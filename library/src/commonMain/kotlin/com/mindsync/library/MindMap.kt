@@ -1,0 +1,220 @@
+package com.mindsync.library
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
+import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.Tree
+import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.node.NodeDrawerFactory
+import com.mindsync.library.util.Dp
+import com.mindsync.library.util.toPx
+
+private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
+private const val SCROLL_ZOOM_STEP = 1.1f
+private const val TEXT_CACHE_SIZE = 64
+
+/**
+ * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
+ * modifier such as `Modifier.fillMaxSize()`.
+ */
+@Composable
+fun MindMap(
+    state: MindMapState,
+    modifier: Modifier = Modifier,
+    fontFamily: FontFamily? = null,
+    onNodeClick: (node: NodeData<*>?) -> Unit = {},
+    onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> },
+) {
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    val textMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
+    val drawInfo = remember { DrawInfo() }
+    val measureTextSize = remember(textMeasurer, density, fontFamily) {
+        val textStyle = TextStyle(
+            fontSize = with(density) { drawInfo.textSize.dpVal.dp.toSp() },
+            fontFamily = fontFamily,
+            textAlign = TextAlign.Center,
+        )
+        MeasureTextSize(textMeasurer, textStyle, density, drawInfo)
+    }
+    val lineColor = if (isSystemInDarkTheme()) drawInfo.darkModeLineColor else drawInfo.lineColor
+    val currentOnNodeClick by rememberUpdatedState(onNodeClick)
+    val currentOnNodeMove by rememberUpdatedState(onNodeMove)
+
+    DisposableEffect(state, measureTextSize, density, scope) {
+        state.attach(measureTextSize, density, scope)
+        onDispose { state.detach() }
+    }
+
+    Canvas(
+        modifier = modifier
+            .clipToBounds()
+            .onSizeChanged { state.onSizeChanged(it.toSize()) }
+            .pointerInput(state) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val touchedNode = state.onTouchDown(down.position)
+                    currentOnNodeClick(touchedNode)
+                    if (touchedNode == null) {
+                        do {
+                            val event = awaitPointerEvent()
+                            state.onTransform(event.calculatePan(), event.calculateZoom())
+                            event.changes.forEach { if (it.positionChanged()) it.consume() }
+                        } while (event.changes.any { it.pressed })
+                    } else {
+                        down.consume()
+                        val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        if (dragStart != null) {
+                            state.onNodeDrag(dragStart.position)
+                            drag(dragStart.id) { change ->
+                                state.onNodeDrag(change.position)
+                                change.consume()
+                            }
+                        }
+                        state.onTouchUp(currentOnNodeMove)
+                    }
+                }
+            }
+            .pointerInput(state) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type == PointerEventType.Scroll) {
+                            val scrollY = event.changes.fold(0f) { sum, change -> sum + change.scrollDelta.y }
+                            if (scrollY != 0f) {
+                                state.onTransform(
+                                    Offset.Zero,
+                                    if (scrollY < 0f) SCROLL_ZOOM_STEP else 1f / SCROLL_ZOOM_STEP,
+                                )
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                }
+            },
+    ) {
+        state.drawTick
+        val measure = state.mindMapManager.getMeasureTextSize() ?: return@Canvas
+        withTransform({
+            translate(state.currentPoint.x, state.currentPoint.y)
+            scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
+        }) {
+            drawAttachedNode(state, drawInfo)
+            drawLines(state, drawInfo, lineColor)
+            drawTree(state, drawInfo, measure)
+            state.selectedNode?.let { selectedNode ->
+                NodeDrawerFactory(selectedNode, drawInfo, this).createStrokeNode().drawNode(this)
+            }
+        }
+    }
+}
+
+private fun DrawScope.drawTree(
+    state: MindMapState,
+    drawInfo: DrawInfo,
+    measureTextSize: MeasureTextSize,
+) {
+    state.tree.doPreorderTraversal { node, depth ->
+        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this, depth).createNodeDrawer()
+        nodeDrawer.drawNode(this)
+        nodeDrawer.drawText(this, measureTextSize.measure(node.description))
+    }
+}
+
+private fun DrawScope.drawAttachedNode(
+    state: MindMapState,
+    drawInfo: DrawInfo,
+) {
+    state.attachedNode?.let { attachedNode ->
+        val height = when (attachedNode) {
+            is RectangleNodeData -> attachedNode.path.height
+            is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
+        }
+        val width = when (attachedNode) {
+            is RectangleNodeData -> attachedNode.path.width
+            is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
+        }
+        drawCircle(
+            color = drawInfo.boundaryColor,
+            radius = maxOf(height.toPx(this), width.toPx(this)),
+            center = Offset(attachedNode.path.centerX.toPx(this), attachedNode.path.centerY.toPx(this)),
+        )
+    }
+}
+
+private fun DrawScope.drawLines(
+    state: MindMapState,
+    drawInfo: DrawInfo,
+    lineColor: Color,
+) {
+    val tree = state.tree
+    val manager = state.mindMapManager
+    val path = Path()
+    val stroke = Stroke(width = drawInfo.lineWidth.toPx(this))
+
+    fun traverseLine(node: NodeData<*>) {
+        for (toNodeId in node.children) {
+            val toNode = tree.getNode(toNodeId)
+            if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
+                val startX = getNodeEdgeX(node, true)
+                val startY = node.path.centerY.toPx(this)
+                val endX = getNodeEdgeX(toNode, false)
+                val endY = toNode.path.centerY.toPx(this)
+                val midX = (startX + endX) / 2
+                path.reset()
+                path.moveTo(startX, startY)
+                path.cubicTo(midX, startY, midX, endY, endX, endY)
+                drawPath(path, lineColor, style = stroke)
+            }
+            traverseLine(toNode)
+        }
+    }
+    traverseLine(tree.getRootNode())
+}
+
+private fun DrawScope.getNodeEdgeX(
+    node: NodeData<*>,
+    isStart: Boolean,
+): Float {
+    val nodeCenterX = node.path.centerX.toPx(this)
+    val widthOffset =
+        when (node) {
+            is CircleNodeData -> node.path.radius.toPx(this)
+            is RectangleNodeData -> node.path.width.toPx(this) / 2
+        }
+    return if (isStart) nodeCenterX + widthOffset else nodeCenterX - widthOffset
+}

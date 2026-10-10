@@ -1,59 +1,51 @@
 plugins {
-    alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
     `maven-publish`
 }
 
-android {
-    namespace = "com.mindsync.library"
-    compileSdk = 34
+group = "com.github.hegleB"
+version = "0.0.13"
 
-    defaultConfig {
+kotlin {
+    jvmToolchain(21)
+
+    androidLibrary {
+        namespace = "com.mindsync.library"
+        compileSdk = 37
         minSdk = 26
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+        androidResources {
+            enable = true
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    jvm()
+    iosArm64()
+    iosSimulatorArm64()
+    wasmJs {
+        browser()
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-    publishing {
-        singleVariant("release")
-    }
-}
 
-dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            api(libs.compose.ui)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.compose.ui.test)
+        }
+        jvmTest.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+    }
 }
 
 publishing {
-    publications {
-        afterEvaluate {
-            register<MavenPublication>("release") {
-                from(components["release"])
-                groupId = "com.github.hegleB"
-                artifactId = "MindMapView"
-                version = "0.0.13"
-            }
-        }
+    publications.withType<MavenPublication>().configureEach {
+        artifactId = artifactId.replaceFirst(project.name, "MindMapView")
     }
 }

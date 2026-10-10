@@ -1,13 +1,12 @@
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     `maven-publish`
-    id("kotlin-kapt")
+    alias(libs.plugins.legacyKapt)
 }
 
 android {
     namespace = "com.mindsync.mindmapview"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.mindsync.mindmapview"
@@ -29,11 +28,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         dataBinding = true
@@ -51,6 +47,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("androidx.activity:activity-ktx:1.5.1")
-    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.fragment.ktx)
 }
