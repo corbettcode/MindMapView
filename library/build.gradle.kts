@@ -14,7 +14,11 @@ kotlin {
 
     androidLibrary {
         namespace = "com.mindsync.library"
-        compileSdk = 37
+        compileSdk {
+            version = release(37) {
+                minorApiLevel = 0
+            }
+        }
         minSdk = 26
 
         androidResources {

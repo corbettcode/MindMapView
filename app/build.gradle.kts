@@ -6,7 +6,11 @@ plugins {
 
 android {
     namespace = "com.mindsync.mindmapview"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 0
+        }
+    }
 
     defaultConfig {
         applicationId = "com.mindsync.mindmapview"
