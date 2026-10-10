@@ -68,6 +68,10 @@ fun MindMapScreen() {
 - `rememberMindMapState()` places the root node at the center of the mind map. Pass `Tree<Any>(Dp(x), Dp(y))` to choose the position yourself.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
+## Sample apps
+- Android: `./gradlew :app:installDebug`
+- Desktop: `./gradlew :desktop:run`
+
 ## Android View
 `MindMapView` is still available on Android as a View that hosts the composable.
 
