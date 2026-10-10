@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     `maven-publish`
-    alias(libs.plugins.legacyKapt)
+    alias(libs.plugins.composeCompiler)
 }
 
 android {
@@ -36,7 +36,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
-        dataBinding = true
+        compose = true
     }
 }
 
@@ -45,12 +45,10 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.compose.material3)
     implementation(project(":library"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
 }
