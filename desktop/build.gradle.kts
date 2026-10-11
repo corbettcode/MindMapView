@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":library"))
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.material3)
+    implementation(libs.richeditor.compose)
 }
 
 compose.desktop {

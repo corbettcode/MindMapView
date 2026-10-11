@@ -21,7 +21,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -34,14 +35,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.rememberMindMapState
+import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 
 private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D),
@@ -155,6 +163,7 @@ private fun AddNodeMenu(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditNodeDialog(
     description: String,
@@ -163,7 +172,7 @@ private fun EditNodeDialog(
     onSubmit: (description: String, color: Color, textColor: Color) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var text by remember { mutableStateOf(description) }
+    val richTextState = remember { RichTextState().setHtml(description) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
@@ -171,9 +180,9 @@ private fun EditNodeDialog(
         onDismissRequest = onDismiss,
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
+                RichTextToolbar(richTextState)
+                OutlinedRichTextEditor(
+                    state = richTextState,
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                 )
@@ -194,7 +203,7 @@ private fun EditNodeDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onSubmit(text, selectedColor, selectedTextColor)
+                    onSubmit(richTextState.toHtml(), selectedColor, selectedTextColor)
                     onDismiss()
                 },
             ) {
@@ -207,6 +216,68 @@ private fun EditNodeDialog(
             }
         },
     )
+}
+
+@Composable
+private fun RichTextToolbar(state: RichTextState) {
+    val spanStyle = state.currentSpanStyle
+    val decoration = spanStyle.textDecoration ?: TextDecoration.None
+
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        RichTextToggle(
+            label = "B",
+            labelStyle = SpanStyle(fontWeight = FontWeight.Bold),
+            checked = spanStyle.fontWeight == FontWeight.Bold,
+            onToggle = { state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) },
+        )
+        RichTextToggle(
+            label = "I",
+            labelStyle = SpanStyle(fontStyle = FontStyle.Italic),
+            checked = spanStyle.fontStyle == FontStyle.Italic,
+            onToggle = { state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) },
+        )
+        RichTextToggle(
+            label = "U",
+            labelStyle = SpanStyle(textDecoration = TextDecoration.Underline),
+            checked = TextDecoration.Underline in decoration,
+            onToggle = { state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline)) },
+        )
+        RichTextToggle(
+            label = "S",
+            labelStyle = SpanStyle(textDecoration = TextDecoration.LineThrough),
+            checked = TextDecoration.LineThrough in decoration,
+            onToggle = { state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) },
+        )
+        RichTextToggle(
+            label = "\u2022",
+            labelStyle = SpanStyle(),
+            checked = state.isUnorderedList,
+            onToggle = { state.toggleUnorderedList() },
+        )
+        RichTextToggle(
+            label = "1.",
+            labelStyle = SpanStyle(),
+            checked = state.isOrderedList,
+            onToggle = { state.toggleOrderedList() },
+        )
+    }
+}
+
+// The toggles do not take focus, so the editor keeps its selection while a style is applied.
+@Composable
+private fun RichTextToggle(
+    label: String,
+    labelStyle: SpanStyle,
+    checked: Boolean,
+    onToggle: () -> Unit,
+) {
+    FilledTonalIconToggleButton(
+        checked = checked,
+        onCheckedChange = { onToggle() },
+        modifier = Modifier.focusProperties { canFocus = false },
+    ) {
+        Text(label, style = LocalTextStyle.current.merge(labelStyle))
+    }
 }
 
 @Composable

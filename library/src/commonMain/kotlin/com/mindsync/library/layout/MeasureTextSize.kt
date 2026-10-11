@@ -1,5 +1,6 @@
 package com.mindsync.library.layout
 
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -12,6 +13,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.Px
+import com.mindsync.library.util.RichText
 import com.mindsync.library.util.toDp
 
 class MeasureTextSize(
@@ -20,8 +22,12 @@ class MeasureTextSize(
     private val density: Density,
     private val drawInfo: DrawInfo = DrawInfo(),
 ) {
+    private val richTextCache = mutableMapOf<String, AnnotatedString>()
+
     fun measure(description: String): TextLayoutResult {
-        return textMeasurer.measure(description, textStyle)
+        if (richTextCache.size >= RICH_TEXT_CACHE_SIZE && description !in richTextCache) richTextCache.clear()
+        val richText = richTextCache.getOrPut(description) { RichText.parse(description) }
+        return textMeasurer.measure(richText, textStyle)
     }
 
     fun traverseTextHead(tree: Tree<*>?) {
@@ -81,5 +87,9 @@ class MeasureTextSize(
                 children = nodeData.children,
             )
         }
+    }
+
+    companion object {
+        private const val RICH_TEXT_CACHE_SIZE = 256
     }
 }

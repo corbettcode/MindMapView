@@ -37,6 +37,7 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             api(libs.compose.ui)
+            implementation(libs.richeditor.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -6,6 +6,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
@@ -22,6 +24,7 @@ import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
+import com.mindsync.library.util.RichText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -277,6 +280,36 @@ class MindMapTest {
         onNodeWithTag(TAG).performTouchInput { doubleClick(Offset(700.dp.toPx(), 50.dp.toPx())) }
         waitForIdle()
         assertEquals(listOf(child.id), doubleClicks)
+    }
+
+    @Test
+    fun descriptionMarkupIsParsedAsRichText() {
+        val richText = RichText.parse("a <b>bold</b> &amp; <i>italic</i> word")
+
+        assertEquals("a bold & italic word", richText.text)
+        assertTrue(richText.spanStyles.any { it.item.fontWeight == FontWeight.Bold && richText.text.substring(it.start, it.end) == "bold" })
+        assertTrue(richText.spanStyles.any { it.item.fontStyle == FontStyle.Italic && richText.text.substring(it.start, it.end) == "italic" })
+    }
+
+    @Test
+    fun nodeIsSizedByItsRenderedTextNotItsMarkup() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("some text")
+        waitForIdle()
+        state.addNode("<u>some text</u>")
+        waitForIdle()
+        state.addNode("&lt;u&gt;some text&lt;/u&gt;")
+        waitForIdle()
+
+        val (plain, rich, escaped) = state.tree.getRootNode().children.map {
+            assertIs<RectangleNodeData>(state.tree.getNode(it)).path
+        }
+        assertEquals(plain.width.dpVal, rich.width.dpVal, 0.01f)
+        assertTrue(escaped.width.dpVal > rich.width.dpVal)
+        assertEquals("<u>some text</u>", state.tree.getNode(state.tree.getRootNode().children[1]).description)
     }
 
     @Test
