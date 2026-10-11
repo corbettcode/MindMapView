@@ -2,6 +2,7 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -28,11 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
-import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.rememberMindMapState
 
-private enum class Operation { ADD, ADD_STADIUM, UPDATE }
+private sealed interface Operation {
+    data class Add(val shape: NodeShape) : Operation
+    data object Update : Operation
+}
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "MindMapView") {
@@ -53,16 +58,11 @@ private fun MindMapScreen() {
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Button(onClick = { operation = Operation.ADD }, enabled = selectedNode != null) {
-                        Text("Add")
-                    }
-                    Button(onClick = { operation = Operation.ADD_STADIUM }, enabled = selectedNode != null) {
-                        Text("Add stadium")
-                    }
-                    Button(onClick = { operation = Operation.UPDATE }, enabled = selectedNode != null) {
+                    AddNodeMenu(enabled = selectedNode != null, onAdd = { operation = Operation.Add(it) })
+                    Button(onClick = { operation = Operation.Update }, enabled = selectedNode != null) {
                         Text("Edit")
                     }
-                    Button(onClick = { state.removeNode() }, enabled = selectedNode != null && selectedNode !is CircleNodeData) {
+                    Button(onClick = { state.removeNode() }, enabled = selectedNode?.parentId != null) {
                         Text("Remove")
                     }
                     Button(onClick = { state.fitScreen() }) {
@@ -75,16 +75,40 @@ private fun MindMapScreen() {
 
         operation?.let { currentOperation ->
             EditDescriptionDialog(
-                description = if (currentOperation == Operation.UPDATE) selectedNode?.description.orEmpty() else "",
+                description = if (currentOperation is Operation.Update) selectedNode?.description.orEmpty() else "",
                 onSubmit = { description ->
                     when (currentOperation) {
-                        Operation.ADD -> state.addNode(description)
-                        Operation.ADD_STADIUM -> state.addNode(description, NodeShape.STADIUM)
-                        Operation.UPDATE -> state.editNodeText(description)
+                        is Operation.Add -> state.addNode(description, currentOperation.shape)
+                        Operation.Update -> state.editNodeText(description)
                     }
                 },
                 onDismiss = { operation = null },
             )
+        }
+    }
+}
+
+@Composable
+private fun AddNodeMenu(
+    enabled: Boolean,
+    onAdd: (NodeShape) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Button(onClick = { expanded = true }, enabled = enabled) {
+            Text("Add")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            NodeShape.entries.forEach { shape ->
+                DropdownMenuItem(
+                    text = { Text(shape.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    onClick = {
+                        expanded = false
+                        onAdd(shape)
+                    },
+                )
+            }
         }
     }
 }

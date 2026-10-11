@@ -3,8 +3,10 @@ package com.mindsync.library
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
@@ -37,7 +39,11 @@ class MindMapManager {
     }
 
     fun addNode(node: NodeData<*>, description: String) {
-        val shape = if (node is StadiumNodeData) NodeShape.STADIUM else NodeShape.RECTANGLE
+        val shape = when (node) {
+            is CircleNodeData -> NodeShape.CIRCLE
+            is RectangleNodeData -> NodeShape.RECTANGLE
+            is StadiumNodeData -> NodeShape.STADIUM
+        }
         this.tree.addNode(node.id, node.parentId, description, shape)
         update(node)
     }

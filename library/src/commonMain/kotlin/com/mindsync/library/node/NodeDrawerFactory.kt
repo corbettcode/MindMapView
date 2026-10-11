@@ -11,10 +11,10 @@ import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.toPx
 
 class NodeDrawerFactory(
-    private val node: NodeData<*>,
-    private val drawInfo: DrawInfo,
-    private val density: Density,
-    private val depth: Int = 0,
+    private val node: NodeData<*>
+    , private val drawInfo: DrawInfo
+    , private val density: Density
+    , private val depth: Int = 0
 ) {
     fun createStrokeNode(): NodeDrawer {
         val stroke = Stroke(width = drawInfo.strokeWidth.toPx(density))
@@ -37,10 +37,10 @@ class NodeDrawerFactory(
             }
             is CircleNodeData -> {
                 CircleNodeDrawer(
-                    node,
-                    drawInfo,
-                    drawInfo.strokeColor,
-                    stroke,
+                    node
+                    , drawInfo = drawInfo
+                    , color = drawInfo.strokeColor
+                    , style = stroke
                 )
             }
         }

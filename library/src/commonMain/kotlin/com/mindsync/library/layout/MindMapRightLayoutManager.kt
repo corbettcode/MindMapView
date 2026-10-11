@@ -51,7 +51,7 @@ class MindMapRightLayoutManager {
 
             startX =
                 when (child) {
-                    is CircleNodeData -> criteriaX + (child.path.radius / 2)
+                    is CircleNodeData -> criteriaX + child.path.radius
                     is RectangleNodeData -> criteriaX + (child.path.width / 2)
                     is StadiumNodeData -> criteriaX + (child.path.width() / 2)
                 }
@@ -94,7 +94,7 @@ class MindMapRightLayoutManager {
         } else {
             heightSum =
                 when (nodeData) {
-                    is CircleNodeData -> nodeData.path.radius
+                    is CircleNodeData -> nodeData.path.radius * 2
                     is RectangleNodeData -> nodeData.path.height
                     is StadiumNodeData -> nodeData.path.height()
                 }

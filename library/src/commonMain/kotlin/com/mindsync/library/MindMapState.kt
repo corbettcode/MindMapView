@@ -77,6 +77,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
     fun addNode(description: String, shape: NodeShape = NodeShape.RECTANGLE) {
         mindMapManager.getSelectedNode()?.let { node ->
             val addNode: NodeData<*> = when (shape) {
+                NodeShape.CIRCLE -> NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
                 NodeShape.RECTANGLE -> NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
                 NodeShape.STADIUM -> NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
             }
@@ -170,7 +171,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
     }
 
     internal fun onNodeDrag(position: Offset) {
-        val selectedNode = mindMapManager.getSelectedNode()?.takeIf { it !is CircleNodeData } ?: return
+        val selectedNode = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
         val point = toTreePoint(position)
         mindMapManager.setMoving()
         treeChangeJob?.cancel()

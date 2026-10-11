@@ -78,6 +78,9 @@ class Tree<T> {
         if (parentId == null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
         val newNode: NodeData<*> =
             when (shape) {
+                NodeShape.CIRCLE ->
+                    NodeGenerator.makeNode(CircleNodeData::class, description = content, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId)
                 NodeShape.RECTANGLE ->
                     NodeGenerator.makeNode(RectangleNodeData::class, description = content, parentId = parentId)
                         .copy(id = targetId, parentId = parentId)
@@ -159,7 +162,16 @@ class Tree<T> {
                 ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
         val newTargetNode =
             when (targetNode) {
-                is CircleNodeData -> targetNode.copy(description = description)
+                is CircleNodeData ->
+                    targetNode.copy(
+                        path =
+                            targetNode.path.copy(
+                                centerX = dx,
+                                centerY = dy,
+                            ),
+                        description = description,
+                        children = if (children.isEmpty()) targetNode.children else children,
+                    )
                 is RectangleNodeData ->
                     targetNode.copy(
                         path =

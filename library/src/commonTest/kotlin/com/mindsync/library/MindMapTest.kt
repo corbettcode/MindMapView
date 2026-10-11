@@ -140,6 +140,41 @@ class MindMapTest {
     }
 
     @Test
+    fun addDragAndRemoveCircleNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second", NodeShape.CIRCLE)
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val (firstId, secondId) = root.children
+        val first = state.tree.getNode(firstId)
+        val second = assertIs<CircleNodeData>(state.tree.getNode(secondId))
+        assertEquals(root.id, second.parentId)
+        assertTrue((second.path.centerX - second.path.radius).dpVal > (root.path.centerX + root.path.radius).dpVal)
+
+        onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
+        waitForIdle()
+        assertEquals(listOf(secondId to firstId), moves)
+        assertEquals(firstId, state.tree.getNode(secondId).parentId)
+
+        clickNode(state.tree.getNode(secondId))
+        assertEquals(secondId, state.selectedNode?.id)
+        state.removeNode()
+        waitForIdle()
+        assertTrue(state.tree.getNode(firstId).children.isEmpty())
+
+        clickNode(state.tree.getRootNode())
+        state.removeNode()
+        waitForIdle()
+        assertEquals(root.id, state.tree.getRootNode().id)
+    }
+
+    @Test
     fun stadiumHitTestFollowsTheRoundedCaps() {
         val path = StadiumPath(Dp(100f), Dp(100f), length = Dp(60f), radius = Dp(20f))
 

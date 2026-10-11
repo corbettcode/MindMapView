@@ -27,8 +27,21 @@ data class CircleNodeData(
     override var isAnimating: Boolean = false,
     override var isDrawingLine: Boolean = false,
     override var strokeWidth: Float = 1f,
-) : NodeData<CircleNodeData>(id, parentId, path, description, children, alpha, isAnimating, isDrawingLine, strokeWidth) {
-    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<CircleNodeData> {
+) : NodeData<CircleNodeData>(
+    id
+    , parentId
+    , path
+    , description
+    , children
+    , alpha
+    , isAnimating
+    , isDrawingLine
+    , strokeWidth
+) {
+    override fun adjustPosition(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): NodeData<CircleNodeData> {
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
