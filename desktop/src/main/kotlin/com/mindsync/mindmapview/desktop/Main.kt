@@ -23,11 +23,14 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,14 +41,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyShortcut
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
@@ -86,76 +93,98 @@ private sealed interface Operation {
     data object Update : Operation
 }
 
+private class FileActions(
+    val new: () -> Unit,
+    val open: () -> Unit,
+    val save: () -> Unit,
+    val saveAs: () -> Unit,
+)
+
 fun main() = application {
     val state = rememberMindMapState()
     var file by remember { mutableStateOf<File?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var frame by remember { mutableStateOf<Frame?>(null) }
+    var fileMenuExpanded by remember { mutableStateOf(false) }
+
+    fun save(target: File) {
+        try {
+            target.writeText(FreeMind.write(state.tree))
+            file = target
+        } catch (e: IOException) {
+            error = "Could not save ${target.name}: ${e.message}"
+        }
+    }
+
+    fun saveAs() {
+        chooseFile(frame, "Save As", FileDialog.SAVE, file)?.let { chosen ->
+            save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
+        }
+    }
+
+    val fileActions = FileActions(
+        new = {
+            state.setTree(Tree<Any>())
+            file = null
+        },
+        open = {
+            chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { chosen ->
+                try {
+                    state.setTree(FreeMind.read(chosen.readText()))
+                    state.animateTreeChange()
+                    file = chosen
+                } catch (e: IOException) {
+                    error = "Could not open ${chosen.name}: ${e.message}"
+                } catch (e: IllegalArgumentException) {
+                    error = "Could not open ${chosen.name}: ${e.message}"
+                }
+            }
+        },
+        save = { file?.let { save(it) } ?: saveAs() },
+        saveAs = { saveAs() },
+    )
 
     Window(
         onCloseRequest = ::exitApplication,
         title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME,
+        onPreviewKeyEvent = { event ->
+            when {
+                event.type != KeyEventType.KeyDown -> false
+                event.isAltPressed && event.key == Key.F -> {
+                    fileMenuExpanded = true
+                    true
+                }
+                !event.isCtrlPressed -> false
+                event.key == Key.N -> {
+                    fileActions.new()
+                    true
+                }
+                event.key == Key.O -> {
+                    fileActions.open()
+                    true
+                }
+                event.key == Key.S -> {
+                    if (event.isShiftPressed) fileActions.saveAs() else fileActions.save()
+                    true
+                }
+                else -> false
+            }
+        },
     ) {
-        fun save(target: File) {
-            try {
-                target.writeText(FreeMind.write(state.tree))
-                file = target
-            } catch (e: IOException) {
-                error = "Could not save ${target.name}: ${e.message}"
-            }
-        }
-
-        fun saveAs() {
-            chooseFile(window, "Save As", FileDialog.SAVE, file)?.let { chosen ->
-                save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
-            }
-        }
-
-        MenuBar {
-            Menu("File", mnemonic = 'F') {
-                Item(
-                    "New",
-                    shortcut = KeyShortcut(Key.N, ctrl = true),
-                    onClick = {
-                        state.setTree(Tree<Any>())
-                        file = null
-                    },
-                )
-                Item(
-                    "Open...",
-                    shortcut = KeyShortcut(Key.O, ctrl = true),
-                    onClick = {
-                        chooseFile(window, "Open", FileDialog.LOAD, file)?.let { chosen ->
-                            try {
-                                state.setTree(FreeMind.read(chosen.readText()))
-                                state.animateTreeChange()
-                                file = chosen
-                            } catch (e: IOException) {
-                                error = "Could not open ${chosen.name}: ${e.message}"
-                            } catch (e: IllegalArgumentException) {
-                                error = "Could not open ${chosen.name}: ${e.message}"
-                            }
-                        }
-                    },
-                )
-                Separator()
-                Item(
-                    "Save",
-                    shortcut = KeyShortcut(Key.S, ctrl = true),
-                    onClick = { file?.let { save(it) } ?: saveAs() },
-                )
-                Item(
-                    "Save As...",
-                    shortcut = KeyShortcut(Key.S, ctrl = true, shift = true),
-                    onClick = { saveAs() },
-                )
-            }
-        }
-        MindMapScreen(state, error, onErrorDismiss = { error = null })
+        SideEffect { frame = window }
+        MindMapScreen(
+            state = state,
+            error = error,
+            onErrorDismiss = { error = null },
+            fileActions = fileActions,
+            fileMenuExpanded = fileMenuExpanded,
+            onFileMenuExpandedChange = { fileMenuExpanded = it },
+        )
     }
 }
 
 private fun chooseFile(
-    window: Frame,
+    window: Frame?,
     title: String,
     mode: Int,
     current: File?,
@@ -174,6 +203,9 @@ private fun MindMapScreen(
     state: MindMapState,
     error: String?,
     onErrorDismiss: () -> Unit,
+    fileActions: FileActions,
+    fileMenuExpanded: Boolean,
+    onFileMenuExpandedChange: (Boolean) -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -181,6 +213,7 @@ private fun MindMapScreen(
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
+                FileMenu(fileActions, fileMenuExpanded, onFileMenuExpandedChange)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -241,6 +274,45 @@ private fun MindMapScreen(
             )
         }
     }
+}
+
+// Drawn by Compose instead of the window's native menu bar, whose drop down closes as soon as the mouse
+// button is released under XWayland.
+@Composable
+private fun FileMenu(
+    actions: FileActions,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+) {
+    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+        TextButton(onClick = { onExpandedChange(true) }) {
+            Text("File")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
+            FileMenuItem("New", "Ctrl+N", actions.new, onExpandedChange)
+            FileMenuItem("Open...", "Ctrl+O", actions.open, onExpandedChange)
+            HorizontalDivider()
+            FileMenuItem("Save", "Ctrl+S", actions.save, onExpandedChange)
+            FileMenuItem("Save As...", "Ctrl+Shift+S", actions.saveAs, onExpandedChange)
+        }
+    }
+}
+
+@Composable
+private fun FileMenuItem(
+    text: String,
+    shortcut: String,
+    onClick: () -> Unit,
+    onExpandedChange: (Boolean) -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
+        onClick = {
+            onExpandedChange(false)
+            onClick()
+        },
+    )
 }
 
 @Composable
