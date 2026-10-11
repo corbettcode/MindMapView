@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontFamily
-import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 
 
@@ -48,11 +49,12 @@ class MindMapView @JvmOverloads constructor(
         addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
-    fun addNode(description: String) {
-        state.addNode(description)
+    @JvmOverloads
+    fun addNode(description: String, shape: NodeShape = NodeShape.RECTANGLE) {
+        state.addNode(description, shape)
     }
 
-    fun getAddNode(): RectangleNodeData? {
+    fun getAddNode(): NodeData<*>? {
         return state.getAddNode()
     }
 

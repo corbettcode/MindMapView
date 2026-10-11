@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
@@ -136,8 +137,15 @@ fun MindMap(
             drawAttachedNode(state, drawInfo)
             drawLines(state, drawInfo, lineColor)
             drawTree(state, drawInfo, measure)
+
             state.selectedNode?.let { selectedNode ->
-                NodeDrawerFactory(selectedNode, drawInfo, this).createStrokeNode().drawNode(this)
+                NodeDrawerFactory(
+                    selectedNode
+                    , drawInfo
+                    , this
+                )
+                .createStrokeNode()
+                .drawNode(this)
             }
         }
     }
@@ -156,16 +164,18 @@ private fun DrawScope.drawTree(
 }
 
 private fun DrawScope.drawAttachedNode(
-    state: MindMapState,
-    drawInfo: DrawInfo,
+    state: MindMapState
+    , drawInfo: DrawInfo
 ) {
     state.attachedNode?.let { attachedNode ->
         val height = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.height
+            is StadiumNodeData -> attachedNode.path.height()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         val width = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.width
+            is StadiumNodeData -> attachedNode.path.width()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         drawCircle(
@@ -215,6 +225,7 @@ private fun DrawScope.getNodeEdgeX(
         when (node) {
             is CircleNodeData -> node.path.radius.toPx(this)
             is RectangleNodeData -> node.path.width.toPx(this) / 2
+            is StadiumNodeData -> node.path.width().toPx(this) / 2
         }
     return if (isStart) nodeCenterX + widthOffset else nodeCenterX - widthOffset
 }

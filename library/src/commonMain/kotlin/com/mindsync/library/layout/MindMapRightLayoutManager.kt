@@ -3,6 +3,7 @@ package com.mindsync.library.layout
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
 
@@ -35,6 +36,7 @@ class MindMapRightLayoutManager {
         val nodeWidth =
             when (currentNodeData) {
                 is RectangleNodeData -> currentNodeData.path.width
+                is StadiumNodeData -> currentNodeData.path.width()
                 is CircleNodeData -> currentNodeData.path.radius
             }
 
@@ -51,6 +53,7 @@ class MindMapRightLayoutManager {
                 when (child) {
                     is CircleNodeData -> criteriaX + (child.path.radius / 2)
                     is RectangleNodeData -> criteriaX + (child.path.width / 2)
+                    is StadiumNodeData -> criteriaX + (child.path.width() / 2)
                 }
             val newChild =
                 when (child) {
@@ -60,6 +63,11 @@ class MindMapRightLayoutManager {
                     }
 
                     is RectangleNodeData -> {
+                        val newPath = child.path.copy(centerX = startX, centerY = newY)
+                        child.copy(path = newPath)
+                    }
+
+                    is StadiumNodeData -> {
                         val newPath = child.path.copy(centerX = startX, centerY = newY)
                         child.copy(path = newPath)
                     }
@@ -88,6 +96,7 @@ class MindMapRightLayoutManager {
                 when (nodeData) {
                     is CircleNodeData -> nodeData.path.radius
                     is RectangleNodeData -> nodeData.path.height
+                    is StadiumNodeData -> nodeData.path.height()
                 }
         }
         return heightSum
@@ -105,6 +114,9 @@ class MindMapRightLayoutManager {
             is RectangleNodeData -> {
                 val right = nodeData.path.centerX.dpVal + nodeData.path.width.dpVal / 2
                 rightMost = maxOf(rightMost, right)
+            }
+            is StadiumNodeData -> {
+                rightMost = maxOf(rightMost, nodeData.path.rightX().dpVal)
             }
             is CircleNodeData -> {
                 val right = nodeData.path.centerX.dpVal + nodeData.path.radius.dpVal

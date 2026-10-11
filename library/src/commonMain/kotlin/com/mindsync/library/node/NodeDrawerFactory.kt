@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.Density
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.toPx
 
@@ -20,6 +21,14 @@ class NodeDrawerFactory(
         return when(node) {
             is RectangleNodeData -> {
                 RectangleNodeDrawer(
+                    node,
+                    drawInfo,
+                    drawInfo.strokeColor,
+                    stroke,
+                )
+            }
+            is StadiumNodeData -> {
+                StadiumNodeDrawer(
                     node,
                     drawInfo,
                     drawInfo.strokeColor,
@@ -41,6 +50,15 @@ class NodeDrawerFactory(
         return when (node) {
             is RectangleNodeData -> {
                 RectangleNodeDrawer(
+                    node,
+                    drawInfo,
+                    drawInfo.nodeColors[(depth - 1).mod(drawInfo.nodeColors.size)],
+                    Fill,
+                )
+            }
+
+            is StadiumNodeData -> {
+                StadiumNodeDrawer(
                     node,
                     drawInfo,
                     drawInfo.nodeColors[(depth - 1).mod(drawInfo.nodeColors.size)],

@@ -5,6 +5,8 @@ import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.RectanglePath
+import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.StadiumPath
 import kotlin.reflect.KClass
 
 
@@ -28,6 +30,13 @@ object NodeGenerator {
                 id = id,
                 parentId = parentId,
                 path = RectanglePath(Dp(0f), Dp(0f), Dp(100f), Dp(50f)),  // 예시로 RectanglePath 설정
+                description = description,
+                children = listOf()
+            ) as N
+            StadiumNodeData::class -> StadiumNodeData(
+                id = id,
+                parentId = parentId,
+                path = StadiumPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
                 description = description,
                 children = listOf()
             ) as N

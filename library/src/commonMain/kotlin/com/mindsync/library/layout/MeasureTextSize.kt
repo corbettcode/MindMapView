@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.Density
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.Dp
@@ -63,6 +64,19 @@ class MeasureTextSize(
                 id = nodeData.id,
                 parentId = nodeData.parentId,
                 path = nodeData.path.copy(width = newWidth, height = newHeight),
+                description = nodeData.description,
+                children = nodeData.children,
+            )
+        }
+
+        // The text sits between the straight sides, so the caps add to the width on either end.
+        is StadiumNodeData -> {
+            val newLength = Dp(Px(width).toDp(density))
+            val newRadius = (Dp(Px(height).toDp(density)) + drawInfo.padding) / 2
+            nodeData.copy(
+                id = nodeData.id,
+                parentId = nodeData.parentId,
+                path = nodeData.path.copy(length = newLength, radius = newRadius),
                 description = nodeData.description,
                 children = nodeData.children,
             )

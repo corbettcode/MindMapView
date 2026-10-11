@@ -20,7 +20,9 @@ import com.mindsync.library.command.RemoveNodeCommand
 import com.mindsync.library.command.UpdateNodeCommand
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapRightLayoutManager
@@ -48,7 +50,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
     private var treeChangeJob: Job? = null
     private var density = Density(1f)
     private var viewportSize = Size.Zero
-    private var addNode: RectangleNodeData? = null
+    private var addNode: NodeData<*>? = null
 
     var scaleFactor by mutableFloatStateOf(DEFAULT_ZOOM)
         private set
@@ -72,9 +74,12 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
         invalidate()
     }
 
-    fun addNode(description: String) {
+    fun addNode(description: String, shape: NodeShape = NodeShape.RECTANGLE) {
         mindMapManager.getSelectedNode()?.let { node ->
-            val addNode = NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
+            val addNode: NodeData<*> = when (shape) {
+                NodeShape.RECTANGLE -> NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
+                NodeShape.STADIUM -> NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
+            }
             this.addNode = addNode
             val addNodeCommand = AddNodeCommand(mindMapManager, addNode)
             addNodeCommand.execute()
@@ -82,7 +87,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
         animateTreeChange()
     }
 
-    fun getAddNode(): RectangleNodeData? {
+    fun getAddNode(): NodeData<*>? {
         return this.addNode
     }
 
@@ -165,7 +170,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
     }
 
     internal fun onNodeDrag(position: Offset) {
-        val selectedNode = mindMapManager.getSelectedNode() as? RectangleNodeData ?: return
+        val selectedNode = mindMapManager.getSelectedNode()?.takeIf { it !is CircleNodeData } ?: return
         val point = toTreePoint(position)
         mindMapManager.setMoving()
         treeChangeJob?.cancel()
@@ -264,6 +269,9 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
             is RectangleNodeData ->
                 point.x in node.path.leftX().toPx(density)..node.path.rightX().toPx(density) &&
                     point.y in node.path.topY().toPx(density)..node.path.bottomY().toPx(density)
+
+            is StadiumNodeData ->
+                node.path.contains(Dp(Px(point.x).toDp(density)), Dp(Px(point.y).toDp(density)))
         }
     }
 

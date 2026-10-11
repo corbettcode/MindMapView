@@ -28,10 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
-import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.NodeShape
 import com.mindsync.library.rememberMindMapState
 
-private enum class Operation { ADD, UPDATE }
+private enum class Operation { ADD, ADD_STADIUM, UPDATE }
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "MindMapView") {
@@ -55,10 +56,13 @@ private fun MindMapScreen() {
                     Button(onClick = { operation = Operation.ADD }, enabled = selectedNode != null) {
                         Text("Add")
                     }
+                    Button(onClick = { operation = Operation.ADD_STADIUM }, enabled = selectedNode != null) {
+                        Text("Add stadium")
+                    }
                     Button(onClick = { operation = Operation.UPDATE }, enabled = selectedNode != null) {
                         Text("Edit")
                     }
-                    Button(onClick = { state.removeNode() }, enabled = selectedNode is RectangleNodeData) {
+                    Button(onClick = { state.removeNode() }, enabled = selectedNode != null && selectedNode !is CircleNodeData) {
                         Text("Remove")
                     }
                     Button(onClick = { state.fitScreen() }) {
@@ -71,10 +75,11 @@ private fun MindMapScreen() {
 
         operation?.let { currentOperation ->
             EditDescriptionDialog(
-                description = if (currentOperation == Operation.ADD) "" else selectedNode?.description.orEmpty(),
+                description = if (currentOperation == Operation.UPDATE) selectedNode?.description.orEmpty() else "",
                 onSubmit = { description ->
                     when (currentOperation) {
                         Operation.ADD -> state.addNode(description)
+                        Operation.ADD_STADIUM -> state.addNode(description, NodeShape.STADIUM)
                         Operation.UPDATE -> state.editNodeText(description)
                     }
                 },

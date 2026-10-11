@@ -14,11 +14,15 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -101,6 +105,77 @@ class MindMapTest {
         waitForIdle()
         assertTrue(state.tree.getRootNode().children.isEmpty())
         assertNull(state.selectedNode)
+    }
+
+    @Test
+    fun addEditAndRemoveStadiumNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", NodeShape.STADIUM)
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val child = assertIs<StadiumNodeData>(state.tree.getNode(root.children.single()))
+        assertEquals("child", child.description)
+        assertTrue(child.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertEquals(root.path.centerY.dpVal, child.path.centerY.dpVal, 0.01f)
+        assertEquals(child.path.length.dpVal + child.path.radius.dpVal * 2, child.path.width().dpVal, 0.01f)
+        assertEquals(child.path.radius.dpVal * 2, child.path.height().dpVal, 0.01f)
+
+        clickNode(child)
+        assertEquals(child.id, state.selectedNode?.id)
+        state.editNodeText("a much longer description")
+        waitForIdle()
+        val edited = assertIs<StadiumNodeData>(state.tree.getNode(child.id))
+        assertEquals("a much longer description", edited.description)
+        assertTrue(edited.path.length.dpVal > child.path.length.dpVal)
+        assertEquals(child.path.radius.dpVal, edited.path.radius.dpVal, 0.01f)
+
+        state.removeNode()
+        waitForIdle()
+        assertTrue(state.tree.getRootNode().children.isEmpty())
+        assertNull(state.selectedNode)
+    }
+
+    @Test
+    fun stadiumHitTestFollowsTheRoundedCaps() {
+        val path = StadiumPath(Dp(100f), Dp(100f), length = Dp(60f), radius = Dp(20f))
+
+        assertTrue(path.contains(Dp(100f), Dp(100f)))
+        assertTrue(path.contains(Dp(149f), Dp(100f)))
+        assertTrue(path.contains(Dp(130f), Dp(119f)))
+        assertTrue(path.contains(Dp(51f), Dp(100f)))
+        // Inside the bounding box, but outside the rounded cap.
+        assertFalse(path.contains(Dp(148f), Dp(118f)))
+        assertFalse(path.contains(Dp(52f), Dp(82f)))
+        assertFalse(path.contains(Dp(151f), Dp(100f)))
+        assertFalse(path.contains(Dp(100f), Dp(121f)))
+    }
+
+    @Test
+    fun draggingStadiumOntoAnotherNodeReattachesIt() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second", NodeShape.STADIUM)
+        waitForIdle()
+
+        val (firstId, secondId) = state.tree.getRootNode().children
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+
+        onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
+        waitForIdle()
+
+        assertEquals(listOf(secondId to firstId), moves)
+        assertEquals(listOf(secondId), state.tree.getNode(firstId).children)
+        assertIs<StadiumNodeData>(state.tree.getNode(secondId))
+        assertEquals(firstId, state.tree.getNode(secondId).parentId)
     }
 
     @Test
