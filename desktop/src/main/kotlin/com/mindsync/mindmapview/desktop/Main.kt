@@ -213,15 +213,17 @@ private fun MindMapScreen(
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
-                FileMenu(fileActions, fileMenuExpanded, onFileMenuExpandedChange)
+                Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    FileMenu(fileActions, fileMenuExpanded, onFileMenuExpandedChange)
+                    TextButton(onClick = { operation = Operation.Update }, enabled = selectedNode != null) {
+                        Text("Edit")
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     AddNodeMenu(enabled = selectedNode != null, onAdd = { operation = Operation.Add(it) })
-                    Button(onClick = { operation = Operation.Update }, enabled = selectedNode != null) {
-                        Text("Edit")
-                    }
                     Button(onClick = { state.removeNode() }, enabled = selectedNode?.parentId != null) {
                         Text("Remove")
                     }
@@ -284,7 +286,7 @@ private fun FileMenu(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
-    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+    Box {
         TextButton(onClick = { onExpandedChange(true) }) {
             Text("File")
         }
