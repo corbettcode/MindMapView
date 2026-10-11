@@ -30,6 +30,21 @@ data class CircleNode(
     }
 }
 
+data class StadiumNode(
+    override val id: String,
+    override val parentId: String?,
+    override val path: StadiumPath = StadiumPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
+    override val description: String,
+    override val children: List<String>,
+) : Node(id, parentId, path, description, children) {
+    override fun adjustPosition(
+        horizontalSpacing: Dp,
+        totalHeight: Dp,
+    ): Node {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}
+
 data class RectangleNode(
     override val id: String,
     override val parentId: String,

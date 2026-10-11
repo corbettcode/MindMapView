@@ -47,9 +47,9 @@ object FreeMind {
         tree.setRootNode(
             root.copy(
                 children = children,
-                color = rootElement.color("BACKGROUND_COLOR") ?: NodeShape.CIRCLE.defaultColor,
+                color = rootElement.color("BACKGROUND_COLOR") ?: root.color,
                 description = rootElement.description(),
-                textColor = rootElement.color("COLOR") ?: NodeShape.CIRCLE.defaultTextColor,
+                textColor = rootElement.color("COLOR") ?: root.textColor,
             ),
         )
         return tree

@@ -50,3 +50,17 @@ data class CirclePath(
         return this.copy(centerY = calculateNewCenterY(horizontalSpacing, totalHeight))
     }
 }
+
+data class StadiumPath(
+    override val centerX: Dp,
+    override val centerY: Dp,
+    val length: Dp,
+    val radius: Dp,
+) : NodePath(centerX, centerY) {
+    override fun adjustPath(
+        horizontalSpacing: Dp,
+        totalHeight: Dp,
+    ): StadiumPath {
+        return this.copy(centerY = calculateNewCenterY(horizontalSpacing, totalHeight))
+    }
+}

@@ -91,7 +91,7 @@ data class StadiumNodeData(
     , override val description: String
     , override var isAnimating: Boolean = false
     , override var isDrawingLine: Boolean = false
-    , override val parentId: String
+    , override val parentId: String?
     , override val path: StadiumPath = StadiumPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
     , override var strokeWidth: Float = 1f
     , override val textColor: Color = NodeShape.STADIUM.defaultTextColor

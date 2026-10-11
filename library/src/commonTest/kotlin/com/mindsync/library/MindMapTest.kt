@@ -73,13 +73,21 @@ class MindMapTest {
     }
 
     @Test
+    fun rootIsAGrayStadiumWithBlackText() {
+        val root: NodeData<*> = Tree<Any>(Dp(150f), Dp(300f)).getRootNode()
+        assertIs<StadiumNodeData>(root)
+        assertEquals(Color.Gray, root.color)
+        assertEquals(Color.Black, root.textColor)
+    }
+
+    @Test
     fun clickSelectsNodeAndEmptySpaceClearsSelection() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
 
         clickNode(state.tree.getRootNode())
-        assertIs<CircleNodeData>(state.selectedNode)
-        assertIs<CircleNodeData>(clicks.last())
+        assertIs<StadiumNodeData>(state.selectedNode)
+        assertIs<StadiumNodeData>(clicks.last())
 
         onNodeWithTag(TAG).performTouchInput { click(Offset(700.dp.toPx(), 50.dp.toPx())) }
         waitForIdle()
@@ -99,7 +107,7 @@ class MindMapTest {
         val root = state.tree.getRootNode()
         val child = assertIs<RectangleNodeData>(state.tree.getNode(root.children.single()))
         assertEquals("child", child.description)
-        assertTrue(child.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertTrue(child.path.leftX().dpVal > root.path.rightX().dpVal)
         assertEquals(root.path.centerY.dpVal, child.path.centerY.dpVal, 0.01f)
 
         clickNode(child)
@@ -128,7 +136,7 @@ class MindMapTest {
         val root = state.tree.getRootNode()
         val child = assertIs<StadiumNodeData>(state.tree.getNode(root.children.single()))
         assertEquals("child", child.description)
-        assertTrue(child.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertTrue(child.path.leftX().dpVal > root.path.rightX().dpVal)
         assertEquals(root.path.centerY.dpVal, child.path.centerY.dpVal, 0.01f)
         assertEquals(child.path.length.dpVal + child.path.radius.dpVal * 2, child.path.width().dpVal, 0.01f)
         assertEquals(child.path.radius.dpVal * 2, child.path.height().dpVal, 0.01f)
@@ -164,7 +172,7 @@ class MindMapTest {
         val first = state.tree.getNode(firstId)
         val second = assertIs<CircleNodeData>(state.tree.getNode(secondId))
         assertEquals(root.id, second.parentId)
-        assertTrue((second.path.centerX - second.path.radius).dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertTrue((second.path.centerX - second.path.radius).dpVal > root.path.rightX().dpVal)
 
         onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
         waitForIdle()
@@ -189,7 +197,7 @@ class MindMapTest {
         setMindMap(state)
 
         val root = state.tree.getRootNode()
-        assertEquals(NodeShape.CIRCLE.defaultColor, root.color)
+        assertEquals(Color.Gray, root.color)
 
         clickNode(root)
         state.addNode("first")
@@ -229,7 +237,7 @@ class MindMapTest {
         setMindMap(state)
 
         val root = state.tree.getRootNode()
-        assertEquals(NodeShape.CIRCLE.defaultTextColor, root.textColor)
+        assertEquals(Color.Black, root.textColor)
 
         clickNode(root)
         state.addNode("first")
@@ -389,7 +397,7 @@ class MindMapTest {
         val tree = FreeMind.read(content)
         val root = tree.getRootNode()
         assertEquals("Tom &amp; Jerry<br>second line", root.description)
-        assertEquals(NodeShape.CIRCLE.defaultColor, root.color)
+        assertEquals(Color.Gray, root.color)
         assertEquals(listOf("ID_2", "ID_3"), root.children)
 
         val first = assertIs<RectangleNodeData>(tree.getNode("ID_2"))
@@ -437,7 +445,7 @@ class MindMapTest {
         val a = assertIs<RectangleNodeData>(state.tree.getNode("a"))
         val b = assertIs<StadiumNodeData>(state.tree.getNode("b"))
         assertTrue(a.path.width.dpVal > 0f)
-        assertTrue(a.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertTrue(a.path.leftX().dpVal > root.path.rightX().dpVal)
         assertTrue(b.path.centerY.dpVal > a.path.centerY.dpVal)
     }
 

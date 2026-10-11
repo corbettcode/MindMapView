@@ -127,6 +127,21 @@ data class CircleNode(
     }
 }
 
+data class StadiumNode(
+    override val id: String,
+    override val parentId: String?,
+    override val path: StadiumPath = StadiumPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
+    override val description: String,
+    override val children: List<String>,
+) : Node(id, parentId, path, description, children) {
+    override fun adjustPosition(
+        horizontalSpacing: Dp,
+        totalHeight: Dp,
+    ): Node {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}
+
 data class RectangleNode(
     override val id: String,
     override val parentId: String,
@@ -184,6 +199,20 @@ fun createNode(node: NodeData<*>?): Node? {
                     Dp(node.path.centerY.dpVal),
                     Dp(node.path.width.dpVal),
                     Dp(node.path.height.dpVal)
+                ),
+                node.description,
+                node.children
+            )
+
+            // The root node is a stadium.
+            is StadiumNodeData -> StadiumNode(
+                node.id,
+                node.parentId,
+                StadiumPath(
+                    Dp(node.path.centerX.dpVal),
+                    Dp(node.path.centerY.dpVal),
+                    Dp(node.path.length.dpVal),
+                    Dp(node.path.radius.dpVal)
                 ),
                 node.description,
                 node.children

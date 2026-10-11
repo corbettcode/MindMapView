@@ -30,12 +30,15 @@ import com.mindsync.library.MindMap
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.mindmapview.model.CircleNode
 import com.mindsync.mindmapview.model.CirclePath
 import com.mindsync.mindmapview.model.Node
 import com.mindsync.mindmapview.model.RectangleNode
 import com.mindsync.mindmapview.model.RectanglePath
+import com.mindsync.mindmapview.model.StadiumNode
+import com.mindsync.mindmapview.model.StadiumPath
 
 private enum class Operation { ADD, UPDATE }
 
@@ -148,6 +151,19 @@ private fun createNode(node: NodeData<*>?): Node? {
                 Dp(node.path.centerY.dpVal),
                 Dp(node.path.width.dpVal),
                 Dp(node.path.height.dpVal)
+            ),
+            node.description,
+            node.children
+        )
+
+        is StadiumNodeData -> StadiumNode(
+            node.id,
+            node.parentId,
+            StadiumPath(
+                Dp(node.path.centerX.dpVal),
+                Dp(node.path.centerY.dpVal),
+                Dp(node.path.length.dpVal),
+                Dp(node.path.radius.dpVal)
             ),
             node.description,
             node.children

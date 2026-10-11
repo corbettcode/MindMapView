@@ -22,17 +22,20 @@ class Tree<T> {
     ) {
         _nodes = mutableMapOf()
         _nodes[ROOT_ID] =
-            CircleNodeData(
+            StadiumNodeData(
                 id = ROOT_ID
                 , children = listOf()
+                , color = Color.Gray
                 , description = "root"
                 , parentId = null
                 , path =
-                    CirclePath(
+                    StadiumPath(
                         rootCenterX
                         , rootCenterY
                         , Dp(50f)
+                        , Dp(25f)
                     )
+                , textColor = Color.Black
             ) as NodeData<T>
     }
 
@@ -46,10 +49,10 @@ class Tree<T> {
         return Tree(nodes)
     }
 
-    fun getRootNode(): CircleNodeData {
+    fun getRootNode(): StadiumNodeData {
         _nodes[ROOT_ID]
             ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_NODE_NOT_EXIST.message)
-        return _nodes[ROOT_ID] as CircleNodeData
+        return _nodes[ROOT_ID] as StadiumNodeData
     }
 
     fun setRootNode(root: NodeData<*>) {

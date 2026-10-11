@@ -114,6 +114,6 @@ data class StadiumPath(
         horizontalSpacing: Dp
         , totalHeight: Dp
     ): StadiumPath {
-        return this.copy(centerY = calculateNewCenterY(horizontalSpacing, totalHeight))
+        return this.copy(centerY = totalHeight / 2 + horizontalSpacing)
     }
 }
