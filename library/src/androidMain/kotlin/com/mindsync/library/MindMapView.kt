@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontFamily
 import com.mindsync.library.data.NodeData
@@ -20,6 +21,7 @@ class MindMapView @JvmOverloads constructor(
     private val state = MindMapState()
     private var fontFamily: FontFamily? = null
     private var nodeClickListener: NodeClickListener? = null
+    private var nodeDoubleClickListener: NodeDoubleClickListener? = null
     private var nodeMoveListener: NodeMoveListener? = null
 
     init {
@@ -40,6 +42,7 @@ class MindMapView @JvmOverloads constructor(
                     modifier = Modifier.fillMaxSize(),
                     fontFamily = fontFamily,
                     onNodeClick = { node -> nodeClickListener?.onClickListener(node) },
+                    onNodeDoubleClick = { node -> nodeDoubleClickListener?.onDoubleClickListener(node) },
                     onNodeMove = { tree, target, parent ->
                         nodeMoveListener?.onMoveListener(tree, target, parent)
                     },
@@ -50,8 +53,13 @@ class MindMapView @JvmOverloads constructor(
     }
 
     @JvmOverloads
-    fun addNode(description: String, shape: NodeShape = NodeShape.RECTANGLE) {
-        state.addNode(description, shape)
+    fun addNode(
+        description: String,
+        shape: NodeShape = NodeShape.RECTANGLE,
+        color: Color = shape.defaultColor,
+        textColor: Color = shape.defaultTextColor,
+    ) {
+        state.addNode(description, shape, color, textColor)
     }
 
     fun getAddNode(): NodeData<*>? {
@@ -68,6 +76,14 @@ class MindMapView @JvmOverloads constructor(
 
     fun editNodeText(description: String) {
         state.editNodeText(description)
+    }
+
+    fun editNodeColor(color: Color) {
+        state.editNodeColor(color)
+    }
+
+    fun editNodeTextColor(textColor: Color) {
+        state.editNodeTextColor(textColor)
     }
 
     fun animateTreeChange() {
@@ -88,6 +104,10 @@ class MindMapView @JvmOverloads constructor(
 
     fun getState(): MindMapState {
         return state
+    }
+
+    fun setNodeDoubleClickListener(nodeDoubleClickListener: NodeDoubleClickListener) {
+        this.nodeDoubleClickListener = nodeDoubleClickListener
     }
 
     fun setNodeClickListener(nodeClickListener: NodeClickListener) {

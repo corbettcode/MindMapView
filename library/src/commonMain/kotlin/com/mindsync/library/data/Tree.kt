@@ -1,5 +1,6 @@
 package com.mindsync.library.data
 
+import androidx.compose.ui.graphics.Color
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
 import com.mindsync.library.util.NodeGenerator
@@ -15,24 +16,29 @@ class Tree<T> {
         isRootPlaced = false
     }
 
-    constructor(rootCenterX: Dp, rootCenterY: Dp) {
+    constructor(
+        rootCenterX: Dp
+        , rootCenterY: Dp
+    ) {
         _nodes = mutableMapOf()
         _nodes[ROOT_ID] =
             CircleNodeData(
-                id = ROOT_ID,
-                parentId = null,
-                path =
+                id = ROOT_ID
+                , children = listOf()
+                , description = "root"
+                , parentId = null
+                , path =
                     CirclePath(
-                        rootCenterX,
-                        rootCenterY,
-                        Dp(50f),
-                    ),
-                "root",
-                listOf(),
+                        rootCenterX
+                        , rootCenterY
+                        , Dp(50f)
+                    )
             ) as NodeData<T>
     }
 
-    constructor(nodes: Map<String, NodeData<*>>) {
+    constructor(
+        nodes: Map<String, NodeData<*>>
+    ) {
         this._nodes = nodes.toMutableMap()
     }
 
@@ -73,6 +79,8 @@ class Tree<T> {
         parentId: String?,
         content: String,
         shape: NodeShape = NodeShape.RECTANGLE,
+        color: Color = shape.defaultColor,
+        textColor: Color = shape.defaultTextColor,
     ) {
         if (_nodes[targetId] != null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_DUPLICATED_NODE.message)
         if (parentId == null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
@@ -80,13 +88,13 @@ class Tree<T> {
             when (shape) {
                 NodeShape.CIRCLE ->
                     NodeGenerator.makeNode(CircleNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
                 NodeShape.RECTANGLE ->
                     NodeGenerator.makeNode(RectangleNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
             }
         val parentNode =
             _nodes[parentId] ?: throw IllegalArgumentException(
@@ -194,6 +202,36 @@ class Tree<T> {
                     )
             }
         _nodes[targetId] = newTargetNode
+    }
+
+    fun updateNodeColor(
+        targetId: String,
+        color: Color,
+    ) {
+        val targetNode =
+            _nodes[targetId]
+                ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
+        _nodes[targetId] =
+            when (targetNode) {
+                is CircleNodeData -> targetNode.copy(color = color)
+                is RectangleNodeData -> targetNode.copy(color = color)
+                is StadiumNodeData -> targetNode.copy(color = color)
+            }
+    }
+
+    fun updateNodeTextColor(
+        targetId: String,
+        textColor: Color,
+    ) {
+        val targetNode =
+            _nodes[targetId]
+                ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
+        _nodes[targetId] =
+            when (targetNode) {
+                is CircleNodeData -> targetNode.copy(textColor = textColor)
+                is RectangleNodeData -> targetNode.copy(textColor = textColor)
+                is StadiumNodeData -> targetNode.copy(textColor = textColor)
+            }
     }
 
     fun doPreorderTraversal(

@@ -14,7 +14,6 @@ class NodeDrawerFactory(
     private val node: NodeData<*>
     , private val drawInfo: DrawInfo
     , private val density: Density
-    , private val depth: Int = 0
 ) {
     fun createStrokeNode(): NodeDrawer {
         val stroke = Stroke(width = drawInfo.strokeWidth.toPx(density))
@@ -22,7 +21,6 @@ class NodeDrawerFactory(
             is RectangleNodeData -> {
                 RectangleNodeDrawer(
                     node,
-                    drawInfo,
                     drawInfo.strokeColor,
                     stroke,
                 )
@@ -30,7 +28,6 @@ class NodeDrawerFactory(
             is StadiumNodeData -> {
                 StadiumNodeDrawer(
                     node,
-                    drawInfo,
                     drawInfo.strokeColor,
                     stroke,
                 )
@@ -38,7 +35,6 @@ class NodeDrawerFactory(
             is CircleNodeData -> {
                 CircleNodeDrawer(
                     node
-                    , drawInfo = drawInfo
                     , color = drawInfo.strokeColor
                     , style = stroke
                 )
@@ -51,8 +47,7 @@ class NodeDrawerFactory(
             is RectangleNodeData -> {
                 RectangleNodeDrawer(
                     node,
-                    drawInfo,
-                    drawInfo.nodeColors[(depth - 1).mod(drawInfo.nodeColors.size)],
+                    node.color,
                     Fill,
                 )
             }
@@ -60,8 +55,7 @@ class NodeDrawerFactory(
             is StadiumNodeData -> {
                 StadiumNodeDrawer(
                     node,
-                    drawInfo,
-                    drawInfo.nodeColors[(depth - 1).mod(drawInfo.nodeColors.size)],
+                    node.color,
                     Fill,
                 )
             }
@@ -69,8 +63,7 @@ class NodeDrawerFactory(
             is CircleNodeData -> {
                 CircleNodeDrawer(
                     node,
-                    drawInfo,
-                    drawInfo.circleColor,
+                    node.color,
                     Fill,
                 )
             }

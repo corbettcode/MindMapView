@@ -58,6 +58,7 @@ fun MindMap(
     modifier: Modifier = Modifier,
     fontFamily: FontFamily? = null,
     onNodeClick: (node: NodeData<*>?) -> Unit = {},
+    onNodeDoubleClick: (node: NodeData<*>) -> Unit = {},
     onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> },
 ) {
     val density = LocalDensity.current
@@ -74,6 +75,7 @@ fun MindMap(
     }
     val lineColor = if (isSystemInDarkTheme()) drawInfo.darkModeLineColor else drawInfo.lineColor
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
+    val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
 
     DisposableEffect(state, measureTextSize, density, scope) {
@@ -86,11 +88,14 @@ fun MindMap(
             .clipToBounds()
             .onSizeChanged { state.onSizeChanged(it.toSize()) }
             .pointerInput(state) {
+                var lastClickedNodeId: String? = null
+                var lastClickTime = 0L
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val touchedNode = state.onTouchDown(down.position)
                     currentOnNodeClick(touchedNode)
                     if (touchedNode == null) {
+                        lastClickedNodeId = null
                         do {
                             val event = awaitPointerEvent()
                             state.onTransform(event.calculatePan(), event.calculateZoom())
@@ -107,6 +112,18 @@ fun MindMap(
                             }
                         }
                         state.onTouchUp(currentOnNodeMove)
+                        // A second click on the same node shortly after the first is a double click; a drag is not a click.
+                        val isSecondClick = lastClickedNodeId == touchedNode.id &&
+                            down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis
+                        if (dragStart != null || isSecondClick) {
+                            lastClickedNodeId = null
+                        } else {
+                            lastClickedNodeId = touchedNode.id
+                            lastClickTime = currentEvent.changes.firstOrNull()?.uptimeMillis ?: down.uptimeMillis
+                        }
+                        if (dragStart == null && isSecondClick) {
+                            currentOnNodeDoubleClick(state.selectedNode ?: touchedNode)
+                        }
                     }
                 }
             }
@@ -156,8 +173,8 @@ private fun DrawScope.drawTree(
     drawInfo: DrawInfo,
     measureTextSize: MeasureTextSize,
 ) {
-    state.tree.doPreorderTraversal { node, depth ->
-        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this, depth).createNodeDrawer()
+    state.tree.doPreorderTraversal { node ->
+        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
         nodeDrawer.drawNode(this)
         nodeDrawer.drawText(this, measureTextSize.measure(node.description))
     }

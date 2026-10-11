@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Density
 import com.mindsync.library.animator.AnimationStrategy
 import com.mindsync.library.animator.FitAnimation
@@ -74,12 +75,23 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
         invalidate()
     }
 
-    fun addNode(description: String, shape: NodeShape = NodeShape.RECTANGLE) {
+    fun addNode(
+        description: String,
+        shape: NodeShape = NodeShape.RECTANGLE,
+        color: Color = shape.defaultColor,
+        textColor: Color = shape.defaultTextColor,
+    ) {
         mindMapManager.getSelectedNode()?.let { node ->
             val addNode: NodeData<*> = when (shape) {
-                NodeShape.CIRCLE -> NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
-                NodeShape.RECTANGLE -> NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
-                NodeShape.STADIUM -> NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
+                NodeShape.CIRCLE ->
+                    NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
+                        .copy(color = color, textColor = textColor)
+                NodeShape.RECTANGLE ->
+                    NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
+                        .copy(color = color, textColor = textColor)
+                NodeShape.STADIUM ->
+                    NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
+                        .copy(color = color, textColor = textColor)
             }
             this.addNode = addNode
             val addNodeCommand = AddNodeCommand(mindMapManager, addNode)
@@ -105,6 +117,20 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
             val updateNodeCommand = UpdateNodeCommand(mindMapManager, node, description)
             updateNodeCommand.execute()
             animateTreeChange()
+        }
+    }
+
+    fun editNodeColor(color: Color) {
+        mindMapManager.getSelectedNode()?.let { node ->
+            tree.updateNodeColor(node.id, color)
+            invalidate()
+        }
+    }
+
+    fun editNodeTextColor(textColor: Color) {
+        mindMapManager.getSelectedNode()?.let { node ->
+            tree.updateNodeTextColor(node.id, textColor)
+            invalidate()
         }
     }
 

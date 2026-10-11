@@ -44,7 +44,7 @@ class MindMapManager {
             is RectangleNodeData -> NodeShape.RECTANGLE
             is StadiumNodeData -> NodeShape.STADIUM
         }
-        this.tree.addNode(node.id, node.parentId, description, shape)
+        this.tree.addNode(node.id, node.parentId, description, shape, node.color, node.textColor)
         update(node)
     }
 
