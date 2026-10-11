@@ -70,6 +70,7 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
     }
 
     fun setTree(tree: Tree<*>) {
+        if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         mindMapManager.setTree(tree)
         placeRootIfNeeded()
         invalidate()

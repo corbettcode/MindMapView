@@ -7,7 +7,12 @@ import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
 
-
+/**
+ * Layout manager for arranging nodes in a mind map layout.
+ *
+ * This class provides methods to arrange nodes in a mind map layout.
+ *
+ */
 class MindMapRightLayoutManager {
     private val horizontalSpacing = Dp(50f)
     private val verticalSpacing = Dp(50f)

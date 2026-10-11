@@ -68,6 +68,16 @@ fun MindMapScreen() {
 - `rememberMindMapState()` places the root node at the center of the mind map. Pass `Tree<Any>(Dp(x), Dp(y))` to choose the position yourself.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
+### FreeMind files
+`FreeMind` converts a tree to and from the text of a FreeMind `.mm` file. Reading and writing the file itself is up to the app.
+
+```kotlin
+val content = FreeMind.write(state.tree)
+
+state.setTree(FreeMind.read(content))
+state.animateTreeChange() // positions are not stored in the file, so arrange the tree
+```
+
 ## Sample apps
 - Android: `./gradlew :app:installDebug`
 - Desktop: `./gradlew :desktop:run`

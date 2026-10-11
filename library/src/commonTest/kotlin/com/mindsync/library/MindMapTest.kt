@@ -23,10 +23,12 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
+import com.mindsync.library.io.FreeMind
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
@@ -310,6 +312,133 @@ class MindMapTest {
         assertEquals(plain.width.dpVal, rich.width.dpVal, 0.01f)
         assertTrue(escaped.width.dpVal > rich.width.dpVal)
         assertEquals("<u>some text</u>", state.tree.getNode(state.tree.getRootNode().children[1]).description)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsStructureShapesColorsAndText() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.updateNodeColor(rootId, Color.Blue)
+        tree.addNode("a", rootId, "plain & <simple>".replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+        tree.addNode("b", rootId, "<p>some <b>bold</b><br>text</p>", NodeShape.STADIUM, Color.Red, Color.White)
+        tree.addNode("c", "b", "<p>leaf</p>", NodeShape.CIRCLE)
+        tree.addNode("d", "b", "\"quoted\"")
+
+        val written = FreeMind.write(tree)
+        assertTrue(written.startsWith("<map version=\"1.0.1\">"))
+        assertTrue("TEXT=\"plain &amp; &lt;simple&gt;\"" in written)
+        assertTrue("TEXT=\"leaf\"" in written)
+        assertTrue("<richcontent TYPE=\"NODE\"><html><head></head><body><p>some <b>bold</b><br/>text</p></body></html></richcontent>" in written)
+
+        val read = FreeMind.read(written)
+        val root = read.getRootNode()
+        assertEquals("root", root.description)
+        assertEquals(Color.Blue, root.color)
+        assertEquals(listOf("a", "b"), root.children)
+
+        val a = assertIs<RectangleNodeData>(read.getNode("a"))
+        assertEquals(rootId, a.parentId)
+        assertEquals("plain &amp; &lt;simple&gt;", a.description)
+        assertEquals(NodeShape.RECTANGLE.defaultColor, a.color)
+
+        val b = assertIs<StadiumNodeData>(read.getNode("b"))
+        assertEquals("<p>some <b>bold</b><br/>text</p>", b.description)
+        assertEquals(Color.Red, b.color)
+        assertEquals(Color.White, b.textColor)
+        assertEquals(listOf("c", "d"), b.children)
+
+        val c = assertIs<CircleNodeData>(read.getNode("c"))
+        assertEquals("b", c.parentId)
+        assertEquals("leaf", c.description)
+        assertEquals("&quot;quoted&quot;".replace("&quot;", "\""), read.getNode("d").description)
+
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
+    fun freeMindFileWrittenByFreeMindIsRead() {
+        val content = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <map version="1.0.1">
+            <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
+            <node CREATED="1" ID="ID_1" MODIFIED="2" TEXT="Tom &amp; Jerry&#xa;second line">
+            <font NAME="SansSerif" SIZE="20"/>
+            <node COLOR="#ff0000" CREATED="1" ID="ID_2" MODIFIED="2" POSITION="right" TEXT="first" BACKGROUND_COLOR='#00FF00'>
+            <edge COLOR="#808080" WIDTH="thin"/>
+            <icon BUILTIN="idea"/>
+            <node ID="ID_2" TEXT="duplicate id"/>
+            </node>
+            <node CREATED="1" ID="ID_3" MODIFIED="2" POSITION="left">
+            <richcontent TYPE="NODE"><html>
+              <head>
+
+              </head>
+              <body>
+                <p>
+                  rich <b>text</b> here
+                </p>
+              </body>
+            </html>
+            </richcontent>
+            <richcontent TYPE="NOTE"><html><body><p>a note</p></body></html></richcontent>
+            </node>
+            </node>
+            </map>
+        """.trimIndent()
+
+        val tree = FreeMind.read(content)
+        val root = tree.getRootNode()
+        assertEquals("Tom &amp; Jerry<br>second line", root.description)
+        assertEquals(NodeShape.CIRCLE.defaultColor, root.color)
+        assertEquals(listOf("ID_2", "ID_3"), root.children)
+
+        val first = assertIs<RectangleNodeData>(tree.getNode("ID_2"))
+        assertEquals("first", first.description)
+        assertEquals(Color.Green, first.color)
+        assertEquals(Color.Red, first.textColor)
+        val duplicate = tree.getNode(first.children.single())
+        assertEquals("duplicate id", duplicate.description)
+        assertEquals("ID_2", duplicate.parentId)
+        assertTrue(duplicate.id != "ID_2")
+
+        val rich = tree.getNode("ID_3")
+        assertEquals("<p>rich <b>text</b> here</p>", rich.description)
+        assertEquals(NodeShape.RECTANGLE.defaultTextColor, rich.textColor)
+        assertEquals("rich text here", RichText.parse(rich.description).text)
+    }
+
+    @Test
+    fun readingSomethingThatIsNotAFreeMindMapFails() {
+        assertFailsWith<IllegalArgumentException> { FreeMind.read("just some text") }
+        assertFailsWith<IllegalArgumentException> { FreeMind.read("<map version=\"1.0.1\"></map>") }
+        assertFailsWith<IllegalArgumentException> { FreeMind.read("<map><node TEXT=\"unterminated></map>") }
+    }
+
+    @Test
+    fun treeReadFromFreeMindIsArrangedWhenShown() = runComposeUiTest {
+        val source = Tree<Any>(Dp(150f), Dp(300f))
+        source.addNode("a", source.getRootNode().id, "first")
+        source.addNode("b", source.getRootNode().id, "second", NodeShape.STADIUM)
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("old")
+        waitForIdle()
+        clickNode(state.tree.getNode(state.tree.getRootNode().children.single()))
+
+        state.setTree(FreeMind.read(FreeMind.write(source)))
+        state.animateTreeChange()
+        waitForIdle()
+
+        assertNull(state.selectedNode)
+        val root = state.tree.getRootNode()
+        assertEquals(Dp(400f), root.path.centerX)
+        val a = assertIs<RectangleNodeData>(state.tree.getNode("a"))
+        val b = assertIs<StadiumNodeData>(state.tree.getNode("b"))
+        assertTrue(a.path.width.dpVal > 0f)
+        assertTrue(a.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertTrue(b.path.centerY.dpVal > a.path.centerY.dpVal)
     }
 
     @Test

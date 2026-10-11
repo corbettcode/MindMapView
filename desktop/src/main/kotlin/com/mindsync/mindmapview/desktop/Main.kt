@@ -37,19 +37,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
+import com.mindsync.library.MindMapState
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.Tree
+import com.mindsync.library.io.FreeMind
 import com.mindsync.library.rememberMindMapState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
+import java.awt.FileDialog
+import java.awt.Frame
+import java.io.File
+import java.io.IOException
+
+private const val APP_NAME = "MindMapView"
+private const val FREE_MIND_EXTENSION = ".mm"
 
 private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D),
@@ -74,14 +87,94 @@ private sealed interface Operation {
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "MindMapView") {
-        MindMapScreen()
+    val state = rememberMindMapState()
+    var file by remember { mutableStateOf<File?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME,
+    ) {
+        fun save(target: File) {
+            try {
+                target.writeText(FreeMind.write(state.tree))
+                file = target
+            } catch (e: IOException) {
+                error = "Could not save ${target.name}: ${e.message}"
+            }
+        }
+
+        fun saveAs() {
+            chooseFile(window, "Save As", FileDialog.SAVE, file)?.let { chosen ->
+                save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
+            }
+        }
+
+        MenuBar {
+            Menu("File", mnemonic = 'F') {
+                Item(
+                    "New",
+                    shortcut = KeyShortcut(Key.N, ctrl = true),
+                    onClick = {
+                        state.setTree(Tree<Any>())
+                        file = null
+                    },
+                )
+                Item(
+                    "Open...",
+                    shortcut = KeyShortcut(Key.O, ctrl = true),
+                    onClick = {
+                        chooseFile(window, "Open", FileDialog.LOAD, file)?.let { chosen ->
+                            try {
+                                state.setTree(FreeMind.read(chosen.readText()))
+                                state.animateTreeChange()
+                                file = chosen
+                            } catch (e: IOException) {
+                                error = "Could not open ${chosen.name}: ${e.message}"
+                            } catch (e: IllegalArgumentException) {
+                                error = "Could not open ${chosen.name}: ${e.message}"
+                            }
+                        }
+                    },
+                )
+                Separator()
+                Item(
+                    "Save",
+                    shortcut = KeyShortcut(Key.S, ctrl = true),
+                    onClick = { file?.let { save(it) } ?: saveAs() },
+                )
+                Item(
+                    "Save As...",
+                    shortcut = KeyShortcut(Key.S, ctrl = true, shift = true),
+                    onClick = { saveAs() },
+                )
+            }
+        }
+        MindMapScreen(state, error, onErrorDismiss = { error = null })
     }
 }
 
+private fun chooseFile(
+    window: Frame,
+    title: String,
+    mode: Int,
+    current: File?,
+): File? {
+    val dialog = FileDialog(window, title, mode)
+    dialog.setFilenameFilter { _, name -> name.endsWith(FREE_MIND_EXTENSION, ignoreCase = true) }
+    dialog.directory = current?.parent
+    dialog.file = current?.name ?: "*$FREE_MIND_EXTENSION"
+    dialog.isVisible = true
+    val name = dialog.file ?: return null
+    return File(dialog.directory, name)
+}
+
 @Composable
-private fun MindMapScreen() {
-    val state = rememberMindMapState()
+private fun MindMapScreen(
+    state: MindMapState,
+    error: String?,
+    onErrorDismiss: () -> Unit,
+) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
 
@@ -109,6 +202,18 @@ private fun MindMapScreen() {
                     onNodeDoubleClick = { operation = Operation.Update },
                 )
             }
+        }
+
+        error?.let { message ->
+            AlertDialog(
+                onDismissRequest = onErrorDismiss,
+                text = { Text(message) },
+                confirmButton = {
+                    Button(onClick = onErrorDismiss) {
+                        Text("OK")
+                    }
+                },
+            )
         }
 
         operation?.let { currentOperation ->
