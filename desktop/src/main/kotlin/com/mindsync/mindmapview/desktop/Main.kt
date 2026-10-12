@@ -215,15 +215,16 @@ private fun MindMapScreen(
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {
                     FileMenu(fileActions, fileMenuExpanded, onFileMenuExpandedChange)
-                    TextButton(onClick = { operation = Operation.Update }, enabled = selectedNode != null) {
-                        Text("Edit")
-                    }
+                    EditMenu(
+                        enabled = selectedNode != null,
+                        onAdd = { operation = Operation.Add(it) },
+                        onEdit = { operation = Operation.Update },
+                    )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    AddNodeMenu(enabled = selectedNode != null, onAdd = { operation = Operation.Add(it) })
                     Button(onClick = { state.removeNode() }, enabled = selectedNode?.parentId != null) {
                         Text("Remove")
                     }
@@ -318,26 +319,53 @@ private fun FileMenuItem(
 }
 
 @Composable
-private fun AddNodeMenu(
+private fun EditMenu(
     enabled: Boolean,
     onAdd: (NodeShape) -> Unit,
+    onEdit: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var addExpanded by remember { mutableStateOf(false) }
 
     Box {
-        Button(onClick = { expanded = true }, enabled = enabled) {
-            Text("Add")
+        TextButton(onClick = { expanded = true }) {
+            Text("Edit")
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            NodeShape.entries.forEach { shape ->
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+                addExpanded = false
+            },
+        ) {
+            Box {
                 DropdownMenuItem(
-                    text = { Text(shape.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                    onClick = {
-                        expanded = false
-                        onAdd(shape)
-                    },
+                    text = { Text("Add") },
+                    trailingIcon = { Text("\u25B8") },
+                    onClick = { addExpanded = true },
+                    enabled = enabled,
                 )
+                DropdownMenu(expanded = addExpanded, onDismissRequest = { addExpanded = false }) {
+                    NodeShape.entries.forEach { shape ->
+                        DropdownMenuItem(
+                            text = { Text(shape.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                            onClick = {
+                                addExpanded = false
+                                expanded = false
+                                onAdd(shape)
+                            },
+                        )
+                    }
+                }
             }
+            DropdownMenuItem(
+                text = { Text("Edit") },
+                onClick = {
+                    expanded = false
+                    onEdit()
+                },
+                enabled = enabled,
+            )
         }
     }
 }
