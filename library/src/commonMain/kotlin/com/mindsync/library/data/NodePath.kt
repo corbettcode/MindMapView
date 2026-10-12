@@ -117,3 +117,51 @@ data class StadiumPath(
         return this.copy(centerY = totalHeight / 2 + horizontalSpacing)
     }
 }
+
+/**
+ * Represents the path of an oval node in the tree: an ellipse whose width and height are independent.
+ *
+ * @param radiusX half the width of the oval
+ * @param radiusY half the height of the oval
+ */
+data class OvalPath(
+    override var centerX: Dp
+    , override var centerY: Dp
+    , val radiusX: Dp
+    , val radiusY: Dp
+) : NodePath(
+    centerX
+    , centerY
+) {
+    fun width() = radiusX * 2
+
+    fun height() = radiusY * 2
+
+    fun leftX() = centerX - radiusX
+
+    fun topY() = centerY - radiusY
+
+    fun rightX() = centerX + radiusX
+
+    fun bottomY() = centerY + radiusY
+
+    /**
+     * A point is inside the oval when it satisfies the ellipse equation `(dx / radiusX)² + (dy / radiusY)² <= 1`.
+     */
+    fun contains(
+        x: Dp
+        , y: Dp
+    ): Boolean {
+        if (radiusX.dpVal <= 0f || radiusY.dpVal <= 0f) return false
+        val dx = (x.dpVal - centerX.dpVal) / radiusX.dpVal
+        val dy = (y.dpVal - centerY.dpVal) / radiusY.dpVal
+        return dx * dx + dy * dy <= 1f
+    }
+
+    override fun adjustPath(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): OvalPath {
+        return this.copy(centerY = totalHeight / 2 + horizontalSpacing)
+    }
+}

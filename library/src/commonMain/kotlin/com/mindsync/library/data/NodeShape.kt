@@ -12,6 +12,7 @@ enum class NodeShape(
     CIRCLE(Color(0xFFE1719F), Color.White),
     RECTANGLE(Color(0xFFFFCF96), Color.Black),
     STADIUM(Color(0xFFB9BC81), Color.Black),
+    OVAL(Color(0xFF9BC4E2), Color.Black),
 }
 
 val NodeData<*>.shape: NodeShape
@@ -19,4 +20,5 @@ val NodeData<*>.shape: NodeShape
         is CircleNodeData -> NodeShape.CIRCLE
         is RectangleNodeData -> NodeShape.RECTANGLE
         is StadiumNodeData -> NodeShape.STADIUM
+        is OvalNodeData -> NodeShape.OVAL
     }

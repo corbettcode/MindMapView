@@ -64,3 +64,17 @@ data class StadiumPath(
         return this.copy(centerY = calculateNewCenterY(horizontalSpacing, totalHeight))
     }
 }
+
+data class OvalPath(
+    override val centerX: Dp,
+    override val centerY: Dp,
+    val radiusX: Dp,
+    val radiusY: Dp,
+) : NodePath(centerX, centerY) {
+    override fun adjustPath(
+        horizontalSpacing: Dp,
+        totalHeight: Dp,
+    ): OvalPath {
+        return this.copy(centerY = calculateNewCenterY(horizontalSpacing, totalHeight))
+    }
+}

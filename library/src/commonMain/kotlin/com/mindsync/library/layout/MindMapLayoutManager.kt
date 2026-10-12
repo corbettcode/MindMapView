@@ -2,6 +2,7 @@ package com.mindsync.library.layout
 
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -104,6 +105,7 @@ abstract class MindMapLayoutManager {
         return when (node) {
             is RectangleNodeData -> node.path.width / 2
             is StadiumNodeData -> node.path.width() / 2
+            is OvalNodeData -> node.path.width() / 2
             is CircleNodeData -> node.path.radius
         }
     }
@@ -117,6 +119,7 @@ abstract class MindMapLayoutManager {
             is CircleNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is RectangleNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is StadiumNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
+            is OvalNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
         }
     }
 
@@ -140,6 +143,7 @@ abstract class MindMapLayoutManager {
                     is CircleNodeData -> nodeData.path.radius * 2
                     is RectangleNodeData -> nodeData.path.height
                     is StadiumNodeData -> nodeData.path.height()
+                    is OvalNodeData -> nodeData.path.height()
                 }
         }
         return heightSum

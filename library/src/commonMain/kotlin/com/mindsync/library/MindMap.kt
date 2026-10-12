@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -221,11 +222,13 @@ private fun DrawScope.drawAttachedNode(
         val height = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.height
             is StadiumNodeData -> attachedNode.path.height()
+            is OvalNodeData -> attachedNode.path.height()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         val width = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.width
             is StadiumNodeData -> attachedNode.path.width()
+            is OvalNodeData -> attachedNode.path.width()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         drawCircle(
@@ -348,6 +351,7 @@ private fun Density.getNodeEdgeX(
             is CircleNodeData -> node.path.radius.toPx(this)
             is RectangleNodeData -> node.path.width.toPx(this) / 2
             is StadiumNodeData -> node.path.width().toPx(this) / 2
+            is OvalNodeData -> node.path.width().toPx(this) / 2
         }
     return if (isRightEdge) nodeCenterX + widthOffset else nodeCenterX - widthOffset
 }

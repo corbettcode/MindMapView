@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OvalNodeData
+import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
@@ -689,6 +691,144 @@ class MindMapTest {
         assertEquals(listOf(secondId to firstId), moves)
         assertEquals(listOf(secondId), state.tree.getNode(firstId).children)
         assertIs<StadiumNodeData>(state.tree.getNode(secondId))
+        assertEquals(firstId, state.tree.getNode(secondId).parentId)
+    }
+
+    @Test
+    fun addEditAndRemoveOvalNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", NodeShape.OVAL)
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val child = assertIs<OvalNodeData>(state.tree.getNode(root.children.single()))
+        assertEquals("child", child.description)
+        assertEquals(NodeShape.OVAL.defaultColor, child.color)
+        assertEquals(NodeShape.OVAL.defaultTextColor, child.textColor)
+        assertTrue(child.path.leftX().dpVal > (root.path.centerX + root.path.radius).dpVal)
+        assertEquals(root.path.centerY.dpVal, child.path.centerY.dpVal, 0.01f)
+        assertEquals(child.path.radiusX.dpVal * 2, child.path.width().dpVal, 0.01f)
+        assertEquals(child.path.radiusY.dpVal * 2, child.path.height().dpVal, 0.01f)
+
+        clickNode(child)
+        assertEquals(child.id, state.selectedNode?.id)
+        state.editNodeText("a much longer description")
+        waitForIdle()
+        val edited = assertIs<OvalNodeData>(state.tree.getNode(child.id))
+        assertEquals("a much longer description", edited.description)
+
+        state.removeNode()
+        waitForIdle()
+        assertTrue(state.tree.getRootNode().children.isEmpty())
+        assertNull(state.selectedNode)
+    }
+
+    @Test
+    fun ovalWidthAndHeightEachFollowTheText() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", NodeShape.OVAL)
+        waitForIdle()
+        val child = assertIs<OvalNodeData>(state.tree.getNode(state.tree.getRootNode().children.single()))
+
+        clickNode(child)
+        state.editNodeText("a much longer description")
+        waitForIdle()
+        val wider = assertIs<OvalNodeData>(state.tree.getNode(child.id))
+        assertTrue(wider.path.radiusX.dpVal > child.path.radiusX.dpVal)
+        assertEquals(child.path.radiusY.dpVal, wider.path.radiusY.dpVal, 0.01f)
+
+        state.editNodeText("<p>child<br>child<br>child</p>")
+        waitForIdle()
+        val taller = assertIs<OvalNodeData>(state.tree.getNode(child.id))
+        assertTrue(taller.path.radiusY.dpVal > child.path.radiusY.dpVal)
+        assertTrue(taller.path.radiusX.dpVal < wider.path.radiusX.dpVal)
+    }
+
+    @Test
+    fun ovalEnclosesItsText() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("the same text", NodeShape.RECTANGLE)
+        waitForIdle()
+        state.addNode("the same text", NodeShape.OVAL)
+        waitForIdle()
+
+        val (rectangleId, ovalId) = state.tree.getRootNode().children
+        val rectangle = assertIs<RectangleNodeData>(state.tree.getNode(rectangleId))
+        val oval = assertIs<OvalNodeData>(state.tree.getNode(ovalId))
+        // A rectangle is its text plus the padding, which gives the size of the text itself.
+        val padding = DrawInfo().padding.dpVal
+        val textCornerX = oval.path.centerX + Dp((rectangle.path.width.dpVal - padding) / 2)
+        val textCornerY = oval.path.centerY + Dp((rectangle.path.height.dpVal - padding) / 2)
+        assertTrue(oval.path.contains(textCornerX, textCornerY))
+    }
+
+    @Test
+    fun ovalHitTestFollowsTheEllipse() {
+        val path = OvalPath(Dp(100f), Dp(100f), radiusX = Dp(40f), radiusY = Dp(20f))
+
+        assertTrue(path.contains(Dp(100f), Dp(100f)))
+        assertTrue(path.contains(Dp(139f), Dp(100f)))
+        assertTrue(path.contains(Dp(61f), Dp(100f)))
+        assertTrue(path.contains(Dp(100f), Dp(119f)))
+        assertTrue(path.contains(Dp(100f), Dp(81f)))
+        // Inside the bounding box, but outside the ellipse.
+        assertFalse(path.contains(Dp(135f), Dp(115f)))
+        assertFalse(path.contains(Dp(65f), Dp(85f)))
+        assertFalse(path.contains(Dp(141f), Dp(100f)))
+        assertFalse(path.contains(Dp(100f), Dp(121f)))
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsOval() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, "first", NodeShape.OVAL)
+        tree.addNode("b", "a", "second", NodeShape.OVAL, Color.Red, Color.White)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<attribute NAME=\"shape\" VALUE=\"oval\"/>" in written)
+
+        val read = FreeMind.read(written)
+        val a = assertIs<OvalNodeData>(read.getNode("a"))
+        assertEquals("first", a.description)
+        assertEquals(NodeShape.OVAL.defaultColor, a.color)
+        assertEquals(NodeShape.OVAL.defaultTextColor, a.textColor)
+        assertEquals(listOf("b"), a.children)
+        val b = assertIs<OvalNodeData>(read.getNode("b"))
+        assertEquals(Color.Red, b.color)
+        assertEquals(Color.White, b.textColor)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
+    fun draggingOvalOntoAnotherNodeReattachesIt() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second", NodeShape.OVAL)
+        waitForIdle()
+
+        val (firstId, secondId) = state.tree.getRootNode().children
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+
+        onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
+        waitForIdle()
+
+        assertEquals(listOf(secondId to firstId), moves)
+        assertEquals(listOf(secondId), state.tree.getNode(firstId).children)
+        assertIs<OvalNodeData>(state.tree.getNode(secondId))
         assertEquals(firstId, state.tree.getNode(secondId).parentId)
     }
 

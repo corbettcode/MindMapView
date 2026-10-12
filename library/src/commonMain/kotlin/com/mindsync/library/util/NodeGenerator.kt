@@ -3,6 +3,8 @@ package com.mindsync.library.util
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.OvalPath
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
@@ -37,6 +39,13 @@ object NodeGenerator {
                 id = id,
                 parentId = parentId,
                 path = StadiumPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
+                description = description,
+                children = listOf()
+            ) as N
+            OvalNodeData::class -> OvalNodeData(
+                id = id,
+                parentId = parentId,
+                path = OvalPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
                 description = description,
                 children = listOf()
             ) as N

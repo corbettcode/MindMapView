@@ -130,6 +130,9 @@ class Tree<T> {
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description = content, parentId = parentId)
                         .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
+                NodeShape.OVAL ->
+                    NodeGenerator.makeNode(OvalNodeData::class, description = content, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
             }
         val parentNode =
             _nodes[parentId] ?: throw IllegalArgumentException(
@@ -141,6 +144,7 @@ class Tree<T> {
             is CircleNodeData -> parentNode.copy(children = newChildren)
             is RectangleNodeData -> parentNode.copy(children = newChildren)
             is StadiumNodeData -> parentNode.copy(children = newChildren)
+            is OvalNodeData -> parentNode.copy(children = newChildren)
         }
         _nodes[parentId] = newParent as NodeData<T>
         _nodes[targetId] = newNode as NodeData<T>
@@ -160,6 +164,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(parentId = parentId)
                 is RectangleNodeData -> targetNode.copy(parentId = parentId)
                 is StadiumNodeData -> targetNode.copy(parentId = parentId)
+                is OvalNodeData -> targetNode.copy(parentId = parentId)
             }
         val parentNode = nodes[parentId] ?: return
         val newNodes = parentNode.children.toMutableList()
@@ -169,6 +174,7 @@ class Tree<T> {
                 is CircleNodeData -> parentNode.copy(children = newNodes)
                 is RectangleNodeData -> parentNode.copy(children = newNodes)
                 is StadiumNodeData -> parentNode.copy(children = newNodes)
+                is OvalNodeData -> parentNode.copy(children = newNodes)
             }
         _nodes[targetId] = newTargetNode as NodeData<T>
         _nodes[parentId] = newParentNode as NodeData<T>
@@ -191,6 +197,7 @@ class Tree<T> {
                     is CircleNodeData -> parentNode.copy(children = newChildren)
                     is RectangleNodeData -> parentNode.copy(children = newChildren)
                     is StadiumNodeData -> parentNode.copy(children = newChildren)
+                    is OvalNodeData -> parentNode.copy(children = newChildren)
                 }
             _nodes[parentId] = newParent as NodeData<T>
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
@@ -239,6 +246,16 @@ class Tree<T> {
                         description = description,
                         children = if (children.isEmpty()) targetNode.children else children,
                     )
+                is OvalNodeData ->
+                    targetNode.copy(
+                        path =
+                            targetNode.path.copy(
+                                centerX = dx,
+                                centerY = dy,
+                            ),
+                        description = description,
+                        children = if (children.isEmpty()) targetNode.children else children,
+                    )
             }
         _nodes[targetId] = newTargetNode
     }
@@ -255,6 +272,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(color = color)
                 is RectangleNodeData -> targetNode.copy(color = color)
                 is StadiumNodeData -> targetNode.copy(color = color)
+                is OvalNodeData -> targetNode.copy(color = color)
             }
     }
 
@@ -270,6 +288,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(textColor = textColor)
                 is RectangleNodeData -> targetNode.copy(textColor = textColor)
                 is StadiumNodeData -> targetNode.copy(textColor = textColor)
+                is OvalNodeData -> targetNode.copy(textColor = textColor)
             }
     }
 

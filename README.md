@@ -147,6 +147,21 @@ data class StadiumNode(
     }
 }
 
+data class OvalNode(
+    override val id: String,
+    override val parentId: String?,
+    override val path: OvalPath = OvalPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
+    override val description: String,
+    override val children: List<String>,
+) : Node(id, parentId, path, description, children) {
+    override fun adjustPosition(
+        horizontalSpacing: Dp,
+        totalHeight: Dp,
+    ): Node {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}
+
 data class RectangleNode(
     override val id: String,
     override val parentId: String,
@@ -218,6 +233,19 @@ fun createNode(node: NodeData<*>?): Node? {
                     Dp(node.path.centerY.dpVal),
                     Dp(node.path.length.dpVal),
                     Dp(node.path.radius.dpVal)
+                ),
+                node.description,
+                node.children
+            )
+
+            is OvalNodeData -> OvalNode(
+                node.id,
+                node.parentId,
+                OvalPath(
+                    Dp(node.path.centerX.dpVal),
+                    Dp(node.path.centerY.dpVal),
+                    Dp(node.path.radiusX.dpVal),
+                    Dp(node.path.radiusY.dpVal)
                 ),
                 node.description,
                 node.children

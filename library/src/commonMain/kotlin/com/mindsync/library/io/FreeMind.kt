@@ -6,6 +6,8 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OvalPath
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
@@ -128,6 +130,15 @@ object FreeMind {
                 color = color,
                 textColor = textColor,
             )
+            NodeShape.OVAL -> OvalNodeData(
+                id = id,
+                parentId = parentId,
+                path = OvalPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
+                description = description,
+                children = children,
+                color = color,
+                textColor = textColor,
+            )
         }
         tree.setNode(id, node)
         return id
@@ -137,6 +148,7 @@ object FreeMind {
         is CircleNodeData -> NodeShape.CIRCLE
         is RectangleNodeData -> NodeShape.RECTANGLE
         is StadiumNodeData -> NodeShape.STADIUM
+        is OvalNodeData -> NodeShape.OVAL
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }

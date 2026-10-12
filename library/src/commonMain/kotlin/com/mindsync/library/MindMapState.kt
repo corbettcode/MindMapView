@@ -22,6 +22,7 @@ import com.mindsync.library.command.UpdateNodeCommand
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -108,6 +109,9 @@ class MindMapState(
                         .copy(color = color, textColor = textColor)
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
+                        .copy(color = color, textColor = textColor)
+                NodeShape.OVAL ->
+                    NodeGenerator.makeNode(OvalNodeData::class, description, node.id)
                         .copy(color = color, textColor = textColor)
             }
             this.addNode = addNode
@@ -346,6 +350,9 @@ class MindMapState(
                     point.y in node.path.topY().toPx(density)..node.path.bottomY().toPx(density)
 
             is StadiumNodeData ->
+                node.path.contains(Dp(Px(point.x).toDp(density)), Dp(Px(point.y).toDp(density)))
+
+            is OvalNodeData ->
                 node.path.contains(Dp(Px(point.x).toDp(density)), Dp(Px(point.y).toDp(density)))
         }
     }

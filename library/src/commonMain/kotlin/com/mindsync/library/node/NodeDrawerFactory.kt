@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Density
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.model.DrawInfo
@@ -32,6 +33,13 @@ class NodeDrawerFactory(
                     stroke,
                 )
             }
+            is OvalNodeData -> {
+                OvalNodeDrawer(
+                    node,
+                    drawInfo.strokeColor,
+                    stroke,
+                )
+            }
             is CircleNodeData -> {
                 CircleNodeDrawer(
                     node
@@ -54,6 +62,14 @@ class NodeDrawerFactory(
 
             is StadiumNodeData -> {
                 StadiumNodeDrawer(
+                    node,
+                    node.color,
+                    Fill,
+                )
+            }
+
+            is OvalNodeData -> {
+                OvalNodeDrawer(
                     node,
                     node.color,
                     Fill,

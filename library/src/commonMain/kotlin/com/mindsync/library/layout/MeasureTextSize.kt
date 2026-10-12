@@ -7,6 +7,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -87,9 +88,23 @@ class MeasureTextSize(
                 children = nodeData.children,
             )
         }
+
+        // An ellipse holds a rectangle of the text's proportions when each radius is √2 times half that side.
+        is OvalNodeData -> {
+            val newRadiusX = Dp(Px(width).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2
+            val newRadiusY = Dp(Px(height).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2
+            nodeData.copy(
+                id = nodeData.id,
+                parentId = nodeData.parentId,
+                path = nodeData.path.copy(radiusX = newRadiusX, radiusY = newRadiusY),
+                description = nodeData.description,
+                children = nodeData.children,
+            )
+        }
     }
 
     companion object {
         private const val RICH_TEXT_CACHE_SIZE = 256
+        private const val OVAL_TEXT_FIT_RATIO = 1.4142135f
     }
 }

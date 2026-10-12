@@ -112,3 +112,33 @@ data class StadiumNodeData(
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
+
+data class OvalNodeData(
+    override val id: String
+    , override var alpha: Float = 0f
+    , override val children: List<String>
+    , override val color: Color = NodeShape.OVAL.defaultColor
+    , override val description: String
+    , override var isAnimating: Boolean = false
+    , override var isDrawingLine: Boolean = false
+    , override val parentId: String?
+    , override val path: OvalPath = OvalPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
+    , override var strokeWidth: Float = 1f
+    , override val textColor: Color = NodeShape.OVAL.defaultTextColor
+) : NodeData<OvalNodeData>(
+    id
+    , alpha
+    , children
+    , color
+    , description
+    , isAnimating
+    , isDrawingLine
+    , parentId
+    , path
+    , strokeWidth
+    , textColor
+) {
+    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<OvalNodeData> {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}
