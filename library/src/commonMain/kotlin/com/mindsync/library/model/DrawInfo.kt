@@ -24,6 +24,8 @@ class DrawInfo {
         Color(0xFF4F8F87),
         Color(0xFF8C6B45),
     )
+    val linkColor = Color(0xFFFFD600)
+    val linkWidth = Dp(2.5f)
     val noteMarkerColor = Color(0xFFFFD54F)
     val noteMarkerLineColor = Color(0xFF5C4A00)
     val boundaryColor = Color.Black.copy(alpha = 50 / 255f)

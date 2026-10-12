@@ -17,6 +17,9 @@ class Tree<T> {
     // The root has a set of children for each side; these are the ones on its left.
     private val leftRootChildIds = mutableSetOf<String>()
 
+    private val _links = mutableListOf<NodeLink>()
+    val links: List<NodeLink> get() = _links.toList()
+
     constructor() : this(Dp(0f), Dp(0f)) {
         isRootPlaced = false
     }
@@ -203,6 +206,37 @@ class Tree<T> {
             _nodes[parentId] = newParent as NodeData<T>
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
         leftRootChildIds.remove(targetId)
+    }
+
+    /**
+     * Links two different nodes of the tree, unless they are linked in that direction already.
+     *
+     * @return whether the link was added
+     */
+    fun addLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        val link = NodeLink(fromId, toId)
+        if (fromId == toId || fromId !in _nodes || toId !in _nodes || link in _links) return false
+        return _links.add(link)
+    }
+
+    /**
+     * @return whether there was a link to remove
+     */
+    fun removeLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        return _links.remove(NodeLink(fromId, toId))
+    }
+
+    // [removeNode] also takes a node out to attach it elsewhere, so it leaves the links alone.
+    internal fun removeLinksOf(nodeId: String) {
+        val ids = mutableSetOf<String>()
+        doPreorderTraversal(getNode(nodeId)) { node -> ids.add(node.id) }
+        _links.removeAll { it.fromId in ids || it.toId in ids }
     }
 
     fun updateNode(

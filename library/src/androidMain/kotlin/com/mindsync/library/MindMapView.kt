@@ -82,6 +82,20 @@ class MindMapView @JvmOverloads constructor(
         state.editNodeNote(note)
     }
 
+    fun addLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        return state.addLink(fromId, toId)
+    }
+
+    fun removeLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        return state.removeLink(fromId, toId)
+    }
+
     fun editNodeColor(color: Color) {
         state.editNodeColor(color)
     }

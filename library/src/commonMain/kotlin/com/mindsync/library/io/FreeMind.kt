@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLink
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.OvalNodeData
@@ -47,9 +48,14 @@ object FreeMind {
         val tree = Tree<Any>()
         val root = tree.getRootNode()
         val usedIds = mutableSetOf(root.id)
+        // The ids of the file, which the root and nodes with an id that is used already do not keep.
+        val idsInFile = mutableMapOf<String, String>()
+        val links = mutableListOf<NodeLink>()
+        rootElement.attributes["ID"]?.let { idsInFile[it] = root.id }
+        links.addAll(rootElement.links(root.id))
         val leftChildren = mutableListOf<String>()
         val children = rootElement.childNodes().map { element ->
-            readNode(tree, element, root.id, usedIds).also { id ->
+            readNode(tree, element, root.id, usedIds, idsInFile, links).also { id ->
                 if (element.attributes["POSITION"] == "left") leftChildren.add(id)
             }
         }
@@ -63,6 +69,8 @@ object FreeMind {
             ),
         )
         leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
+        // A link can point at a node further down the file, so the links are added once every node is read.
+        links.forEach { link -> tree.addLink(link.fromId, idsInFile[link.toId] ?: link.toId) }
         return tree
     }
 
@@ -87,6 +95,10 @@ object FreeMind {
         }
         append(indent).append("  <attribute NAME=\"").append(SHAPE_ATTRIBUTE).append("\" VALUE=\"")
         append(node.shape().name.lowercase()).append("\"/>\n")
+        tree.links.filter { it.fromId == node.id }.forEach { link ->
+            append(indent).append("  <arrowlink DESTINATION=\"").append(escapeXml(link.toId))
+            append("\" STARTARROW=\"None\" ENDARROW=\"Default\"/>\n")
+        }
         node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1) }
         append(indent).append("</node>\n")
     }
@@ -96,14 +108,18 @@ object FreeMind {
         element: XmlElement,
         parentId: String,
         usedIds: MutableSet<String>,
+        idsInFile: MutableMap<String, String>,
+        links: MutableList<NodeLink>,
     ): String {
         val id = element.attributes["ID"]?.takeIf { it.isNotEmpty() && usedIds.add(it) }
             ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
+        element.attributes["ID"]?.let { if (it !in idsInFile) idsInFile[it] = id }
+        links.addAll(element.links(id))
         val shape = element.children
             .firstOrNull { it.name == "attribute" && it.attributes["NAME"] == SHAPE_ATTRIBUTE }
             ?.let { attribute -> NodeShape.entries.firstOrNull { it.name.equals(attribute.attributes["VALUE"], ignoreCase = true) } }
             ?: NodeShape.RECTANGLE
-        val children = element.childNodes().map { readNode(tree, it, id, usedIds) }
+        val children = element.childNodes().map { readNode(tree, it, id, usedIds, idsInFile, links) }
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
         val description = element.description()
@@ -175,6 +191,13 @@ object FreeMind {
         val richContent = children.firstOrNull { it.name == "richcontent" && it.attributes["TYPE"] == "NODE" }?.rawContent
         if (richContent != null) return htmlBody(richContent)
         return escapeHtml(attributes["TEXT"].orEmpty())
+    }
+
+    // FreeMind keeps a graphical link as an <arrowlink> child of the node it starts at, holding the id it points at.
+    private fun XmlElement.links(fromId: String): List<NodeLink> {
+        return children
+            .filter { it.name == "arrowlink" }
+            .mapNotNull { arrowLink -> arrowLink.attributes["DESTINATION"]?.let { NodeLink(fromId, it) } }
     }
 
     // FreeMind keeps a node's note in a <richcontent> child of its own.

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.text.AnnotatedString
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLink
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.OvalPath
@@ -55,6 +58,7 @@ class MindMapTest {
     private val moves = mutableListOf<Pair<String, String>>()
     private val addChildClicks = mutableListOf<String>()
     private val addChildSides = mutableListOf<LayoutSide>()
+    private val linkChanges = mutableListOf<Triple<String, String, Boolean>>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -64,6 +68,7 @@ class MindMapTest {
                 onNodeClick = { clicks.add(it) },
                 onNodeDoubleClick = { doubleClicks.add(it.id) },
                 onNodeMove = { _, target, parent -> moves.add(target.id to parent.id) },
+                onNodeLink = { _, from, to, isLinked -> linkChanges.add(Triple(from.id, to.id, isLinked)) },
                 onAddChildClick = { node, side ->
                     addChildClicks.add(node.id)
                     addChildSides.add(side)
@@ -74,6 +79,24 @@ class MindMapTest {
 
     private fun ComposeUiTest.clickNode(node: NodeData<*>) {
         onNodeWithTag(TAG).performTouchInput { click(center(node)) }
+        waitForIdle()
+    }
+
+    // Drags with the mouse from [from] to [to] while Ctrl is held down.
+    private fun ComposeUiTest.ctrlDrag(
+        from: NodeData<*>,
+        to: androidx.compose.ui.unit.Density.() -> Offset,
+    ) {
+        onNodeWithTag(TAG).performKeyInput { keyDown(Key.CtrlLeft) }
+        onNodeWithTag(TAG).performMouseInput {
+            val start = center(from)
+            val end = to()
+            moveTo(start)
+            press()
+            (1..4).forEach { step -> moveTo(start + (end - start) * (step / 4f)) }
+            release()
+        }
+        onNodeWithTag(TAG).performKeyInput { keyUp(Key.CtrlLeft) }
         waitForIdle()
     }
 
@@ -1128,6 +1151,195 @@ class MindMapTest {
         onNodeWithTag(TAG).performMouseInput { exit() }
         waitForIdle()
         assertNull(state.hoveredNode)
+    }
+
+    private fun ComposeUiTest.stateWithTwoChildren(): Triple<MindMapState, String, String> {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second", NodeShape.OVAL)
+        waitForIdle()
+        val (firstId, secondId) = state.tree.getRootNode().children
+        return Triple(state, firstId, secondId)
+    }
+
+    @Test
+    fun ctrlDraggingNodeOntoAnotherLinksThemWithoutMovingThem() = runComposeUiTest {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+
+        ctrlDrag(first) { center(second) }
+
+        assertEquals(listOf(NodeLink(firstId, secondId)), state.tree.links)
+        assertEquals(listOf(Triple(firstId, secondId, true)), linkChanges)
+        assertTrue(moves.isEmpty())
+        assertEquals(listOf(firstId, secondId), state.tree.getRootNode().children)
+        assertEquals(first.path, state.tree.getNode(firstId).path)
+        assertEquals(second.path, state.tree.getNode(secondId).path)
+    }
+
+    @Test
+    fun repeatingTheCtrlDragRemovesTheLink() = runComposeUiTest {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+
+        ctrlDrag(first) { center(second) }
+        ctrlDrag(second) { center(first) }
+        assertEquals(listOf(NodeLink(firstId, secondId), NodeLink(secondId, firstId)), state.tree.links)
+
+        ctrlDrag(first) { center(second) }
+        assertEquals(listOf(NodeLink(secondId, firstId)), state.tree.links)
+        assertEquals(Triple(firstId, secondId, false), linkChanges.last())
+    }
+
+    @Test
+    fun ctrlDragThatEndsOnNoOtherNodeLinksNothing() = runComposeUiTest {
+        val (state, firstId, _) = stateWithTwoChildren()
+        val first = state.tree.getNode(firstId)
+
+        ctrlDrag(first) { Offset(5f, 5f) }
+        ctrlDrag(first) { center(first) + Offset(3f, 3f) }
+
+        assertTrue(state.tree.links.isEmpty())
+        assertTrue(linkChanges.isEmpty())
+        assertEquals(first.path, state.tree.getNode(firstId).path)
+    }
+
+    @Test
+    fun rootCanBeLinked() = runComposeUiTest {
+        val (state, firstId, _) = stateWithTwoChildren()
+        val root = state.tree.getRootNode()
+
+        ctrlDrag(root) { center(state.tree.getNode(firstId)) }
+
+        assertEquals(listOf(NodeLink(root.id, firstId)), state.tree.links)
+        assertEquals(root.path, state.tree.getRootNode().path)
+    }
+
+    @Test
+    fun linkIsKeptWhenItsNodeIsReattached() = runComposeUiTest {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        assertTrue(state.addLink(secondId, state.tree.getRootNode().id))
+
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+        onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
+        waitForIdle()
+
+        assertEquals(firstId, state.tree.getNode(secondId).parentId)
+        assertEquals(listOf(NodeLink(secondId, state.tree.getRootNode().id)), state.tree.links)
+    }
+
+    @Test
+    fun removingNodeRemovesTheLinksOfItAndTheNodesBelowIt() = runComposeUiTest {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        val rootId = state.tree.getRootNode().id
+        clickNode(state.tree.getNode(firstId))
+        state.addNode("below first")
+        waitForIdle()
+        val belowFirstId = state.tree.getNode(firstId).children.single()
+        assertTrue(state.addLink(belowFirstId, secondId))
+        assertTrue(state.addLink(secondId, firstId))
+        assertTrue(state.addLink(rootId, secondId))
+
+        clickNode(state.tree.getNode(firstId))
+        assertEquals(firstId, state.selectedNode?.id)
+        state.removeNode()
+        waitForIdle()
+
+        assertEquals(listOf(secondId), state.tree.getRootNode().children)
+        assertEquals(listOf(NodeLink(rootId, secondId)), state.tree.links)
+    }
+
+    @Test
+    fun linkNeedsTwoDifferentNodesAndIsNotAddedTwice() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "a")
+        tree.addNode("b", rootId, "b")
+
+        assertTrue(tree.addLink("a", "b"))
+        assertFalse(tree.addLink("a", "b"))
+        assertFalse(tree.addLink("a", "a"))
+        assertFalse(tree.addLink("a", "missing"))
+        assertFalse(tree.addLink("missing", "a"))
+        assertTrue(tree.addLink("b", "a"))
+        assertEquals(listOf(NodeLink("a", "b"), NodeLink("b", "a")), tree.links)
+
+        assertTrue(tree.removeLink("a", "b"))
+        assertFalse(tree.removeLink("a", "b"))
+        assertEquals(listOf(NodeLink("b", "a")), tree.links)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsLinks() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "first")
+        tree.addNode("b", rootId, "second")
+        tree.addNode("c", "a", "third")
+        tree.addLink("a", "b")
+        tree.addLink("a", "c")
+        tree.addLink("c", rootId)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<arrowlink DESTINATION=\"b\" STARTARROW=\"None\" ENDARROW=\"Default\"/>" in written)
+
+        val read = FreeMind.read(written)
+        assertEquals(setOf(NodeLink("a", "b"), NodeLink("a", "c"), NodeLink("c", rootId)), read.links.toSet())
+        assertEquals(listOf("c"), read.getNode("a").children)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
+    fun freeMindArrowLinksAreRead() {
+        val content = """
+            <map version="1.0.1">
+            <node ID="ID_1" TEXT="root">
+            <node ID="ID_2" TEXT="first">
+            <arrowlink DESTINATION="ID_3" ENDARROW="Default" ENDINCLINATION="96;0;" ID="Arrow_ID_9" STARTARROW="None" STARTINCLINATION="96;0;"/>
+            <arrowlink DESTINATION="ID_1"/>
+            <arrowlink DESTINATION="ID_404"/>
+            <arrowlink DESTINATION="ID_2"/>
+            </node>
+            <node ID="ID_3" TEXT="second">
+            <arrowlink DESTINATION="ID_2"/>
+            </node>
+            </node>
+            </map>
+        """.trimIndent()
+
+        val tree = FreeMind.read(content)
+        assertEquals(
+            listOf(NodeLink("ID_2", "ID_3"), NodeLink("ID_2", tree.getRootNode().id), NodeLink("ID_3", "ID_2")),
+            tree.links,
+        )
+        assertEquals("first", tree.getNode("ID_2").description)
+    }
+
+    @Test
+    fun linksBetweenTheSameNodesBowToOppositeSides() = runComposeUiTest {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+
+        val there = density.linkCurve(first, second)
+        val back = density.linkCurve(second, first)
+        val firstCenter = with(density) { center(first) }
+        val secondCenter = with(density) { center(second) }
+
+        // Each control point is as far to one side of the line between the centers as the other is to the other.
+        assertEquals(firstCenter + secondCenter, there.control + back.control)
+        assertTrue((there.control - back.control).getDistance() > 1f)
+        // A curve starts on the edge of its first node and ends on the edge of its second.
+        assertTrue((there.start - firstCenter).getDistance() < (there.start - secondCenter).getDistance())
+        assertTrue((there.end - secondCenter).getDistance() < (there.end - firstCenter).getDistance())
+        assertTrue((there.start - firstCenter).getDistance() > 1f)
+        assertTrue((there.end - secondCenter).getDistance() > 1f)
     }
 
     @Test

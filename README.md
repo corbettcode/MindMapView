@@ -261,5 +261,7 @@ fun createNode(node: NodeData<*>?): Node? {
 binding.mindMapView.addNode(description)
 binding.mindMapView.editNodeText(description)
 binding.mindMapView.editNodeNote(note)
+binding.mindMapView.addLink(fromId, toId)
+binding.mindMapView.removeLink(fromId, toId)
 binding.mindMapView.fitScreen()
 ```

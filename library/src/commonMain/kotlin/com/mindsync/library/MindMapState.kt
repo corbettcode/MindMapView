@@ -64,6 +64,10 @@ class MindMapState(
     internal var drawTick by mutableIntStateOf(0)
         private set
 
+    // Where the pointer is, in the tree, while a link is being dragged from the selected node.
+    internal var linkDragPoint: Offset? by mutableStateOf(null)
+        private set
+
     val tree: Tree<*> get() = mindMapManager.getTree()
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
 
@@ -172,6 +176,28 @@ class MindMapState(
             tree.updateNodeNote(node.id, note)
             invalidate()
         }
+    }
+
+    /**
+     * Links two different nodes with an arrow from the first to the second.
+     *
+     * @return whether the link was added: it is not when the nodes are linked in that direction already
+     */
+    fun addLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        return tree.addLink(fromId, toId).also { invalidate() }
+    }
+
+    /**
+     * @return whether there was a link to remove
+     */
+    fun removeLink(
+        fromId: String,
+        toId: String,
+    ): Boolean {
+        return tree.removeLink(fromId, toId).also { invalidate() }
     }
 
     fun fitScreen() {
@@ -306,6 +332,31 @@ class MindMapState(
         }
         attachedNode = null
         animateTreeChange()
+    }
+
+    // A link is dragged from the selected node, which stays where it is.
+    internal fun onLinkDrag(position: Offset) {
+        val selectedNode = mindMapManager.getSelectedNode() ?: return
+        val point = toTreePoint(position)
+        linkDragPoint = point
+        attachedNode = findNode(point)?.takeIf { it.id != selectedNode.id }
+        invalidate()
+    }
+
+    // Dropped on another node, the link to it is added, or removed when there is one already.
+    internal fun onLinkDrop(
+        onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit,
+    ) {
+        val selectedNode = mindMapManager.getSelectedNode()
+        val attachedNode = this.attachedNode
+        if (linkDragPoint != null && selectedNode != null && attachedNode != null) {
+            val isLinked = tree.addLink(selectedNode.id, attachedNode.id)
+            if (!isLinked) tree.removeLink(selectedNode.id, attachedNode.id)
+            onNodeLink(tree, selectedNode, attachedNode, isLinked)
+        }
+        linkDragPoint = null
+        this.attachedNode = null
+        invalidate()
     }
 
     internal fun onTransform(pan: Offset, zoom: Float) {

@@ -49,6 +49,7 @@ class MindMapManager {
     }
 
     fun removeNode(node: NodeData<*>) {
+        this.tree.removeLinksOf(node.id)
         this.tree.removeNode(node.id)
     }
 
