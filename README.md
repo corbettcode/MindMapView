@@ -68,6 +68,7 @@ fun MindMapScreen() {
 - `rememberMindMapState()` places the root node at the center of the mind map. Pass `Tree<Any>(Dp(x), Dp(y))` to choose the position yourself.
 - The root has two sets of children: one laid out to its right and one to its left. `addNode` takes the `side` a child of the root is added to, which defaults to `state.layoutSide`. Setting `state.layoutSide` also moves every child of the root to that side.
 - Pass `onAddChildClick` to `MindMap` to draw a '+' button on every node, where its lines to its children start; the root gets one on each side. Clicking it selects that node and calls `onAddChildClick` with the node and the side, so a following `addNode` with that side adds the child there.
+- Each line from the root to one of its children is drawn in its own color, which the lines and '+' buttons of the branch below it share.
 - Drag a node onto the left or right half of the root to move it to that side.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 

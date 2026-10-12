@@ -184,7 +184,7 @@ fun MindMap(
             drawAttachedNode(state, drawInfo)
             drawLines(state, drawInfo, lineColor)
             if (onAddChildClick != null) {
-                drawAddButtons(state, lineColor, addIconColor)
+                drawAddButtons(state, drawInfo, lineColor, addIconColor)
             }
             drawTree(state, drawInfo, measure)
 
@@ -250,37 +250,64 @@ private fun DrawScope.drawLines(
     val path = Path()
     val stroke = Stroke(width = drawInfo.lineWidth.toPx(this))
 
-    fun traverseLine(node: NodeData<*>) {
-        for (toNodeId in node.children) {
-            val toNode = tree.getNode(toNodeId)
-            if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
-                val isRightSide = tree.sideOf(toNode.id) == LayoutSide.RIGHT
-                val startX = getNodeEdgeX(node, isRightEdge = isRightSide)
-                val startY = node.path.centerY.toPx(this)
+    forEachNodeWithLineColor(tree, drawInfo, lineColor) { toNode, color ->
+        val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLineColor
+        if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
+            val isRightSide = tree.sideOf(toNode.id) == LayoutSide.RIGHT
+            val startX = getNodeEdgeX(node, isRightEdge = isRightSide)
+            val startY = node.path.centerY.toPx(this)
 
-                val endX = getNodeEdgeX(toNode, isRightEdge = isRightSide.not())
-                val endY = toNode.path.centerY.toPx(this)
+            val endX = getNodeEdgeX(toNode, isRightEdge = isRightSide.not())
+            val endY = toNode.path.centerY.toPx(this)
 
-                val midX = (startX + endX) / 2
+            val midX = (startX + endX) / 2
 
-                path.reset()
-                path.moveTo(startX, startY)
-                path.cubicTo(midX, startY, midX, endY, endX, endY)
+            path.reset()
+            path.moveTo(startX, startY)
+            path.cubicTo(midX, startY, midX, endY, endX, endY)
 
-                drawPath(
-                    path = path
-                    , color = lineColor
-                    , style = stroke
-                )
-            }
-            traverseLine(toNode)
+            drawPath(
+                path = path
+                , color = color
+                , style = stroke
+            )
         }
     }
-    traverseLine(tree.getRootNode())
+}
+
+/**
+ * Calls [action] for every node with the color of the lines of its branch: each child of the root starts
+ * a branch with its own color, which the nodes below it share. The root is in no branch and gets
+ * [lineColor].
+ */
+private fun forEachNodeWithLineColor(
+    tree: Tree<*>
+    , drawInfo: DrawInfo
+    , lineColor: Color
+    , action: (node: NodeData<*>, color: Color) -> Unit
+) {
+    fun traverse(
+        node: NodeData<*>
+        , color: Color
+    ) {
+        action(node, color)
+        node.children.forEachIndexed { index, childId ->
+            traverse(tree.getNode(childId), if (node.parentId == null) rootLineColor(drawInfo, index) else color)
+        }
+    }
+    traverse(tree.getRootNode(), lineColor)
+}
+
+internal fun rootLineColor(
+    drawInfo: DrawInfo
+    , childIndex: Int
+): Color {
+    return drawInfo.rootLineColors[childIndex % drawInfo.rootLineColors.size]
 }
 
 private fun DrawScope.drawAddButtons(
     state: MindMapState
+    , drawInfo: DrawInfo
     , lineColor: Color
     , iconColor: Color
 ) {
@@ -288,10 +315,10 @@ private fun DrawScope.drawAddButtons(
     val arm = radius * ADD_BUTTON_ARM_RATIO
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
-    state.tree.doPreorderTraversal { node ->
+    forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
         state.addButtonSides(node).forEach { side ->
             val center = addButtonCenter(node, side)
-            drawCircle(color = lineColor, radius = radius, center = center)
+            drawCircle(color = color, radius = radius, center = center)
             drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
             drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
         }

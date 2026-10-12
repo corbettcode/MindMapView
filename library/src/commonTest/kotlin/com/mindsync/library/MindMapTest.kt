@@ -25,6 +25,7 @@ import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.layout.MindMapLeftLayoutManager
+import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
@@ -453,6 +454,18 @@ class MindMapTest {
         val arranged = tree.getNode("first") as RectangleNodeData
         assertEquals(50f, arranged.path.leftX().dpVal, 0.01f)
         assertEquals(arranged.path.rightX().dpVal + 50f, tree.getRootNode().path.let { it.centerX - it.radius }.dpVal, 0.01f)
+    }
+
+    @Test
+    fun linesFromTheRootEachHaveTheirOwnColor() {
+        val drawInfo = DrawInfo()
+        val colors = drawInfo.rootLineColors.indices.map { rootLineColor(drawInfo, it) }
+
+        assertEquals(colors.size, colors.toSet().size)
+        assertFalse(drawInfo.lineColor in colors)
+        assertFalse(drawInfo.darkModeLineColor in colors)
+        // With more children than colors, the colors start over.
+        assertEquals(colors.first(), rootLineColor(drawInfo, colors.size))
     }
 
     @Test
