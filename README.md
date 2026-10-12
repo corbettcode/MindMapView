@@ -182,6 +182,7 @@ binding.mindMapView.setNodeClickListener(object : NodeClickListener {
 ```kotlin
 fun createNode(node: NodeData<*>?): Node? {
         return when (node) {
+            // The root node is a circle.
             is CircleNodeData -> CircleNode(
                 node.id,
                 node.parentId,
@@ -207,7 +208,6 @@ fun createNode(node: NodeData<*>?): Node? {
                 node.children
             )
 
-            // The root node is a stadium.
             is StadiumNodeData -> StadiumNode(
                 node.id,
                 node.parentId,

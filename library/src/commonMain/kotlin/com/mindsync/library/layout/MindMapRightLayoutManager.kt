@@ -15,6 +15,6 @@ class MindMapRightLayoutManager : MindMapLayoutManager() {
         , parent: NodeData<*>
         , child: NodeData<*>
     ): Dp {
-        return parentCenterX + parentOffset(parent) + horizontalSpacing + halfWidth(child)
+        return parentCenterX + halfWidth(parent) + horizontalSpacing + halfWidth(child)
     }
 }

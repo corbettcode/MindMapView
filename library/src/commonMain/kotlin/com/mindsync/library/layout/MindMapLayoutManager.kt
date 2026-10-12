@@ -100,17 +100,6 @@ abstract class MindMapLayoutManager {
         return if (node.parentId == null) node.children.filter { tree.sideOf(it) == side } else node.children
     }
 
-    /**
-     * The distance from the center of a parent to the edge its children are spaced from.
-     */
-    protected fun parentOffset(node: NodeData<*>): Dp {
-        return when (node) {
-            is RectangleNodeData -> node.path.width / 2
-            is StadiumNodeData -> node.path.width() / 2
-            is CircleNodeData -> node.path.radius / 2
-        }
-    }
-
     protected fun halfWidth(node: NodeData<*>): Dp {
         return when (node) {
             is RectangleNodeData -> node.path.width / 2

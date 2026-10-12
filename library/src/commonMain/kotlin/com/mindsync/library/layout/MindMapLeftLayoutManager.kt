@@ -16,7 +16,7 @@ class MindMapLeftLayoutManager : MindMapLayoutManager() {
         , parent: NodeData<*>
         , child: NodeData<*>
     ): Dp {
-        return parentCenterX - parentOffset(parent) - horizontalSpacing - halfWidth(child)
+        return parentCenterX - halfWidth(parent) - horizontalSpacing - halfWidth(child)
     }
 
     // The mind map cannot be panned to the left of x = 0, so the root is moved right until the tree fits.
