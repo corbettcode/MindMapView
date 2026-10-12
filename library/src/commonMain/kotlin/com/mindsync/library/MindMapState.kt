@@ -199,18 +199,12 @@ class MindMapState(
         return touchedNode
     }
 
-    // A node has an add button while at least one line to a child is drawn from it.
-    internal fun hasAddButton(node: NodeData<*>): Boolean {
-        val hiddenChildId = mindMapManager.getSelectedNode()?.id?.takeIf { mindMapManager.getMovingState() }
-        return node.children.any { it != hiddenChildId }
-    }
-
     internal fun findAddButtonNode(position: Offset): NodeData<*>? {
         val point = toTreePoint(position)
         val radius = ADD_BUTTON_RADIUS.toPx(density)
         var buttonNode: NodeData<*>? = null
         tree.doPreorderTraversal { node ->
-            if (hasAddButton(node) && (point - density.addButtonCenter(node)).getDistance() <= radius) {
+            if ((point - density.addButtonCenter(node)).getDistance() <= radius) {
                 buttonNode = node
             }
         }

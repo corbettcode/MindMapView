@@ -58,8 +58,8 @@ internal val ADD_BUTTON_RADIUS = Dp(10f)
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
  * modifier such as `Modifier.fillMaxSize()`.
  *
- * When [onAddChildClick] is given, a '+' button in the color of the lines is drawn where a node's lines
- * to its children start. Clicking it selects that node and calls [onAddChildClick] with it, so
+ * When [onAddChildClick] is given, every node gets a '+' button in the color of the lines, drawn where
+ * its lines to its children start. Clicking it selects that node and calls [onAddChildClick] with it, so
  * [MindMapState.addNode] then adds the child to it.
  */
 @Composable
@@ -286,12 +286,10 @@ private fun DrawScope.drawAddButtons(
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
     state.tree.doPreorderTraversal { node ->
-        if (state.hasAddButton(node)) {
-            val center = addButtonCenter(node)
-            drawCircle(color = lineColor, radius = radius, center = center)
-            drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
-            drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
-        }
+        val center = addButtonCenter(node)
+        drawCircle(color = lineColor, radius = radius, center = center)
+        drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
+        drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
     }
 }
 

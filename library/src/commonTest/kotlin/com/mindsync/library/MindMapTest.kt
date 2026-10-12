@@ -301,12 +301,13 @@ class MindMapTest {
         waitForIdle()
         val root = state.tree.getRootNode()
 
-        // A node without children has no lines, so it has no add button either.
+        // A leaf node has an add button too.
         onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(root)) }
         waitForIdle()
-        assertTrue(addChildClicks.isEmpty())
+        assertEquals(listOf(root.id), addChildClicks)
+        assertEquals(root.id, state.selectedNode?.id)
+        addChildClicks.clear()
 
-        clickNode(root)
         state.addNode("first")
         waitForIdle()
         val first = state.tree.getNode(state.tree.getRootNode().children.single())

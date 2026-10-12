@@ -230,9 +230,10 @@ private fun MindMapScreen(
                     state = state
                     , modifier = Modifier.fillMaxSize()
                     , onNodeDoubleClick = { operation = Operation.Update }
-                    // The new child takes the shape of the sibling it is added below.
+                    // The new child takes the shape of the sibling it is added below, or of its parent if it has none.
                     , onAddChildClick = { node ->
-                        operation = Operation.Add(state.tree.getNode(node.children.last()).shape)
+                        val sibling = node.children.lastOrNull()?.let { state.tree.getNode(it) }
+                        operation = Operation.Add((sibling ?: node).shape)
                     }
                 )
             }
