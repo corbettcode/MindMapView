@@ -219,15 +219,14 @@ private fun MindMapScreen(
                         enabled = selectedNode != null,
                         onAdd = { operation = Operation.Add(it) },
                         onEdit = { operation = Operation.Update },
+                        removeEnabled = selectedNode?.parentId != null,
+                        onRemove = { state.removeNode() },
                     )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Button(onClick = { state.removeNode() }, enabled = selectedNode?.parentId != null) {
-                        Text("Remove")
-                    }
                     Button(onClick = { state.fitScreen() }) {
                         Text("Fit")
                     }
@@ -323,6 +322,8 @@ private fun EditMenu(
     enabled: Boolean,
     onAdd: (NodeShape) -> Unit,
     onEdit: () -> Unit,
+    removeEnabled: Boolean,
+    onRemove: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
@@ -365,6 +366,14 @@ private fun EditMenu(
                     onEdit()
                 },
                 enabled = enabled,
+            )
+            DropdownMenuItem(
+                text = { Text("Remove") },
+                onClick = {
+                    expanded = false
+                    onRemove()
+                },
+                enabled = removeEnabled,
             )
         }
     }
