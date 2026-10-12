@@ -222,14 +222,7 @@ private fun MindMapScreen(
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = { state.removeNode() },
                     )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(onClick = { state.fitScreen() }) {
-                        Text("Fit")
-                    }
+                    ViewMenu(onFit = { state.fitScreen() })
                 }
                 MindMap(
                     state = state,
@@ -374,6 +367,26 @@ private fun EditMenu(
                     onRemove()
                 },
                 enabled = removeEnabled,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ViewMenu(onFit: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(onClick = { expanded = true }) {
+            Text("View")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("Fit") },
+                onClick = {
+                    expanded = false
+                    onFit()
+                },
             )
         }
     }
