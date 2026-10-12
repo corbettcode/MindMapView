@@ -59,6 +59,7 @@ import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.shape
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.rememberMindMapState
 import com.mohamedrejeb.richeditor.model.RichTextState
@@ -145,9 +146,9 @@ fun main() = application {
     )
 
     Window(
-        onCloseRequest = ::exitApplication,
-        title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME,
-        onPreviewKeyEvent = { event ->
+        onCloseRequest = ::exitApplication
+        , title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME
+        , onPreviewKeyEvent = { event ->
             when {
                 event.type != KeyEventType.KeyDown -> false
                 event.isAltPressed && event.key == Key.F -> {
@@ -169,7 +170,7 @@ fun main() = application {
                 }
                 else -> false
             }
-        },
+        }
     ) {
         SideEffect { frame = window }
         MindMapScreen(
@@ -224,10 +225,15 @@ private fun MindMapScreen(
                     )
                     ViewMenu(onFit = { state.fitScreen() })
                 }
+
                 MindMap(
-                    state = state,
-                    modifier = Modifier.fillMaxSize(),
-                    onNodeDoubleClick = { operation = Operation.Update },
+                    state = state
+                    , modifier = Modifier.fillMaxSize()
+                    , onNodeDoubleClick = { operation = Operation.Update }
+                    // The new child takes the shape of the sibling it is added below.
+                    , onAddChildClick = { node ->
+                        operation = Operation.Add(state.tree.getNode(node.children.last()).shape)
+                    }
                 )
             }
         }

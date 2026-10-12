@@ -42,7 +42,9 @@ fun rememberMindMapState(tree: Tree<*> = remember { Tree<Any>() }): MindMapState
 }
 
 @Stable
-class MindMapState(tree: Tree<*> = Tree<Any>()) {
+class MindMapState(
+    tree: Tree<*> = Tree<Any>()
+) {
     val mindMapManager = MindMapManager()
     private val rightLayoutManager = MindMapRightLayoutManager()
     private val mindMapAnimator = MindMapAnimator()
@@ -195,6 +197,30 @@ class MindMapState(tree: Tree<*> = Tree<Any>()) {
         mindMapManager.setSelectedNode(touchedNode)
         invalidate()
         return touchedNode
+    }
+
+    // A node has an add button while at least one line to a child is drawn from it.
+    internal fun hasAddButton(node: NodeData<*>): Boolean {
+        val hiddenChildId = mindMapManager.getSelectedNode()?.id?.takeIf { mindMapManager.getMovingState() }
+        return node.children.any { it != hiddenChildId }
+    }
+
+    internal fun findAddButtonNode(position: Offset): NodeData<*>? {
+        val point = toTreePoint(position)
+        val radius = ADD_BUTTON_RADIUS.toPx(density)
+        var buttonNode: NodeData<*>? = null
+        tree.doPreorderTraversal { node ->
+            if (hasAddButton(node) && (point - density.addButtonCenter(node)).getDistance() <= radius) {
+                buttonNode = node
+            }
+        }
+        return buttonNode
+    }
+
+    internal fun onAddButtonClick(node: NodeData<*>) {
+        mindMapManager.setNotMoving()
+        mindMapManager.setSelectedNode(node)
+        invalidate()
     }
 
     internal fun onNodeDrag(position: Offset) {

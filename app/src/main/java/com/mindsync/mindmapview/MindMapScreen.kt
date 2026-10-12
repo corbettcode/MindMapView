@@ -57,6 +57,10 @@ fun MindMapScreen(viewModel: MindMapViewModel) {
                     modifier = Modifier.fillMaxSize(),
                     fontFamily = nodeFontFamily,
                     onNodeClick = { node -> viewModel.setSelectedNode(createNode(node)) },
+                    onAddChildClick = { node ->
+                        viewModel.setSelectedNode(createNode(node))
+                        operation = Operation.ADD
+                    },
                 )
                 IconButton(
                     onClick = { state.fitScreen() },

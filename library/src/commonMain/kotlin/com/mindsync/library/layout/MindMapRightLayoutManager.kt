@@ -17,7 +17,10 @@ class MindMapRightLayoutManager {
     private val horizontalSpacing = Dp(50f)
     private val verticalSpacing = Dp(50f)
 
-    fun arrangeNode(tree: Tree<*>, rootNodeData: NodeData<*>? = null) {
+    fun arrangeNode(
+        tree: Tree<*>
+        , rootNodeData: NodeData<*>? = null
+    ) {
         val root = rootNodeData ?: tree.getRootNode()
         val totalHeight = measureChildHeight(root, tree)
         val newHead =
@@ -33,8 +36,8 @@ class MindMapRightLayoutManager {
     }
 
     private fun recurArrangeNode(
-        currentNodeData: NodeData<*>,
-        tree: Tree<*>,
+        currentNodeData: NodeData<*>
+        , tree: Tree<*>
     ) {
         val childHeightSum = measureChildHeight(currentNodeData, tree)
 
@@ -96,7 +99,8 @@ class MindMapRightLayoutManager {
                 heightSum += measureChildHeight(childNode, tree)
             }
             heightSum += verticalSpacing * (nodeData.children.size - 1)
-        } else {
+        }
+        else {
             heightSum =
                 when (nodeData) {
                     is CircleNodeData -> nodeData.path.radius * 2

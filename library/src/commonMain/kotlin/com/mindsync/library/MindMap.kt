@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.CircleNodeData
@@ -47,19 +49,28 @@ import com.mindsync.library.util.toPx
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
 private const val SCROLL_ZOOM_STEP = 1.1f
 private const val TEXT_CACHE_SIZE = 64
+private const val ADD_BUTTON_ARM_RATIO = 0.5f
+private const val ADD_BUTTON_STROKE_RATIO = 0.25f
+
+internal val ADD_BUTTON_RADIUS = Dp(10f)
 
 /**
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
  * modifier such as `Modifier.fillMaxSize()`.
+ *
+ * When [onAddChildClick] is given, a '+' button in the color of the lines is drawn where a node's lines
+ * to its children start. Clicking it selects that node and calls [onAddChildClick] with it, so
+ * [MindMapState.addNode] then adds the child to it.
  */
 @Composable
 fun MindMap(
-    state: MindMapState,
-    modifier: Modifier = Modifier,
-    fontFamily: FontFamily? = null,
-    onNodeClick: (node: NodeData<*>?) -> Unit = {},
-    onNodeDoubleClick: (node: NodeData<*>) -> Unit = {},
-    onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> },
+    state: MindMapState
+    , modifier: Modifier = Modifier
+    , fontFamily: FontFamily? = null
+    , onNodeClick: (node: NodeData<*>?) -> Unit = {}
+    , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
+    , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
+    , onAddChildClick: ((node: NodeData<*>) -> Unit)? = null
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -73,10 +84,13 @@ fun MindMap(
         )
         MeasureTextSize(textMeasurer, textStyle, density, drawInfo)
     }
-    val lineColor = if (isSystemInDarkTheme()) drawInfo.darkModeLineColor else drawInfo.lineColor
+    val isDarkTheme = isSystemInDarkTheme()
+    val lineColor = if (isDarkTheme) drawInfo.darkModeLineColor else drawInfo.lineColor
+    val addIconColor = if (isDarkTheme) Color.Black else Color.White
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
+    val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -92,6 +106,18 @@ fun MindMap(
                 var lastClickTime = 0L
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
+                    val addButtonNode =
+                        if (currentOnAddChildClick != null) state.findAddButtonNode(down.position) else null
+                    if (addButtonNode != null) {
+                        down.consume()
+                        lastClickedNodeId = null
+                        waitForUpOrCancellation()?.let { up ->
+                            up.consume()
+                            state.onAddButtonClick(addButtonNode)
+                            currentOnAddChildClick?.invoke(addButtonNode)
+                        }
+                        return@awaitEachGesture
+                    }
                     val touchedNode = state.onTouchDown(down.position)
                     currentOnNodeClick(touchedNode)
                     if (touchedNode == null) {
@@ -101,7 +127,8 @@ fun MindMap(
                             state.onTransform(event.calculatePan(), event.calculateZoom())
                             event.changes.forEach { if (it.positionChanged()) it.consume() }
                         } while (event.changes.any { it.pressed })
-                    } else {
+                    }
+                    else {
                         down.consume()
                         val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                         if (dragStart != null) {
@@ -117,7 +144,8 @@ fun MindMap(
                             down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis
                         if (dragStart != null || isSecondClick) {
                             lastClickedNodeId = null
-                        } else {
+                        }
+                        else {
                             lastClickedNodeId = touchedNode.id
                             lastClickTime = currentEvent.changes.firstOrNull()?.uptimeMillis ?: down.uptimeMillis
                         }
@@ -153,6 +181,9 @@ fun MindMap(
         }) {
             drawAttachedNode(state, drawInfo)
             drawLines(state, drawInfo, lineColor)
+            if (onAddChildClick != null) {
+                drawAddButtons(state, lineColor, addIconColor)
+            }
             drawTree(state, drawInfo, measure)
 
             state.selectedNode?.let { selectedNode ->
@@ -203,10 +234,14 @@ private fun DrawScope.drawAttachedNode(
     }
 }
 
+/**
+ * Draws the lines connecting the nodes in the mind map held by [state]. The mind map fills the
+ * size given by [modifier], so pass a size modifier such as `Modifier.fillMaxSize()`.
+ */
 private fun DrawScope.drawLines(
-    state: MindMapState,
-    drawInfo: DrawInfo,
-    lineColor: Color,
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
 ) {
     val tree = state.tree
     val manager = state.mindMapManager
@@ -219,13 +254,21 @@ private fun DrawScope.drawLines(
             if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
                 val startX = getNodeEdgeX(node, true)
                 val startY = node.path.centerY.toPx(this)
+
                 val endX = getNodeEdgeX(toNode, false)
                 val endY = toNode.path.centerY.toPx(this)
+
                 val midX = (startX + endX) / 2
+
                 path.reset()
                 path.moveTo(startX, startY)
                 path.cubicTo(midX, startY, midX, endY, endX, endY)
-                drawPath(path, lineColor, style = stroke)
+
+                drawPath(
+                    path = path
+                    , color = lineColor
+                    , style = stroke
+                )
             }
             traverseLine(toNode)
         }
@@ -233,7 +276,31 @@ private fun DrawScope.drawLines(
     traverseLine(tree.getRootNode())
 }
 
-private fun DrawScope.getNodeEdgeX(
+private fun DrawScope.drawAddButtons(
+    state: MindMapState
+    , lineColor: Color
+    , iconColor: Color
+) {
+    val radius = ADD_BUTTON_RADIUS.toPx(this)
+    val arm = radius * ADD_BUTTON_ARM_RATIO
+    val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
+
+    state.tree.doPreorderTraversal { node ->
+        if (state.hasAddButton(node)) {
+            val center = addButtonCenter(node)
+            drawCircle(color = lineColor, radius = radius, center = center)
+            drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
+            drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
+        }
+    }
+}
+
+// The button touches the node's edge where its lines start, so it covers the start of the lines, not the node.
+internal fun Density.addButtonCenter(node: NodeData<*>): Offset {
+    return Offset(getNodeEdgeX(node, true) + ADD_BUTTON_RADIUS.toPx(this), node.path.centerY.toPx(this))
+}
+
+private fun Density.getNodeEdgeX(
     node: NodeData<*>,
     isStart: Boolean,
 ): Float {

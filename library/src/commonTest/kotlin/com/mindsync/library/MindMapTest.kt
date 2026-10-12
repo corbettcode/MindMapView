@@ -39,6 +39,7 @@ class MindMapTest {
     private val clicks = mutableListOf<NodeData<*>?>()
     private val doubleClicks = mutableListOf<String>()
     private val moves = mutableListOf<Pair<String, String>>()
+    private val addChildClicks = mutableListOf<String>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -48,6 +49,7 @@ class MindMapTest {
                 onNodeClick = { clicks.add(it) },
                 onNodeDoubleClick = { doubleClicks.add(it.id) },
                 onNodeMove = { _, target, parent -> moves.add(target.id to parent.id) },
+                onAddChildClick = { addChildClicks.add(it.id) },
             )
         }
     }
@@ -290,6 +292,35 @@ class MindMapTest {
         onNodeWithTag(TAG).performTouchInput { doubleClick(Offset(700.dp.toPx(), 50.dp.toPx())) }
         waitForIdle()
         assertEquals(listOf(child.id), doubleClicks)
+    }
+
+    @Test
+    fun addButtonAtTheStartOfTheLinesAddsAChildToTheirSourceNode() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        val root = state.tree.getRootNode()
+
+        // A node without children has no lines, so it has no add button either.
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(root)) }
+        waitForIdle()
+        assertTrue(addChildClicks.isEmpty())
+
+        clickNode(root)
+        state.addNode("first")
+        waitForIdle()
+        val first = state.tree.getNode(state.tree.getRootNode().children.single())
+        clickNode(first)
+        assertEquals(first.id, state.selectedNode?.id)
+
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(state.tree.getRootNode())) }
+        waitForIdle()
+        assertEquals(listOf(root.id), addChildClicks)
+        assertEquals(root.id, state.selectedNode?.id)
+
+        state.addNode("second")
+        waitForIdle()
+        assertEquals(2, state.tree.getRootNode().children.size)
     }
 
     @Test

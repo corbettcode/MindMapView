@@ -13,3 +13,10 @@ enum class NodeShape(
     RECTANGLE(Color(0xFFFFCF96), Color.Black),
     STADIUM(Color(0xFFB9BC81), Color.Black),
 }
+
+val NodeData<*>.shape: NodeShape
+    get() = when (this) {
+        is CircleNodeData -> NodeShape.CIRCLE
+        is RectangleNodeData -> NodeShape.RECTANGLE
+        is StadiumNodeData -> NodeShape.STADIUM
+    }
