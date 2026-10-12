@@ -42,6 +42,7 @@ import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
@@ -247,15 +248,16 @@ private fun DrawScope.drawLines(
     val manager = state.mindMapManager
     val path = Path()
     val stroke = Stroke(width = drawInfo.lineWidth.toPx(this))
+    val isRightLayout = state.layoutSide == LayoutSide.RIGHT
 
     fun traverseLine(node: NodeData<*>) {
         for (toNodeId in node.children) {
             val toNode = tree.getNode(toNodeId)
             if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
-                val startX = getNodeEdgeX(node, true)
+                val startX = getNodeEdgeX(node, isRightEdge = isRightLayout)
                 val startY = node.path.centerY.toPx(this)
 
-                val endX = getNodeEdgeX(toNode, false)
+                val endX = getNodeEdgeX(toNode, isRightEdge = isRightLayout.not())
                 val endY = toNode.path.centerY.toPx(this)
 
                 val midX = (startX + endX) / 2
@@ -286,7 +288,7 @@ private fun DrawScope.drawAddButtons(
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
     state.tree.doPreorderTraversal { node ->
-        val center = addButtonCenter(node)
+        val center = addButtonCenter(node, state.layoutSide)
         drawCircle(color = lineColor, radius = radius, center = center)
         drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
         drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
@@ -294,13 +296,21 @@ private fun DrawScope.drawAddButtons(
 }
 
 // The button touches the node's edge where its lines start, so it covers the start of the lines, not the node.
-internal fun Density.addButtonCenter(node: NodeData<*>): Offset {
-    return Offset(getNodeEdgeX(node, true) + ADD_BUTTON_RADIUS.toPx(this), node.path.centerY.toPx(this))
+internal fun Density.addButtonCenter(
+    node: NodeData<*>
+    , side: LayoutSide = LayoutSide.RIGHT
+): Offset {
+    val radius = ADD_BUTTON_RADIUS.toPx(this)
+    val centerX = when (side) {
+        LayoutSide.RIGHT -> getNodeEdgeX(node, isRightEdge = true) + radius
+        LayoutSide.LEFT -> getNodeEdgeX(node, isRightEdge = false) - radius
+    }
+    return Offset(centerX, node.path.centerY.toPx(this))
 }
 
 private fun Density.getNodeEdgeX(
     node: NodeData<*>,
-    isStart: Boolean,
+    isRightEdge: Boolean,
 ): Float {
     val nodeCenterX = node.path.centerX.toPx(this)
     val widthOffset =
@@ -309,5 +319,5 @@ private fun Density.getNodeEdgeX(
             is RectangleNodeData -> node.path.width.toPx(this) / 2
             is StadiumNodeData -> node.path.width().toPx(this) / 2
         }
-    return if (isStart) nodeCenterX + widthOffset else nodeCenterX - widthOffset
+    return if (isRightEdge) nodeCenterX + widthOffset else nodeCenterX - widthOffset
 }

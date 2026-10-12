@@ -61,6 +61,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
@@ -223,7 +224,11 @@ private fun MindMapScreen(
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = { state.removeNode() },
                     )
-                    ViewMenu(onFit = { state.fitScreen() })
+                    ViewMenu(
+                        layoutSide = state.layoutSide,
+                        onLayoutSideChange = { state.layoutSide = it },
+                        onFit = { state.fitScreen() },
+                    )
                 }
 
                 MindMap(
@@ -380,7 +385,11 @@ private fun EditMenu(
 }
 
 @Composable
-private fun ViewMenu(onFit: () -> Unit) {
+private fun ViewMenu(
+    layoutSide: LayoutSide,
+    onLayoutSideChange: (LayoutSide) -> Unit,
+    onFit: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
 
     Box {
@@ -395,6 +404,17 @@ private fun ViewMenu(onFit: () -> Unit) {
                     onFit()
                 },
             )
+            HorizontalDivider()
+            LayoutSide.entries.forEach { side ->
+                DropdownMenuItem(
+                    text = { Text("Layout " + side.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    trailingIcon = { if (side == layoutSide) Text("\u2713") },
+                    onClick = {
+                        expanded = false
+                        onLayoutSideChange(side)
+                    },
+                )
+            }
         }
     }
 }

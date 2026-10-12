@@ -24,6 +24,8 @@ import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.layout.MindMapLeftLayoutManager
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
 import kotlin.test.Test
@@ -322,6 +324,59 @@ class MindMapTest {
         state.addNode("second")
         waitForIdle()
         assertEquals(2, state.tree.getRootNode().children.size)
+    }
+
+    @Test
+    fun leftLayoutPlacesChildrenToTheLeftOfTheirParent() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        assertEquals(LayoutSide.RIGHT, state.layoutSide)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        val firstId = state.tree.getRootNode().children.single()
+        clickNode(state.tree.getNode(firstId))
+        state.addNode("second")
+        waitForIdle()
+        val secondId = state.tree.getNode(firstId).children.single()
+        assertTrue(state.tree.getNode(firstId).path.centerX.dpVal > state.tree.getRootNode().path.centerX.dpVal)
+
+        state.layoutSide = LayoutSide.LEFT
+        waitForIdle()
+        val root = state.tree.getRootNode()
+        val first = state.tree.getNode(firstId) as RectangleNodeData
+        val second = state.tree.getNode(secondId) as RectangleNodeData
+        assertEquals(Dp(400f), root.path.centerX)
+        assertEquals(root.path.centerY, first.path.centerY)
+        assertEquals(root.path.leftX().dpVal - 50f, first.path.rightX().dpVal, 0.01f)
+        assertEquals(first.path.leftX().dpVal - 50f, second.path.rightX().dpVal, 0.01f)
+
+        // The add button moves to the left edge with the lines.
+        clickNode(second)
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(first, LayoutSide.LEFT)) }
+        waitForIdle()
+        assertEquals(listOf(first.id), addChildClicks)
+        assertEquals(first.id, state.selectedNode?.id)
+
+        state.layoutSide = LayoutSide.RIGHT
+        waitForIdle()
+        assertTrue(state.tree.getNode(firstId).path.centerX.dpVal > state.tree.getRootNode().path.centerX.dpVal)
+    }
+
+    @Test
+    fun leftLayoutMovesTheRootRightUntilTheTreeFits() {
+        val tree = Tree<Any>(Dp(60f), Dp(300f))
+        tree.addNode("first", tree.getRootNode().id, "first", NodeShape.RECTANGLE)
+        val first = tree.getNode("first") as RectangleNodeData
+        tree.setNode("first", first.copy(path = first.path.copy(width = Dp(80f), height = Dp(40f))))
+
+        MindMapLeftLayoutManager().arrangeNode(tree)
+
+        val arranged = tree.getNode("first") as RectangleNodeData
+        assertEquals(50f, arranged.path.leftX().dpVal, 0.01f)
+        assertEquals(arranged.path.rightX().dpVal + 50f, tree.getRootNode().path.leftX().dpVal, 0.01f)
     }
 
     @Test

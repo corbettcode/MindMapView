@@ -7,13 +7,14 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.MindMapLayoutManager
 import com.mindsync.library.layout.MindMapRightLayoutManager
 import com.mindsync.library.util.Dp
 
 class MindMapManager {
     private lateinit var tree: Tree<*>
     private var selectNode: NodeData<*>? by mutableStateOf(null)
-    private val rightLayoutManager = MindMapRightLayoutManager()
+    private var layout: MindMapLayoutManager by mutableStateOf(MindMapRightLayoutManager())
     private var measureTextSize: MeasureTextSize? = null
     private var isMoving = false
 
@@ -64,16 +65,24 @@ class MindMapManager {
         return this.selectNode
     }
 
+    fun setLayoutManager(layoutManager: MindMapLayoutManager) {
+        this.layout = layoutManager
+    }
+
+    fun getLayoutManager(): MindMapLayoutManager {
+        return this.layout
+    }
+
     fun arrangeTree() {
-        rightLayoutManager.arrangeNode(this.tree)
+        layout.arrangeNode(this.tree)
     }
 
     fun measureHeight(node: NodeData<*>): Dp {
-        return rightLayoutManager.measureChildHeight(node, tree)
+        return layout.measureChildHeight(node, tree)
     }
 
     fun measureWidth(node: NodeData<*>): Dp {
-        return rightLayoutManager.measureChildWidth(node, tree)
+        return layout.measureChildWidth(node, tree)
     }
 
     fun deepCopyTree(): Map<String, NodeData<*>> {

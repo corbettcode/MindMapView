@@ -26,7 +26,9 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.MindMapLeftLayoutManager
 import com.mindsync.library.layout.MindMapRightLayoutManager
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.NodeGenerator
 import com.mindsync.library.util.Px
@@ -46,7 +48,6 @@ class MindMapState(
     tree: Tree<*> = Tree<Any>()
 ) {
     val mindMapManager = MindMapManager()
-    private val rightLayoutManager = MindMapRightLayoutManager()
     private val mindMapAnimator = MindMapAnimator()
     private val pendingAnimations = mutableListOf<AnimationStrategy>()
     private var scope: CoroutineScope? = null
@@ -66,6 +67,22 @@ class MindMapState(
 
     val tree: Tree<*> get() = mindMapManager.getTree()
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
+
+    /**
+     * The side of a node its children are placed on. Changing it rearranges the tree.
+     */
+    var layoutSide: LayoutSide
+        get() = mindMapManager.getLayoutManager().side
+        set(value) {
+            if (value == layoutSide) return
+            mindMapManager.setLayoutManager(
+                when (value) {
+                    LayoutSide.RIGHT -> MindMapRightLayoutManager()
+                    LayoutSide.LEFT -> MindMapLeftLayoutManager()
+                }
+            )
+            animateTreeChange()
+        }
 
     init {
         mindMapManager.setTree(tree)
@@ -204,7 +221,7 @@ class MindMapState(
         val radius = ADD_BUTTON_RADIUS.toPx(density)
         var buttonNode: NodeData<*>? = null
         tree.doPreorderTraversal { node ->
-            if ((point - density.addButtonCenter(node)).getDistance() <= radius) {
+            if ((point - density.addButtonCenter(node, layoutSide)).getDistance() <= radius) {
                 buttonNode = node
             }
         }
@@ -230,7 +247,7 @@ class MindMapState(
             Dp(Px(point.y).toDp(density)),
         )
         mindMapManager.update(tree)
-        rightLayoutManager.arrangeNode(tree, tree.getNode(selectedNode.id))
+        mindMapManager.getLayoutManager().arrangeNode(tree, tree.getNode(selectedNode.id))
         attachedNode = findIncludedNode(point, selectedNode.id)
         invalidate()
     }

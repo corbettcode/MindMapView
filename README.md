@@ -67,6 +67,7 @@ fun MindMapScreen() {
 - `addNode`, `editNodeText` and `removeNode` act on the selected node (`state.selectedNode`).
 - `rememberMindMapState()` places the root node at the center of the mind map. Pass `Tree<Any>(Dp(x), Dp(y))` to choose the position yourself.
 - Pass `onAddChildClick` to `MindMap` to draw a '+' button on every node, where its lines to its children start. Clicking it selects that node and calls `onAddChildClick`, so a following `addNode` adds the child to it.
+- Children are placed to the right of their parent. Set `state.layoutSide = LayoutSide.LEFT` to place them to the left instead.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
 ### FreeMind files
