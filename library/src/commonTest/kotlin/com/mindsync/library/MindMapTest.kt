@@ -83,10 +83,11 @@ class MindMapTest {
     }
 
     @Test
-    fun rootIsAGrayCircleWithBlackText() {
+    fun rootIsALightGrayCircleWithBlackText() {
         val root: NodeData<*> = Tree<Any>(Dp(150f), Dp(300f)).getRootNode()
         assertIs<CircleNodeData>(root)
-        assertEquals(Color.Gray, root.color)
+        assertEquals("🌱" to "root", DescriptionEmoji.split(root.description))
+        assertEquals(Color.LightGray, root.color)
         assertEquals(Color.Black, root.textColor)
     }
 
@@ -207,7 +208,7 @@ class MindMapTest {
         setMindMap(state)
 
         val root = state.tree.getRootNode()
-        assertEquals(Color.Gray, root.color)
+        assertEquals(Color.LightGray, root.color)
 
         clickNode(root)
         state.addNode("first")
@@ -543,7 +544,7 @@ class MindMapTest {
 
         val read = FreeMind.read(written)
         val root = read.getRootNode()
-        assertEquals("root", root.description)
+        assertEquals("🌱 root", root.description)
         assertEquals(Color.Blue, root.color)
         assertEquals(listOf("a", "b"), root.children)
 
@@ -600,7 +601,7 @@ class MindMapTest {
         val tree = FreeMind.read(content)
         val root = tree.getRootNode()
         assertEquals("Tom &amp; Jerry<br>second line", root.description)
-        assertEquals(Color.Gray, root.color)
+        assertEquals(Color.LightGray, root.color)
         assertEquals(listOf("ID_2", "ID_3"), root.children)
 
         val first = assertIs<RectangleNodeData>(tree.getNode("ID_2"))

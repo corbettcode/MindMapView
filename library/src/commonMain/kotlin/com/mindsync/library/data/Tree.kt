@@ -2,6 +2,7 @@ package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
 import com.mindsync.library.util.NodeGenerator
@@ -29,8 +30,8 @@ class Tree<T> {
             CircleNodeData(
                 id = ROOT_ID
                 , children = listOf()
-                , color = Color.Gray
-                , description = "root"
+                , color = Color.LightGray
+                , description = DescriptionEmoji.prepend(ROOT_EMOJI, "root")
                 , parentId = null
                 , path =
                     CirclePath(
@@ -295,5 +296,6 @@ class Tree<T> {
 
     companion object {
         private const val ROOT_ID = "root"
+        private const val ROOT_EMOJI = "🌱"
     }
 }

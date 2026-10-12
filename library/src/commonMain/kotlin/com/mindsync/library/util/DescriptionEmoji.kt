@@ -12,6 +12,8 @@ object DescriptionEmoji {
         "✅", "❌", "⚠️", "❓", "❗", "💡", "🔒", "🔑",
         "📌", "📎", "📅", "📈", "📝", "📚", "📞", "📧",
         "💰", "🏠", "🚀", "⏰", "🔧", "💊", "🩺", "🍎",
+        "🌟", "🌈", "☀️", "🌙", "🌱", "🌍", "🐶", "🐱",
+        "☕", "🍕", "🎵", "🎨", "⚽", "🚗", "✈️", "💻",
     )
 
     // An emoji that starts with another one has to be looked for first.
@@ -41,7 +43,9 @@ object DescriptionEmoji {
     ): String {
         val text = split(description).second
         if (emoji == null) return text
+
         val start = paragraphStart.find(text)?.value
+
         return when {
             start != null -> start + emoji + " " + text.substring(start.length)
             text.trimStart().startsWith("<") -> "<p>$emoji</p>$text"
