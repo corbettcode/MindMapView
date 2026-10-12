@@ -27,6 +27,7 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.layout.MindMapLeftLayoutManager
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
 import kotlin.test.Test
@@ -466,6 +467,32 @@ class MindMapTest {
         assertFalse(drawInfo.darkModeLineColor in colors)
         // With more children than colors, the colors start over.
         assertEquals(colors.first(), rootLineColor(drawInfo, colors.size))
+    }
+
+    @Test
+    fun emojiIsKeptInFrontOfTheDescription() {
+        val withEmoji = DescriptionEmoji.prepend("⭐", "<p><b>some</b> text</p>")
+        assertEquals("<p>⭐ <b>some</b> text</p>", withEmoji)
+        assertEquals("⭐ some text", RichText.parse(withEmoji).text)
+        assertEquals("⭐" to "<p><b>some</b> text</p>", DescriptionEmoji.split(withEmoji))
+
+        // Picking another emoji replaces the one that is there, and picking none removes it.
+        assertEquals("<p>❤️ <b>some</b> text</p>", DescriptionEmoji.prepend("❤️", withEmoji))
+        assertEquals("<p><b>some</b> text</p>", DescriptionEmoji.prepend(null, withEmoji))
+
+        assertEquals(null to "<p>some text</p>", DescriptionEmoji.split("<p>some text</p>"))
+        assertEquals("🚀 plain", DescriptionEmoji.prepend("🚀", "plain"))
+        assertEquals("🚀" to "plain", DescriptionEmoji.split("🚀 plain"))
+        assertEquals("<p>🚀</p><ul><li>item</li></ul>", DescriptionEmoji.prepend("🚀", "<ul><li>item</li></ul>"))
+        assertEquals("🚀" to "<ul><li>item</li></ul>", DescriptionEmoji.split("<p>🚀</p><ul><li>item</li></ul>"))
+
+        // The emoji survives a FreeMind round trip.
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, DescriptionEmoji.prepend("⭐", "<p>plain</p>"))
+        tree.addNode("b", tree.getRootNode().id, withEmoji)
+        val read = FreeMind.read(FreeMind.write(tree))
+        assertEquals("⭐" to "plain", DescriptionEmoji.split(read.getNode("a").description))
+        assertEquals("⭐" to "<p><b>some</b> text</p>", DescriptionEmoji.split(read.getNode("b").description))
     }
 
     @Test

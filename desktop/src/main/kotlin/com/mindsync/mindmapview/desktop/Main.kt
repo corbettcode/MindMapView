@@ -62,6 +62,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
+import com.mindsync.library.util.DescriptionEmoji
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import java.awt.FileDialog
@@ -71,6 +72,7 @@ import java.io.IOException
 
 private const val APP_NAME = "MindMapView"
 private const val FREE_MIND_EXTENSION = ".mm"
+private const val EMOJI_PICKER_COLUMNS = 8
 
 private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D),
@@ -449,7 +451,10 @@ private fun EditNodeDialog(
     onSubmit: (description: String, color: Color, textColor: Color) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val richTextState = remember { RichTextState().setHtml(description) }
+    // The emoji in front of the description is picked on its own, so it is kept out of the editor.
+    val (emoji, text) = remember { DescriptionEmoji.split(description) }
+    val richTextState = remember { RichTextState().setHtml(text) }
+    var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
@@ -463,6 +468,7 @@ private fun EditNodeDialog(
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                 )
+                EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
                 ColorPicker(
                     label = "Fill",
                     colors = remember(color) { (NODE_COLORS + color).distinct() },
@@ -480,7 +486,11 @@ private fun EditNodeDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onSubmit(richTextState.toHtml(), selectedColor, selectedTextColor)
+                    onSubmit(
+                        DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
+                        selectedColor,
+                        selectedTextColor,
+                    )
                     onDismiss()
                 },
             ) {
@@ -554,6 +564,57 @@ private fun RichTextToggle(
         modifier = Modifier.focusProperties { canFocus = false },
     ) {
         Text(label, style = LocalTextStyle.current.merge(labelStyle))
+    }
+}
+
+@Composable
+private fun EmojiPicker(
+    selectedEmoji: String?,
+    onSelect: (String?) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Emoji", modifier = Modifier.width(40.dp))
+        Box {
+            TextButton(onClick = { expanded = true }) {
+                Text(selectedEmoji ?: "None")
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(
+                    text = { Text("None") },
+                    onClick = {
+                        expanded = false
+                        onSelect(null)
+                    },
+                )
+                HorizontalDivider()
+                DescriptionEmoji.EMOJIS.chunked(EMOJI_PICKER_COLUMNS).forEach { emojis ->
+                    Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        emojis.forEach { emoji ->
+                            val borderColor =
+                                if (emoji == selectedEmoji) MaterialTheme.colorScheme.onSurface else Color.Transparent
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, borderColor, CircleShape)
+                                    .clickable {
+                                        expanded = false
+                                        onSelect(emoji)
+                                    },
+                            ) {
+                                Text(emoji)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
