@@ -23,9 +23,16 @@ class MindMapLeftLayoutManager : MindMapLayoutManager() {
     override fun adjustRoot(
         root: NodeData<*>
         , tree: Tree<*>
+        , totalHeight: Dp
     ): NodeData<*> {
-        val overflow = horizontalSpacing - leftMost(root, root.path.centerX, tree)
-        return if (overflow.dpVal > 0f) moveNode(root, root.path.centerX + overflow, root.path.centerY) else root
+        val newRoot = super.adjustRoot(root, tree, totalHeight)
+        val overflow = horizontalSpacing - leftMost(newRoot, newRoot.path.centerX, tree)
+        return if (overflow.dpVal > 0f) {
+            moveNode(newRoot, newRoot.path.centerX + overflow, newRoot.path.centerY)
+        }
+        else {
+            newRoot
+        }
     }
 
     private fun leftMost(
@@ -34,7 +41,7 @@ class MindMapLeftLayoutManager : MindMapLayoutManager() {
         , tree: Tree<*>
     ): Dp {
         var leftMost = centerX - halfWidth(node)
-        node.children.forEach { childId ->
+        childrenOnSide(node, tree).forEach { childId ->
             val child = tree.getNode(childId)
             val childLeftMost = leftMost(child, childCenterX(centerX, node, child), tree)
             if (childLeftMost.dpVal < leftMost.dpVal) leftMost = childLeftMost

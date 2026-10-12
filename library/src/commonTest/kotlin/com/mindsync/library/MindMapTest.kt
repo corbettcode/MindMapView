@@ -42,6 +42,7 @@ class MindMapTest {
     private val doubleClicks = mutableListOf<String>()
     private val moves = mutableListOf<Pair<String, String>>()
     private val addChildClicks = mutableListOf<String>()
+    private val addChildSides = mutableListOf<LayoutSide>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -51,7 +52,10 @@ class MindMapTest {
                 onNodeClick = { clicks.add(it) },
                 onNodeDoubleClick = { doubleClicks.add(it.id) },
                 onNodeMove = { _, target, parent -> moves.add(target.id to parent.id) },
-                onAddChildClick = { addChildClicks.add(it.id) },
+                onAddChildClick = { node, side ->
+                    addChildClicks.add(node.id)
+                    addChildSides.add(side)
+                },
             )
         }
     }
@@ -366,9 +370,81 @@ class MindMapTest {
     }
 
     @Test
+    fun rootHasASetOfChildrenOnEachSide() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+
+        // The root has an add button on each side, which reports the side it is on.
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(state.tree.getRootNode(), LayoutSide.LEFT)) }
+        waitForIdle()
+        assertEquals(listOf(LayoutSide.LEFT), addChildSides)
+        state.addNode("left", side = LayoutSide.LEFT)
+        waitForIdle()
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(state.tree.getRootNode(), LayoutSide.RIGHT)) }
+        waitForIdle()
+        assertEquals(listOf(LayoutSide.LEFT, LayoutSide.RIGHT), addChildSides)
+        state.addNode("right")
+        state.addNode("right too")
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val (leftId, rightId, rightTooId) = root.children
+        val left = state.tree.getNode(leftId) as RectangleNodeData
+        val right = state.tree.getNode(rightId) as RectangleNodeData
+        val rightToo = state.tree.getNode(rightTooId) as RectangleNodeData
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(leftId))
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(rightId))
+        assertEquals(root.path.leftX().dpVal - 50f, left.path.rightX().dpVal, 0.01f)
+        assertEquals(root.path.rightX().dpVal + 50f, right.path.leftX().dpVal, 0.01f)
+        // Each side is centered on the root on its own.
+        assertEquals(root.path.centerY, left.path.centerY)
+        assertEquals(root.path.centerY.dpVal, (right.path.centerY.dpVal + rightToo.path.centerY.dpVal) / 2, 0.01f)
+
+        // A node below a child of the root is on that child's side, whatever side is asked for.
+        clickNode(left)
+        state.addNode("below left", side = LayoutSide.RIGHT)
+        waitForIdle()
+        val belowLeft = state.tree.getNode(state.tree.getNode(leftId).children.single()) as RectangleNodeData
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(belowLeft.id))
+        assertTrue(belowLeft.path.rightX().dpVal < (state.tree.getNode(leftId) as RectangleNodeData).path.leftX().dpVal)
+
+        // Its add button is on the left, and the sides survive a FreeMind round trip.
+        addChildClicks.clear()
+        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(belowLeft, LayoutSide.LEFT)) }
+        waitForIdle()
+        assertEquals(listOf(belowLeft.id), addChildClicks)
+        val read = FreeMind.read(FreeMind.write(state.tree))
+        assertEquals(LayoutSide.LEFT, read.sideOf(belowLeft.id))
+        assertEquals(LayoutSide.RIGHT, read.sideOf(rightId))
+    }
+
+    @Test
+    fun draggingANodeOntoTheLeftOfTheRootMovesItToTheLeftSide() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        val firstId = state.tree.getRootNode().children.single()
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(firstId))
+
+        onNodeWithTag(TAG).performTouchInput {
+            val root = state.tree.getRootNode()
+            swipe(center(state.tree.getNode(firstId)), center(root) - Offset(20.dp.toPx(), 0f), durationMillis = 200)
+        }
+        waitForIdle()
+
+        assertEquals(listOf(firstId), state.tree.getRootNode().children)
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(firstId))
+        assertTrue(state.tree.getNode(firstId).path.centerX.dpVal < state.tree.getRootNode().path.centerX.dpVal)
+    }
+
+    @Test
     fun leftLayoutMovesTheRootRightUntilTheTreeFits() {
         val tree = Tree<Any>(Dp(60f), Dp(300f))
-        tree.addNode("first", tree.getRootNode().id, "first", NodeShape.RECTANGLE)
+        tree.addNode("first", tree.getRootNode().id, "first", NodeShape.RECTANGLE, side = LayoutSide.LEFT)
         val first = tree.getNode("first") as RectangleNodeData
         tree.setNode("first", first.copy(path = first.path.copy(width = Dp(80f), height = Dp(40f))))
 

@@ -11,6 +11,7 @@ import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 
@@ -18,7 +19,8 @@ import com.mindsync.library.util.IdGenerator
  * Reads and writes mind maps in the FreeMind `.mm` format.
  *
  * FreeMind has no notion of this library's node shapes, so a node's shape is kept in an
- * `<attribute NAME="shape">` child, which FreeMind preserves. Node positions are not stored: a map that
+ * `<attribute NAME="shape">` child, which FreeMind preserves. The side of the root a child of the root is
+ * on is kept in FreeMind's own `POSITION`. Node positions are not stored: a map that
  * was read needs to be arranged, for example with `MindMapState.animateTreeChange()`.
  */
 object FreeMind {
@@ -43,7 +45,12 @@ object FreeMind {
         val tree = Tree<Any>()
         val root = tree.getRootNode()
         val usedIds = mutableSetOf(root.id)
-        val children = rootElement.childNodes().map { readNode(tree, it, root.id, usedIds) }
+        val leftChildren = mutableListOf<String>()
+        val children = rootElement.childNodes().map { element ->
+            readNode(tree, element, root.id, usedIds).also { id ->
+                if (element.attributes["POSITION"] == "left") leftChildren.add(id)
+            }
+        }
         tree.setRootNode(
             root.copy(
                 children = children,
@@ -52,6 +59,7 @@ object FreeMind {
                 textColor = rootElement.color("COLOR") ?: root.textColor,
             ),
         )
+        leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
         return tree
     }
 
@@ -61,7 +69,7 @@ object FreeMind {
 
         append(indent).append("<node ID=\"").append(escapeXml(node.id)).append('"')
         if (plainText != null) append(" TEXT=\"").append(escapeXml(plainText)).append('"')
-        if (depth == 1) append(" POSITION=\"right\"")
+        if (depth == 1) append(" POSITION=\"").append(tree.sideOf(node.id).name.lowercase()).append('"')
         append(" BACKGROUND_COLOR=\"").append(node.color.toHex()).append('"')
         append(" COLOR=\"").append(node.textColor.toHex()).append("\">\n")
         if (plainText == null) {

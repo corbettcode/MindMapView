@@ -5,6 +5,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.NodeGenerator
 
@@ -12,6 +13,7 @@ import com.mindsync.library.util.NodeGenerator
 class AddNodeCommand(
     private val mindMapManager: MindMapManager,
     private val addNode: NodeData<*>,
+    private val side: LayoutSide = LayoutSide.RIGHT,
 ) : MindMapCommand {
     override fun execute() {
         val parent = mindMapManager.getTree().getNode(addNode.parentId)
@@ -22,12 +24,12 @@ class AddNodeCommand(
             is RectangleNodeData -> parent.path.width
             is StadiumNodeData -> parent.path.width()
         }
-        val centerX = parentX + width + Dp(20f)
+        val centerX = if (side == LayoutSide.LEFT) parentX - width - Dp(20f) else parentX + width + Dp(20f)
         val updatedNode = when (addNode) {
             is CircleNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
             is RectangleNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
             is StadiumNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
         }
-        mindMapManager.addNode(updatedNode, addNode.description)
+        mindMapManager.addNode(updatedNode, addNode.description, side)
     }
 }

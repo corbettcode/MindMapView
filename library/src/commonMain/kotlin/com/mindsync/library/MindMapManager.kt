@@ -8,13 +8,16 @@ import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
+import com.mindsync.library.layout.MindMapLeftLayoutManager
 import com.mindsync.library.layout.MindMapRightLayoutManager
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 
 class MindMapManager {
     private lateinit var tree: Tree<*>
     private var selectNode: NodeData<*>? by mutableStateOf(null)
-    private var layout: MindMapLayoutManager by mutableStateOf(MindMapRightLayoutManager())
+    private val rightLayoutManager = MindMapRightLayoutManager()
+    private val leftLayoutManager = MindMapLeftLayoutManager()
     private var measureTextSize: MeasureTextSize? = null
     private var isMoving = false
 
@@ -36,8 +39,12 @@ class MindMapManager {
         measureTextSize?.traverseTextHead(tree)
     }
 
-    fun addNode(node: NodeData<*>, description: String) {
-        this.tree.addNode(node.id, node.parentId, description, node.shape, node.color, node.textColor)
+    fun addNode(
+        node: NodeData<*>
+        , description: String
+        , side: LayoutSide = LayoutSide.RIGHT
+    ) {
+        this.tree.addNode(node.id, node.parentId, description, node.shape, node.color, node.textColor, side)
         update(node)
     }
 
@@ -65,24 +72,32 @@ class MindMapManager {
         return this.selectNode
     }
 
-    fun setLayoutManager(layoutManager: MindMapLayoutManager) {
-        this.layout = layoutManager
+    fun getLayoutManager(side: LayoutSide): MindMapLayoutManager {
+        return when (side) {
+            LayoutSide.RIGHT -> rightLayoutManager
+            LayoutSide.LEFT -> leftLayoutManager
+        }
     }
 
-    fun getLayoutManager(): MindMapLayoutManager {
-        return this.layout
-    }
-
+    // The root is placed once for both of its sets of children, then each side is arranged around it.
     fun arrangeTree() {
-        layout.arrangeNode(this.tree)
+        val totalHeight = measureHeight(tree.getRootNode())
+        var root: NodeData<*> = tree.getRootNode()
+        root = rightLayoutManager.adjustRoot(root, tree, totalHeight)
+        root = leftLayoutManager.adjustRoot(root, tree, totalHeight)
+        tree.setRootNode(root)
+        rightLayoutManager.arrangeChildren(root, tree)
+        leftLayoutManager.arrangeChildren(root, tree)
     }
 
     fun measureHeight(node: NodeData<*>): Dp {
-        return layout.measureChildHeight(node, tree)
+        val rightHeight = rightLayoutManager.measureChildHeight(node, tree)
+        val leftHeight = leftLayoutManager.measureChildHeight(node, tree)
+        return if (leftHeight.dpVal > rightHeight.dpVal) leftHeight else rightHeight
     }
 
     fun measureWidth(node: NodeData<*>): Dp {
-        return layout.measureChildWidth(node, tree)
+        return rightLayoutManager.measureChildWidth(node, tree)
     }
 
     fun deepCopyTree(): Map<String, NodeData<*>> {

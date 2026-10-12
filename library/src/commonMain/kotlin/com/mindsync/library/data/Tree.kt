@@ -1,6 +1,7 @@
 package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
 import com.mindsync.library.util.NodeGenerator
@@ -11,6 +12,9 @@ class Tree<T> {
 
     internal var isRootPlaced = true
         private set
+
+    // The root has a set of children for each side; these are the ones on its left.
+    private val leftRootChildIds = mutableSetOf<String>()
 
     constructor() : this(Dp(0f), Dp(0f)) {
         isRootPlaced = false
@@ -43,6 +47,33 @@ class Tree<T> {
         nodes: Map<String, NodeData<*>>
     ) {
         this._nodes = nodes.toMutableMap()
+    }
+
+    /**
+     * Returns the side of the root the node is on: the side of the child of the root it is, or is below.
+     * The root itself is on neither side, and [LayoutSide.RIGHT] is returned for it.
+     */
+    fun sideOf(id: String): LayoutSide {
+        var node = getNode(id)
+        while (node.parentId != null && node.parentId != ROOT_ID) {
+            node = getNode(node.parentId)
+        }
+        return if (node.id in leftRootChildIds) LayoutSide.LEFT else LayoutSide.RIGHT
+    }
+
+    /**
+     * Moves a child of the root, and the nodes below it, to [side] of the root.
+     */
+    fun setRootChildSide(
+        childId: String
+        , side: LayoutSide
+    ) {
+        if (side == LayoutSide.LEFT && _nodes[childId]?.parentId == ROOT_ID) {
+            leftRootChildIds.add(childId)
+        }
+        else {
+            leftRootChildIds.remove(childId)
+        }
     }
 
     fun copy(nodes: Map<String, NodeData<T>>): Tree<T> {
@@ -84,6 +115,7 @@ class Tree<T> {
         shape: NodeShape = NodeShape.RECTANGLE,
         color: Color = shape.defaultColor,
         textColor: Color = shape.defaultTextColor,
+        side: LayoutSide = LayoutSide.RIGHT,
     ) {
         if (_nodes[targetId] != null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_DUPLICATED_NODE.message)
         if (parentId == null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
@@ -112,11 +144,13 @@ class Tree<T> {
         }
         _nodes[parentId] = newParent as NodeData<T>
         _nodes[targetId] = newNode as NodeData<T>
+        setRootChildSide(targetId, side)
     }
 
     fun attachNode(
         targetId: String,
         parentId: String?,
+        side: LayoutSide = LayoutSide.RIGHT,
     ) {
         if (targetId == ROOT_ID || parentId == null) return
         val targetNode = nodes[targetId] ?: return
@@ -138,6 +172,7 @@ class Tree<T> {
             }
         _nodes[targetId] = newTargetNode as NodeData<T>
         _nodes[parentId] = newParentNode as NodeData<T>
+        setRootChildSide(targetId, side)
     }
 
     fun removeNode(targetId: String) {
@@ -159,6 +194,7 @@ class Tree<T> {
                 }
             _nodes[parentId] = newParent as NodeData<T>
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
+        leftRootChildIds.remove(targetId)
     }
 
     fun updateNode(

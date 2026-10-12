@@ -26,8 +26,6 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
-import com.mindsync.library.layout.MindMapLeftLayoutManager
-import com.mindsync.library.layout.MindMapRightLayoutManager
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.NodeGenerator
@@ -68,19 +66,17 @@ class MindMapState(
     val tree: Tree<*> get() = mindMapManager.getTree()
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
 
+    private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
+
     /**
-     * The side of a node its children are placed on. Changing it rearranges the tree.
+     * The side of the root new children of the root are added to unless [addNode] is given one. Setting
+     * it also moves every child of the root to that side and rearranges the tree.
      */
     var layoutSide: LayoutSide
-        get() = mindMapManager.getLayoutManager().side
+        get() = defaultSide
         set(value) {
-            if (value == layoutSide) return
-            mindMapManager.setLayoutManager(
-                when (value) {
-                    LayoutSide.RIGHT -> MindMapRightLayoutManager()
-                    LayoutSide.LEFT -> MindMapLeftLayoutManager()
-                }
-            )
+            defaultSide = value
+            tree.getRootNode().children.forEach { tree.setRootChildSide(it, value) }
             animateTreeChange()
         }
 
@@ -100,6 +96,7 @@ class MindMapState(
         shape: NodeShape = NodeShape.RECTANGLE,
         color: Color = shape.defaultColor,
         textColor: Color = shape.defaultTextColor,
+        side: LayoutSide = layoutSide,
     ) {
         mindMapManager.getSelectedNode()?.let { node ->
             val addNode: NodeData<*> = when (shape) {
@@ -114,7 +111,9 @@ class MindMapState(
                         .copy(color = color, textColor = textColor)
             }
             this.addNode = addNode
-            val addNodeCommand = AddNodeCommand(mindMapManager, addNode)
+            // Only the root has a set of children for each side; below it a child is on the side of its parent.
+            val addSide = if (node.parentId == null) side else tree.sideOf(node.id)
+            val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
             addNodeCommand.execute()
         }
         animateTreeChange()
@@ -216,16 +215,23 @@ class MindMapState(
         return touchedNode
     }
 
-    internal fun findAddButtonNode(position: Offset): NodeData<*>? {
+    // The root has an add button for each of its sets of children; other nodes have one on their own side.
+    internal fun addButtonSides(node: NodeData<*>): List<LayoutSide> {
+        return if (node.parentId == null) LayoutSide.entries else listOf(tree.sideOf(node.id))
+    }
+
+    internal fun findAddButton(position: Offset): Pair<NodeData<*>, LayoutSide>? {
         val point = toTreePoint(position)
         val radius = ADD_BUTTON_RADIUS.toPx(density)
-        var buttonNode: NodeData<*>? = null
+        var button: Pair<NodeData<*>, LayoutSide>? = null
         tree.doPreorderTraversal { node ->
-            if ((point - density.addButtonCenter(node, layoutSide)).getDistance() <= radius) {
-                buttonNode = node
+            addButtonSides(node).forEach { side ->
+                if ((point - density.addButtonCenter(node, side)).getDistance() <= radius) {
+                    button = node to side
+                }
             }
         }
-        return buttonNode
+        return button
     }
 
     internal fun onAddButtonClick(node: NodeData<*>) {
@@ -247,7 +253,7 @@ class MindMapState(
             Dp(Px(point.y).toDp(density)),
         )
         mindMapManager.update(tree)
-        mindMapManager.getLayoutManager().arrangeNode(tree, tree.getNode(selectedNode.id))
+        mindMapManager.getLayoutManager(tree.sideOf(selectedNode.id)).arrangeNode(tree, tree.getNode(selectedNode.id))
         attachedNode = findIncludedNode(point, selectedNode.id)
         invalidate()
     }
@@ -258,8 +264,12 @@ class MindMapState(
             val selectedNode = mindMapManager.getSelectedNode()
             val attachedNode = this.attachedNode
             if (selectedNode != null && attachedNode != null) {
+                // A node dropped on the root joins the children on the side of the root it was dropped on.
+                val side =
+                    if (selectedNode.path.centerX.dpVal < attachedNode.path.centerX.dpVal) LayoutSide.LEFT
+                    else LayoutSide.RIGHT
                 tree.removeNode(selectedNode.id)
-                tree.attachNode(selectedNode.id, attachedNode.id)
+                tree.attachNode(selectedNode.id, attachedNode.id, side)
                 onNodeMove(tree, selectedNode, attachedNode)
             }
         }

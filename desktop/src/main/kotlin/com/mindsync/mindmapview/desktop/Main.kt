@@ -59,7 +59,6 @@ import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
-import com.mindsync.library.data.shape
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
@@ -90,8 +89,11 @@ private val TEXT_COLORS = listOf(
     Color(0xFF274E13),
 )
 
+private val NodeShape.label: String
+    get() = name.lowercase().replaceFirstChar { it.uppercase() }
+
 private sealed interface Operation {
-    data class Add(val shape: NodeShape) : Operation
+    data class Add(val shape: NodeShape, val side: LayoutSide? = null) : Operation
     data object Update : Operation
 }
 
@@ -211,6 +213,8 @@ private fun MindMapScreen(
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
+    // The side a '+' button was clicked on, while the shape of the node to add there is being chosen.
+    var shapeChoiceSide by remember { mutableStateOf<LayoutSide?>(null) }
 
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -224,22 +228,14 @@ private fun MindMapScreen(
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = { state.removeNode() },
                     )
-                    ViewMenu(
-                        layoutSide = state.layoutSide,
-                        onLayoutSideChange = { state.layoutSide = it },
-                        onFit = { state.fitScreen() },
-                    )
+                    ViewMenu(onFit = { state.fitScreen() })
                 }
 
                 MindMap(
                     state = state
                     , modifier = Modifier.fillMaxSize()
                     , onNodeDoubleClick = { operation = Operation.Update }
-                    // The new child takes the shape of the sibling it is added below, or of its parent if it has none.
-                    , onAddChildClick = { node ->
-                        val sibling = node.children.lastOrNull()?.let { state.tree.getNode(it) }
-                        operation = Operation.Add((sibling ?: node).shape)
-                    }
+                    , onAddChildClick = { _, side -> shapeChoiceSide = side }
                 )
             }
         }
@@ -256,6 +252,16 @@ private fun MindMapScreen(
             )
         }
 
+        shapeChoiceSide?.let { side ->
+            ShapeSelectorDialog(
+                onSelect = { shape ->
+                    shapeChoiceSide = null
+                    operation = Operation.Add(shape, side)
+                },
+                onDismiss = { shapeChoiceSide = null },
+            )
+        }
+
         operation?.let { currentOperation ->
             EditNodeDialog(
                 description = if (currentOperation is Operation.Update) selectedNode?.description.orEmpty() else "",
@@ -269,7 +275,13 @@ private fun MindMapScreen(
                 },
                 onSubmit = { description, color, textColor ->
                     when (currentOperation) {
-                        is Operation.Add -> state.addNode(description, currentOperation.shape, color, textColor)
+                        is Operation.Add -> state.addNode(
+                            description,
+                            currentOperation.shape,
+                            color,
+                            textColor,
+                            currentOperation.side ?: state.layoutSide,
+                        )
                         Operation.Update -> {
                             state.editNodeText(description)
                             state.editNodeColor(color)
@@ -354,7 +366,7 @@ private fun EditMenu(
                 DropdownMenu(expanded = addExpanded, onDismissRequest = { addExpanded = false }) {
                     NodeShape.entries.forEach { shape ->
                         DropdownMenuItem(
-                            text = { Text(shape.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                            text = { Text(shape.label) },
                             onClick = {
                                 addExpanded = false
                                 expanded = false
@@ -385,11 +397,7 @@ private fun EditMenu(
 }
 
 @Composable
-private fun ViewMenu(
-    layoutSide: LayoutSide,
-    onLayoutSideChange: (LayoutSide) -> Unit,
-    onFit: () -> Unit,
-) {
+private fun ViewMenu(onFit: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Box {
@@ -404,19 +412,32 @@ private fun ViewMenu(
                     onFit()
                 },
             )
-            HorizontalDivider()
-            LayoutSide.entries.forEach { side ->
-                DropdownMenuItem(
-                    text = { Text("Layout " + side.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                    trailingIcon = { if (side == layoutSide) Text("\u2713") },
-                    onClick = {
-                        expanded = false
-                        onLayoutSideChange(side)
-                    },
-                )
-            }
         }
     }
+}
+
+@Composable
+private fun ShapeSelectorDialog(
+    onSelect: (NodeShape) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Shape") },
+        text = {
+            Column {
+                NodeShape.entries.forEach { shape ->
+                    DropdownMenuItem(text = { Text(shape.label) }, onClick = { onSelect(shape) })
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

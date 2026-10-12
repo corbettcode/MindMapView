@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.MindMap
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
@@ -47,6 +48,7 @@ fun MindMapScreen(viewModel: MindMapViewModel) {
     val state = rememberMindMapState()
     val selectedNode by viewModel.selectedNode.collectAsState()
     var operation by remember { mutableStateOf<Operation?>(null) }
+    var addSide by remember { mutableStateOf<LayoutSide?>(null) }
     val nodeFontFamily = remember { FontFamily(Font(R.font.pretendard_bold)) }
 
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
@@ -57,8 +59,9 @@ fun MindMapScreen(viewModel: MindMapViewModel) {
                     modifier = Modifier.fillMaxSize(),
                     fontFamily = nodeFontFamily,
                     onNodeClick = { node -> viewModel.setSelectedNode(createNode(node)) },
-                    onAddChildClick = { node ->
+                    onAddChildClick = { node, side ->
                         viewModel.setSelectedNode(createNode(node))
+                        addSide = side
                         operation = Operation.ADD
                     },
                 )
@@ -72,7 +75,10 @@ fun MindMapScreen(viewModel: MindMapViewModel) {
             if (selectedNode != null) {
                 MindMapSideBar(
                     removeEnabled = selectedNode is RectangleNode,
-                    onAdd = { operation = Operation.ADD },
+                    onAdd = {
+                        addSide = null
+                        operation = Operation.ADD
+                    },
                     onRemove = {
                         state.removeNode()
                         viewModel.setSelectedNode(null)
@@ -87,7 +93,7 @@ fun MindMapScreen(viewModel: MindMapViewModel) {
                 description = if (currentOperation == Operation.ADD) "" else selectedNode?.description.orEmpty(),
                 onSubmit = { description ->
                     when (currentOperation) {
-                        Operation.ADD -> state.addNode(description)
+                        Operation.ADD -> state.addNode(description, side = addSide ?: state.layoutSide)
                         Operation.UPDATE -> state.editNodeText(description)
                     }
                 },

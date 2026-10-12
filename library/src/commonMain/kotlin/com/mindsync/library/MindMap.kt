@@ -60,8 +60,9 @@ internal val ADD_BUTTON_RADIUS = Dp(10f)
  * modifier such as `Modifier.fillMaxSize()`.
  *
  * When [onAddChildClick] is given, every node gets a '+' button in the color of the lines, drawn where
- * its lines to its children start. Clicking it selects that node and calls [onAddChildClick] with it, so
- * [MindMapState.addNode] then adds the child to it.
+ * its lines to its children start. The root has one for each side, as it has a set of children on each.
+ * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
+ * button, so [MindMapState.addNode] with that side then adds the child there.
  */
 @Composable
 fun MindMap(
@@ -71,7 +72,7 @@ fun MindMap(
     , onNodeClick: (node: NodeData<*>?) -> Unit = {}
     , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
     , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
-    , onAddChildClick: ((node: NodeData<*>) -> Unit)? = null
+    , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -107,15 +108,15 @@ fun MindMap(
                 var lastClickTime = 0L
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
-                    val addButtonNode =
-                        if (currentOnAddChildClick != null) state.findAddButtonNode(down.position) else null
-                    if (addButtonNode != null) {
+                    val addButton =
+                        if (currentOnAddChildClick != null) state.findAddButton(down.position) else null
+                    if (addButton != null) {
                         down.consume()
                         lastClickedNodeId = null
                         waitForUpOrCancellation()?.let { up ->
                             up.consume()
-                            state.onAddButtonClick(addButtonNode)
-                            currentOnAddChildClick?.invoke(addButtonNode)
+                            state.onAddButtonClick(addButton.first)
+                            currentOnAddChildClick?.invoke(addButton.first, addButton.second)
                         }
                         return@awaitEachGesture
                     }
@@ -248,16 +249,16 @@ private fun DrawScope.drawLines(
     val manager = state.mindMapManager
     val path = Path()
     val stroke = Stroke(width = drawInfo.lineWidth.toPx(this))
-    val isRightLayout = state.layoutSide == LayoutSide.RIGHT
 
     fun traverseLine(node: NodeData<*>) {
         for (toNodeId in node.children) {
             val toNode = tree.getNode(toNodeId)
             if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
-                val startX = getNodeEdgeX(node, isRightEdge = isRightLayout)
+                val isRightSide = tree.sideOf(toNode.id) == LayoutSide.RIGHT
+                val startX = getNodeEdgeX(node, isRightEdge = isRightSide)
                 val startY = node.path.centerY.toPx(this)
 
-                val endX = getNodeEdgeX(toNode, isRightEdge = isRightLayout.not())
+                val endX = getNodeEdgeX(toNode, isRightEdge = isRightSide.not())
                 val endY = toNode.path.centerY.toPx(this)
 
                 val midX = (startX + endX) / 2
@@ -288,10 +289,12 @@ private fun DrawScope.drawAddButtons(
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
     state.tree.doPreorderTraversal { node ->
-        val center = addButtonCenter(node, state.layoutSide)
-        drawCircle(color = lineColor, radius = radius, center = center)
-        drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
-        drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
+        state.addButtonSides(node).forEach { side ->
+            val center = addButtonCenter(node, side)
+            drawCircle(color = lineColor, radius = radius, center = center)
+            drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
+            drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
+        }
     }
 }
 

@@ -9,8 +9,11 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 
 /**
- * Arranges the nodes of a mind map. Children are stacked vertically and centered on their parent; the
- * side of the parent they are placed on is up to the subclass.
+ * Arranges the nodes of a mind map on one [side] of their parent. Children are stacked vertically and
+ * centered on their parent; the side they are placed on is up to the subclass.
+ *
+ * The root has a set of children for each side, so a layout manager only arranges and measures the
+ * children of the root that are on its own side.
  */
 abstract class MindMapLayoutManager {
     protected val horizontalSpacing = Dp(50f)
@@ -28,13 +31,14 @@ abstract class MindMapLayoutManager {
     ): Dp
 
     /**
-     * Returns the root moved to where the whole tree fits. The root is kept where it is by default.
+     * Returns the root moved to where a tree that is [totalHeight] high fits.
      */
-    protected open fun adjustRoot(
+    open fun adjustRoot(
         root: NodeData<*>
         , tree: Tree<*>
+        , totalHeight: Dp
     ): NodeData<*> {
-        return root
+        return adjustVertically(root, totalHeight)
     }
 
     fun arrangeNode(
@@ -43,28 +47,27 @@ abstract class MindMapLayoutManager {
     ) {
         val root = rootNodeData ?: tree.getRootNode()
         val totalHeight = measureChildHeight(root, tree)
-        var newHead =
-            if (root.path.centerX.dpVal <= (totalHeight / 2).dpVal) {
-                root.adjustPosition(horizontalSpacing, totalHeight)
+        val newHead =
+            if (rootNodeData == null) {
+                adjustRoot(root, tree, totalHeight).also { tree.setRootNode(it) }
             }
             else {
-                root
-            } as NodeData<*>
-        if (rootNodeData == null) {
-            newHead = adjustRoot(newHead, tree)
-            tree.setRootNode(newHead)
-        }
-        recurArrangeNode(newHead, tree)
+                adjustVertically(root, totalHeight)
+            }
+        arrangeChildren(newHead, tree)
     }
 
-    private fun recurArrangeNode(
+    /**
+     * Arranges the nodes below [currentNodeData] that are on this side of it.
+     */
+    fun arrangeChildren(
         currentNodeData: NodeData<*>
         , tree: Tree<*>
     ) {
         val childHeightSum = measureChildHeight(currentNodeData, tree)
         var startY = currentNodeData.path.centerY - (childHeightSum / 2)
 
-        currentNodeData.children.forEach { childId ->
+        childrenOnSide(currentNodeData, tree).forEach { childId ->
             val child = tree.getNode(childId)
             val childHeight = measureChildHeight(child, tree)
             val newX = childCenterX(currentNodeData.path.centerX, currentNodeData, child)
@@ -72,9 +75,29 @@ abstract class MindMapLayoutManager {
             val newChild = moveNode(child, newX, newY)
 
             tree.setNode(childId, newChild)
-            recurArrangeNode(newChild, tree)
+            arrangeChildren(newChild, tree)
             startY += childHeight + verticalSpacing
         }
+    }
+
+    private fun adjustVertically(
+        node: NodeData<*>
+        , totalHeight: Dp
+    ): NodeData<*> {
+        return if (node.path.centerX.dpVal <= (totalHeight / 2).dpVal) {
+            node.adjustPosition(horizontalSpacing, totalHeight)
+        }
+        else {
+            node
+        }
+    }
+
+    // Only the root has children on both sides.
+    protected fun childrenOnSide(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): List<String> {
+        return if (node.parentId == null) node.children.filter { tree.sideOf(it) == side } else node.children
     }
 
     /**
@@ -113,13 +136,14 @@ abstract class MindMapLayoutManager {
         tree: Tree<*>,
     ): Dp {
         var heightSum = Dp(0f)
+        val children = childrenOnSide(nodeData, tree)
 
-        if (nodeData.children.isNotEmpty()) {
-            nodeData.children.forEach { childId ->
+        if (children.isNotEmpty()) {
+            children.forEach { childId ->
                 val childNode = tree.getNode(childId)
                 heightSum += measureChildHeight(childNode, tree)
             }
-            heightSum += verticalSpacing * (nodeData.children.size - 1)
+            heightSum += verticalSpacing * (children.size - 1)
         }
         else {
             heightSum =
