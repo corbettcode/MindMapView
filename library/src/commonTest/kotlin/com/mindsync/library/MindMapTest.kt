@@ -6,6 +6,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -15,7 +17,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
@@ -32,6 +37,8 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
+import com.mindsync.library.util.RichTextSize
+import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -505,6 +512,89 @@ class MindMapTest {
         assertEquals("a bold & italic word", richText.text)
         assertTrue(richText.spanStyles.any { it.item.fontWeight == FontWeight.Bold && richText.text.substring(it.start, it.end) == "bold" })
         assertTrue(richText.spanStyles.any { it.item.fontStyle == FontStyle.Italic && richText.text.substring(it.start, it.end) == "italic" })
+    }
+
+    private fun AnnotatedString.sizeOf(word: String): RichTextSize {
+        val start = text.indexOf(word)
+        val fontSize = spanStyles
+            .lastOrNull { it.start <= start && it.end >= start + word.length && it.item.fontSize != TextUnit.Unspecified }
+            ?.item?.fontSize ?: TextUnit.Unspecified
+        return RichTextSize.of(fontSize)
+    }
+
+    @Test
+    fun richTextSizeIsTheOneNearestAFontSize() {
+        assertEquals(RichTextSize.NORMAL, RichTextSize.of(TextUnit.Unspecified))
+        assertEquals(RichTextSize.SMALL, RichTextSize.of(0.8f.em))
+        assertEquals(RichTextSize.NORMAL, RichTextSize.of(1f.em))
+        assertEquals(RichTextSize.LARGE, RichTextSize.of(1.4f.em))
+        // A size in a description is read as CSS pixels, of which a normal size has 16.
+        assertEquals(RichTextSize.SMALL, RichTextSize.of(12.8f.sp))
+        assertEquals(RichTextSize.NORMAL, RichTextSize.of(16f.sp))
+        assertEquals(RichTextSize.LARGE, RichTextSize.of(22.4f.sp))
+    }
+
+    @Test
+    fun descriptionFontSizesAreRelativeToTheNodeText() {
+        val richText = RichText.parse(
+            "<small>little</small> plain <span style=\"font-size: 1.4em;\">big</span> <span style=\"font-size: 16px;\">same</span>",
+        )
+
+        assertEquals("little plain big same", richText.text)
+        assertTrue(richText.spanStyles.none { it.item.fontSize.isSp })
+        assertEquals(RichTextSize.SMALL, richText.sizeOf("little"))
+        assertEquals(RichTextSize.NORMAL, richText.sizeOf("plain"))
+        assertEquals(RichTextSize.LARGE, richText.sizeOf("big"))
+        assertEquals(RichTextSize.NORMAL, richText.sizeOf("same"))
+    }
+
+    @Test
+    fun sizesAppliedInAnEditorAreKeptInTheDescription() {
+        val editor = RichTextState().setHtml("little plain big")
+        editor.addSpanStyle(RichTextSize.SMALL.spanStyle, TextRange(0, 6))
+        editor.addSpanStyle(RichTextSize.LARGE.spanStyle, TextRange(13, 16))
+
+        val richText = RichText.parse(editor.toHtml())
+        assertEquals(RichTextSize.SMALL, richText.sizeOf("little"))
+        assertEquals(RichTextSize.NORMAL, richText.sizeOf("plain"))
+        assertEquals(RichTextSize.LARGE, richText.sizeOf("big"))
+
+        // Opened in an editor again, the sizes are still the ones that were chosen.
+        val reopened = RichTextState().setHtml(editor.toHtml()).annotatedString
+        assertEquals(RichTextSize.SMALL, reopened.sizeOf("little"))
+        assertEquals(RichTextSize.LARGE, reopened.sizeOf("big"))
+    }
+
+    @Test
+    fun nodeGrowsAndShrinksWithTheSizeOfItsText() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        listOf("<small>some text</small>", "some text", "<span style=\"font-size: 1.4em;\">some text</span>").forEach {
+            state.addNode(it)
+            waitForIdle()
+        }
+
+        val (small, normal, large) = state.tree.getRootNode().children.map {
+            assertIs<RectangleNodeData>(state.tree.getNode(it)).path
+        }
+        val padding = DrawInfo().padding.dpVal
+        assertEquals((normal.width.dpVal - padding) * 0.8f, small.width.dpVal - padding, 1.5f)
+        assertEquals((normal.width.dpVal - padding) * 1.4f, large.width.dpVal - padding, 1.5f)
+        // A line is never lower than one of normal text, so small text only makes a node narrower.
+        assertEquals(normal.height.dpVal, small.height.dpVal, 0.01f)
+        assertTrue(large.height.dpVal > normal.height.dpVal)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsTextSizes() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val description = "<p><small>little</small> and <span style=\"font-size: 1.4em;\">big</span></p>"
+        tree.addNode("a", tree.getRootNode().id, description)
+
+        val read = FreeMind.read(FreeMind.write(tree))
+        assertEquals(description, read.getNode("a").description)
     }
 
     @Test

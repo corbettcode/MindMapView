@@ -53,6 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mindsync.library.MindMap
@@ -63,6 +65,7 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.library.util.DescriptionEmoji
+import com.mindsync.library.util.RichTextSize
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import java.awt.FileDialog
@@ -92,6 +95,9 @@ private val TEXT_COLORS = listOf(
 )
 
 private val NodeShape.label: String
+    get() = name.lowercase().replaceFirstChar { it.uppercase() }
+
+private val RichTextSize.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
 private sealed interface Operation {
@@ -510,7 +516,10 @@ private fun RichTextToolbar(state: RichTextState) {
     val spanStyle = state.currentSpanStyle
     val decoration = spanStyle.textDecoration ?: TextDecoration.None
 
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         RichTextToggle(
             label = "B",
             labelStyle = SpanStyle(fontWeight = FontWeight.Bold),
@@ -547,6 +556,50 @@ private fun RichTextToolbar(state: RichTextState) {
             checked = state.isOrderedList,
             onToggle = { state.toggleOrderedList() },
         )
+        RichTextSizeSelect(
+            selectedSize = RichTextSize.of(spanStyle.fontSize),
+            onSelect = { state.setSize(it) },
+        )
+    }
+}
+
+private fun RichTextState.setSize(size: RichTextSize) {
+    // A size is only taken away by the very size the text has, so a selection is first given one size throughout.
+    if (!selection.collapsed) addSpanStyle(SpanStyle(fontSize = 1.em))
+    removeSpanStyle(SpanStyle(fontSize = currentSpanStyle.fontSize))
+    if (size != RichTextSize.NORMAL) addSpanStyle(size.spanStyle)
+}
+
+// Like the toggles, the select does not take focus, so the editor keeps its selection while a size is chosen.
+@Composable
+private fun RichTextSizeSelect(
+    selectedSize: RichTextSize,
+    onSelect: (RichTextSize) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(
+            onClick = { expanded = true },
+            modifier = Modifier.focusProperties { canFocus = false },
+        ) {
+            Text("${selectedSize.label} \u25BE")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            properties = PopupProperties(focusable = false),
+        ) {
+            RichTextSize.entries.forEach { size ->
+                DropdownMenuItem(
+                    text = { Text(size.label, style = LocalTextStyle.current.merge(size.spanStyle)) },
+                    onClick = {
+                        expanded = false
+                        onSelect(size)
+                    },
+                )
+            }
+        }
     }
 }
 
