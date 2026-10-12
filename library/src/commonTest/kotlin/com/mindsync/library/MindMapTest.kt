@@ -14,6 +14,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -920,6 +921,213 @@ class MindMapTest {
         assertEquals(listOf(secondId), state.tree.getNode(firstId).children)
         assertIs<OvalNodeData>(state.tree.getNode(secondId))
         assertEquals(firstId, state.tree.getNode(secondId).parentId)
+    }
+
+    @Test
+    fun noteIsSetKeptThroughEditsAndCleared() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", note = "<p>remember <b>this</b></p>")
+        waitForIdle()
+        val child = state.tree.getNode(state.tree.getRootNode().children.single())
+        assertEquals("<p>remember <b>this</b></p>", child.note)
+        assertEquals("", state.tree.getRootNode().note)
+
+        clickNode(child)
+        state.editNodeText("changed")
+        state.editNodeColor(Color.Red)
+        state.editNodeTextColor(Color.White)
+        waitForIdle()
+        assertEquals("<p>remember <b>this</b></p>", state.tree.getNode(child.id).note)
+
+        state.editNodeNote("<p>something else</p>")
+        waitForIdle()
+        assertEquals("<p>something else</p>", state.tree.getNode(child.id).note)
+        assertEquals("<p>something else</p>", state.selectedNode?.note)
+        assertEquals("changed", state.tree.getNode(child.id).description)
+
+        state.editNodeNote("")
+        waitForIdle()
+        assertEquals("", state.tree.getNode(child.id).note)
+    }
+
+    @Test
+    fun noteDoesNotChangeTheSizeOfItsNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val child = assertIs<RectangleNodeData>(state.tree.getNode(state.tree.getRootNode().children.single()))
+
+        clickNode(child)
+        state.editNodeNote("<p>a note that is a good deal longer than the text of its node</p>")
+        waitForIdle()
+        val withNote = assertIs<RectangleNodeData>(state.tree.getNode(child.id))
+        assertEquals(child.path, withNote.path)
+    }
+
+    @Test
+    fun noteIsKeptWhenItsNodeIsReattached() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second", NodeShape.OVAL, note = "<p>kept</p>")
+        waitForIdle()
+
+        val (firstId, secondId) = state.tree.getRootNode().children
+        val first = state.tree.getNode(firstId)
+        val second = state.tree.getNode(secondId)
+        onNodeWithTag(TAG).performTouchInput { swipe(center(second), center(first), durationMillis = 200) }
+        waitForIdle()
+
+        assertEquals(firstId, state.tree.getNode(secondId).parentId)
+        assertEquals("<p>kept</p>", state.tree.getNode(secondId).note)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsNotes() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.updateNodeNote(rootId, "<p>about the root</p>")
+        tree.addNode("a", rootId, "first", note = "<p>a <b>note</b><br>in two lines</p>")
+        tree.addNode("b", rootId, "second", NodeShape.STADIUM)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<richcontent TYPE=\"NOTE\"><html><head></head><body><p>a <b>note</b><br/>in two lines</p></body></html></richcontent>" in written)
+        assertEquals(2, Regex("TYPE=\"NOTE\"").findAll(written).count())
+
+        val read = FreeMind.read(written)
+        assertEquals("<p>about the root</p>", read.getRootNode().note)
+        assertEquals("<p>a <b>note</b><br/>in two lines</p>", read.getNode("a").note)
+        assertEquals("first", read.getNode("a").description)
+        assertEquals("", read.getNode("b").note)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
+    fun freeMindNotesAreRead() {
+        val content = """
+            <map version="1.0.1">
+            <node ID="ID_1" TEXT="root">
+            <node ID="ID_2" TEXT="child">
+            <richcontent TYPE="NOTE"><html>
+              <head>
+              </head>
+              <body>
+                <p>
+                  a note
+                </p>
+              </body>
+            </html>
+            </richcontent>
+            </node>
+            </node>
+            </map>
+        """.trimIndent()
+
+        val tree = FreeMind.read(content)
+        assertEquals("child", tree.getNode("ID_2").description)
+        assertEquals("<p>a note</p>", tree.getNode("ID_2").note)
+        assertEquals("", tree.getRootNode().note)
+    }
+
+    @Test
+    fun noteMarkerSitsOnTheTopRightEdgeOfItsNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        NodeShape.entries.forEach {
+            state.addNode("child", it)
+            waitForIdle()
+        }
+
+        val root = state.tree.getRootNode()
+        val rootMarker = density.noteMarkerCenter(root)
+        val rootCenter = with(density) { center(root) }
+        assertEquals(with(density) { root.path.radius.dpVal.dp.toPx() }, (rootMarker - rootCenter).getDistance(), 0.01f)
+        assertTrue(rootMarker.x > rootCenter.x && rootMarker.y < rootCenter.y)
+
+        root.children.map { state.tree.getNode(it) }.forEach { node ->
+            val marker = density.noteMarkerCenter(node)
+            val center = with(density) { center(node) }
+            assertTrue(marker.x > center.x && marker.y < center.y)
+            when (node) {
+                is RectangleNodeData -> {
+                    assertEquals(with(density) { node.path.rightX().dpVal.dp.toPx() }, marker.x, 0.01f)
+                    assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
+                }
+                is OvalNodeData -> {
+                    val markerDp = with(density) { Dp(marker.x.toDp().value) to Dp(marker.y.toDp().value) }
+                    assertTrue(node.path.contains(markerDp.first - 0.1f, markerDp.second + 0.1f))
+                    assertFalse(node.path.contains(markerDp.first + 0.1f, markerDp.second - 0.1f))
+                }
+                is StadiumNodeData -> {
+                    val markerDp = with(density) { Dp(marker.x.toDp().value) to Dp(marker.y.toDp().value) }
+                    assertTrue(node.path.contains(markerDp.first - 0.1f, markerDp.second + 0.1f))
+                    assertFalse(node.path.contains(markerDp.first + 0.1f, markerDp.second - 0.1f))
+                }
+                is CircleNodeData ->
+                    assertEquals(with(density) { node.path.radius.dpVal.dp.toPx() }, (marker - center).getDistance(), 0.01f)
+            }
+        }
+    }
+
+    @Test
+    fun hoveredNodeFollowsTheMouse() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val child = state.tree.getNode(state.tree.getRootNode().children.single())
+        assertNull(state.hoveredNode)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(child)) }
+        waitForIdle()
+        assertEquals(child.id, state.hoveredNode?.id)
+        val childCenter = with(density) { center(child) }
+        assertEquals(childCenter, state.hoverPosition)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(state.tree.getRootNode())) }
+        waitForIdle()
+        assertEquals(state.tree.getRootNode().id, state.hoveredNode?.id)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(Offset(5f, 5f)) }
+        waitForIdle()
+        assertNull(state.hoveredNode)
+    }
+
+    @Test
+    fun hoverEndsWhenTheMouseIsPressedOrLeaves() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        waitForIdle()
+        val root = state.tree.getRootNode()
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(root)) }
+        waitForIdle()
+        assertEquals(root.id, state.hoveredNode?.id)
+        onNodeWithTag(TAG).performMouseInput { press() }
+        waitForIdle()
+        assertNull(state.hoveredNode)
+        onNodeWithTag(TAG).performMouseInput { release() }
+        waitForIdle()
+
+        onNodeWithTag(TAG).performMouseInput { moveBy(Offset(1f, 1f)) }
+        waitForIdle()
+        assertEquals(root.id, state.hoveredNode?.id)
+        onNodeWithTag(TAG).performMouseInput { exit() }
+        waitForIdle()
+        assertNull(state.hoveredNode)
     }
 
     @Test

@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -30,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +41,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -47,16 +52,20 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberDialogState
 import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
 import com.mindsync.library.data.NodeShape
@@ -65,17 +74,30 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.library.util.DescriptionEmoji
+import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
+import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
 import java.io.IOException
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 private const val APP_NAME = "MindMapView"
 private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
+private const val NOTE_POPUP_DELAY_MILLIS = 1000L
+
+private val EDIT_DIALOG_SIZE = DpSize(600.dp, 720.dp)
+private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 620.dp)
+private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
+private val NOTE_POPUP_GAP = 16.dp
+
+// Wide enough for the longest of the picker labels, so the pickers line up.
+private val PICKER_LABEL_WIDTH = 56.dp
 
 private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D),
@@ -224,6 +246,17 @@ private fun MindMapScreen(
     // The side a '+' button was clicked on, while the shape of the node to add there is being chosen.
     var shapeChoiceSide by remember { mutableStateOf<LayoutSide?>(null) }
 
+    // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
+    var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    val hoveredNode = state.hoveredNode
+    val isDialogOpen = operation != null || shapeChoiceSide != null
+    LaunchedEffect(hoveredNode?.id, hoveredNode?.note, isDialogOpen) {
+        notePopup = null
+        val note = hoveredNode?.note?.takeIf { it.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
+        delay(NOTE_POPUP_DELAY_MILLIS)
+        notePopup = note to state.hoverPosition
+    }
+
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
@@ -239,12 +272,15 @@ private fun MindMapScreen(
                     ViewMenu(onFit = { state.fitScreen() })
                 }
 
-                MindMap(
-                    state = state
-                    , modifier = Modifier.fillMaxSize()
-                    , onNodeDoubleClick = { operation = Operation.Update }
-                    , onAddChildClick = { _, side -> shapeChoiceSide = side }
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    MindMap(
+                        state = state
+                        , modifier = Modifier.fillMaxSize()
+                        , onNodeDoubleClick = { operation = Operation.Update }
+                        , onAddChildClick = { _, side -> shapeChoiceSide = side }
+                    )
+                    notePopup?.let { (note, position) -> NotePopup(note, position) }
+                }
             }
         }
 
@@ -272,7 +308,9 @@ private fun MindMapScreen(
 
         operation?.let { currentOperation ->
             EditNodeDialog(
+                title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
                 description = if (currentOperation is Operation.Update) selectedNode?.description.orEmpty() else "",
+                note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
                 color = when (currentOperation) {
                     is Operation.Add -> currentOperation.shape.defaultColor
                     Operation.Update -> selectedNode?.color ?: Color.Unspecified
@@ -281,7 +319,7 @@ private fun MindMapScreen(
                     is Operation.Add -> currentOperation.shape.defaultTextColor
                     Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
                 },
-                onSubmit = { description, color, textColor ->
+                onSubmit = { description, note, color, textColor ->
                     when (currentOperation) {
                         is Operation.Add -> state.addNode(
                             description,
@@ -289,9 +327,11 @@ private fun MindMapScreen(
                             color,
                             textColor,
                             currentOperation.side ?: state.layoutSide,
+                            note,
                         )
                         Operation.Update -> {
                             state.editNodeText(description)
+                            state.editNodeNote(note)
                             state.editNodeColor(color)
                             state.editNodeTextColor(textColor)
                         }
@@ -451,30 +491,43 @@ private fun ShapeSelectorDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditNodeDialog(
+    title: String,
     description: String,
+    note: String,
     color: Color,
     textColor: Color,
-    onSubmit: (description: String, color: Color, textColor: Color) -> Unit,
+    onSubmit: (description: String, note: String, color: Color, textColor: Color) -> Unit,
     onDismiss: () -> Unit,
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
     val (emoji, text) = remember { DescriptionEmoji.split(description) }
     val richTextState = remember { RichTextState().setHtml(text) }
+    val noteState = remember { RichTextState().setHtml(note) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    // A window of its own, so it can be resized: the note takes the room the rest leaves.
+    DialogWindow(
+        onCloseRequest = onDismiss,
+        state = rememberDialogState(size = EDIT_DIALOG_SIZE),
+        title = title,
+    ) {
+        LaunchedEffect(Unit) {
+            window.minimumSize = with(EDIT_DIALOG_MIN_SIZE) { Dimension(width.value.toInt(), height.value.toInt()) }
+        }
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+            ) {
+                EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
                 RichTextToolbar(richTextState)
                 OutlinedRichTextEditor(
                     state = richTextState,
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 200.dp),
                 )
-                EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
                 ColorPicker(
                     label = "Fill",
                     colors = remember(color) { (NODE_COLORS + color).distinct() },
@@ -487,28 +540,78 @@ private fun EditNodeDialog(
                     selectedColor = selectedTextColor,
                     onSelect = { selectedTextColor = it },
                 )
+                Text("Note", style = MaterialTheme.typography.titleSmall)
+                RichTextToolbar(noteState)
+                OutlinedRichTextEditor(
+                    state = noteState,
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Button(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            onSubmit(
+                                DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
+                                // An editor that was emptied still holds an empty paragraph, which is no note.
+                                if (noteState.annotatedString.text.isBlank()) "" else noteState.toHtml(),
+                                selectedColor,
+                                selectedTextColor,
+                            )
+                            onDismiss()
+                        },
+                    ) {
+                        Text("OK")
+                    }
+                }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSubmit(
-                        DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
-                        selectedColor,
-                        selectedTextColor,
-                    )
-                    onDismiss()
-                },
+        }
+    }
+}
+
+// The popup takes no pointer input, so the pointer stays over the mind map below it while it is shown.
+@Composable
+private fun NotePopup(
+    note: String,
+    position: Offset,
+) {
+    val text = remember(note) { RichText.parse(note) }
+    val shape = RoundedCornerShape(8.dp)
+
+    Layout(
+        content = {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = NOTE_POPUP_MAX_SIZE.width)
+                    .heightIn(max = NOTE_POPUP_MAX_SIZE.height)
+                    .shadow(4.dp, shape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                    .padding(12.dp),
             ) {
-                Text("OK")
+                Text(text, color = MaterialTheme.colorScheme.onSurface)
             }
         },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
+        modifier = Modifier.fillMaxSize(),
+    ) { measurables, constraints ->
+        val placeable = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val gap = NOTE_POPUP_GAP.roundToPx()
+        val pointerX = position.x.roundToInt()
+        val pointerY = position.y.roundToInt()
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            // Below and to the right of the pointer, or above it where there is no room below.
+            val x = (pointerX + gap).coerceAtMost(constraints.maxWidth - placeable.width).coerceAtLeast(0)
+            val below = pointerY + gap
+            val y =
+                if (below + placeable.height <= constraints.maxHeight) below
+                else (pointerY - gap - placeable.height).coerceAtLeast(0)
+            placeable.place(x, y)
+        }
+    }
 }
 
 @Composable
@@ -631,7 +734,7 @@ private fun EmojiPicker(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Emoji", modifier = Modifier.width(40.dp))
+        Text("Emoji", maxLines = 1, softWrap = false, modifier = Modifier.width(PICKER_LABEL_WIDTH))
         Box {
             TextButton(onClick = { expanded = true }) {
                 Text(selectedEmoji ?: "None")
@@ -682,7 +785,7 @@ private fun ColorPicker(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, modifier = Modifier.width(40.dp))
+        Text(label, modifier = Modifier.width(PICKER_LABEL_WIDTH))
         colors.forEach { color ->
             val borderColor =
                 if (color == selectedColor) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant

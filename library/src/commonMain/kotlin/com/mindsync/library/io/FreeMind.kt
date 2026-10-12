@@ -58,6 +58,7 @@ object FreeMind {
                 children = children,
                 color = rootElement.color("BACKGROUND_COLOR") ?: root.color,
                 description = rootElement.description(),
+                note = rootElement.note(),
                 textColor = rootElement.color("COLOR") ?: root.textColor,
             ),
         )
@@ -77,6 +78,11 @@ object FreeMind {
         if (plainText == null) {
             append(indent).append("  <richcontent TYPE=\"NODE\"><html><head></head><body>")
             append(toXhtml(node.description))
+            append("</body></html></richcontent>\n")
+        }
+        if (node.note.isNotBlank()) {
+            append(indent).append("  <richcontent TYPE=\"NOTE\"><html><head></head><body>")
+            append(toXhtml(node.note))
             append("</body></html></richcontent>\n")
         }
         append(indent).append("  <attribute NAME=\"").append(SHAPE_ATTRIBUTE).append("\" VALUE=\"")
@@ -101,6 +107,7 @@ object FreeMind {
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
         val description = element.description()
+        val note = element.note()
 
         val node = when (shape) {
             NodeShape.CIRCLE -> CircleNodeData(
@@ -111,6 +118,7 @@ object FreeMind {
                 children = children,
                 color = color,
                 textColor = textColor,
+                note = note,
             )
             NodeShape.RECTANGLE -> RectangleNodeData(
                 id = id,
@@ -120,6 +128,7 @@ object FreeMind {
                 children = children,
                 color = color,
                 textColor = textColor,
+                note = note,
             )
             NodeShape.STADIUM -> StadiumNodeData(
                 id = id,
@@ -129,6 +138,7 @@ object FreeMind {
                 children = children,
                 color = color,
                 textColor = textColor,
+                note = note,
             )
             NodeShape.OVAL -> OvalNodeData(
                 id = id,
@@ -138,6 +148,7 @@ object FreeMind {
                 children = children,
                 color = color,
                 textColor = textColor,
+                note = note,
             )
         }
         tree.setNode(id, node)
@@ -164,6 +175,12 @@ object FreeMind {
         val richContent = children.firstOrNull { it.name == "richcontent" && it.attributes["TYPE"] == "NODE" }?.rawContent
         if (richContent != null) return htmlBody(richContent)
         return escapeHtml(attributes["TEXT"].orEmpty())
+    }
+
+    // FreeMind keeps a node's note in a <richcontent> child of its own.
+    private fun XmlElement.note(): String {
+        val richContent = children.firstOrNull { it.name == "richcontent" && it.attributes["TYPE"] == "NOTE" }?.rawContent
+        return richContent?.let { htmlBody(it) }.orEmpty()
     }
 
     private fun Color.toHex(): String = "#" + (toArgb() and 0xFFFFFF).toString(16).padStart(6, '0')

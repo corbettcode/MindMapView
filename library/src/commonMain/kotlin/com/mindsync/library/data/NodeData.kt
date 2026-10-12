@@ -4,6 +4,10 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.util.Dp
 
 
+/**
+ * A node of the tree. Its [description] and its [note] are rich text held as HTML; only the description
+ * is drawn on the node.
+ */
 sealed class NodeData<T>(
     open val id: String
     , open var alpha: Float
@@ -12,6 +16,7 @@ sealed class NodeData<T>(
     , open val description: String
     , open var isAnimating: Boolean = false
     , open var isDrawingLine: Boolean = false
+    , open val note: String = ""
     , open val parentId: String?
     , open val path: NodePath
     , open var strokeWidth: Float = 1f
@@ -28,6 +33,7 @@ data class CircleNodeData(
     , override val description: String
     , override var isAnimating: Boolean = false
     , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
     , override val parentId: String?
     , override val path: CirclePath = CirclePath(Dp(0f), Dp(0f), Dp(0f))
     , override var strokeWidth: Float = 1f
@@ -40,6 +46,7 @@ data class CircleNodeData(
     , description
     , isAnimating
     , isDrawingLine
+    , note
     , parentId
     , path
     , strokeWidth
@@ -61,6 +68,7 @@ data class RectangleNodeData(
     , override val description: String
     , override var isAnimating: Boolean = false
     , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
     , override val parentId: String
     , override val path: RectanglePath = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
     , override var strokeWidth: Float = 1f
@@ -73,6 +81,7 @@ data class RectangleNodeData(
     , description
     , isAnimating
     , isDrawingLine
+    , note
     , parentId
     , path
     , strokeWidth
@@ -91,6 +100,7 @@ data class StadiumNodeData(
     , override val description: String
     , override var isAnimating: Boolean = false
     , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
     , override val parentId: String?
     , override val path: StadiumPath = StadiumPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
     , override var strokeWidth: Float = 1f
@@ -103,6 +113,7 @@ data class StadiumNodeData(
     , description
     , isAnimating
     , isDrawingLine
+    , note
     , parentId
     , path
     , strokeWidth
@@ -121,6 +132,7 @@ data class OvalNodeData(
     , override val description: String
     , override var isAnimating: Boolean = false
     , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
     , override val parentId: String?
     , override val path: OvalPath = OvalPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
     , override var strokeWidth: Float = 1f
@@ -133,6 +145,7 @@ data class OvalNodeData(
     , description
     , isAnimating
     , isDrawingLine
+    , note
     , parentId
     , path
     , strokeWidth

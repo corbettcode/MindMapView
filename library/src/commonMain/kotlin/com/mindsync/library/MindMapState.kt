@@ -67,6 +67,15 @@ class MindMapState(
     val tree: Tree<*> get() = mindMapManager.getTree()
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
 
+    private var hoveredNodeId by mutableStateOf<String?>(null)
+
+    /** The node the mouse pointer is over while no button is pressed, or null when it is over none. */
+    val hoveredNode: NodeData<*>? get() = hoveredNodeId?.let { tree.nodes[it] }
+
+    /** Where in the bounds of the mind map the mouse pointer last was. */
+    var hoverPosition by mutableStateOf(Offset.Zero)
+        private set
+
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
 
     /**
@@ -98,21 +107,22 @@ class MindMapState(
         color: Color = shape.defaultColor,
         textColor: Color = shape.defaultTextColor,
         side: LayoutSide = layoutSide,
+        note: String = "",
     ) {
         mindMapManager.getSelectedNode()?.let { node ->
             val addNode: NodeData<*> = when (shape) {
                 NodeShape.CIRCLE ->
                     NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor)
+                        .copy(color = color, textColor = textColor, note = note)
                 NodeShape.RECTANGLE ->
                     NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor)
+                        .copy(color = color, textColor = textColor, note = note)
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor)
+                        .copy(color = color, textColor = textColor, note = note)
                 NodeShape.OVAL ->
                     NodeGenerator.makeNode(OvalNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor)
+                        .copy(color = color, textColor = textColor, note = note)
             }
             this.addNode = addNode
             // Only the root has a set of children for each side; below it a child is on the side of its parent.
@@ -153,6 +163,13 @@ class MindMapState(
     fun editNodeTextColor(textColor: Color) {
         mindMapManager.getSelectedNode()?.let { node ->
             tree.updateNodeTextColor(node.id, textColor)
+            invalidate()
+        }
+    }
+
+    fun editNodeNote(note: String) {
+        mindMapManager.getSelectedNode()?.let { node ->
+            tree.updateNodeNote(node.id, note)
             invalidate()
         }
     }
@@ -207,16 +224,26 @@ class MindMapState(
 
     internal fun onTouchDown(position: Offset): NodeData<*>? {
         mindMapManager.setNotMoving()
-        val point = toTreePoint(position)
-        var touchedNode: NodeData<*>? = null
-        tree.doPreorderTraversal { node ->
-            if (isInsideNode(node, point)) {
-                touchedNode = node
-            }
-        }
+        val touchedNode = findNode(toTreePoint(position))
         mindMapManager.setSelectedNode(touchedNode)
         invalidate()
         return touchedNode
+    }
+
+    // A null position is a pointer that is not hovering: one that left the mind map or has a button pressed.
+    internal fun onHover(position: Offset?) {
+        if (position != null) hoverPosition = position
+        hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
+    }
+
+    private fun findNode(point: Offset): NodeData<*>? {
+        var foundNode: NodeData<*>? = null
+        tree.doPreorderTraversal { node ->
+            if (isInsideNode(node, point)) {
+                foundNode = node
+            }
+        }
+        return foundNode
     }
 
     // The root has an add button for each of its sets of children; other nodes have one on their own side.

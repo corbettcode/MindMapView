@@ -54,7 +54,14 @@ private const val TEXT_CACHE_SIZE = 64
 private const val ADD_BUTTON_ARM_RATIO = 0.5f
 private const val ADD_BUTTON_STROKE_RATIO = 0.25f
 
+private const val NOTE_MARKER_FOLD_RATIO = 0.4f
+private const val NOTE_MARKER_STROKE_RATIO = 0.1f
+
+// cos 45°: how far along each radius the top right of a round edge is.
+private const val TOP_RIGHT_OF_ARC = 0.70710677f
+
 internal val ADD_BUTTON_RADIUS = Dp(10f)
+internal val NOTE_MARKER_SIZE = Dp(12f)
 
 /**
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
@@ -64,6 +71,9 @@ internal val ADD_BUTTON_RADIUS = Dp(10f)
  * its lines to its children start. The root has one for each side, as it has a set of children on each.
  * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
  * button, so [MindMapState.addNode] with that side then adds the child there.
+ *
+ * A node with a note has a marker on its top right edge. The note itself is not drawn:
+ * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
  */
 @Composable
 fun MindMap(
@@ -162,6 +172,11 @@ fun MindMap(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
+                        when (event.type) {
+                            PointerEventType.Move, PointerEventType.Enter ->
+                                state.onHover(event.changes.firstOrNull()?.takeIf { !it.pressed }?.position)
+                            PointerEventType.Press, PointerEventType.Exit -> state.onHover(null)
+                        }
                         if (event.type == PointerEventType.Scroll) {
                             val scrollY = event.changes.fold(0f) { sum, change -> sum + change.scrollDelta.y }
                             if (scrollY != 0f) {
@@ -211,7 +226,64 @@ private fun DrawScope.drawTree(
         val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
         nodeDrawer.drawNode(this)
         nodeDrawer.drawText(this, measureTextSize.measure(node.description))
+        if (node.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(node), drawInfo)
     }
+}
+
+// A sheet of paper with its top right corner folded over.
+private fun DrawScope.drawNoteMarker(
+    center: Offset
+    , drawInfo: DrawInfo
+) {
+    val half = NOTE_MARKER_SIZE.toPx(this) / 2
+    val fold = half * 2 * NOTE_MARKER_FOLD_RATIO
+    val stroke = Stroke(width = half * 2 * NOTE_MARKER_STROKE_RATIO)
+    val left = center.x - half
+    val top = center.y - half
+    val right = center.x + half
+    val bottom = center.y + half
+
+    val sheet = Path().apply {
+        moveTo(left, top)
+        lineTo(right - fold, top)
+        lineTo(right, top + fold)
+        lineTo(right, bottom)
+        lineTo(left, bottom)
+        close()
+    }
+    drawPath(sheet, drawInfo.noteMarkerColor)
+    drawPath(sheet, drawInfo.noteMarkerLineColor, style = stroke)
+    val foldedCorner = Path().apply {
+        moveTo(right - fold, top)
+        lineTo(right - fold, top + fold)
+        lineTo(right, top + fold)
+    }
+    drawPath(foldedCorner, drawInfo.noteMarkerLineColor, style = stroke)
+}
+
+// The marker is centered on the top right of the node's edge, so it is clear of the node's text.
+internal fun Density.noteMarkerCenter(node: NodeData<*>): Offset {
+    val offsetX: Dp
+    val offsetY: Dp
+    when (node) {
+        is CircleNodeData -> {
+            offsetX = node.path.radius * TOP_RIGHT_OF_ARC
+            offsetY = node.path.radius * TOP_RIGHT_OF_ARC
+        }
+        is RectangleNodeData -> {
+            offsetX = node.path.width / 2
+            offsetY = node.path.height / 2
+        }
+        is StadiumNodeData -> {
+            offsetX = node.path.length / 2 + node.path.radius * TOP_RIGHT_OF_ARC
+            offsetY = node.path.radius * TOP_RIGHT_OF_ARC
+        }
+        is OvalNodeData -> {
+            offsetX = node.path.radiusX * TOP_RIGHT_OF_ARC
+            offsetY = node.path.radiusY * TOP_RIGHT_OF_ARC
+        }
+    }
+    return Offset((node.path.centerX + offsetX).toPx(this), (node.path.centerY - offsetY).toPx(this))
 }
 
 private fun DrawScope.drawAttachedNode(

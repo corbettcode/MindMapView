@@ -116,6 +116,7 @@ class Tree<T> {
         color: Color = shape.defaultColor,
         textColor: Color = shape.defaultTextColor,
         side: LayoutSide = LayoutSide.RIGHT,
+        note: String = "",
     ) {
         if (_nodes[targetId] != null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_DUPLICATED_NODE.message)
         if (parentId == null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
@@ -123,16 +124,16 @@ class Tree<T> {
             when (shape) {
                 NodeShape.CIRCLE ->
                     NodeGenerator.makeNode(CircleNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
                 NodeShape.RECTANGLE ->
                     NodeGenerator.makeNode(RectangleNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
                 NodeShape.OVAL ->
                     NodeGenerator.makeNode(OvalNodeData::class, description = content, parentId = parentId)
-                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
             }
         val parentNode =
             _nodes[parentId] ?: throw IllegalArgumentException(
@@ -273,6 +274,22 @@ class Tree<T> {
                 is RectangleNodeData -> targetNode.copy(color = color)
                 is StadiumNodeData -> targetNode.copy(color = color)
                 is OvalNodeData -> targetNode.copy(color = color)
+            }
+    }
+
+    fun updateNodeNote(
+        targetId: String,
+        note: String,
+    ) {
+        val targetNode =
+            _nodes[targetId]
+                ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
+        _nodes[targetId] =
+            when (targetNode) {
+                is CircleNodeData -> targetNode.copy(note = note)
+                is RectangleNodeData -> targetNode.copy(note = note)
+                is StadiumNodeData -> targetNode.copy(note = note)
+                is OvalNodeData -> targetNode.copy(note = note)
             }
     }
 

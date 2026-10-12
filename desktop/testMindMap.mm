@@ -4,6 +4,7 @@
   <richcontent TYPE="NODE"><html><head></head><body><p><b>My Medical Data</b></p></body></html></richcontent>
   <attribute NAME="shape" VALUE="circle"/>
   <node ID="cd06e1c0-13b5-45b4-89b2-95c8d4f5bde8" TEXT="medications" POSITION="right" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
+    <richcontent TYPE="NOTE"><html><head></head><body><p>These are the medications I take.</p></body></html></richcontent>
     <attribute NAME="shape" VALUE="rectangle"/>
     <node ID="1fa8e17d-c7d4-450a-8716-2cef9de9d320" TEXT="vitamin D" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
       <attribute NAME="shape" VALUE="stadium"/>

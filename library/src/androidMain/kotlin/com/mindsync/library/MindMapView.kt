@@ -78,6 +78,10 @@ class MindMapView @JvmOverloads constructor(
         state.editNodeText(description)
     }
 
+    fun editNodeNote(note: String) {
+        state.editNodeNote(note)
+    }
+
     fun editNodeColor(color: Color) {
         state.editNodeColor(color)
     }
