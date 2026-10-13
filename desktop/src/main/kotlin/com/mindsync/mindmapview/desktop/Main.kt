@@ -63,6 +63,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -112,6 +113,10 @@ private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
 private val LINK_MENU_MAX_WIDTH = 480.dp
 private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
+
+// The description a new node starts out with is this and the number of the node.
+private const val NEW_NODE_DESCRIPTION = "node "
+private val NUMBERED_DESCRIPTION = Regex(Regex.escape(NEW_NODE_DESCRIPTION) + "(\\d+)")
 private val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
@@ -192,6 +197,8 @@ fun main() = application {
     var fileMenuExpanded by remember { mutableStateOf(false) }
     // The node an arrow link is being added from, while the node it leads to is being chosen.
     var arrowLinkSourceId by remember { mutableStateOf<String?>(null) }
+    // How many nodes were added to the mind map since it was started or opened.
+    var createdNodeCount by remember { mutableStateOf(0) }
 
     fun save(target: File) {
         try {
@@ -212,6 +219,7 @@ fun main() = application {
         new = {
             state.setTree(Tree<Any>())
             file = null
+            createdNodeCount = 0
         },
         open = {
             chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { chosen ->
@@ -219,6 +227,7 @@ fun main() = application {
                     state.setTree(FreeMind.read(chosen.readText()))
                     state.animateTreeChange()
                     file = chosen
+                    createdNodeCount = 0
                 } catch (e: IOException) {
                     error = "Could not open ${chosen.name}: ${e.message}"
                 } catch (e: IllegalArgumentException) {
@@ -281,6 +290,8 @@ fun main() = application {
             onFileMenuExpandedChange = { fileMenuExpanded = it },
             arrowLinkSourceId = arrowLinkSourceId,
             onArrowLinkSourceIdChange = { arrowLinkSourceId = it },
+            createdNodeCount = createdNodeCount,
+            onCreatedNodeCountChange = { createdNodeCount = it },
         )
     }
 }
@@ -311,6 +322,8 @@ private fun MindMapScreen(
     onFileMenuExpandedChange: (Boolean) -> Unit,
     arrowLinkSourceId: String?,
     onArrowLinkSourceIdChange: (String?) -> Unit,
+    createdNodeCount: Int,
+    onCreatedNodeCountChange: (Int) -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -466,9 +479,14 @@ private fun MindMapScreen(
         }
 
         operation?.let { currentOperation ->
+            val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
             EditNodeDialog(
                 title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
-                description = if (currentOperation is Operation.Update) selectedNode?.description.orEmpty() else "",
+                description =
+                    if (currentOperation is Operation.Update) selectedNode?.description.orEmpty()
+                    else NEW_NODE_DESCRIPTION + nodeNumber,
+                // The description of a new node is only a start, so typing replaces it.
+                isDescriptionSelected = currentOperation is Operation.Add,
                 note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
                 color = when (currentOperation) {
                     is Operation.Add -> currentOperation.shape.defaultColor
@@ -480,14 +498,17 @@ private fun MindMapScreen(
                 },
                 onSubmit = { description, note, color, textColor ->
                     when (currentOperation) {
-                        is Operation.Add -> state.addNode(
-                            description,
-                            currentOperation.shape,
-                            color,
-                            textColor,
-                            currentOperation.side ?: state.layoutSide,
-                            note,
-                        )
+                        is Operation.Add -> {
+                            state.addNode(
+                                description,
+                                currentOperation.shape,
+                                color,
+                                textColor,
+                                currentOperation.side ?: state.layoutSide,
+                                note,
+                            )
+                            onCreatedNodeCountChange(nodeNumber)
+                        }
                         Operation.Update -> {
                             state.editNodeText(description)
                             state.editNodeNote(note)
@@ -500,6 +521,25 @@ private fun MindMapScreen(
             )
         }
     }
+}
+
+// The number of the node that is added next: one more than the nodes there are and the nodes that were
+// added, some of which may have been removed since. A map that was opened may hold numbered nodes of
+// removed ones too, so the highest number in it counts as well.
+private fun nextNodeNumber(
+    tree: Tree<*>,
+    createdNodeCount: Int,
+): Int {
+    var nodeCount = 0
+    var highestNumber = 0
+    tree.doPreorderTraversal { node ->
+        if (node.parentId != null) nodeCount++
+        val text = RichText.parse(DescriptionEmoji.split(node.description).second).text.trim()
+        NUMBERED_DESCRIPTION.matchEntire(text)?.groupValues?.get(1)?.toIntOrNull()?.let {
+            highestNumber = maxOf(highestNumber, it)
+        }
+    }
+    return maxOf(nodeCount, highestNumber, createdNodeCount) + 1
 }
 
 // Drawn by Compose instead of the window's native menu bar, whose drop down closes as soon as the mouse
@@ -707,6 +747,7 @@ private fun ShapeSelectorDialog(
 private fun EditNodeDialog(
     title: String,
     description: String,
+    isDescriptionSelected: Boolean,
     note: String,
     color: Color,
     textColor: Color,
@@ -715,7 +756,12 @@ private fun EditNodeDialog(
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
     val (emoji, text) = remember { DescriptionEmoji.split(description) }
-    val richTextState = remember { RichTextState().setHtml(text) }
+    val richTextState = remember {
+        RichTextState().setHtml(text).apply {
+            if (isDescriptionSelected) selection = TextRange(0, annotatedString.text.length)
+        }
+    }
+    val descriptionFocusRequester = remember { FocusRequester() }
     val noteState = remember { RichTextState().setHtml(note) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedColor by remember { mutableStateOf(color) }
@@ -729,6 +775,7 @@ private fun EditNodeDialog(
     ) {
         LaunchedEffect(Unit) {
             window.minimumSize = with(EDIT_DIALOG_MIN_SIZE) { Dimension(width.value.toInt(), height.value.toInt()) }
+            descriptionFocusRequester.requestFocus()
         }
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -740,7 +787,10 @@ private fun EditNodeDialog(
                 OutlinedRichTextEditor(
                     state = richTextState,
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 200.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 120.dp, max = 200.dp)
+                        .focusRequester(descriptionFocusRequester),
                 )
                 ColorPicker(
                     label = "Fill",
