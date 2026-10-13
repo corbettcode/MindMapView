@@ -48,7 +48,9 @@ class MindMapManager {
         update(node)
     }
 
+    // Unlike a node that is detached to be attached elsewhere, a removed node takes its arrow links along.
     fun removeNode(node: NodeData<*>) {
+        this.tree.removeArrowLinksOfBranch(node.id)
         this.tree.removeNode(node.id)
     }
 

@@ -17,6 +17,11 @@ class Tree<T> {
     // The root has a set of children for each side; these are the ones on its left.
     private val leftRootChildIds = mutableSetOf<String>()
 
+    private val _arrowLinks = mutableListOf<ArrowLink>()
+
+    /** The arrow links between the nodes of the tree, in the order they are drawn. */
+    val arrowLinks: List<ArrowLink> get() = _arrowLinks.toList()
+
     constructor() : this(Dp(0f), Dp(0f)) {
         isRootPlaced = false
     }
@@ -89,6 +94,31 @@ class Tree<T> {
         else {
             leftRootChildIds.remove(childId)
         }
+    }
+
+    /**
+     * Adds an arrow link, in place of the one with its id when there is one. Its nodes have to be two
+     * different nodes of the tree.
+     */
+    fun addArrowLink(link: ArrowLink) {
+        if (link.sourceId == link.targetId) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        getNode(link.sourceId)
+        getNode(link.targetId)
+        val index = _arrowLinks.indexOfFirst { it.id == link.id }
+        if (index == -1) _arrowLinks.add(link) else _arrowLinks[index] = link
+    }
+
+    fun removeArrowLink(id: String) {
+        _arrowLinks.removeAll { it.id == id }
+    }
+
+    /**
+     * Removes the arrow links from and to the node and the nodes below it.
+     */
+    fun removeArrowLinksOfBranch(id: String) {
+        val ids = mutableSetOf<String>()
+        doPreorderTraversal(getNode(id)) { node -> ids.add(node.id) }
+        _arrowLinks.removeAll { it.sourceId in ids || it.targetId in ids }
     }
 
     fun copy(nodes: Map<String, NodeData<T>>): Tree<T> {

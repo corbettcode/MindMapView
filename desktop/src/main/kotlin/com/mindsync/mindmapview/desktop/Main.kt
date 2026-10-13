@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.DialogWindow
@@ -77,6 +79,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberDialogState
 import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
+import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
@@ -108,6 +111,7 @@ private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 620.dp)
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
 private val LINK_MENU_MAX_WIDTH = 480.dp
+private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
 private val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
@@ -133,6 +137,28 @@ private val TEXT_COLORS = listOf(
     Color(0xFF0B5394),
     Color(0xFF274E13),
 )
+
+private val ARROW_LINK_COLORS = listOf(
+    ArrowLink.DEFAULT_COLOR,
+    Color(0xFF5C5C5C),
+    Color(0xFFB3261E),
+    Color(0xFFC98A4E),
+    Color(0xFF274E13),
+    Color(0xFF0B5394),
+    Color(0xFF8A5FA3),
+)
+
+// The arrowheads an arrow link can be given in its menu: which of its two ends has one.
+private enum class ArrowHeads(
+    val label: String,
+    val hasStartArrow: Boolean,
+    val hasEndArrow: Boolean,
+) {
+    FORWARD("\u2192  Forward", false, true),
+    BACKWARD("\u2190  Backward", true, false),
+    BOTH("\u2194  Both Ways", true, true),
+    NONE("\u2014  No Arrowheads", false, false),
+}
 
 private val NodeShape.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
@@ -164,6 +190,8 @@ fun main() = application {
     var error by remember { mutableStateOf<String?>(null) }
     var frame by remember { mutableStateOf<Frame?>(null) }
     var fileMenuExpanded by remember { mutableStateOf(false) }
+    // The node an arrow link is being added from, while the node it leads to is being chosen.
+    var arrowLinkSourceId by remember { mutableStateOf<String?>(null) }
 
     fun save(target: File) {
         try {
@@ -213,6 +241,10 @@ fun main() = application {
                     fileMenuExpanded = true
                     true
                 }
+                event.key == Key.Escape && arrowLinkSourceId != null -> {
+                    arrowLinkSourceId = null
+                    true
+                }
                 !event.isCtrlPressed -> false
                 event.key == Key.N -> {
                     fileActions.new()
@@ -230,6 +262,10 @@ fun main() = application {
                     state.moveNodeToOtherSide()
                     true
                 }
+                event.key == Key.L -> {
+                    arrowLinkSourceId = state.selectedNode?.id
+                    true
+                }
                 else -> false
             }
         }
@@ -243,6 +279,8 @@ fun main() = application {
             fileActions = fileActions,
             fileMenuExpanded = fileMenuExpanded,
             onFileMenuExpandedChange = { fileMenuExpanded = it },
+            arrowLinkSourceId = arrowLinkSourceId,
+            onArrowLinkSourceIdChange = { arrowLinkSourceId = it },
         )
     }
 }
@@ -271,11 +309,15 @@ private fun MindMapScreen(
     fileActions: FileActions,
     fileMenuExpanded: Boolean,
     onFileMenuExpandedChange: (Boolean) -> Unit,
+    arrowLinkSourceId: String?,
+    onArrowLinkSourceIdChange: (String?) -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
     // The side a '+' button was clicked on, while the shape of the node to add there is being chosen.
     var shapeChoiceSide by remember { mutableStateOf<LayoutSide?>(null) }
+    // The arrow link its menu is open for, and where in the mind map it was asked for.
+    var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
@@ -326,6 +368,7 @@ private fun MindMapScreen(
                             selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
                         },
                         onOpenLink = openLink,
+                        onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                     )
                     ViewMenu(onFit = { state.fitScreen() })
                 }
@@ -334,12 +377,49 @@ private fun MindMapScreen(
                     MindMap(
                         state = state
                         , modifier = Modifier.fillMaxSize()
+                        // While an arrow link is being added, the next click chooses the node it leads to, or none.
+                        , onNodeClick = { node ->
+                            arrowLinkSourceId?.let { sourceId ->
+                                if (node != null) state.addArrowLink(sourceId, node.id)
+                                onArrowLinkSourceIdChange(null)
+                            }
+                        }
                         , onNodeDoubleClick = { operation = Operation.Update }
-                        , onAddChildClick = { _, side -> shapeChoiceSide = side }
+                        , onAddChildClick = { _, side ->
+                            onArrowLinkSourceIdChange(null)
+                            shapeChoiceSide = side
+                        }
+                        , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
                         // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
                     notePopup?.let { (note, position) -> NotePopup(note, position) }
+                    if (arrowLinkSourceId != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+                        ) {
+                            Text(
+                                "Click the node the arrow should point to. Esc cancels.",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
+                    arrowLinkMenu?.let { (linkId, position) ->
+                        state.arrowLinks.firstOrNull { it.id == linkId }?.let { link ->
+                            ArrowLinkMenu(
+                                link = link,
+                                position = position,
+                                sourceLabel = nodeLabel(state.tree.nodes[link.sourceId]?.description),
+                                targetLabel = nodeLabel(state.tree.nodes[link.targetId]?.description),
+                                onGoTo = { state.goToNode(it) },
+                                onChange = { state.updateArrowLink(it) },
+                                onRemove = { state.removeArrowLink(link.id) },
+                                onDismiss = { arrowLinkMenu = null },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -453,6 +533,7 @@ private fun EditMenu(
     onMove: () -> Unit,
     links: () -> List<RichTextLink>,
     onOpenLink: (String) -> Unit,
+    onAddArrowLink: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
@@ -516,6 +597,15 @@ private fun EditMenu(
                     onMove()
                 },
                 enabled = side != null,
+            )
+            DropdownMenuItem(
+                text = { Text("Add Arrow Link") },
+                trailingIcon = { Text("Ctrl+L", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onAddArrowLink()
+                },
+                enabled = enabled,
             )
             val nodeLinks = links()
             Box {
@@ -674,6 +764,77 @@ private fun EditNodeDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+// The text of a node as a menu shows it: without its markup, on one line and cut short.
+private fun nodeLabel(description: String?): String {
+    val text = RichText.parse(description.orEmpty()).text.replace(Regex("\\s+"), " ").trim()
+    return if (text.length > ARROW_LINK_MENU_LABEL_LENGTH) text.take(ARROW_LINK_MENU_LABEL_LENGTH) + "\u2026" else text
+}
+
+// The menu of an arrow link, which floats where the link was clicked. Each of its items closes it.
+@Composable
+private fun ArrowLinkMenu(
+    link: ArrowLink,
+    position: Offset,
+    sourceLabel: String,
+    targetLabel: String,
+    onGoTo: (nodeId: String) -> Unit,
+    onChange: (ArrowLink) -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    // A drop down menu opens at the box it is in, so an empty box is put where the click was.
+    Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
+        DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+            DropdownMenuItem(
+                text = { Text("Go to: $sourceLabel") },
+                onClick = {
+                    onDismiss()
+                    onGoTo(link.sourceId)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Go to: $targetLabel") },
+                onClick = {
+                    onDismiss()
+                    onGoTo(link.targetId)
+                },
+            )
+            HorizontalDivider()
+            ArrowHeads.entries.forEach { heads ->
+                val isCurrent = heads.hasStartArrow == link.hasStartArrow && heads.hasEndArrow == link.hasEndArrow
+                DropdownMenuItem(
+                    text = { Text(heads.label) },
+                    trailingIcon = { if (isCurrent) Text("\u2713") },
+                    onClick = {
+                        onDismiss()
+                        onChange(link.copy(hasStartArrow = heads.hasStartArrow, hasEndArrow = heads.hasEndArrow))
+                    },
+                )
+            }
+            HorizontalDivider()
+            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                ColorPicker(
+                    label = "Color",
+                    colors = remember(link.color) { (ARROW_LINK_COLORS + link.color).distinct() },
+                    selectedColor = link.color,
+                    onSelect = {
+                        onDismiss()
+                        onChange(link.copy(color = it))
+                    },
+                )
+            }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Remove Arrow Link") },
+                onClick = {
+                    onDismiss()
+                    onRemove()
+                },
+            )
         }
     }
 }

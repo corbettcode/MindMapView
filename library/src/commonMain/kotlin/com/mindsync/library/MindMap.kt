@@ -20,10 +20,12 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
@@ -63,6 +66,12 @@ private const val TOP_RIGHT_OF_ARC = 0.70710677f
 internal val ADD_BUTTON_RADIUS = Dp(10f)
 internal val NOTE_MARKER_SIZE = Dp(12f)
 
+// How near to an arrow link a click on it has to be.
+internal val ARROW_LINK_REACH = Dp(8f)
+private val ARROW_LINK_WIDTH = Dp(2f)
+private val ARROW_HEAD_LENGTH = Dp(12f)
+private val ARROW_HEAD_HALF_WIDTH = Dp(5f)
+
 /**
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
  * modifier such as `Modifier.fillMaxSize()`.
@@ -74,6 +83,10 @@ internal val NOTE_MARKER_SIZE = Dp(12f)
  *
  * A click on a link in the text of a node, one that is not the start of a drag, calls [onLinkClick] with
  * the node and the URL of the link. The click selects the node as any other click on it does.
+ *
+ * The arrow links of the tree are drawn on top of its nodes. A click on one with the secondary mouse
+ * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
+ * showing a menu there.
  *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
@@ -88,6 +101,7 @@ fun MindMap(
     , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
     , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
+    , onArrowLinkMenu: (link: ArrowLink, position: Offset) -> Unit = { _, _ -> }
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -109,6 +123,7 @@ fun MindMap(
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
     val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
+    val currentOnArrowLinkMenu by rememberUpdatedState(onArrowLinkMenu)
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -185,6 +200,17 @@ fun MindMap(
                                 state.onHover(event.changes.firstOrNull()?.takeIf { !it.pressed }?.position)
                             PointerEventType.Press, PointerEventType.Exit -> state.onHover(null)
                         }
+                        // The gestures above only follow the primary button, so the secondary one is seen here.
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            val change = event.changes.firstOrNull()
+                            val link = change
+                                ?.takeIf { state.findNodeAt(it.position) == null }
+                                ?.let { state.findArrowLink(it.position) }
+                            if (change != null && link != null) {
+                                change.consume()
+                                currentOnArrowLinkMenu(link, change.position)
+                            }
+                        }
                         if (event.type == PointerEventType.Scroll) {
                             val scrollY = event.changes.fold(0f) { sum, change -> sum + change.scrollDelta.y }
                             if (scrollY != 0f) {
@@ -211,6 +237,7 @@ fun MindMap(
                 drawAddButtons(state, drawInfo, lineColor, addIconColor)
             }
             drawTree(state, drawInfo, measure)
+            drawArrowLinks(state)
 
             state.selectedNode?.let { selectedNode ->
                 NodeDrawerFactory(
@@ -236,6 +263,47 @@ private fun DrawScope.drawTree(
         nodeDrawer.drawText(this, measureTextSize.measure(node.description))
         if (node.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(node), drawInfo)
     }
+}
+
+private fun DrawScope.drawArrowLinks(state: MindMapState) {
+    val tree = state.tree
+    val path = Path()
+    val stroke = Stroke(width = ARROW_LINK_WIDTH.toPx(this), cap = StrokeCap.Round)
+
+    tree.arrowLinks.forEach { link ->
+        val curve = arrowLinkCurve(tree, link) ?: return@forEach
+        path.reset()
+        path.moveTo(curve.start.x, curve.start.y)
+        path.cubicTo(
+            curve.startControl.x, curve.startControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y,
+        )
+        drawPath(path, link.color, style = stroke)
+        if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, link.color)
+        if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, link.color)
+    }
+}
+
+// The head points the way the curve arrives at its tip: away from the control point of that end, or from
+// the other end when the control point is on the tip.
+private fun DrawScope.drawArrowHead(
+    tip: Offset
+    , control: Offset
+    , otherEnd: Offset
+    , color: Color
+) {
+    val along = (tip - control).takeIf { it.getDistance() > 0f } ?: (tip - otherEnd)
+    val length = along.getDistance()
+    if (length == 0f) return
+    val direction = along / length
+    val across = Offset(-direction.y, direction.x) * ARROW_HEAD_HALF_WIDTH.toPx(this)
+    val base = tip - direction * ARROW_HEAD_LENGTH.toPx(this)
+    val head = Path().apply {
+        moveTo(tip.x, tip.y)
+        lineTo(base.x + across.x, base.y + across.y)
+        lineTo(base.x - across.x, base.y - across.y)
+        close()
+    }
+    drawPath(head, color)
 }
 
 // A sheet of paper with its top right corner folded over.

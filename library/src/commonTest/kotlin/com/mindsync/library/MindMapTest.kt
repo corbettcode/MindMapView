@@ -16,12 +16,15 @@ import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.rightClick
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.mindsync.library.data.ArrowLink
+import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
@@ -57,6 +60,7 @@ class MindMapTest {
     private val addChildClicks = mutableListOf<String>()
     private val addChildSides = mutableListOf<LayoutSide>()
     private val linkClicks = mutableListOf<Pair<String, String>>()
+    private val arrowLinkMenus = mutableListOf<Pair<String, Offset>>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -71,6 +75,7 @@ class MindMapTest {
                     addChildSides.add(side)
                 },
                 onLinkClick = { node, url -> linkClicks.add(node.id to url) },
+                onArrowLinkMenu = { link, position -> arrowLinkMenus.add(link.id to position) },
             )
         }
     }
@@ -1034,6 +1039,174 @@ class MindMapTest {
             listOf(RichTextLink("a link to click", "https://example.com/")),
             RichText.links(read.getNode(linkId).description),
         )
+    }
+
+    @Test
+    fun arrowLinksAreAddedChangedAndRemoved() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        state.addNode("second")
+        waitForIdle()
+        val (firstId, secondId) = state.tree.getRootNode().children
+
+        assertNull(state.addArrowLink(firstId, firstId))
+        assertNull(state.addArrowLink(firstId, "no such node"))
+        val link = assertIs<ArrowLink>(state.addArrowLink(firstId, secondId))
+        assertEquals(ArrowLink(link.id, firstId, secondId, ArrowLink.DEFAULT_COLOR, false, true), link)
+        // There is one arrow link from a node to another, though there may be one back.
+        assertEquals(link, state.addArrowLink(firstId, secondId))
+        val back = assertIs<ArrowLink>(state.addArrowLink(secondId, firstId))
+        assertEquals(listOf(link, back), state.arrowLinks)
+        state.removeArrowLink(back.id)
+        assertEquals(listOf(link), state.arrowLinks)
+
+        // The nodes are above one another to the right of the root, so the curve goes around them on the right,
+        // from below the middle of the upper one to above the middle of the lower one.
+        waitForIdle()
+        val curve = assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, link) })
+        val first = state.tree.getNode(firstId) as RectangleNodeData
+        val second = state.tree.getNode(secondId) as RectangleNodeData
+        with(density) {
+            assertEquals(first.path.rightX().dpVal.dp.toPx(), curve.start.x, 0.01f)
+            assertEquals((first.path.centerY + first.path.height * 0.3f).dpVal.dp.toPx(), curve.start.y, 0.01f)
+            assertEquals(second.path.rightX().dpVal.dp.toPx(), curve.end.x, 0.01f)
+            assertEquals((second.path.centerY - second.path.height * 0.3f).dpVal.dp.toPx(), curve.end.y, 0.01f)
+        }
+        val middle = curve.pointAt(0.5f)
+        assertTrue(middle.x > curve.start.x && middle.x > curve.end.x)
+        assertEquals(0f, curve.distanceTo(middle), 0.5f)
+
+        // The secondary button on the curve asks for its menu; the primary one does not, nor does either elsewhere.
+        onNodeWithTag(TAG).performMouseInput { rightClick(middle) }
+        waitForIdle()
+        assertEquals(listOf(link.id to middle), arrowLinkMenus)
+
+        // An arrow link from the root to a node beside it has its ends on the edges that face each other.
+        val fromRoot = assertIs<ArrowLink>(state.addArrowLink(state.tree.getRootNode().id, firstId))
+        val facing = assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, fromRoot) })
+        with(density) {
+            assertTrue(facing.start.x > state.tree.getRootNode().path.centerX.dpVal.dp.toPx())
+            assertEquals(first.path.leftX().dpVal.dp.toPx(), facing.end.x, 0.01f)
+        }
+        state.removeArrowLink(fromRoot.id)
+
+        onNodeWithTag(TAG).performMouseInput { click(middle) }
+        onNodeWithTag(TAG).performMouseInput { rightClick(middle + Offset(60.dp.toPx(), 0f)) }
+        waitForIdle()
+        assertEquals(1, arrowLinkMenus.size)
+
+        val changed = link.copy(color = Color.Red, hasStartArrow = true, hasEndArrow = false)
+        state.updateArrowLink(changed)
+        assertEquals(listOf(changed), state.arrowLinks)
+        state.updateArrowLink(changed.copy(id = "no such link"))
+        assertEquals(listOf(changed), state.arrowLinks)
+
+        state.goToNode(secondId)
+        assertEquals(secondId, state.selectedNode?.id)
+    }
+
+    @Test
+    fun removingANodeRemovesTheArrowLinksOfItsBranch() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        state.addNode("second")
+        state.addNode("third")
+        waitForIdle()
+        val root = state.tree.getRootNode()
+        val (firstId, secondId, thirdId) = root.children
+        clickNode(state.tree.getNode(firstId))
+        state.addNode("below first")
+        waitForIdle()
+        val belowFirstId = state.tree.getNode(firstId).children.single()
+
+        state.addArrowLink(firstId, secondId)
+        state.addArrowLink(thirdId, belowFirstId)
+        val kept = state.addArrowLink(secondId, thirdId)
+
+        // A node that is dragged onto another keeps its arrow links.
+        onNodeWithTag(TAG).performTouchInput {
+            swipe(center(state.tree.getNode(belowFirstId)), center(state.tree.getNode(secondId)), durationMillis = 200)
+        }
+        waitForIdle()
+        assertEquals(secondId, state.tree.getNode(belowFirstId).parentId)
+        assertEquals(3, state.arrowLinks.size)
+
+        clickNode(state.tree.getNode(firstId))
+        state.removeNode()
+        waitForIdle()
+        assertEquals(2, state.arrowLinks.size)
+        clickNode(state.tree.getNode(secondId))
+        state.removeNode()
+        waitForIdle()
+        assertEquals(emptyList(), state.arrowLinks)
+        assertTrue(kept != null)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsArrowLinks() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.addNode("first", rootId, "first")
+        tree.addNode("second", rootId, "second", side = LayoutSide.LEFT)
+        tree.addNode("removed", rootId, "removed")
+        val plain = ArrowLink("plain", "first", "second")
+        val changed = ArrowLink(
+            id = "changed",
+            sourceId = "second",
+            targetId = rootId,
+            color = Color.Red,
+            hasStartArrow = true,
+            hasEndArrow = false,
+            startInclination = ArrowLinkInclination(Dp(-120f), Dp(35f)),
+            endInclination = ArrowLinkInclination(Dp(60f), Dp(-10f)),
+        )
+        tree.addArrowLink(plain)
+        tree.addArrowLink(changed)
+        tree.addArrowLink(ArrowLink("to removed", "first", "removed"))
+        assertFailsWith<IllegalArgumentException> { tree.addArrowLink(ArrowLink("self", "first", "first")) }
+        assertFailsWith<IllegalArgumentException> { tree.addArrowLink(ArrowLink("nowhere", "first", "no such node")) }
+        // Only the node is detached here, as it is when it is dragged, so its arrow link is still there.
+        tree.removeNode("removed")
+        assertEquals(3, tree.arrowLinks.size)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<arrowlink ID=\"plain\" DESTINATION=\"second\" COLOR=\"#b0b0b0\" STARTARROW=\"None\" ENDARROW=\"Default\"/>" in written)
+        assertTrue("STARTINCLINATION=\"-120;35;\" ENDINCLINATION=\"60;-10;\"" in written)
+        assertFalse("to removed" in written)
+        assertEquals(listOf(plain, changed), FreeMind.read(written).arrowLinks)
+    }
+
+    @Test
+    fun freeMindArrowLinksAreRead() {
+        val content = """
+            <map version="1.0.1">
+            <node ID="ID_1" TEXT="root">
+            <arrowlink DESTINATION="ID_3" ENDARROW="Default" ENDINCLINATION="57;0;" ID="Arrow_ID_7" STARTARROW="None" STARTINCLINATION="57;0;"/>
+            <node ID="ID_2" POSITION="right" TEXT="first">
+            <arrowlink COLOR="#ff0000" DESTINATION="ID_1" ENDARROW="None" ID="Arrow_ID_8" STARTARROW="Default"/>
+            <arrowlink DESTINATION="ID_3"/>
+            <arrowlink DESTINATION="ID_404" ID="Arrow_ID_9"/>
+            <arrowlink DESTINATION="ID_2" ID="Arrow_ID_10"/>
+            </node>
+            <node ID="ID_3" POSITION="left" TEXT="second"/>
+            </node>
+            </map>
+        """.trimIndent()
+
+        val tree = FreeMind.read(content)
+        val rootId = tree.getRootNode().id
+        val (fromRoot, toRoot, bare) = tree.arrowLinks
+        assertEquals(3, tree.arrowLinks.size)
+        val inclination = ArrowLinkInclination(Dp(57f), Dp(0f))
+        assertEquals(ArrowLink("Arrow_ID_7", rootId, "ID_3", ArrowLink.DEFAULT_COLOR, false, true, inclination, inclination), fromRoot)
+        assertEquals(ArrowLink("Arrow_ID_8", "ID_2", rootId, Color.Red, true, false), toRoot)
+        assertEquals(ArrowLink(bare.id, "ID_2", "ID_3"), bare)
     }
 
     @Test

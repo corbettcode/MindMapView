@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Density
@@ -19,6 +20,7 @@ import com.mindsync.library.animator.TreeChangeAnimation
 import com.mindsync.library.command.AddNodeCommand
 import com.mindsync.library.command.RemoveNodeCommand
 import com.mindsync.library.command.UpdateNodeCommand
+import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
@@ -29,6 +31,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
+import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.NodeGenerator
 import com.mindsync.library.util.Px
 import com.mindsync.library.util.RichText
@@ -76,6 +79,14 @@ class MindMapState(
     /** Where in the bounds of the mind map the mouse pointer last was. */
     var hoverPosition by mutableStateOf(Offset.Zero)
         private set
+
+    /** The arrow links of the tree. */
+    val arrowLinks: List<ArrowLink>
+        get() {
+            // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+            drawTick
+            return tree.arrowLinks
+        }
 
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
 
@@ -186,6 +197,47 @@ class MindMapState(
         }
     }
 
+    /**
+     * Adds an arrow link from one node to another and returns it, or the one there already is between
+     * them. Returns null when the two are not different nodes of the tree.
+     */
+    fun addArrowLink(
+        sourceId: String
+        , targetId: String
+    ): ArrowLink? {
+        if (sourceId == targetId || sourceId !in tree.nodes || targetId !in tree.nodes) return null
+        tree.arrowLinks.firstOrNull { it.sourceId == sourceId && it.targetId == targetId }?.let { return it }
+        val link = ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId)
+        tree.addArrowLink(link)
+        invalidate()
+        return link
+    }
+
+    /** Replaces the arrow link with the id of [link], to change its color or its arrowheads. */
+    fun updateArrowLink(link: ArrowLink) {
+        if (tree.arrowLinks.none { it.id == link.id }) return
+        tree.addArrowLink(link)
+        invalidate()
+    }
+
+    fun removeArrowLink(id: String) {
+        tree.removeArrowLink(id)
+        invalidate()
+    }
+
+    /** Selects a node and, when it is out of view, moves the mind map to bring it to the center. */
+    fun goToNode(id: String) {
+        val node = tree.nodes[id] ?: return
+        mindMapManager.setSelectedNode(node)
+        val position =
+            Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
+        if (!viewportSize.isEmpty() && !Rect(Offset.Zero, viewportSize).contains(position)) {
+            val moved = currentPoint + Offset(viewportSize.width / 2, viewportSize.height / 2) - position
+            currentPoint = Offset(minOf(0f, moved.x), minOf(0f, moved.y))
+        }
+        invalidate()
+    }
+
     fun fitScreen() {
         if (viewportSize.isEmpty()) return
         val root = tree.getRootNode()
@@ -248,6 +300,8 @@ class MindMapState(
         hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
     }
 
+    internal fun findNodeAt(position: Offset): NodeData<*>? = findNode(toTreePoint(position))
+
     private fun findNode(point: Offset): NodeData<*>? {
         var foundNode: NodeData<*>? = null
         tree.doPreorderTraversal { node ->
@@ -256,6 +310,15 @@ class MindMapState(
             }
         }
         return foundNode
+    }
+
+    // The last drawn of the arrow links near enough to the position: it is the one on top there.
+    internal fun findArrowLink(position: Offset): ArrowLink? {
+        val point = toTreePoint(position)
+        val reach = ARROW_LINK_REACH.toPx(density) / scaleFactor
+        return tree.arrowLinks.lastOrNull { link ->
+            density.arrowLinkCurve(tree, link)?.let { it.distanceTo(point) <= reach } == true
+        }
     }
 
     // The text of a node is drawn centered on the node, so that is where its links are looked for.

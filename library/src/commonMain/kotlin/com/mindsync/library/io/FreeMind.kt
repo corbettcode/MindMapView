@@ -2,6 +2,8 @@ package com.mindsync.library.io
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.mindsync.library.data.ArrowLink
+import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeData
@@ -16,22 +18,30 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
+import kotlin.math.roundToInt
 
 /**
  * Reads and writes mind maps in the FreeMind `.mm` format.
  *
  * FreeMind has no notion of this library's node shapes, so a node's shape is kept in an
  * `<attribute NAME="shape">` child, which FreeMind preserves. The side of the root a child of the root is
- * on is kept in FreeMind's own `POSITION`. Node positions are not stored: a map that
+ * on is kept in FreeMind's own `POSITION`. Arrow links are kept as FreeMind's own `<arrowlink>` children of
+ * the node they start at. Node positions are not stored: a map that
  * was read needs to be arranged, for example with `MindMapState.animateTreeChange()`.
  */
 object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
+    private const val ARROW = "Default"
+    private const val NO_ARROW = "None"
 
     fun write(tree: Tree<*>): String = buildString {
         append("<map version=\"1.0.1\">\n")
         append("<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->\n")
-        writeNode(tree, tree.getRootNode(), depth = 0)
+        // A node that was removed is not written, so neither is an arrow link to one.
+        val writtenIds = mutableSetOf<String>()
+        tree.doPreorderTraversal { node -> writtenIds.add(node.id) }
+        val arrowLinks = tree.arrowLinks.filter { it.targetId in writtenIds }.groupBy { it.sourceId }
+        writeNode(tree, tree.getRootNode(), depth = 0, arrowLinks)
         append("</map>\n")
     }
 
@@ -48,8 +58,11 @@ object FreeMind {
         val root = tree.getRootNode()
         val usedIds = mutableSetOf(root.id)
         val leftChildren = mutableListOf<String>()
+        // The node an arrow link leads to may be read after the link, so the links are added once all nodes are.
+        val arrowLinks = mutableListOf<ArrowLink>()
+        rootElement.readArrowLinks(root.id, arrowLinks)
         val children = rootElement.childNodes().map { element ->
-            readNode(tree, element, root.id, usedIds).also { id ->
+            readNode(tree, element, root.id, usedIds, arrowLinks).also { id ->
                 if (element.attributes["POSITION"] == "left") leftChildren.add(id)
             }
         }
@@ -63,10 +76,23 @@ object FreeMind {
             ),
         )
         leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
+        val usedArrowLinkIds = mutableSetOf<String>()
+        arrowLinks
+            // The root is given this library's own id, whatever id it has in the file.
+            .map { if (it.targetId == rootElement.attributes["ID"]) it.copy(targetId = root.id) else it }
+            .filter { it.targetId in tree.nodes && it.targetId != it.sourceId }
+            .forEach { link ->
+                tree.addArrowLink(if (usedArrowLinkIds.add(link.id)) link else link.copy(id = IdGenerator.makeRandomNodeId()))
+            }
         return tree
     }
 
-    private fun StringBuilder.writeNode(tree: Tree<*>, node: NodeData<*>, depth: Int) {
+    private fun StringBuilder.writeNode(
+        tree: Tree<*>,
+        node: NodeData<*>,
+        depth: Int,
+        arrowLinks: Map<String, List<ArrowLink>>,
+    ) {
         val indent = "  ".repeat(depth)
         val plainText = plainTextOrNull(node.description)
 
@@ -87,7 +113,17 @@ object FreeMind {
         }
         append(indent).append("  <attribute NAME=\"").append(SHAPE_ATTRIBUTE).append("\" VALUE=\"")
         append(node.shape().name.lowercase()).append("\"/>\n")
-        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1) }
+        arrowLinks[node.id]?.forEach { link ->
+            append(indent).append("  <arrowlink ID=\"").append(escapeXml(link.id)).append('"')
+            append(" DESTINATION=\"").append(escapeXml(link.targetId)).append('"')
+            append(" COLOR=\"").append(link.color.toHex()).append('"')
+            append(" STARTARROW=\"").append(if (link.hasStartArrow) ARROW else NO_ARROW).append('"')
+            append(" ENDARROW=\"").append(if (link.hasEndArrow) ARROW else NO_ARROW).append('"')
+            link.startInclination?.let { append(" STARTINCLINATION=\"").append(it.toFreeMind()).append('"') }
+            link.endInclination?.let { append(" ENDINCLINATION=\"").append(it.toFreeMind()).append('"') }
+            append("/>\n")
+        }
+        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1, arrowLinks) }
         append(indent).append("</node>\n")
     }
 
@@ -96,14 +132,16 @@ object FreeMind {
         element: XmlElement,
         parentId: String,
         usedIds: MutableSet<String>,
+        arrowLinks: MutableList<ArrowLink>,
     ): String {
         val id = element.attributes["ID"]?.takeIf { it.isNotEmpty() && usedIds.add(it) }
             ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
+        element.readArrowLinks(id, arrowLinks)
         val shape = element.children
             .firstOrNull { it.name == "attribute" && it.attributes["NAME"] == SHAPE_ATTRIBUTE }
             ?.let { attribute -> NodeShape.entries.firstOrNull { it.name.equals(attribute.attributes["VALUE"], ignoreCase = true) } }
             ?: NodeShape.RECTANGLE
-        val children = element.childNodes().map { readNode(tree, it, id, usedIds) }
+        val children = element.childNodes().map { readNode(tree, it, id, usedIds, arrowLinks) }
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
         val description = element.description()
@@ -163,6 +201,36 @@ object FreeMind {
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    // FreeMind draws an arrowhead unless it is told there is none, at the end; at the start it draws none.
+    private fun XmlElement.readArrowLinks(
+        sourceId: String,
+        arrowLinks: MutableList<ArrowLink>,
+    ) {
+        children.filter { it.name == "arrowlink" }.forEach { element ->
+            val targetId = element.attributes["DESTINATION"]?.takeIf { it.isNotEmpty() } ?: return@forEach
+            arrowLinks.add(
+                ArrowLink(
+                    id = element.attributes["ID"]?.takeIf { it.isNotEmpty() } ?: IdGenerator.makeRandomNodeId(),
+                    sourceId = sourceId,
+                    targetId = targetId,
+                    color = element.color("COLOR") ?: ArrowLink.DEFAULT_COLOR,
+                    hasStartArrow = element.attributes["STARTARROW"].equals(ARROW, ignoreCase = true),
+                    hasEndArrow = !element.attributes["ENDARROW"].equals(NO_ARROW, ignoreCase = true),
+                    startInclination = element.inclination("STARTINCLINATION"),
+                    endInclination = element.inclination("ENDINCLINATION"),
+                ),
+            )
+        }
+    }
+
+    // FreeMind writes an inclination as "x;y;".
+    private fun XmlElement.inclination(attribute: String): ArrowLinkInclination? {
+        val parts = attributes[attribute]?.split(';')?.mapNotNull { it.trim().toFloatOrNull() } ?: return null
+        return if (parts.size >= 2) ArrowLinkInclination(Dp(parts[0]), Dp(parts[1])) else null
+    }
+
+    private fun ArrowLinkInclination.toFreeMind(): String = "${x.dpVal.roundToInt()};${y.dpVal.roundToInt()};"
 
     private fun XmlElement.color(attribute: String): Color? {
         val hex = attributes[attribute]?.removePrefix("#")?.takeIf { it.length == 6 } ?: return null
