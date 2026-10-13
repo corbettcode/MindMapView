@@ -186,6 +186,7 @@ private sealed interface Operation {
 private class FileActions(
     val new: () -> Unit,
     val open: () -> Unit,
+    val openRecent: (File) -> Unit,
     val save: () -> Unit,
     val saveAs: () -> Unit,
 )
@@ -210,9 +211,14 @@ fun main() = application {
     // How many nodes were added to the mind map since it was started or opened.
     var createdNodeCount by remember { mutableStateOf(0) }
 
+    val recentFiles = remember { RecentFiles.ofUser() }
+    var recentPaths by remember { mutableStateOf(recentFiles.paths) }
+
     fun save(target: File) {
         try {
             target.writeText(FreeMind.write(state.tree))
+            // A mind map that is saved under a new name is one to open again, as one that was opened is.
+            if (target != file) recentPaths = recentFiles.add(target)
             file = target
         } catch (e: IOException) {
             error = "Could not save ${target.name}: ${e.message}"
@@ -225,26 +231,31 @@ fun main() = application {
         }
     }
 
+    // A mind map that cannot be opened is no recent file any longer.
+    fun open(chosen: File) {
+        try {
+            state.setTree(FreeMind.read(chosen.readText()))
+            state.animateTreeChange()
+            file = chosen
+            createdNodeCount = 0
+            recentPaths = recentFiles.add(chosen)
+        } catch (e: IOException) {
+            error = "Could not open ${chosen.name}: ${e.message}"
+            recentPaths = recentFiles.remove(chosen)
+        } catch (e: IllegalArgumentException) {
+            error = "Could not open ${chosen.name}: ${e.message}"
+            recentPaths = recentFiles.remove(chosen)
+        }
+    }
+
     val fileActions = FileActions(
         new = {
             state.setTree(Tree<Any>())
             file = null
             createdNodeCount = 0
         },
-        open = {
-            chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { chosen ->
-                try {
-                    state.setTree(FreeMind.read(chosen.readText()))
-                    state.animateTreeChange()
-                    file = chosen
-                    createdNodeCount = 0
-                } catch (e: IOException) {
-                    error = "Could not open ${chosen.name}: ${e.message}"
-                } catch (e: IllegalArgumentException) {
-                    error = "Could not open ${chosen.name}: ${e.message}"
-                }
-            }
-        },
+        open = { chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { open(it) } },
+        openRecent = { open(it) },
         save = { file?.let { save(it) } ?: saveAs() },
         saveAs = { saveAs() },
     )
@@ -313,6 +324,7 @@ fun main() = application {
             onError = { error = it },
             onErrorDismiss = { error = null },
             fileActions = fileActions,
+            recentPaths = recentPaths,
             fileMenuExpanded = fileMenuExpanded,
             onFileMenuExpandedChange = { fileMenuExpanded = it },
             arrowLinkSourceId = arrowLinkSourceId,
@@ -373,6 +385,7 @@ private fun MindMapScreen(
     onError: (String) -> Unit,
     onErrorDismiss: () -> Unit,
     fileActions: FileActions,
+    recentPaths: List<String>,
     fileMenuExpanded: Boolean,
     onFileMenuExpandedChange: (Boolean) -> Unit,
     arrowLinkSourceId: String?,
@@ -425,7 +438,7 @@ private fun MindMapScreen(
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-                    FileMenu(fileActions, fileMenuExpanded, onFileMenuExpandedChange)
+                    FileMenu(fileActions, recentPaths, fileMenuExpanded, onFileMenuExpandedChange)
                     EditMenu(
                         enabled = selectedNode != null,
                         onAdd = { operation = Operation.Add(it) },
@@ -629,16 +642,52 @@ private fun nextNodeNumber(
 @Composable
 private fun FileMenu(
     actions: FileActions,
+    recentPaths: List<String>,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
+    var recentExpanded by remember { mutableStateOf(false) }
+
     Box {
         TextButton(onClick = { onExpandedChange(true) }) {
             Text("File")
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                onExpandedChange(false)
+                recentExpanded = false
+            },
+        ) {
             FileMenuItem("New", "Ctrl+N", actions.new, onExpandedChange)
             FileMenuItem("Open...", "Ctrl+O", actions.open, onExpandedChange)
+            Box {
+                DropdownMenuItem(
+                    text = { Text("Recent") },
+                    trailingIcon = { Text("\u25B8") },
+                    onClick = { recentExpanded = true },
+                    enabled = recentPaths.isNotEmpty(),
+                )
+                DropdownMenu(expanded = recentExpanded, onDismissRequest = { recentExpanded = false }) {
+                    recentPaths.forEach { path ->
+                        val recentFile = File(path)
+                        DropdownMenuItem(
+                            // Mind maps in different folders may share a name, so the folder is shown too.
+                            text = {
+                                Column {
+                                    Text(recentFile.name)
+                                    Text(recentFile.parent.orEmpty(), style = MaterialTheme.typography.labelSmall)
+                                }
+                            },
+                            onClick = {
+                                recentExpanded = false
+                                onExpandedChange(false)
+                                actions.openRecent(recentFile)
+                            },
+                        )
+                    }
+                }
+            }
             HorizontalDivider()
             FileMenuItem("Save", "Ctrl+S", actions.save, onExpandedChange)
             FileMenuItem("Save As...", "Ctrl+Shift+S", actions.saveAs, onExpandedChange)

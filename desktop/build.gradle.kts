@@ -15,6 +15,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.material3)
     implementation(libs.richeditor.compose)
+    testImplementation(libs.kotlin.test)
 }
 
 compose.desktop {
