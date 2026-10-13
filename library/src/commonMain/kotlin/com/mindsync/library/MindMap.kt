@@ -84,6 +84,9 @@ private val ARROW_HEAD_HALF_WIDTH = Dp(5f)
  * A click on a link in the text of a node, one that is not the start of a drag, calls [onLinkClick] with
  * the node and the URL of the link. The click selects the node as any other click on it does.
  *
+ * A click on a node with the secondary mouse button selects the node and calls [onNodeMenu] with it and the
+ * position of the click, for showing a menu there.
+ *
  * The arrow links of the tree are drawn on top of its nodes. A click on one with the secondary mouse
  * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
  * showing a menu there.
@@ -102,6 +105,7 @@ fun MindMap(
     , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onArrowLinkMenu: (link: ArrowLink, position: Offset) -> Unit = { _, _ -> }
+    , onNodeMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -124,6 +128,7 @@ fun MindMap(
     val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnArrowLinkMenu by rememberUpdatedState(onArrowLinkMenu)
+    val currentOnNodeMenu by rememberUpdatedState(onNodeMenu)
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -203,10 +208,14 @@ fun MindMap(
                         // The gestures above only follow the primary button, so the secondary one is seen here.
                         if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
                             val change = event.changes.firstOrNull()
-                            val link = change
-                                ?.takeIf { state.findNodeAt(it.position) == null }
-                                ?.let { state.findArrowLink(it.position) }
-                            if (change != null && link != null) {
+                            val node = change?.let { state.findNodeAt(it.position) }
+                            val link = change?.takeIf { node == null }?.let { state.findArrowLink(it.position) }
+                            if (change != null && node != null) {
+                                change.consume()
+                                state.onNodeMenuClick(node)
+                                currentOnNodeMenu(state.selectedNode ?: node, change.position)
+                            }
+                            else if (change != null && link != null) {
                                 change.consume()
                                 currentOnArrowLinkMenu(link, change.position)
                             }

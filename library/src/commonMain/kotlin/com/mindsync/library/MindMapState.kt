@@ -356,6 +356,11 @@ class MindMapState(
         return button
     }
 
+    internal fun onNodeMenuClick(node: NodeData<*>) {
+        mindMapManager.setSelectedNode(node)
+        invalidate()
+    }
+
     internal fun onAddButtonClick(node: NodeData<*>) {
         mindMapManager.setNotMoving()
         mindMapManager.setSelectedNode(node)

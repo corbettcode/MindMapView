@@ -61,6 +61,7 @@ class MindMapTest {
     private val addChildSides = mutableListOf<LayoutSide>()
     private val linkClicks = mutableListOf<Pair<String, String>>()
     private val arrowLinkMenus = mutableListOf<Pair<String, Offset>>()
+    private val nodeMenus = mutableListOf<Pair<String, Offset>>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -76,6 +77,7 @@ class MindMapTest {
                 },
                 onLinkClick = { node, url -> linkClicks.add(node.id to url) },
                 onArrowLinkMenu = { link, position -> arrowLinkMenus.add(link.id to position) },
+                onNodeMenu = { node, position -> nodeMenus.add(node.id to position) },
             )
         }
     }
@@ -1039,6 +1041,32 @@ class MindMapTest {
             listOf(RichTextLink("a link to click", "https://example.com/")),
             RichText.links(read.getNode(linkId).description),
         )
+    }
+
+    @Test
+    fun secondaryClickOnANodeSelectsItAndAsksForItsMenu() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        val rootId = state.tree.getRootNode().id
+        val firstId = state.tree.getRootNode().children.single()
+        assertEquals(rootId, state.selectedNode?.id)
+        val position = with(density) { center(state.tree.getNode(firstId)) }
+
+        onNodeWithTag(TAG).performMouseInput { rightClick(position) }
+        waitForIdle()
+        assertEquals(listOf(firstId to position), nodeMenus)
+        assertEquals(firstId, state.selectedNode?.id)
+        assertEquals(emptyList(), arrowLinkMenus)
+
+        // Empty space has no menu, and the secondary button leaves the selection as it is there.
+        onNodeWithTag(TAG).performMouseInput { rightClick(Offset(5f, 5f)) }
+        waitForIdle()
+        assertEquals(1, nodeMenus.size)
+        assertEquals(firstId, state.selectedNode?.id)
     }
 
     @Test

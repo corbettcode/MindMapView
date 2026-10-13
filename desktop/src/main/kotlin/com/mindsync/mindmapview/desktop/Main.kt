@@ -318,6 +318,8 @@ private fun MindMapScreen(
     var shapeChoiceSide by remember { mutableStateOf<LayoutSide?>(null) }
     // The arrow link its menu is open for, and where in the mind map it was asked for.
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    // The node its menu is open for, and where in the mind map it was asked for.
+    var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
@@ -390,6 +392,10 @@ private fun MindMapScreen(
                             shapeChoiceSide = side
                         }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
+                        , onNodeMenu = { node, position ->
+                            onArrowLinkSourceIdChange(null)
+                            nodeMenu = node.id to position
+                        }
                         // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
@@ -403,6 +409,19 @@ private fun MindMapScreen(
                             Text(
                                 "Click the node the arrow should point to. Esc cancels.",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
+                    nodeMenu?.let { (nodeId, position) ->
+                        state.tree.nodes[nodeId]?.let { node ->
+                            NodeMenu(
+                                position = position,
+                                // The root is on neither side of itself, so it is not moved.
+                                side = if (node.parentId == null) null else state.tree.sideOf(nodeId),
+                                onEdit = { operation = Operation.Update },
+                                onLink = { onArrowLinkSourceIdChange(nodeId) },
+                                onMove = { state.moveNodeToOtherSide() },
+                                onDismiss = { nodeMenu = null },
                             )
                         }
                     }
@@ -772,6 +791,48 @@ private fun EditNodeDialog(
 private fun nodeLabel(description: String?): String {
     val text = RichText.parse(description.orEmpty()).text.replace(Regex("\\s+"), " ").trim()
     return if (text.length > ARROW_LINK_MENU_LABEL_LENGTH) text.take(ARROW_LINK_MENU_LABEL_LENGTH) + "\u2026" else text
+}
+
+// The menu of a node, which floats where the node was clicked. The click selected the node, which is the
+// one the items act on. Each of them closes the menu.
+@Composable
+private fun NodeMenu(
+    position: Offset,
+    side: LayoutSide?,
+    onEdit: () -> Unit,
+    onLink: () -> Unit,
+    onMove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
+        DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+            DropdownMenuItem(
+                text = { Text("Edit") },
+                onClick = {
+                    onDismiss()
+                    onEdit()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Link") },
+                onClick = {
+                    onDismiss()
+                    onLink()
+                },
+            )
+            if (side != null) {
+                DropdownMenuItem(
+                    text = { Text("Move") },
+                    // The arrow is the way the node goes: to the side of the root it is not on.
+                    trailingIcon = { Text(if (side == LayoutSide.RIGHT) "\u2190" else "\u2192") },
+                    onClick = {
+                        onDismiss()
+                        onMove()
+                    },
+                )
+            }
+        }
+    }
 }
 
 // The menu of an arrow link, which floats where the link was clicked. Each of its items closes it.
