@@ -38,6 +38,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
+import com.mindsync.library.util.RichTextLink
 import com.mindsync.library.util.RichTextSize
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.test.Test
@@ -55,6 +56,7 @@ class MindMapTest {
     private val moves = mutableListOf<Pair<String, String>>()
     private val addChildClicks = mutableListOf<String>()
     private val addChildSides = mutableListOf<LayoutSide>()
+    private val linkClicks = mutableListOf<Pair<String, String>>()
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
         setContent {
@@ -68,6 +70,7 @@ class MindMapTest {
                     addChildClicks.add(node.id)
                     addChildSides.add(side)
                 },
+                onLinkClick = { node, url -> linkClicks.add(node.id to url) },
             )
         }
     }
@@ -965,6 +968,72 @@ class MindMapTest {
         assertEquals(listOf(secondId), state.tree.getNode(firstId).children)
         assertIs<OvalNodeData>(state.tree.getNode(secondId))
         assertEquals(firstId, state.tree.getNode(secondId).parentId)
+    }
+
+    @Test
+    fun linksAreFoundInRichText() {
+        val html =
+            "<p>see <a href=\"https://example.com/\">the <b>site</b></a> or " +
+                "<a href=\"mailto:someone@example.com\">write</a></p>"
+        assertEquals(
+            listOf(
+                RichTextLink("the site", "https://example.com/"),
+                RichTextLink("write", "mailto:someone@example.com"),
+            ),
+            RichText.links(html),
+        )
+        assertEquals(emptyList(), RichText.links("<p>no <b>link</b> here</p>"))
+
+        val text = RichText.parse(html)
+        assertEquals("see the site or write", text.text)
+        assertNull(RichText.linkAt(text, text.text.indexOf("see")))
+        assertEquals("https://example.com/", RichText.linkAt(text, text.text.indexOf("the")))
+        assertEquals("https://example.com/", RichText.linkAt(text, text.text.indexOf("site") + 3))
+        assertNull(RichText.linkAt(text, text.text.indexOf(" or") + 1))
+        assertEquals("mailto:someone@example.com", RichText.linkAt(text, text.text.length - 1))
+        assertNull(RichText.linkAt(text, text.text.length))
+    }
+
+    @Test
+    fun clickingALinkInANodeReportsIt() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("<p><a href=\"https://example.com/\">a link to click</a></p>")
+        state.addNode("no link")
+        waitForIdle()
+        val (linkId, plainId) = state.tree.getRootNode().children
+
+        clickNode(state.tree.getNode(plainId))
+        assertEquals(emptyList(), linkClicks)
+
+        // The click selects the node as well.
+        clickNode(state.tree.getNode(linkId))
+        assertEquals(listOf(linkId to "https://example.com/"), linkClicks)
+        assertEquals(linkId, state.selectedNode?.id)
+
+        // The padding around the text is not part of the link.
+        onNodeWithTag(TAG).performTouchInput {
+            val node = state.tree.getNode(linkId) as RectangleNodeData
+            click(Offset(node.path.leftX().dpVal.dp.toPx() + 2f, node.path.centerY.dpVal.dp.toPx()))
+        }
+        waitForIdle()
+        assertEquals(1, linkClicks.size)
+
+        // A drag that starts on a link is not a click on it.
+        onNodeWithTag(TAG).performTouchInput {
+            val start = center(state.tree.getNode(linkId))
+            swipe(start, start + Offset(0f, 150.dp.toPx()), durationMillis = 200)
+        }
+        waitForIdle()
+        assertEquals(1, linkClicks.size)
+
+        val read = FreeMind.read(FreeMind.write(state.tree))
+        assertEquals(
+            listOf(RichTextLink("a link to click", "https://example.com/")),
+            RichText.links(read.getNode(linkId).description),
+        )
     }
 
     @Test

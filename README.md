@@ -71,6 +71,7 @@ fun MindMapScreen() {
 - Each line from the root to one of its children is drawn in its own color, which the lines and '+' buttons of the branch below it share.
 - `DescriptionEmoji.prepend(emoji, description)` puts an emoji in front of a description and `DescriptionEmoji.split(description)` finds it again, for an emoji picker in an edit dialog.
 - Drag a node onto the left or right half of the root to move it to that side, or call `state.moveNodeToOtherSide()` to move the branch the selected node is in, the child of the root it is or is below, to the other side.
+- A description or a note may hold links, as HTML `<a href>` elements. Pass `onLinkClick` to `MindMap` to be told of a click on a link in the text of a node; `RichText.links(html)` lists the links in a description or a note.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
 ### FreeMind files

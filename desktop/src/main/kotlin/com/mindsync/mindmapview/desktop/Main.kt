@@ -23,6 +23,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.HorizontalDivider
@@ -42,7 +43,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -54,12 +57,16 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -77,6 +84,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
+import com.mindsync.library.util.RichTextLink
 import com.mindsync.library.util.RichTextSize
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
@@ -99,6 +107,12 @@ private val EDIT_DIALOG_SIZE = DpSize(600.dp, 720.dp)
 private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 620.dp)
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
+private val LINK_MENU_MAX_WIDTH = 480.dp
+private val LINK_DIALOG_FIELD_WIDTH = 400.dp
+
+// The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
+private val LINK_SCHEMES = listOf("http", "https", "mailto")
+private val URL_SCHEME = Regex("^([A-Za-z][A-Za-z0-9+.-]*):")
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
 private val PICKER_LABEL_WIDTH = 56.dp
@@ -224,6 +238,7 @@ fun main() = application {
         MindMapScreen(
             state = state,
             error = error,
+            onError = { error = it },
             onErrorDismiss = { error = null },
             fileActions = fileActions,
             fileMenuExpanded = fileMenuExpanded,
@@ -251,6 +266,7 @@ private fun chooseFile(
 private fun MindMapScreen(
     state: MindMapState,
     error: String?,
+    onError: (String) -> Unit,
     onErrorDismiss: () -> Unit,
     fileActions: FileActions,
     fileMenuExpanded: Boolean,
@@ -265,6 +281,21 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen = operation != null || shapeChoiceSide != null
+
+    val uriHandler = LocalUriHandler.current
+    val windowInfo = LocalWindowInfo.current
+    val openLink: (String) -> Unit = { url ->
+        if (linkScheme(url) !in LINK_SCHEMES) {
+            onError("Could not open $url: only web and mail links are opened.")
+        }
+        else {
+            try {
+                uriHandler.openUri(url)
+            } catch (e: IllegalArgumentException) {
+                onError("Could not open $url: ${e.message}")
+            }
+        }
+    }
     LaunchedEffect(hoveredNode?.id, hoveredNode?.note, isDialogOpen) {
         notePopup = null
         val note = hoveredNode?.note?.takeIf { it.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
@@ -290,6 +321,11 @@ private fun MindMapScreen(
                             }
                         },
                         onMove = { state.moveNodeToOtherSide() },
+                        // Read when the menu opens, as moveSide is.
+                        links = {
+                            selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
+                        },
+                        onOpenLink = openLink,
                     )
                     ViewMenu(onFit = { state.fitScreen() })
                 }
@@ -300,6 +336,8 @@ private fun MindMapScreen(
                         , modifier = Modifier.fillMaxSize()
                         , onNodeDoubleClick = { operation = Operation.Update }
                         , onAddChildClick = { _, side -> shapeChoiceSide = side }
+                        // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
+                        , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
                     notePopup?.let { (note, position) -> NotePopup(note, position) }
                 }
@@ -413,9 +451,12 @@ private fun EditMenu(
     onRemove: () -> Unit,
     moveSide: () -> LayoutSide?,
     onMove: () -> Unit,
+    links: () -> List<RichTextLink>,
+    onOpenLink: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
+    var linksExpanded by remember { mutableStateOf(false) }
 
     Box {
         TextButton(onClick = { expanded = true }) {
@@ -426,6 +467,7 @@ private fun EditMenu(
             onDismissRequest = {
                 expanded = false
                 addExpanded = false
+                linksExpanded = false
             },
         ) {
             Box {
@@ -475,6 +517,34 @@ private fun EditMenu(
                 },
                 enabled = side != null,
             )
+            val nodeLinks = links()
+            Box {
+                DropdownMenuItem(
+                    text = { Text("Open Link") },
+                    trailingIcon = { Text("\u25B8") },
+                    onClick = { linksExpanded = true },
+                    enabled = nodeLinks.isNotEmpty(),
+                )
+                DropdownMenu(expanded = linksExpanded, onDismissRequest = { linksExpanded = false }) {
+                    nodeLinks.forEach { link ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (link.text == link.url) link.url else "${link.text} \u2014 ${link.url}",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = LINK_MENU_MAX_WIDTH),
+                                )
+                            },
+                            onClick = {
+                                linksExpanded = false
+                                expanded = false
+                                onOpenLink(link.url)
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -614,7 +684,8 @@ private fun NotePopup(
     note: String,
     position: Offset,
 ) {
-    val text = remember(note) { RichText.parse(note) }
+    val linkColor = MaterialTheme.colorScheme.primary
+    val text = remember(note, linkColor) { RichText.parse(note, linkColor) }
     val shape = RoundedCornerShape(8.dp)
 
     Layout(
@@ -653,6 +724,16 @@ private fun NotePopup(
 private fun RichTextToolbar(state: RichTextState) {
     val spanStyle = state.currentSpanStyle
     val decoration = spanStyle.textDecoration ?: TextDecoration.None
+    var linkDialogOpen by remember { mutableStateOf(false) }
+
+    if (linkDialogOpen) {
+        LinkDialog(
+            url = state.selectedLinkUrl,
+            onSubmit = { state.setLink(it) },
+            onRemove = { state.removeLink() },
+            onDismiss = { linkDialogOpen = false },
+        )
+    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -694,11 +775,99 @@ private fun RichTextToolbar(state: RichTextState) {
             checked = state.isOrderedList,
             onToggle = { state.toggleOrderedList() },
         )
+        RichTextToggle(
+            label = "\uD83D\uDD17",
+            labelStyle = SpanStyle(),
+            checked = state.isLink,
+            onToggle = { linkDialogOpen = true },
+        )
         RichTextSizeSelect(
             selectedSize = RichTextSize.of(spanStyle.fontSize),
             onSelect = { state.setSize(it) },
         )
     }
+}
+
+// The link the cursor is in is changed; otherwise the selection becomes a link, or the URL is put in as one.
+private fun RichTextState.setLink(url: String) {
+    when {
+        isLink -> updateLink(url)
+        !selection.collapsed -> addLinkToSelection(url)
+        else -> addLink(text = url, url = url)
+    }
+}
+
+private fun linkScheme(url: String): String? = URL_SCHEME.find(url)?.groupValues?.get(1)?.lowercase()
+
+// An address typed without a scheme is taken to be a mail address when it looks like one, and a web address otherwise.
+private fun completeUrl(input: String): String {
+    val url = input.trim()
+    return when {
+        url.isEmpty() || linkScheme(url) != null -> url
+        '@' in url && '/' !in url -> "mailto:$url"
+        else -> "https://$url"
+    }
+}
+
+@Composable
+private fun LinkDialog(
+    url: String?,
+    onSubmit: (String) -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var input by remember { mutableStateOf(url.orEmpty()) }
+    val completed = completeUrl(input)
+    val isOpenable = linkScheme(completed) in LINK_SCHEMES
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (url == null) "Add link" else "Edit link") },
+        text = {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                label = { Text("Address") },
+                placeholder = { Text("https://") },
+                singleLine = true,
+                isError = input.isNotBlank() && !isOpenable,
+                supportingText = {
+                    if (input.isNotBlank() && !isOpenable) Text("Only web and mail addresses can be linked to.")
+                },
+                modifier = Modifier.width(LINK_DIALOG_FIELD_WIDTH).focusRequester(focusRequester),
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSubmit(completed)
+                    onDismiss()
+                },
+                enabled = isOpenable,
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (url != null) {
+                    TextButton(
+                        onClick = {
+                            onRemove()
+                            onDismiss()
+                        },
+                    ) {
+                        Text("Remove link")
+                    }
+                }
+                Button(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        },
+    )
 }
 
 private fun RichTextState.setSize(size: RichTextSize) {

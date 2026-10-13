@@ -72,6 +72,9 @@ internal val NOTE_MARKER_SIZE = Dp(12f)
  * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
  * button, so [MindMapState.addNode] with that side then adds the child there.
  *
+ * A click on a link in the text of a node, one that is not the start of a drag, calls [onLinkClick] with
+ * the node and the URL of the link. The click selects the node as any other click on it does.
+ *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
  */
@@ -84,6 +87,7 @@ fun MindMap(
     , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
     , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
     , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
+    , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -104,6 +108,7 @@ fun MindMap(
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
     val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
+    val currentOnLinkClick by rememberUpdatedState(onLinkClick)
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -152,6 +157,9 @@ fun MindMap(
                             }
                         }
                         state.onTouchUp(currentOnNodeMove)
+                        if (dragStart == null) {
+                            state.findLink(down.position)?.let { (node, url) -> currentOnLinkClick(node, url) }
+                        }
                         // A second click on the same node shortly after the first is a double click; a drag is not a click.
                         val isSecondClick = lastClickedNodeId == touchedNode.id &&
                             down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis

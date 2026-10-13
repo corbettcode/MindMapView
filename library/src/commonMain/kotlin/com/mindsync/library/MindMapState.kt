@@ -31,6 +31,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.NodeGenerator
 import com.mindsync.library.util.Px
+import com.mindsync.library.util.RichText
 import com.mindsync.library.util.toDp
 import com.mindsync.library.util.toPx
 import kotlinx.coroutines.CoroutineScope
@@ -255,6 +256,22 @@ class MindMapState(
             }
         }
         return foundNode
+    }
+
+    // The text of a node is drawn centered on the node, so that is where its links are looked for.
+    internal fun findLink(position: Offset): Pair<NodeData<*>, String>? {
+        val point = toTreePoint(position)
+        val node = findNode(point) ?: return null
+        val layout = mindMapManager.getMeasureTextSize()?.measure(node.description) ?: return null
+        val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
+        val textPoint = point - center + Offset(layout.size.width / 2f, layout.size.height / 2f)
+        // The offset is that of the nearest gap between two characters, so the point is in one of the two.
+        val gap = layout.getOffsetForPosition(textPoint)
+        val text = layout.layoutInput.text
+        return listOf(gap - 1, gap)
+            .filter { it in text.indices && layout.getBoundingBox(it).contains(textPoint) }
+            .firstNotNullOfOrNull { RichText.linkAt(text, it) }
+            ?.let { node to it }
     }
 
     // The root has an add button for each of its sets of children; other nodes have one on their own side.
