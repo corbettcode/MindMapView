@@ -6,6 +6,7 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.CirclePath
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalPath
@@ -24,7 +25,9 @@ import kotlin.math.roundToInt
  * Reads and writes mind maps in the FreeMind `.mm` format.
  *
  * FreeMind has no notion of this library's node shapes, so a node's shape is kept in an
- * `<attribute NAME="shape">` child, which FreeMind preserves. The side of the root a child of the root is
+ * `<attribute NAME="shape">` child, which FreeMind preserves. It is written in front of the node's own
+ * attributes, which are FreeMind's `<attribute>` children as well: the first one named `shape` that holds a
+ * shape is read as the shape, and every other one as an attribute. The side of the root a child of the root is
  * on is kept in FreeMind's own `POSITION`. Arrow links are kept as FreeMind's own `<arrowlink>` children of
  * the node they start at. Node positions are not stored: a map that
  * was read needs to be arranged, for example with `MindMapState.animateTreeChange()`.
@@ -75,6 +78,7 @@ object FreeMind {
                 textColor = rootElement.color("COLOR") ?: root.textColor,
             ),
         )
+        tree.setAttributes(root.id, rootElement.nodeAttributes())
         leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
         val usedArrowLinkIds = mutableSetOf<String>()
         arrowLinks
@@ -113,6 +117,10 @@ object FreeMind {
         }
         append(indent).append("  <attribute NAME=\"").append(SHAPE_ATTRIBUTE).append("\" VALUE=\"")
         append(node.shape().name.lowercase()).append("\"/>\n")
+        tree.attributesOf(node.id).forEach { attribute ->
+            append(indent).append("  <attribute NAME=\"").append(escapeXml(attribute.name)).append("\" VALUE=\"")
+            append(escapeXml(attribute.value)).append("\"/>\n")
+        }
         arrowLinks[node.id]?.forEach { link ->
             append(indent).append("  <arrowlink ID=\"").append(escapeXml(link.id)).append('"')
             append(" DESTINATION=\"").append(escapeXml(link.targetId)).append('"')
@@ -137,10 +145,7 @@ object FreeMind {
         val id = element.attributes["ID"]?.takeIf { it.isNotEmpty() && usedIds.add(it) }
             ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
         element.readArrowLinks(id, arrowLinks)
-        val shape = element.children
-            .firstOrNull { it.name == "attribute" && it.attributes["NAME"] == SHAPE_ATTRIBUTE }
-            ?.let { attribute -> NodeShape.entries.firstOrNull { it.name.equals(attribute.attributes["VALUE"], ignoreCase = true) } }
-            ?: NodeShape.RECTANGLE
+        val shape = element.shapeAttribute()?.shape() ?: NodeShape.RECTANGLE
         val children = element.childNodes().map { readNode(tree, it, id, usedIds, arrowLinks) }
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
@@ -190,6 +195,7 @@ object FreeMind {
             )
         }
         tree.setNode(id, node)
+        tree.setAttributes(id, element.nodeAttributes())
         return id
     }
 
@@ -201,6 +207,24 @@ object FreeMind {
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    private fun XmlElement.shape(): NodeShape? {
+        return NodeShape.entries.firstOrNull { it.name.equals(attributes["VALUE"], ignoreCase = true) }
+    }
+
+    // The attribute that holds the shape of the node, which is none of the node's own attributes.
+    private fun XmlElement.shapeAttribute(): XmlElement? {
+        return children.firstOrNull {
+            it.name == "attribute" && it.attributes["NAME"] == SHAPE_ATTRIBUTE && it.shape() != null
+        }
+    }
+
+    private fun XmlElement.nodeAttributes(): List<NodeAttribute> {
+        val shapeAttribute = shapeAttribute()
+        return children
+            .filter { it.name == "attribute" && it !== shapeAttribute }
+            .map { NodeAttribute(it.attributes["NAME"].orEmpty(), it.attributes["VALUE"].orEmpty()) }
+    }
 
     // FreeMind draws an arrowhead unless it is told there is none, at the end; at the start it draws none.
     private fun XmlElement.readArrowLinks(

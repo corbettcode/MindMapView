@@ -17,6 +17,8 @@ class Tree<T> {
     // The root has a set of children for each side; these are the ones on its left.
     private val leftRootChildIds = mutableSetOf<String>()
 
+    private val nodeAttributes = mutableMapOf<String, List<NodeAttribute>>()
+
     private val _arrowLinks = mutableListOf<ArrowLink>()
 
     /** The arrow links between the nodes of the tree, in the order they are drawn. */
@@ -94,6 +96,17 @@ class Tree<T> {
         else {
             leftRootChildIds.remove(childId)
         }
+    }
+
+    /** Returns the attributes of a node, in the order they are shown. */
+    fun attributesOf(id: String): List<NodeAttribute> = nodeAttributes[id].orEmpty()
+
+    fun setAttributes(
+        id: String
+        , attributes: List<NodeAttribute>
+    ) {
+        getNode(id)
+        if (attributes.isEmpty()) nodeAttributes.remove(id) else nodeAttributes[id] = attributes.toList()
     }
 
     /**

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
@@ -1235,6 +1236,137 @@ class MindMapTest {
         assertEquals(ArrowLink("Arrow_ID_7", rootId, "ID_3", ArrowLink.DEFAULT_COLOR, false, true, inclination, inclination), fromRoot)
         assertEquals(ArrowLink("Arrow_ID_8", "ID_2", rootId, Color.Red, true, false), toRoot)
         assertEquals(ArrowLink(bare.id, "ID_2", "ID_3"), bare)
+    }
+
+    @Test
+    fun attributesMakeANodeLargerWhileTheyAreShown() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        state.addNode("sibling")
+        waitForIdle()
+        val (childId, siblingId) = state.tree.getRootNode().children
+        fun child() = state.tree.getNode(childId) as RectangleNodeData
+        val plain = child().path
+        val apart = state.tree.getNode(siblingId).path.centerY.dpVal - plain.centerY.dpVal
+        assertTrue(state.showAttributes)
+        assertEquals(emptyList(), state.tree.attributesOf(childId))
+
+        val attributes = listOf(NodeAttribute("priority", "high"), NodeAttribute("owner", "someone with a long name"))
+        clickNode(child())
+        state.editNodeAttributes(attributes)
+        waitForIdle()
+        assertEquals(attributes, state.tree.attributesOf(childId))
+        assertEquals(emptyList(), state.tree.attributesOf(siblingId))
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+        assertTrue(child().path.width.dpVal > plain.width.dpVal)
+        // The sibling makes room for the taller node.
+        assertTrue(state.tree.getNode(siblingId).path.centerY.dpVal - child().path.centerY.dpVal > apart)
+
+        state.showAttributes = false
+        waitForIdle()
+        assertEquals(attributes, state.tree.attributesOf(childId))
+        assertEquals(plain.width, child().path.width)
+        assertEquals(plain.height, child().path.height)
+        assertEquals(apart, state.tree.getNode(siblingId).path.centerY.dpVal - child().path.centerY.dpVal, 0.01f)
+
+        state.showAttributes = true
+        waitForIdle()
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+
+        state.editNodeAttributes(emptyList())
+        waitForIdle()
+        assertEquals(emptyList(), state.tree.attributesOf(childId))
+        assertEquals(plain.height, child().path.height)
+    }
+
+    @Test
+    fun linkInANodeWithAttributesIsWhereItsTextIsDrawn() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("<p><a href=\"https://example.com/\">a link to click</a></p>")
+        waitForIdle()
+        val id = state.tree.getRootNode().children.single()
+        clickNode(state.tree.getNode(id))
+        state.editNodeAttributes(List(4) { NodeAttribute("name $it", "value $it") })
+        waitForIdle()
+        linkClicks.clear()
+
+        // The text is at the top of the node now, and its attributes are in the middle.
+        clickNode(state.tree.getNode(id))
+        assertEquals(emptyList(), linkClicks)
+        onNodeWithTag(TAG).performTouchInput {
+            val node = state.tree.getNode(id) as RectangleNodeData
+            click(Offset(node.path.centerX.dpVal.dp.toPx(), (node.path.topY() + Dp(17f)).dpVal.dp.toPx()))
+        }
+        waitForIdle()
+        assertEquals(listOf(id to "https://example.com/"), linkClicks)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsAttributes() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.addNode("first", rootId, "first", NodeShape.OVAL)
+        tree.addNode("second", rootId, "second")
+        val rootAttributes = listOf(NodeAttribute("status", "draft"))
+        // A node may have attributes of one name, and one that is named as the one its shape is kept in.
+        val firstAttributes = listOf(
+            NodeAttribute("tag", "a <b> & \"c\""),
+            NodeAttribute("tag", ""),
+            NodeAttribute("shape", "circle"),
+            NodeAttribute("shape", "no shape at all"),
+        )
+        tree.setAttributes(rootId, rootAttributes)
+        tree.setAttributes("first", firstAttributes)
+        assertFailsWith<IllegalArgumentException> { tree.setAttributes("no such node", rootAttributes) }
+
+        val read = FreeMind.read(FreeMind.write(tree))
+        assertEquals(rootAttributes, read.attributesOf(rootId))
+        assertEquals(firstAttributes, read.attributesOf("first"))
+        assertEquals(emptyList(), read.attributesOf("second"))
+        assertIs<OvalNodeData>(read.getNode("first"))
+        assertIs<RectangleNodeData>(read.getNode("second"))
+    }
+
+    @Test
+    fun freeMindAttributesAreRead() {
+        val content = """
+            <map version="1.0.1">
+            <attribute_registry SHOW_ATTRIBUTES="selected">
+            <attribute_name NAME="priority" VISIBLE="true"><attribute_value VALUE="high"/></attribute_name>
+            </attribute_registry>
+            <node ID="ID_1" TEXT="root">
+            <node ID="ID_2" POSITION="right" TEXT="first">
+            <attribute_layout NAME_WIDTH="60" VALUE_WIDTH="80"/>
+            <attribute NAME="priority" VALUE="high"/>
+            <attribute NAME="shape" VALUE="not one of ours"/>
+            <attribute NAME="owner" VALUE="Tom &amp; Jerry"/>
+            </node>
+            <node ID="ID_3" POSITION="right" TEXT="second">
+            <attribute NAME="shape" VALUE="stadium"/>
+            </node>
+            </node>
+            </map>
+        """.trimIndent()
+
+        val tree = FreeMind.read(content)
+        assertEquals(
+            listOf(
+                NodeAttribute("priority", "high"),
+                NodeAttribute("shape", "not one of ours"),
+                NodeAttribute("owner", "Tom & Jerry"),
+            ),
+            tree.attributesOf("ID_2"),
+        )
+        assertIs<RectangleNodeData>(tree.getNode("ID_2"))
+        assertEquals(emptyList(), tree.attributesOf("ID_3"))
+        assertIs<StadiumNodeData>(tree.getNode("ID_3"))
+        assertEquals(emptyList(), tree.attributesOf(tree.getRootNode().id))
     }
 
     @Test

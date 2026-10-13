@@ -18,11 +18,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
@@ -31,6 +33,7 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +47,7 @@ import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.LayoutSide
@@ -72,6 +76,9 @@ private val ARROW_LINK_WIDTH = Dp(2f)
 private val ARROW_HEAD_LENGTH = Dp(12f)
 private val ARROW_HEAD_HALF_WIDTH = Dp(5f)
 
+private val ATTRIBUTE_LINE_WIDTH = Dp(1f)
+private const val ATTRIBUTE_LINE_ALPHA = 0.5f
+
 /**
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
  * modifier such as `Modifier.fillMaxSize()`.
@@ -90,6 +97,8 @@ private val ARROW_HEAD_HALF_WIDTH = Dp(5f)
  * The arrow links of the tree are drawn on top of its nodes. A click on one with the secondary mouse
  * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
  * showing a menu there.
+ *
+ * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set.
  *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
@@ -269,7 +278,10 @@ private fun DrawScope.drawTree(
     state.tree.doPreorderTraversal { node ->
         val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
         nodeDrawer.drawNode(this)
-        nodeDrawer.drawText(this, measureTextSize.measure(node.description))
+        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes)
+        // The drawer centers the text on the node, which the attributes below it share with the text.
+        translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        content.table?.let { drawAttributeTable(node, it, content.tableTop) }
         if (node.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(node), drawInfo)
     }
 }
@@ -313,6 +325,30 @@ private fun DrawScope.drawArrowHead(
         close()
     }
     drawPath(head, color)
+}
+
+// A grid in the color of the node's text, with the names in its left column and the values in its right one.
+private fun DrawScope.drawAttributeTable(
+    node: NodeData<*>
+    , table: AttributeTable
+    , tableTop: Float
+) {
+    val left = node.path.centerX.toPx(this) - table.width / 2
+    val top = node.path.centerY.toPx(this) + tableTop
+    val lineColor = node.textColor.copy(alpha = ATTRIBUTE_LINE_ALPHA)
+    val lineWidth = ATTRIBUTE_LINE_WIDTH.toPx(this)
+
+    drawRect(lineColor, Offset(left, top), Size(table.width, table.height), style = Stroke(lineWidth))
+    drawLine(
+        lineColor, Offset(left + table.nameWidth, top), Offset(left + table.nameWidth, top + table.height), lineWidth,
+    )
+    var rowTop = top
+    table.rows.forEachIndexed { index, row ->
+        if (index > 0) drawLine(lineColor, Offset(left, rowTop), Offset(left + table.width, rowTop), lineWidth)
+        drawText(row.name, node.textColor, Offset(left + table.paddingX, rowTop + table.paddingY))
+        drawText(row.value, node.textColor, Offset(left + table.nameWidth + table.paddingX, rowTop + table.paddingY))
+        rowTop += row.height
+    }
 }
 
 // A sheet of paper with its top right corner folded over.

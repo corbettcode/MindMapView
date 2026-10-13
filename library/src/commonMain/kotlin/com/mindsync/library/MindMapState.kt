@@ -22,6 +22,7 @@ import com.mindsync.library.command.RemoveNodeCommand
 import com.mindsync.library.command.UpdateNodeCommand
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
@@ -86,6 +87,20 @@ class MindMapState(
             // The tree is no state of its own, so reading the tick is what tells a reader of a change.
             drawTick
             return tree.arrowLinks
+        }
+
+    private var attributesShown by mutableStateOf(true)
+
+    /**
+     * Whether the attributes of the nodes are shown, as a table below the text of each node that has any.
+     * Setting it rearranges the tree, as the nodes change size.
+     */
+    var showAttributes: Boolean
+        get() = attributesShown
+        set(value) {
+            attributesShown = value
+            mindMapManager.showAttributes = value
+            animateTreeChange()
         }
 
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
@@ -187,6 +202,15 @@ class MindMapState(
         mindMapManager.getSelectedNode()?.let { node ->
             tree.updateNodeTextColor(node.id, textColor)
             invalidate()
+        }
+    }
+
+    /** Gives the selected node these attributes in place of the ones it has. */
+    fun editNodeAttributes(attributes: List<NodeAttribute>) {
+        mindMapManager.getSelectedNode()?.let { node ->
+            tree.setAttributes(node.id, attributes)
+            mindMapManager.update(tree)
+            animateTreeChange()
         }
     }
 
@@ -321,13 +345,17 @@ class MindMapState(
         }
     }
 
-    // The text of a node is drawn centered on the node, so that is where its links are looked for.
+    // The text of a node is drawn centered on the node, above its attributes when they are shown, so that
+    // is where its links are looked for.
     internal fun findLink(position: Offset): Pair<NodeData<*>, String>? {
         val point = toTreePoint(position)
         val node = findNode(point) ?: return null
-        val layout = mindMapManager.getMeasureTextSize()?.measure(node.description) ?: return null
+        val content =
+            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes) ?: return null
+        val layout = content.text
         val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
-        val textPoint = point - center + Offset(layout.size.width / 2f, layout.size.height / 2f)
+        val textPoint =
+            point - center + Offset(layout.size.width / 2f, layout.size.height / 2f + content.textRise)
         // The offset is that of the nearest gap between two characters, so the point is in one of the two.
         val gap = layout.getOffsetForPosition(textPoint)
         val text = layout.layoutInput.text

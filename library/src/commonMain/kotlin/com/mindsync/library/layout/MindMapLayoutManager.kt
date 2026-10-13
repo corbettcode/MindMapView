@@ -65,7 +65,7 @@ abstract class MindMapLayoutManager {
         currentNodeData: NodeData<*>
         , tree: Tree<*>
     ) {
-        val childHeightSum = measureChildHeight(currentNodeData, tree)
+        val childHeightSum = measureChildrenHeight(currentNodeData, tree)
         var startY = currentNodeData.path.centerY - (childHeightSum / 2)
 
         childrenOnSide(currentNodeData, tree).forEach { childId ->
@@ -123,28 +123,37 @@ abstract class MindMapLayoutManager {
         }
     }
 
+    /**
+     * Returns the height the node and the nodes below it on this side take: that of its children, or its
+     * own when it is the taller, as a node with a table of attributes may be.
+     */
     fun measureChildHeight(
+        nodeData: NodeData<*>,
+        tree: Tree<*>,
+    ): Dp {
+        val childrenHeight = measureChildrenHeight(nodeData, tree)
+        val ownHeight =
+            when (nodeData) {
+                is CircleNodeData -> nodeData.path.radius * 2
+                is RectangleNodeData -> nodeData.path.height
+                is StadiumNodeData -> nodeData.path.height()
+                is OvalNodeData -> nodeData.path.height()
+            }
+        return if (childrenHeight.dpVal > ownHeight.dpVal) childrenHeight else ownHeight
+    }
+
+    // The height of the children of the node on this side, one above the other, or none without any.
+    private fun measureChildrenHeight(
         nodeData: NodeData<*>,
         tree: Tree<*>,
     ): Dp {
         var heightSum = Dp(0f)
         val children = childrenOnSide(nodeData, tree)
-
         if (children.isNotEmpty()) {
             children.forEach { childId ->
-                val childNode = tree.getNode(childId)
-                heightSum += measureChildHeight(childNode, tree)
+                heightSum += measureChildHeight(tree.getNode(childId), tree)
             }
             heightSum += verticalSpacing * (children.size - 1)
-        }
-        else {
-            heightSum =
-                when (nodeData) {
-                    is CircleNodeData -> nodeData.path.radius * 2
-                    is RectangleNodeData -> nodeData.path.height
-                    is StadiumNodeData -> nodeData.path.height()
-                    is OvalNodeData -> nodeData.path.height()
-                }
         }
         return heightSum
     }

@@ -6,6 +6,7 @@
   <node ID="cd06e1c0-13b5-45b4-89b2-95c8d4f5bde8" TEXT="medications" POSITION="right" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
     <richcontent TYPE="NOTE"><html><head></head><body><p>These are the medications I take.</p></body></html></richcontent>
     <attribute NAME="shape" VALUE="rectangle"/>
+    <arrowlink ID="3ade8b8d-b1ad-436e-8630-0013552f5250" DESTINATION="4d78aee7-19fd-4e6b-b5c9-f874c029bf9a" COLOR="#b0b0b0" STARTARROW="None" ENDARROW="Default"/>
     <node ID="1fa8e17d-c7d4-450a-8716-2cef9de9d320" TEXT="vitamin D" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
       <attribute NAME="shape" VALUE="stadium"/>
     </node>
