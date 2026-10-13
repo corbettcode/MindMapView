@@ -1612,6 +1612,199 @@ class MindMapTest {
         return Triple(state, firstId, secondId)
     }
 
+    // The root with "first" and "second" below it, "below first" and "also below first" below "first" and
+    // "lowest" below "below first".
+    private class FoldTree(
+        val state: MindMapState,
+        val firstId: String,
+        val secondId: String,
+        val belowFirstId: String,
+        val alsoBelowFirstId: String,
+        val lowestId: String,
+    )
+
+    private fun ComposeUiTest.stateToFold(): FoldTree {
+        val (state, firstId, secondId) = stateWithTwoChildren()
+        clickNode(state.tree.getNode(firstId))
+        state.addNode("below first")
+        waitForIdle()
+        state.addNode("also below first")
+        waitForIdle()
+        val (belowFirstId, alsoBelowFirstId) = state.tree.getNode(firstId).children
+        clickNode(state.tree.getNode(belowFirstId))
+        state.addNode("lowest")
+        waitForIdle()
+        return FoldTree(state, firstId, secondId, belowFirstId, alsoBelowFirstId, state.tree.getNode(belowFirstId).children.single())
+    }
+
+    private fun MindMapState.foldedIds(): Set<String> = tree.nodes.keys.filter { tree.isFolded(it) }.toSet()
+
+    @Test
+    fun foldingANodeHidesTheNodesBelowItAndClosesTheirRoom() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+        val belowFirst = state.tree.getNode(fold.belowFirstId)
+        val gap = state.tree.getNode(fold.secondId).path.centerY - state.tree.getNode(fold.firstId).path.centerY
+
+        clickNode(state.tree.getNode(fold.firstId))
+        state.toggleFold()
+        waitForIdle()
+
+        assertTrue(state.tree.isFolded(fold.firstId))
+        assertFalse(state.tree.isVisible(fold.belowFirstId))
+        assertFalse(state.tree.isVisible(fold.lowestId))
+        assertTrue(state.tree.isVisible(fold.firstId))
+        assertEquals(listOf(fold.belowFirstId, fold.alsoBelowFirstId), state.tree.getNode(fold.firstId).children)
+        val foldedGap = state.tree.getNode(fold.secondId).path.centerY - state.tree.getNode(fold.firstId).path.centerY
+        assertTrue(foldedGap.dpVal < gap.dpVal)
+
+        // A hidden node is not there to click.
+        clicks.clear()
+        clickNode(belowFirst)
+        assertTrue(clicks.none { it?.id == fold.belowFirstId })
+
+        clickNode(state.tree.getNode(fold.firstId))
+        state.toggleFold()
+        waitForIdle()
+        assertFalse(state.tree.isFolded(fold.firstId))
+        assertEquals(gap, state.tree.getNode(fold.secondId).path.centerY - state.tree.getNode(fold.firstId).path.centerY)
+        clickNode(state.tree.getNode(fold.belowFirstId))
+        assertEquals(fold.belowFirstId, state.selectedNode?.id)
+    }
+
+    @Test
+    fun rootAndNodeWithoutChildrenAreNotFolded() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+
+        clickNode(state.tree.getRootNode())
+        state.toggleFold()
+        clickNode(state.tree.getNode(fold.secondId))
+        state.toggleFold()
+        waitForIdle()
+
+        assertEquals(emptySet(), state.foldedIds())
+    }
+
+    @Test
+    fun clickOnTheMarkerOfAFoldedNodeUnfoldsIt() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+        clickNode(state.tree.getNode(fold.firstId))
+        state.toggleFold()
+        waitForIdle()
+        clickNode(state.tree.getNode(fold.secondId))
+        addChildClicks.clear()
+
+        onNodeWithTag(TAG).performTouchInput { click(foldMarkerCenter(state.tree, state.tree.getNode(fold.firstId))) }
+        waitForIdle()
+
+        assertFalse(state.tree.isFolded(fold.firstId))
+        assertEquals(fold.firstId, state.selectedNode?.id)
+        // The marker is where the add button is while the node is not folded, and takes the click from it.
+        assertTrue(addChildClicks.isEmpty())
+    }
+
+    @Test
+    fun goingToAHiddenNodeUnfoldsTheNodesAboveIt() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+        clickNode(state.tree.getNode(fold.firstId))
+        state.foldAll()
+        waitForIdle()
+        assertEquals(setOf(fold.firstId, fold.belowFirstId), state.foldedIds())
+
+        state.goToNode(fold.lowestId)
+        waitForIdle()
+        assertEquals(emptySet(), state.foldedIds())
+        assertEquals(fold.lowestId, state.selectedNode?.id)
+
+        clickNode(state.tree.getRootNode())
+        state.foldAll()
+        state.goToNode(fold.lowestId)
+        waitForIdle()
+        // The nodes are arranged again, so the node is where it is clicked.
+        clickNode(state.tree.getNode(fold.lowestId))
+        assertEquals(fold.lowestId, clicks.last()?.id)
+    }
+
+    @Test
+    fun foldCommandsFoldAndUnfoldByLevel() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+        clickNode(state.tree.getRootNode())
+
+        state.foldOneLevel()
+        assertEquals(setOf(fold.belowFirstId), state.foldedIds())
+        state.foldOneLevel()
+        assertEquals(setOf(fold.belowFirstId, fold.firstId), state.foldedIds())
+        state.foldOneLevel()
+        assertEquals(setOf(fold.belowFirstId, fold.firstId), state.foldedIds())
+
+        state.unfoldOneLevel()
+        assertEquals(setOf(fold.belowFirstId), state.foldedIds())
+        state.unfoldOneLevel()
+        assertEquals(emptySet(), state.foldedIds())
+
+        state.toggleChildrenFold()
+        assertEquals(setOf(fold.firstId), state.foldedIds())
+        state.toggleChildrenFold()
+        assertEquals(emptySet(), state.foldedIds())
+
+        state.foldAll()
+        assertEquals(setOf(fold.firstId, fold.belowFirstId), state.foldedIds())
+        state.unfoldAll()
+        assertEquals(emptySet(), state.foldedIds())
+        waitForIdle()
+    }
+
+    @Test
+    fun foldedNodeUnfoldsForANewChildAndHidesTheArrowLinksOfItsHiddenNodes() = runComposeUiTest {
+        val fold = stateToFold()
+        val state = fold.state
+        val link = assertIs<ArrowLink>(state.addArrowLink(fold.secondId, fold.lowestId))
+        clickNode(state.tree.getNode(fold.firstId))
+        state.toggleFold()
+        waitForIdle()
+        assertNull(with(density) { arrowLinkCurve(state.tree, link) })
+
+        state.addNode("new below first")
+        waitForIdle()
+
+        assertFalse(state.tree.isFolded(fold.firstId))
+        assertEquals(3, state.tree.getNode(fold.firstId).children.size)
+        assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, link) })
+
+        clickNode(state.tree.getNode(fold.firstId))
+        state.toggleFold()
+        state.removeNode()
+        waitForIdle()
+        assertEquals(emptySet(), state.foldedIds())
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsFolds() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "first")
+        tree.addNode("b", rootId, "second")
+        tree.addNode("c", "a", "third")
+        tree.setFolded("a", true)
+        tree.setFolded("b", true)
+        tree.setFolded(rootId, true)
+
+        val written = FreeMind.write(tree)
+        assertEquals(1, Regex("FOLDED=\"true\"").findAll(written).count())
+
+        val read = FreeMind.read(written)
+        assertTrue(read.isFolded("a"))
+        assertFalse(read.isFolded("b"))
+        assertFalse(read.isFolded(rootId))
+        assertEquals(listOf("c"), read.getNode("a").children)
+        assertEquals(emptyList(), read.visibleChildren(read.getNode("a")))
+        assertEquals(written, FreeMind.write(read))
+    }
+
     @Test
     fun ctrlDraggingNodeOntoAnotherLinksThemWithoutMovingThem() = runComposeUiTest {
         val (state, firstId, secondId) = stateWithTwoChildren()

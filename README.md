@@ -72,6 +72,7 @@ fun MindMapScreen() {
 - `DescriptionEmoji.prepend(emoji, description)` puts an emoji in front of a description and `DescriptionEmoji.split(description)` finds it again, for an emoji picker in an edit dialog.
 - Drag a node onto the left or right half of the root to move it to that side, or call `state.moveNodeToOtherSide()` to move the branch the selected node is in, the child of the root it is or is below, to the other side.
 - A description or a note may hold links, as HTML `<a href>` elements. Pass `onLinkClick` to `MindMap` to be told of a click on a link in the text of a node; `RichText.links(html)` lists the links in a description or a note.
+- A node with children can be folded, as in FreeMind, which hides the nodes below it: `state.toggleFold()` folds or unfolds the selected node and `state.toggleChildrenFold()` its children, `state.foldOneLevel()` and `state.unfoldOneLevel()` hide or show one level of the nodes below it, and `state.foldAll()` and `state.unfoldAll()` all of them. A folded node has a ring where its lines would start, and a click on the ring unfolds it. The root is never folded. `FreeMind` reads and writes the folds as `FOLDED="true"`.
 - An arrow link is an arrow from one node to any other, drawn as a curve on top of the tree: `state.addArrowLink(sourceId, targetId)` adds one, `state.updateArrowLink` changes its color and arrowheads and `state.removeArrowLink` removes it. `MindMap` calls `onArrowLinkMenu` when one is clicked with the secondary mouse button, for showing a menu there. Dragging a node onto another with Ctrl held down adds an arrow link from the first to the second, or removes it when it is there already, and calls `onNodeLink`.
 - A click on a node with the secondary mouse button selects it and calls `onNodeMenu`, for showing a menu of the node there.
 - A node may have attributes, names with a value each, which are drawn as a table below its text while `state.showAttributes` is set: `state.editNodeAttributes(attributes)` gives them to the selected node and `state.tree.attributesOf(id)` returns them.
@@ -267,5 +268,6 @@ binding.mindMapView.editNodeText(description)
 binding.mindMapView.editNodeNote(note)
 binding.mindMapView.addArrowLink(sourceId, targetId)
 binding.mindMapView.removeArrowLink(arrowLinkId)
+binding.mindMapView.toggleFold()
 binding.mindMapView.fitScreen()
 ```

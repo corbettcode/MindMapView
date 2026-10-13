@@ -74,6 +74,7 @@ private const val TOP_RIGHT_OF_ARC = 0.70710677f
 internal val ADD_BUTTON_RADIUS = Dp(10f)
 private val LINK_DRAG_DASH = Dp(6f)
 internal val NOTE_MARKER_SIZE = Dp(12f)
+private val FOLD_MARKER_WIDTH = Dp(3f)
 
 // How near to an arrow link a click on it has to be.
 internal val ARROW_LINK_REACH = Dp(8f)
@@ -108,6 +109,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * Dragging a node onto another while Ctrl is held down adds an arrow link from the first to the second
  * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
  * with whether the nodes are linked now. See [MindMapState.addArrowLink].
+ *
+ * A folded node, whose nodes below it are hidden, has a ring where its lines to them would start, in place
+ * of its '+' button. A click on the ring unfolds the node. See [MindMapState.toggleFold].
  *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
@@ -164,6 +168,16 @@ fun MindMap(
                 var lastClickTime = 0L
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
+                    val foldMarkerNode = state.findFoldMarker(down.position)
+                    if (foldMarkerNode != null) {
+                        down.consume()
+                        lastClickedNodeId = null
+                        waitForUpOrCancellation()?.let { up ->
+                            up.consume()
+                            state.onFoldMarkerClick(foldMarkerNode)
+                        }
+                        return@awaitEachGesture
+                    }
                     val addButton =
                         if (currentOnAddChildClick != null) state.findAddButton(down.position) else null
                     if (addButton != null) {
@@ -268,6 +282,7 @@ fun MindMap(
             if (onAddChildClick != null) {
                 drawAddButtons(state, drawInfo, lineColor, addIconColor)
             }
+            drawFoldMarkers(state, drawInfo, lineColor)
             drawTree(state, drawInfo, measure)
             drawArrowLinks(state)
             drawLinkDrag(state)
@@ -290,7 +305,7 @@ private fun DrawScope.drawTree(
     drawInfo: DrawInfo,
     measureTextSize: MeasureTextSize,
 ) {
-    state.tree.doPreorderTraversal { node ->
+    state.tree.doVisiblePreorderTraversal { node ->
         val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
         nodeDrawer.drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.showAttributes)
@@ -541,7 +556,7 @@ private fun DrawScope.drawLinkDrag(state: MindMapState) {
 }
 
 /**
- * Calls [action] for every node with the color of the lines of its branch: each child of the root starts
+ * Calls [action] for every node that is shown with the color of the lines of its branch: each child of the root starts
  * a branch with its own color, which the nodes below it share. The root is in no branch and gets
  * [lineColor].
  */
@@ -556,7 +571,7 @@ private fun forEachNodeWithLineColor(
         , color: Color
     ) {
         action(node, color)
-        node.children.forEachIndexed { index, childId ->
+        tree.visibleChildren(node).forEachIndexed { index, childId ->
             traverse(tree.getNode(childId), if (node.parentId == null) rootLineColor(drawInfo, index) else color)
         }
     }
@@ -581,6 +596,7 @@ private fun DrawScope.drawAddButtons(
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
     forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
+        if (state.tree.isFolded(node.id)) return@forEachNodeWithLineColor
         state.addButtonSides(node).forEach { side ->
             val center = addButtonCenter(node, side)
             drawCircle(color = color, radius = radius, center = center)
@@ -589,6 +605,28 @@ private fun DrawScope.drawAddButtons(
         }
     }
 }
+
+// As FreeMind marks a folded node: a small circle where the lines to its hidden children would start.
+private fun DrawScope.drawFoldMarkers(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+) {
+    val strokeWidth = FOLD_MARKER_WIDTH.toPx(this)
+    val radius = ADD_BUTTON_RADIUS.toPx(this) - strokeWidth / 2
+
+    forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
+        if (state.tree.isFolded(node.id)) {
+            drawCircle(color = color, radius = radius, center = foldMarkerCenter(state.tree, node), style = Stroke(strokeWidth))
+        }
+    }
+}
+
+// The marker is where the add button of the node is while it is not folded.
+internal fun Density.foldMarkerCenter(
+    tree: Tree<*>
+    , node: NodeData<*>
+): Offset = addButtonCenter(node, tree.sideOf(node.id))
 
 // The button touches the node's edge where its lines start, so it covers the start of the lines, not the node.
 internal fun Density.addButtonCenter(

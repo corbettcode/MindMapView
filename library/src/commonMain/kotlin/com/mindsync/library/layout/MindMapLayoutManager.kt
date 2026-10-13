@@ -14,7 +14,8 @@ import com.mindsync.library.util.Dp
  * centered on their parent; the side they are placed on is up to the subclass.
  *
  * The root has a set of children for each side, so a layout manager only arranges and measures the
- * children of the root that are on its own side.
+ * children of the root that are on its own side. The nodes below a folded node are hidden: they take no
+ * room and are left where they are.
  */
 abstract class MindMapLayoutManager {
     protected val horizontalSpacing = Dp(50f)
@@ -98,7 +99,7 @@ abstract class MindMapLayoutManager {
         node: NodeData<*>
         , tree: Tree<*>
     ): List<String> {
-        return if (node.parentId == null) node.children.filter { tree.sideOf(it) == side } else node.children
+        return if (node.parentId == null) node.children.filter { tree.sideOf(it) == side } else tree.visibleChildren(node)
     }
 
     protected fun halfWidth(node: NodeData<*>): Dp {
@@ -161,12 +162,13 @@ abstract class MindMapLayoutManager {
     private var rightMost = Float.MIN_VALUE
 
     fun measureChildWidth(nodeData: NodeData<*>, tree: Tree<*>): Dp {
+        rightMost = Float.MIN_VALUE
         calculateWidth(nodeData, tree)
         return Dp(rightMost)
     }
 
     private fun calculateWidth(nodeData: NodeData<*>, tree: Tree<*>) {
         rightMost = maxOf(rightMost, (nodeData.path.centerX + halfWidth(nodeData)).dpVal)
-        nodeData.children.forEach { calculateWidth(tree.getNode(it), tree) }
+        tree.visibleChildren(nodeData).forEach { calculateWidth(tree.getNode(it), tree) }
     }
 }

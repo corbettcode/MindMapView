@@ -79,6 +79,30 @@ class MindMapView @JvmOverloads constructor(
         state.fitScreen()
     }
 
+    fun toggleFold() {
+        state.toggleFold()
+    }
+
+    fun toggleChildrenFold() {
+        state.toggleChildrenFold()
+    }
+
+    fun foldOneLevel() {
+        state.foldOneLevel()
+    }
+
+    fun unfoldOneLevel() {
+        state.unfoldOneLevel()
+    }
+
+    fun foldAll() {
+        state.foldAll()
+    }
+
+    fun unfoldAll() {
+        state.unfoldAll()
+    }
+
     fun editNodeText(description: String) {
         state.editNodeText(description)
     }

@@ -60,7 +60,7 @@ internal class ArrowLinkCurve(
 }
 
 /**
- * Returns the curve of [link], or null when one of its nodes is not in [tree].
+ * Returns the curve of [link], or null when one of its nodes is not in [tree] or is hidden in a folded node.
  */
 internal fun Density.arrowLinkCurve(
     tree: Tree<*>
@@ -68,6 +68,7 @@ internal fun Density.arrowLinkCurve(
 ): ArrowLinkCurve? {
     val source = tree.nodes[link.sourceId] ?: return null
     val target = tree.nodes[link.targetId] ?: return null
+    if (!tree.isVisible(source.id) || !tree.isVisible(target.id)) return null
     val isStartOnRight = isOnRightEdge(tree, source, target, link.startInclination)
     val isEndOnRight = isOnRightEdge(tree, target, source, link.endInclination)
     val start = edgePoint(source, target, isStartOnRight)

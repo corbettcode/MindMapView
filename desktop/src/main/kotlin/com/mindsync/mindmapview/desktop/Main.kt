@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -204,6 +205,8 @@ fun main() = application {
     // The node an arrow link is being added from, while the node it leads to is being chosen.
     var arrowLinkSourceId by remember { mutableStateOf<String?>(null) }
     var attributesDialogOpen by remember { mutableStateOf(false) }
+    // Space is typed in a dialog and chooses the item of a menu, so it folds no node while one is open.
+    var isDialogOpen by remember { mutableStateOf(false) }
     // How many nodes were added to the mind map since it was started or opened.
     var createdNodeCount by remember { mutableStateOf(0) }
 
@@ -274,6 +277,10 @@ fun main() = application {
                     arrowLinkSourceId = null
                     true
                 }
+                !isDialogOpen && error == null && foldCommand(event) != null -> {
+                    foldCommand(event)?.run?.invoke(state)
+                    true
+                }
                 !event.isCtrlPressed -> false
                 event.key == Key.N -> {
                     fileActions.new()
@@ -314,7 +321,33 @@ fun main() = application {
             onCreatedNodeCountChange = { createdNodeCount = it },
             attributesDialogOpen = attributesDialogOpen,
             onAttributesDialogOpenChange = { attributesDialogOpen = it },
+            onDialogOpenChange = { isDialogOpen = it },
         )
+    }
+}
+
+// FreeMind's own keys for folding.
+private class FoldCommand(
+    val label: String,
+    val shortcut: String,
+    val isAlt: Boolean,
+    val isCtrl: Boolean,
+    val key: Key,
+    val run: (MindMapState) -> Unit,
+)
+
+private val FOLD_COMMANDS = listOf(
+    FoldCommand("Toggle Folded", "Space", isAlt = false, isCtrl = false, Key.Spacebar) { it.toggleFold() },
+    FoldCommand("Toggle Children Folded", "Ctrl+Space", isAlt = false, isCtrl = true, Key.Spacebar) { it.toggleChildrenFold() },
+    FoldCommand("Fold One Level", "Alt+PageUp", isAlt = true, isCtrl = false, Key.PageUp) { it.foldOneLevel() },
+    FoldCommand("Unfold One Level", "Alt+PageDown", isAlt = true, isCtrl = false, Key.PageDown) { it.unfoldOneLevel() },
+    FoldCommand("Fold All", "Alt+Home", isAlt = true, isCtrl = false, Key.MoveHome) { it.foldAll() },
+    FoldCommand("Unfold All", "Alt+End", isAlt = true, isCtrl = false, Key.MoveEnd) { it.unfoldAll() },
+)
+
+private fun foldCommand(event: KeyEvent): FoldCommand? {
+    return FOLD_COMMANDS.firstOrNull {
+        it.key == event.key && it.isAlt == event.isAltPressed && it.isCtrl == event.isCtrlPressed && !event.isShiftPressed
     }
 }
 
@@ -348,6 +381,7 @@ private fun MindMapScreen(
     onCreatedNodeCountChange: (Int) -> Unit,
     attributesDialogOpen: Boolean,
     onAttributesDialogOpenChange: (Boolean) -> Unit,
+    onDialogOpenChange: (Boolean) -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -362,6 +396,9 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen = operation != null || shapeChoiceSide != null || attributesDialogOpen
+
+    val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
+    LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
 
     val uriHandler = LocalUriHandler.current
     val windowInfo = LocalWindowInfo.current
@@ -414,6 +451,7 @@ private fun MindMapScreen(
                         onFit = { state.fitScreen() },
                         showAttributes = state.showAttributes,
                         onShowAttributesChange = { state.showAttributes = it },
+                        onFold = { it.run(state) },
                     )
                 }
 
@@ -464,6 +502,11 @@ private fun MindMapScreen(
                                 onEditAttributes = { onAttributesDialogOpenChange(true) },
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
                                 onMove = { state.moveNodeToOtherSide() },
+                                // Only a node with children that is not the root is folded.
+                                isFolded =
+                                    if (node.parentId == null || node.children.isEmpty()) null
+                                    else state.tree.isFolded(nodeId),
+                                onFold = { state.toggleFold() },
                                 onDismiss = { nodeMenu = null },
                             )
                         }
@@ -752,6 +795,7 @@ private fun ViewMenu(
     onFit: () -> Unit,
     showAttributes: Boolean,
     onShowAttributesChange: (Boolean) -> Unit,
+    onFold: (FoldCommand) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -787,6 +831,17 @@ private fun ViewMenu(
                     onShowAttributesChange(false)
                 },
             )
+            HorizontalDivider()
+            FOLD_COMMANDS.forEach { command ->
+                DropdownMenuItem(
+                    text = { Text(command.label) },
+                    trailingIcon = { Text(command.shortcut, style = MaterialTheme.typography.labelMedium) },
+                    onClick = {
+                        expanded = false
+                        onFold(command)
+                    },
+                )
+            }
         }
     }
 }
@@ -926,6 +981,8 @@ private fun NodeMenu(
     onEditAttributes: () -> Unit,
     onLink: () -> Unit,
     onMove: () -> Unit,
+    isFolded: Boolean?,
+    onFold: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
@@ -959,6 +1016,15 @@ private fun NodeMenu(
                     onClick = {
                         onDismiss()
                         onMove()
+                    },
+                )
+            }
+            if (isFolded != null) {
+                DropdownMenuItem(
+                    text = { Text(if (isFolded) "Unfold" else "Fold") },
+                    onClick = {
+                        onDismiss()
+                        onFold()
                     },
                 )
             }

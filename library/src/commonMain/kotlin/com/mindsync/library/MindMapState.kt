@@ -187,6 +187,77 @@ class MindMapState(
         }
     }
 
+    /**
+     * Folds the selected node, which hides the nodes below it, or unfolds it when it is folded. Only a node
+     * with children is folded, and the root never is.
+     */
+    fun toggleFold() {
+        val node = mindMapManager.getSelectedNode() ?: return
+        changeFolds { tree.setFolded(node.id, !tree.isFolded(node.id)) }
+    }
+
+    /**
+     * Folds the children of the selected node, or unfolds them when there is none left of them to fold.
+     */
+    fun toggleChildrenFold() {
+        val children = (mindMapManager.getSelectedNode() ?: return).children.filter { tree.getNode(it).children.isNotEmpty() }
+        val isFolding = children.any { !tree.isFolded(it) }
+        changeFolds { children.forEach { tree.setFolded(it, isFolding) } }
+    }
+
+    /**
+     * Folds the lowest of the nodes that are unfolded, of the selected node and the nodes below it: one
+     * level of what is shown of them is hidden. The root is taken when no node is selected.
+     */
+    fun foldOneLevel() {
+        val unfolded = foldBranch().filter { (node, _) -> isFoldable(node) && !tree.isFolded(node.id) }
+        val depth = unfolded.maxOfOrNull { it.second } ?: return
+        changeFolds { unfolded.forEach { (node, nodeDepth) -> if (nodeDepth == depth) tree.setFolded(node.id, true) } }
+    }
+
+    /**
+     * Unfolds the highest of the nodes that are folded, of the selected node and the nodes shown below it:
+     * one more level of them is shown. The root is taken when no node is selected.
+     */
+    fun unfoldOneLevel() {
+        val folded = foldBranch(isVisibleOnly = true).filter { (node, _) -> tree.isFolded(node.id) }
+        val depth = folded.minOfOrNull { it.second } ?: return
+        changeFolds { folded.forEach { (node, nodeDepth) -> if (nodeDepth == depth) tree.setFolded(node.id, false) } }
+    }
+
+    /** Folds the selected node and every node below it. The root is taken when no node is selected. */
+    fun foldAll() {
+        changeFolds { foldBranch().forEach { (node, _) -> tree.setFolded(node.id, true) } }
+    }
+
+    /** Unfolds the selected node and every node below it. The root is taken when no node is selected. */
+    fun unfoldAll() {
+        changeFolds { foldBranch().forEach { (node, _) -> tree.setFolded(node.id, false) } }
+    }
+
+    private fun isFoldable(node: NodeData<*>): Boolean = node.parentId != null && node.children.isNotEmpty()
+
+    // The selected node and the nodes below it, each with how far below it is.
+    private fun foldBranch(isVisibleOnly: Boolean = false): List<Pair<NodeData<*>, Int>> {
+        val nodes = mutableListOf<Pair<NodeData<*>, Int>>()
+        fun traverse(
+            node: NodeData<*>
+            , depth: Int
+        ) {
+            nodes.add(node to depth)
+            val children = if (isVisibleOnly) tree.visibleChildren(node) else node.children
+            children.forEach { traverse(tree.getNode(it), depth + 1) }
+        }
+        traverse(mindMapManager.getSelectedNode()?.let { tree.getNode(it.id) } ?: tree.getRootNode(), 0)
+        return nodes
+    }
+
+    // The folds are those of the selected node and the nodes below it, so none of them hides the selected node.
+    private fun changeFolds(change: () -> Unit) {
+        change()
+        animateTreeChange()
+    }
+
     fun editNodeText(description: String) {
         mindMapManager.getSelectedNode()?.let { node ->
             val updateNodeCommand = UpdateNodeCommand(mindMapManager, node, description)
@@ -253,9 +324,22 @@ class MindMapState(
         invalidate()
     }
 
-    /** Selects a node and, when it is out of view, moves the mind map to bring it to the center. */
+    /**
+     * Selects a node and, when it is out of view, moves the mind map to bring it to the center. A node that
+     * is hidden in a folded node is shown first, by unfolding the nodes above it.
+     */
     fun goToNode(id: String) {
-        val node = tree.nodes[id] ?: return
+        if (id !in tree.nodes) return
+        if (!tree.isVisible(id)) {
+            var parentId = tree.getNode(id).parentId
+            while (parentId != null) {
+                tree.setFolded(parentId, false)
+                parentId = tree.getNode(parentId).parentId
+            }
+            treeChangeJob?.cancel()
+            mindMapManager.arrangeTree()
+        }
+        val node = tree.getNode(id)
         mindMapManager.setSelectedNode(node)
         val position =
             Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
@@ -332,7 +416,7 @@ class MindMapState(
 
     private fun findNode(point: Offset): NodeData<*>? {
         var foundNode: NodeData<*>? = null
-        tree.doPreorderTraversal { node ->
+        tree.doVisiblePreorderTraversal { node ->
             if (isInsideNode(node, point)) {
                 foundNode = node
             }
@@ -378,7 +462,9 @@ class MindMapState(
         val point = toTreePoint(position)
         val radius = ADD_BUTTON_RADIUS.toPx(density)
         var button: Pair<NodeData<*>, LayoutSide>? = null
-        tree.doPreorderTraversal { node ->
+        tree.doVisiblePreorderTraversal { node ->
+            // A folded node has its fold marker there instead.
+            if (tree.isFolded(node.id)) return@doVisiblePreorderTraversal
             addButtonSides(node).forEach { side ->
                 if ((point - density.addButtonCenter(node, side)).getDistance() <= radius) {
                     button = node to side
@@ -386,6 +472,24 @@ class MindMapState(
             }
         }
         return button
+    }
+
+    internal fun findFoldMarker(position: Offset): NodeData<*>? {
+        val point = toTreePoint(position)
+        val radius = ADD_BUTTON_RADIUS.toPx(density)
+        var marked: NodeData<*>? = null
+        tree.doVisiblePreorderTraversal { node ->
+            if (tree.isFolded(node.id) && (point - density.foldMarkerCenter(tree, node)).getDistance() <= radius) {
+                marked = node
+            }
+        }
+        return marked
+    }
+
+    internal fun onFoldMarkerClick(node: NodeData<*>) {
+        mindMapManager.setNotMoving()
+        mindMapManager.setSelectedNode(node)
+        toggleFold()
     }
 
     internal fun onNodeMenuClick(node: NodeData<*>) {
@@ -511,7 +615,7 @@ class MindMapState(
             if (isInsideNode(node, point)) {
                 includedNode = node
             }
-            node.children.forEach { childId -> traverse(tree.getNode(childId)) }
+            tree.visibleChildren(node).forEach { childId -> traverse(tree.getNode(childId)) }
         }
         traverse(tree.getRootNode())
         return includedNode

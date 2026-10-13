@@ -19,6 +19,8 @@ class Tree<T> {
 
     private val nodeAttributes = mutableMapOf<String, List<NodeAttribute>>()
 
+    private val foldedIds = mutableSetOf<String>()
+
     private val _arrowLinks = mutableListOf<ArrowLink>()
 
     /** The arrow links between the nodes of the tree, in the order they are drawn. */
@@ -107,6 +109,40 @@ class Tree<T> {
     ) {
         getNode(id)
         if (attributes.isEmpty()) nodeAttributes.remove(id) else nodeAttributes[id] = attributes.toList()
+    }
+
+    /** Whether the node is folded: the nodes below it are hidden, as in FreeMind. */
+    fun isFolded(id: String): Boolean = id in foldedIds && id in _nodes
+
+    /**
+     * Folds or unfolds a node. Only a node with children is folded, and the root never is.
+     */
+    fun setFolded(
+        id: String
+        , isFolded: Boolean
+    ) {
+        val node = getNode(id)
+        if (isFolded && node.parentId != null && node.children.isNotEmpty()) foldedIds.add(id) else foldedIds.remove(id)
+    }
+
+    /** Returns the children of the node that are shown: none of them when it is folded. */
+    fun visibleChildren(node: NodeData<*>): List<String> = if (isFolded(node.id)) emptyList() else node.children
+
+    /** Whether the node is shown: it is not when a node above it is folded. */
+    fun isVisible(id: String): Boolean = id in _nodes && visibleAncestorOf(id) == id
+
+    /**
+     * Returns the node itself when it is shown, and otherwise the folded node above it that is: the one
+     * it is hidden in.
+     */
+    fun visibleAncestorOf(id: String): String {
+        var visibleId = id
+        var parentId = getNode(id).parentId
+        while (parentId != null) {
+            if (isFolded(parentId)) visibleId = parentId
+            parentId = getNode(parentId).parentId
+        }
+        return visibleId
     }
 
     /**
@@ -207,6 +243,8 @@ class Tree<T> {
         }
         _nodes[parentId] = newParent as NodeData<T>
         _nodes[targetId] = newNode as NodeData<T>
+        // A folded node would hide the child it is given.
+        foldedIds.remove(parentId)
         setRootChildSide(targetId, side)
     }
 
@@ -237,6 +275,7 @@ class Tree<T> {
             }
         _nodes[targetId] = newTargetNode as NodeData<T>
         _nodes[parentId] = newParentNode as NodeData<T>
+        foldedIds.remove(parentId)
         setRootChildSide(targetId, side)
     }
 
@@ -251,6 +290,7 @@ class Tree<T> {
                     ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message,
                 )
             val newChildren = parentNode.children.filter { id -> id != targetId }
+            if (newChildren.isEmpty()) foldedIds.remove(parentId)
             val newParent =
                 when (parentNode) {
                     is CircleNodeData -> parentNode.copy(children = newChildren)
@@ -385,6 +425,17 @@ class Tree<T> {
         action.invoke(nodeData, depth)
         nodeData.children.forEach { childId ->
             doPreorderTraversal(getNode(childId), depth + 1, action)
+        }
+    }
+
+    /** Calls [action] for the nodes that are shown: those that are not below a folded node. */
+    fun doVisiblePreorderTraversal(
+        nodeData: NodeData<*> = getRootNode(),
+        action: (nodeData: NodeData<*>) -> Unit,
+    ) {
+        action.invoke(nodeData)
+        visibleChildren(nodeData).forEach { childId ->
+            doVisiblePreorderTraversal(getNode(childId), action)
         }
     }
 

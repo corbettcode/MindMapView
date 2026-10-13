@@ -58,6 +58,7 @@ class MindMapManager {
     // Unlike a node that is detached to be attached elsewhere, a removed node takes its arrow links along.
     fun removeNode(node: NodeData<*>) {
         this.tree.removeArrowLinksOfBranch(node.id)
+        this.tree.doPreorderTraversal(node) { this.tree.setFolded(it.id, false) }
         this.tree.removeNode(node.id)
     }
 

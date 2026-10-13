@@ -103,6 +103,7 @@ object FreeMind {
         append(indent).append("<node ID=\"").append(escapeXml(node.id)).append('"')
         if (plainText != null) append(" TEXT=\"").append(escapeXml(plainText)).append('"')
         if (depth == 1) append(" POSITION=\"").append(tree.sideOf(node.id).name.lowercase()).append('"')
+        if (tree.isFolded(node.id)) append(" FOLDED=\"true\"")
         append(" BACKGROUND_COLOR=\"").append(node.color.toHex()).append('"')
         append(" COLOR=\"").append(node.textColor.toHex()).append("\">\n")
         if (plainText == null) {
@@ -196,6 +197,7 @@ object FreeMind {
         }
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
+        tree.setFolded(id, element.attributes["FOLDED"] == "true")
         return id
     }
 
