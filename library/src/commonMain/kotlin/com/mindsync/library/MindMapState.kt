@@ -69,6 +69,10 @@ class MindMapState(
     internal var drawTick by mutableIntStateOf(0)
         private set
 
+    // Where the pointer is, in the tree, while an arrow link is being dragged from the selected node.
+    internal var linkDragPoint: Offset? by mutableStateOf(null)
+        private set
+
     val tree: Tree<*> get() = mindMapManager.getTree()
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
 
@@ -430,6 +434,32 @@ class MindMapState(
         }
         attachedNode = null
         animateTreeChange()
+    }
+
+    // An arrow link is dragged from the selected node, which stays where it is.
+    internal fun onLinkDrag(position: Offset) {
+        val selectedNode = mindMapManager.getSelectedNode() ?: return
+        val point = toTreePoint(position)
+        linkDragPoint = point
+        attachedNode = findNode(point)?.takeIf { it.id != selectedNode.id }
+        invalidate()
+    }
+
+    // Dropped on another node, the arrow link to it is added, or removed when there is one already.
+    internal fun onLinkDrop(
+        onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit,
+    ) {
+        val selectedNode = mindMapManager.getSelectedNode()
+        val attachedNode = this.attachedNode
+        if (linkDragPoint != null && selectedNode != null && attachedNode != null) {
+            val link = tree.arrowLinks.firstOrNull { it.sourceId == selectedNode.id && it.targetId == attachedNode.id }
+            if (link == null) tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), selectedNode.id, attachedNode.id))
+            else tree.removeArrowLink(link.id)
+            onNodeLink(tree, selectedNode, attachedNode, link == null)
+        }
+        linkDragPoint = null
+        this.attachedNode = null
+        invalidate()
     }
 
     internal fun onTransform(pan: Offset, zoom: Float) {

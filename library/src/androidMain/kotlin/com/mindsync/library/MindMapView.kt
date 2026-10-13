@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontFamily
+import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
@@ -84,6 +85,17 @@ class MindMapView @JvmOverloads constructor(
 
     fun editNodeNote(note: String) {
         state.editNodeNote(note)
+    }
+
+    fun addArrowLink(
+        sourceId: String,
+        targetId: String,
+    ): ArrowLink? {
+        return state.addArrowLink(sourceId, targetId)
+    }
+
+    fun removeArrowLink(id: String) {
+        state.removeArrowLink(id)
     }
 
     fun editNodeColor(color: Color) {

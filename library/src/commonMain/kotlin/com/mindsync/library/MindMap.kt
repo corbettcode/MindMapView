@@ -22,12 +22,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
@@ -54,6 +56,8 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
 private const val SCROLL_ZOOM_STEP = 1.1f
@@ -68,6 +72,7 @@ private const val NOTE_MARKER_STROKE_RATIO = 0.1f
 private const val TOP_RIGHT_OF_ARC = 0.70710677f
 
 internal val ADD_BUTTON_RADIUS = Dp(10f)
+private val LINK_DRAG_DASH = Dp(6f)
 internal val NOTE_MARKER_SIZE = Dp(12f)
 
 // How near to an arrow link a click on it has to be.
@@ -100,6 +105,10 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  *
  * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set.
  *
+ * Dragging a node onto another while Ctrl is held down adds an arrow link from the first to the second
+ * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
+ * with whether the nodes are linked now. See [MindMapState.addArrowLink].
+ *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
  */
@@ -115,6 +124,7 @@ fun MindMap(
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onArrowLinkMenu: (link: ArrowLink, position: Offset) -> Unit = { _, _ -> }
     , onNodeMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
+    , onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit = { _, _, _, _ -> }
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -138,6 +148,7 @@ fun MindMap(
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnArrowLinkMenu by rememberUpdatedState(onArrowLinkMenu)
     val currentOnNodeMenu by rememberUpdatedState(onNodeMenu)
+    val currentOnNodeLink by rememberUpdatedState(onNodeLink)
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -177,15 +188,18 @@ fun MindMap(
                     }
                     else {
                         down.consume()
+                        // With Ctrl held down a drag links the node to the one it is dropped on instead of moving it.
+                        val isLinkDrag = currentEvent.keyboardModifiers.isCtrlPressed
+                        val onDrag: (Offset) -> Unit = if (isLinkDrag) state::onLinkDrag else state::onNodeDrag
                         val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                         if (dragStart != null) {
-                            state.onNodeDrag(dragStart.position)
+                            onDrag(dragStart.position)
                             drag(dragStart.id) { change ->
-                                state.onNodeDrag(change.position)
+                                onDrag(change.position)
                                 change.consume()
                             }
                         }
-                        state.onTouchUp(currentOnNodeMove)
+                        if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
                         if (dragStart == null) {
                             state.findLink(down.position)?.let { (node, url) -> currentOnLinkClick(node, url) }
                         }
@@ -256,6 +270,7 @@ fun MindMap(
             }
             drawTree(state, drawInfo, measure)
             drawArrowLinks(state)
+            drawLinkDrag(state)
 
             state.selectedNode?.let { selectedNode ->
                 NodeDrawerFactory(
@@ -469,6 +484,60 @@ private fun DrawScope.drawLines(
             )
         }
     }
+}
+
+// Where the straight line from the center of the node towards a point leaves the node.
+private fun Density.edgePoint(
+    node: NodeData<*>
+    , towards: Offset
+): Offset {
+    val center = Offset(node.path.centerX.toPx(this), node.path.centerY.toPx(this))
+    val direction = towards - center
+    if (direction == Offset.Zero) return center
+    val halfWidth: Dp
+    val halfHeight: Dp
+    val isRound: Boolean
+    when (node) {
+        is CircleNodeData -> {
+            halfWidth = node.path.radius
+            halfHeight = node.path.radius
+            isRound = true
+        }
+        is OvalNodeData -> {
+            halfWidth = node.path.radiusX
+            halfHeight = node.path.radiusY
+            isRound = true
+        }
+        is RectangleNodeData -> {
+            halfWidth = node.path.width / 2
+            halfHeight = node.path.height / 2
+            isRound = false
+        }
+        // The caps of a stadium are left out: the line leaves the box around it.
+        is StadiumNodeData -> {
+            halfWidth = node.path.width() / 2
+            halfHeight = node.path.height() / 2
+            isRound = false
+        }
+    }
+    val x = direction.x / halfWidth.toPx(this)
+    val y = direction.y / halfHeight.toPx(this)
+    val scale = if (isRound) sqrt(x * x + y * y) else maxOf(abs(x), abs(y))
+    return if (scale == 0f || scale.isNaN() || scale.isInfinite()) center else center + direction / scale
+}
+
+// The arrow link being dragged, from the node it starts at to the pointer.
+private fun DrawScope.drawLinkDrag(state: MindMapState) {
+    val dragPoint = state.linkDragPoint ?: return
+    val from = state.selectedNode ?: return
+    val dash = LINK_DRAG_DASH.toPx(this)
+    drawLine(
+        color = ArrowLink.DEFAULT_COLOR
+        , start = edgePoint(from, dragPoint)
+        , end = dragPoint
+        , strokeWidth = ARROW_LINK_WIDTH.toPx(this)
+        , pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))
+    )
 }
 
 /**
