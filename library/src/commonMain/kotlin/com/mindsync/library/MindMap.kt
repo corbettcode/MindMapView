@@ -110,6 +110,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
  * with whether the nodes are linked now. See [MindMapState.addArrowLink].
  *
+ * Dragging the root moves it and the tree with it, as far up and to the left as the tree still fits. A root
+ * that is given no position is kept in the center of the mind map until it is dragged.
+ *
  * A folded node, whose nodes below it are hidden, has a ring where its lines to them would start, in place
  * of its '+' button. A click on the ring unfolds the node. See [MindMapState.toggleFold].
  *

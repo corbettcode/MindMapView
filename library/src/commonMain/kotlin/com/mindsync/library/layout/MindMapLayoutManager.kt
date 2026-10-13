@@ -82,16 +82,13 @@ abstract class MindMapLayoutManager {
         }
     }
 
+    // The mind map cannot be panned above y = 0, so the node is moved down until the nodes below it fit.
     private fun adjustVertically(
         node: NodeData<*>
         , totalHeight: Dp
     ): NodeData<*> {
-        return if (node.path.centerX.dpVal <= (totalHeight / 2).dpVal) {
-            node.adjustPosition(horizontalSpacing, totalHeight)
-        }
-        else {
-            node
-        }
+        val topMost = totalHeight / 2 + verticalSpacing
+        return if (node.path.centerY.dpVal < topMost.dpVal) moveNode(node, node.path.centerX, topMost) else node
     }
 
     // Only the root has children on both sides.

@@ -505,8 +505,16 @@ class MindMapState(
     }
 
     internal fun onNodeDrag(position: Offset) {
-        val selectedNode = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
+        val selectedNode = mindMapManager.getSelectedNode() ?: return
         val point = toTreePoint(position)
+        // The root is attached to no other node, so it is not moving as they are: the tree goes along with it.
+        if (selectedNode.parentId == null) {
+            treeChangeJob?.cancel()
+            tree.moveRoot(Dp(Px(point.x).toDp(density)), Dp(Px(point.y).toDp(density)))
+            mindMapManager.arrangeTree()
+            invalidate()
+            return
+        }
         mindMapManager.setMoving()
         treeChangeJob?.cancel()
         tree.updateNode(

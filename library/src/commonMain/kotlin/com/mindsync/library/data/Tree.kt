@@ -195,6 +195,12 @@ class Tree<T> {
         isRootPlaced = true
     }
 
+    // A root the user puts somewhere is no longer kept in the center of the mind map.
+    internal fun moveRoot(centerX: Dp, centerY: Dp) {
+        placeRoot(centerX, centerY)
+        isRootCentered = false
+    }
+
     fun setNode(
         id: String,
         nodeData: NodeData<*>,

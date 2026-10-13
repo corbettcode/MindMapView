@@ -166,6 +166,69 @@ class MindMapTest {
     }
 
     @Test
+    fun draggingTheRootMovesTheTreeAndIsNoLongerCentered() = runComposeUiTest {
+        val state = MindMapState()
+        var size by mutableStateOf(DpSize(800.dp, 600.dp))
+        setContent {
+            MindMap(
+                state = state,
+                modifier = Modifier.size(size).testTag(TAG),
+                onNodeMove = { _, target, parent -> moves.add(target.id to parent.id) },
+            )
+        }
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val childId = state.tree.getRootNode().children.single()
+        val child = state.tree.getNode(childId)
+        val fromRoot = child.path.centerX - state.tree.getRootNode().path.centerX
+
+        // The root is dropped on its child, which it is not attached to as another node would be.
+        onNodeWithTag(TAG).performTouchInput { swipe(center(state.tree.getRootNode()), center(child), durationMillis = 200) }
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        assertEquals(child.path.centerX.dpVal, root.path.centerX.dpVal, 1f)
+        assertEquals(child.path.centerY.dpVal, root.path.centerY.dpVal, 1f)
+        assertEquals(fromRoot, state.tree.getNode(childId).path.centerX - root.path.centerX)
+        assertEquals(root.path.centerY, state.tree.getNode(childId).path.centerY)
+        assertTrue(moves.isEmpty())
+        assertEquals(listOf(childId), root.children)
+        assertNull(root.parentId)
+
+        size = DpSize(1000.dp, 700.dp)
+        waitForIdle()
+        assertEquals(root.path, state.tree.getRootNode().path)
+    }
+
+    @Test
+    fun rootDraggedTowardsTheTopStopsWhereTheTreeFits() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        clickNode(state.tree.getRootNode())
+        repeat(4) {
+            state.addNode("child")
+            waitForIdle()
+        }
+        val height = state.mindMapManager.measureHeight(state.tree.getRootNode())
+
+        onNodeWithTag(TAG).performTouchInput { swipe(center(state.tree.getRootNode()), Offset(300.dp.toPx(), 20.dp.toPx()), durationMillis = 200) }
+        waitForIdle()
+
+        // The mind map is not moved past its top, so a tree that reached above it could not all be seen.
+        val root = state.tree.getRootNode()
+        assertEquals(300f, root.path.centerX.dpVal, 1f)
+        assertEquals((height / 2 + Dp(50f)).dpVal, root.path.centerY.dpVal, 0.01f)
+        val top = root.children.minOf { state.tree.getNode(it).path.centerY.dpVal }
+        assertTrue(top > 0f)
+
+        // The root stays there as the tree is arranged again.
+        state.animateTreeChange()
+        waitForIdle()
+        assertEquals(root.path, state.tree.getRootNode().path)
+    }
+
+    @Test
     fun rootIsALightGrayCircleWithBlackText() {
         val root: NodeData<*> = Tree<Any>(Dp(150f), Dp(300f)).getRootNode()
         assertIs<CircleNodeData>(root)
