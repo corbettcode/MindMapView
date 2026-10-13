@@ -394,8 +394,9 @@ class MindMapState(
     }
 
     internal fun onSizeChanged(size: Size) {
+        if (size == viewportSize) return
         viewportSize = size
-        placeRootIfNeeded()
+        if (tree.isRootPlaced) centerRootAgain() else placeRootIfNeeded()
     }
 
     internal fun onTouchDown(position: Offset): NodeData<*>? {
@@ -599,6 +600,18 @@ class MindMapState(
             Dp(Px(viewportSize.width).toDp(density) / 2),
             Dp(Px(viewportSize.height).toDp(density) / 2),
         )
+        invalidate()
+    }
+
+    // The center is another one once the mind map has another size, and the nodes below the root go along.
+    private fun centerRootAgain() {
+        if (!tree.isRootCentered || viewportSize.isEmpty()) return
+        treeChangeJob?.cancel()
+        tree.placeRoot(
+            Dp(Px(viewportSize.width).toDp(density) / 2),
+            Dp(Px(viewportSize.height).toDp(density) / 2),
+        )
+        mindMapManager.arrangeTree()
         invalidate()
     }
 

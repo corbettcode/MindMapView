@@ -14,6 +14,10 @@ class Tree<T> {
     internal var isRootPlaced = true
         private set
 
+    // A root that is given no position is kept in the center of the mind map, whatever size that takes.
+    internal var isRootCentered = false
+        private set
+
     // The root has a set of children for each side; these are the ones on its left.
     private val leftRootChildIds = mutableSetOf<String>()
 
@@ -28,6 +32,7 @@ class Tree<T> {
 
     constructor() : this(Dp(0f), Dp(0f)) {
         isRootPlaced = false
+        isRootCentered = true
     }
 
     constructor(

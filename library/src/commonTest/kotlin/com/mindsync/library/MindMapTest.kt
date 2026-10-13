@@ -1,6 +1,10 @@
 package com.mindsync.library
 
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -123,6 +127,42 @@ class MindMapTest {
         val root = state.tree.getRootNode()
         assertEquals(Dp(400f), root.path.centerX)
         assertEquals(Dp(300f), root.path.centerY)
+    }
+
+    @Test
+    fun rootStaysCenteredWhenTheSizeChanges() = runComposeUiTest {
+        val state = MindMapState()
+        var size by mutableStateOf(DpSize(800.dp, 600.dp))
+        setContent { MindMap(state = state, modifier = Modifier.size(size).testTag(TAG)) }
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val childId = state.tree.getRootNode().children.single()
+        val fromRoot = state.tree.getNode(childId).path.centerX - state.tree.getRootNode().path.centerX
+
+        size = DpSize(1000.dp, 700.dp)
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        assertEquals(Dp(500f), root.path.centerX)
+        assertEquals(Dp(350f), root.path.centerY)
+        // The nodes below the root go along with it.
+        assertEquals(fromRoot, state.tree.getNode(childId).path.centerX - root.path.centerX)
+        assertEquals(Dp(350f), state.tree.getNode(childId).path.centerY)
+    }
+
+    @Test
+    fun rootWithAGivenPositionStaysThereWhenTheSizeChanges() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        var size by mutableStateOf(DpSize(800.dp, 600.dp))
+        setContent { MindMap(state = state, modifier = Modifier.size(size).testTag(TAG)) }
+        waitForIdle()
+
+        size = DpSize(1000.dp, 700.dp)
+        waitForIdle()
+
+        assertEquals(Dp(150f), state.tree.getRootNode().path.centerX)
+        assertEquals(Dp(300f), state.tree.getRootNode().path.centerY)
     }
 
     @Test
