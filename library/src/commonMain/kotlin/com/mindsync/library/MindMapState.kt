@@ -145,6 +145,17 @@ class MindMapState(
         }
     }
 
+    /**
+     * Moves the branch the selected node is in, the child of the root it is or is below, to the other
+     * side of the root. Nothing is moved when the root is selected.
+     */
+    fun moveNodeToOtherSide() {
+        mindMapManager.getSelectedNode()?.takeIf { it.parentId != null }?.let { node ->
+            tree.moveToOtherSide(node.id)
+            animateTreeChange()
+        }
+    }
+
     fun editNodeText(description: String) {
         mindMapManager.getSelectedNode()?.let { node ->
             val updateNodeCommand = UpdateNodeCommand(mindMapManager, node, description)

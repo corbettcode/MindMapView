@@ -212,6 +212,10 @@ fun main() = application {
                     if (event.isShiftPressed) fileActions.saveAs() else fileActions.save()
                     true
                 }
+                event.key == Key.M -> {
+                    state.moveNodeToOtherSide()
+                    true
+                }
                 else -> false
             }
         }
@@ -279,6 +283,13 @@ private fun MindMapScreen(
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = { state.removeNode() },
+                        // Read when the menu opens: moving a node does not change the selected node.
+                        moveSide = {
+                            selectedNode?.takeIf { it.parentId != null }?.let { node ->
+                                if (state.tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
+                            }
+                        },
+                        onMove = { state.moveNodeToOtherSide() },
                     )
                     ViewMenu(onFit = { state.fitScreen() })
                 }
@@ -400,6 +411,8 @@ private fun EditMenu(
     onEdit: () -> Unit,
     removeEnabled: Boolean,
     onRemove: () -> Unit,
+    moveSide: () -> LayoutSide?,
+    onMove: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
@@ -450,6 +463,17 @@ private fun EditMenu(
                     onRemove()
                 },
                 enabled = removeEnabled,
+            )
+            HorizontalDivider()
+            val side = moveSide()
+            DropdownMenuItem(
+                text = { Text(if (side == LayoutSide.LEFT) "Move to Left Side" else "Move to Right Side") },
+                trailingIcon = { Text("Ctrl+M", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onMove()
+                },
+                enabled = side != null,
             )
         }
     }

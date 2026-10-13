@@ -70,6 +70,10 @@ class MindMapView @JvmOverloads constructor(
         state.removeNode()
     }
 
+    fun moveNodeToOtherSide() {
+        state.moveNodeToOtherSide()
+    }
+
     fun fitScreen() {
         state.fitScreen()
     }

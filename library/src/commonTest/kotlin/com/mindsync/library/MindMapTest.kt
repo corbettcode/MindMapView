@@ -455,6 +455,50 @@ class MindMapTest {
     }
 
     @Test
+    fun movingANodeToTheOtherSideMovesItsBranch() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        state.addNode("second")
+        waitForIdle()
+        val (firstId, secondId) = state.tree.getRootNode().children
+        clickNode(state.tree.getNode(firstId))
+        state.addNode("below first")
+        waitForIdle()
+        val belowFirstId = state.tree.getNode(firstId).children.single()
+
+        // Nothing is moved for the root.
+        clickNode(state.tree.getRootNode())
+        state.moveNodeToOtherSide()
+        waitForIdle()
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(firstId))
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(secondId))
+
+        // A node below a child of the root takes that child, and the nodes below it, along.
+        clickNode(state.tree.getNode(belowFirstId))
+        state.moveNodeToOtherSide()
+        waitForIdle()
+        val root = state.tree.getRootNode()
+        val first = state.tree.getNode(firstId) as RectangleNodeData
+        val belowFirst = state.tree.getNode(belowFirstId) as RectangleNodeData
+        assertEquals(listOf(firstId, secondId), root.children)
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(firstId))
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(belowFirstId))
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(secondId))
+        assertEquals((root.path.centerX - root.path.radius).dpVal - 50f, first.path.rightX().dpVal, 0.01f)
+        assertTrue(belowFirst.path.rightX().dpVal < first.path.leftX().dpVal)
+
+        // Moving it again brings it back.
+        clickNode(first)
+        state.moveNodeToOtherSide()
+        waitForIdle()
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf(belowFirstId))
+        assertTrue(state.tree.getNode(firstId).path.centerX.dpVal > state.tree.getRootNode().path.centerX.dpVal)
+    }
+
+    @Test
     fun leftLayoutMovesTheRootRightUntilTheTreeFits() {
         val tree = Tree<Any>(Dp(60f), Dp(300f))
         tree.addNode("first", tree.getRootNode().id, "first", NodeShape.RECTANGLE, side = LayoutSide.LEFT)

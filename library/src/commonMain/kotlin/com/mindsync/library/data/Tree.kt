@@ -54,11 +54,26 @@ class Tree<T> {
      * The root itself is on neither side, and [LayoutSide.RIGHT] is returned for it.
      */
     fun sideOf(id: String): LayoutSide {
+        return if (branchOf(id).id in leftRootChildIds) LayoutSide.LEFT else LayoutSide.RIGHT
+    }
+
+    /**
+     * Moves the branch the node is in, the child of the root it is or is below, to the other side of the
+     * root. The root itself is in no branch, and nothing is moved for it.
+     */
+    fun moveToOtherSide(id: String) {
+        val branch = branchOf(id)
+        if (branch.parentId == null) return
+        setRootChildSide(branch.id, if (sideOf(branch.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT)
+    }
+
+    // The child of the root the node is, or is below; the root for the root itself.
+    private fun branchOf(id: String): NodeData<*> {
         var node = getNode(id)
         while (node.parentId != null && node.parentId != ROOT_ID) {
             node = getNode(node.parentId)
         }
-        return if (node.id in leftRootChildIds) LayoutSide.LEFT else LayoutSide.RIGHT
+        return node
     }
 
     /**
