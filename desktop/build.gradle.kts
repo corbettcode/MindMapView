@@ -28,6 +28,7 @@ compose.desktop {
             description = "Mind map editor"
 
             linux {
+                iconFile.set(project.file("src/main/resources/icon.png"))
                 shortcut = true
                 menuGroup = "Office"
             }

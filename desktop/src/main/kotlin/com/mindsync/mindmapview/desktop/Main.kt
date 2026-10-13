@@ -45,6 +45,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -85,8 +87,10 @@ import java.io.File
 import java.io.IOException
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import org.jetbrains.skia.Image
 
 private const val APP_NAME = "MindMapView"
+private const val APP_ICON_RESOURCE = "/icon.png"
 private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
@@ -134,6 +138,12 @@ private class FileActions(
     val saveAs: () -> Unit,
 )
 
+private val appIcon: BitmapPainter? by lazy {
+    object {}.javaClass.getResourceAsStream(APP_ICON_RESOURCE)?.use { stream ->
+        BitmapPainter(Image.makeFromEncoded(stream.readBytes()).toComposeImageBitmap())
+    }
+}
+
 fun main() = application {
     val state = rememberMindMapState()
     var file by remember { mutableStateOf<File?>(null) }
@@ -180,6 +190,7 @@ fun main() = application {
 
     Window(
         onCloseRequest = ::exitApplication
+        , icon = appIcon
         , title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME
         , onPreviewKeyEvent = { event ->
             when {
