@@ -351,6 +351,16 @@ fun main() = application {
                 else -> false
             }
         }
+        // Escape closes an open menu first, which takes the key, so only an Escape nothing else took gets here.
+        , onKeyEvent = { event ->
+            if (event.type == KeyEventType.KeyDown && event.key == Key.Escape && !isDialogOpen && error == null) {
+                state.select(null)
+                true
+            }
+            else {
+                false
+            }
+        }
     ) {
         SideEffect { frame = window }
         MindMapScreen(
