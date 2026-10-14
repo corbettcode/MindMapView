@@ -404,11 +404,12 @@ private fun MindMapScreen(
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     // The node its menu is open for, and where in the mind map it was asked for.
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    var isRemoveConfirmOpen by remember { mutableStateOf(false) }
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
-    val isDialogOpen = operation != null || shapeChoiceSide != null || attributesDialogOpen
+    val isDialogOpen = operation != null || shapeChoiceSide != null || attributesDialogOpen || isRemoveConfirmOpen
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -444,7 +445,7 @@ private fun MindMapScreen(
                         onAdd = { operation = Operation.Add(it) },
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
-                        onRemove = { state.removeNode() },
+                        onRemove = { isRemoveConfirmOpen = true },
                         // Read when the menu opens: moving a node does not change the selected node.
                         moveSide = {
                             selectedNode?.takeIf { it.parentId != null }?.let { node ->
@@ -520,6 +521,9 @@ private fun MindMapScreen(
                                     if (node.parentId == null || node.children.isEmpty()) null
                                     else state.tree.isFolded(nodeId),
                                 onFold = { state.toggleFold() },
+                                // The root is not removed.
+                                isRemovable = node.parentId != null,
+                                onRemove = { isRemoveConfirmOpen = true },
                                 onDismiss = { nodeMenu = null },
                             )
                         }
@@ -551,6 +555,16 @@ private fun MindMapScreen(
                         Text("OK")
                     }
                 },
+            )
+        }
+
+        if (isRemoveConfirmOpen && selectedNode?.parentId != null) {
+            RemoveNodeDialog(
+                onConfirm = {
+                    isRemoveConfirmOpen = false
+                    state.removeNode()
+                },
+                onDismiss = { isRemoveConfirmOpen = false },
             )
         }
 
@@ -896,6 +910,28 @@ private fun ViewMenu(
 }
 
 @Composable
+private fun RemoveNodeDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Remove node") },
+        text = { Text("Are you sure?") },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("Remove")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@Composable
 private fun ShapeSelectorDialog(
     onSelect: (NodeShape) -> Unit,
     onDismiss: () -> Unit,
@@ -1032,6 +1068,8 @@ private fun NodeMenu(
     onMove: () -> Unit,
     isFolded: Boolean?,
     onFold: () -> Unit,
+    isRemovable: Boolean,
+    onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
@@ -1074,6 +1112,16 @@ private fun NodeMenu(
                     onClick = {
                         onDismiss()
                         onFold()
+                    },
+                )
+            }
+            if (isRemovable) {
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text("Remove") },
+                    onClick = {
+                        onDismiss()
+                        onRemove()
                     },
                 )
             }
