@@ -18,6 +18,9 @@ class Tree<T> {
     internal var isRootCentered = false
         private set
 
+    internal var isRootDragged = false
+        private set
+
     // The root has a set of children for each side; these are the ones on its left.
     private val leftRootChildIds = mutableSetOf<String>()
 
@@ -195,10 +198,11 @@ class Tree<T> {
         isRootPlaced = true
     }
 
-    // A root the user puts somewhere is no longer kept in the center of the mind map.
+    // A root the user puts somewhere is no longer kept in the center of the mind map, nor where the tree fits.
     internal fun moveRoot(centerX: Dp, centerY: Dp) {
         placeRoot(centerX, centerY)
         isRootCentered = false
+        isRootDragged = true
     }
 
     fun setNode(

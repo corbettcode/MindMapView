@@ -90,14 +90,27 @@ class MindMapManager {
     }
 
     // The root is placed once for both of its sets of children, then each side is arranged around it.
+    // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
     fun arrangeTree() {
-        val totalHeight = measureHeight(tree.getRootNode())
-        var root: NodeData<*> = tree.getRootNode()
-        root = rightLayoutManager.adjustRoot(root, tree, totalHeight)
-        root = leftLayoutManager.adjustRoot(root, tree, totalHeight)
+        val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
         rightLayoutManager.arrangeChildren(root, tree)
         leftLayoutManager.arrangeChildren(root, tree)
+    }
+
+    private fun fittedRoot(): NodeData<*> {
+        val totalHeight = measureHeight(tree.getRootNode())
+        val root = rightLayoutManager.adjustRoot(tree.getRootNode(), tree, totalHeight)
+        return leftLayoutManager.adjustRoot(root, tree, totalHeight)
+    }
+
+    /**
+     * Returns how far the tree reaches to the left of and above where it fits, as its x and y.
+     */
+    fun measureOverflow(): Pair<Dp, Dp> {
+        val root = tree.getRootNode()
+        val fittedRoot = fittedRoot()
+        return fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
     }
 
     fun measureHeight(node: NodeData<*>): Dp {

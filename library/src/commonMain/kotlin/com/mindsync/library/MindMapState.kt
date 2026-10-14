@@ -345,7 +345,7 @@ class MindMapState(
             Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
         if (!viewportSize.isEmpty() && !Rect(Offset.Zero, viewportSize).contains(position)) {
             val moved = currentPoint + Offset(viewportSize.width / 2, viewportSize.height / 2) - position
-            currentPoint = Offset(minOf(0f, moved.x), minOf(0f, moved.y))
+            currentPoint = limitPan(moved)
         }
         invalidate()
     }
@@ -577,9 +577,15 @@ class MindMapState(
 
     internal fun onTransform(pan: Offset, zoom: Float) {
         scaleFactor *= zoom
-        currentPoint = Offset(
-            minOf(0f, currentPoint.x + pan.x),
-            minOf(0f, currentPoint.y + pan.y),
+        currentPoint = limitPan(currentPoint + pan)
+    }
+
+    // The mind map is not panned past its left and top, other than to the nodes a dragged root left there.
+    private fun limitPan(point: Offset): Offset {
+        val (overflowX, overflowY) = mindMapManager.measureOverflow()
+        return Offset(
+            minOf(overflowX.toPx(density) * scaleFactor, point.x),
+            minOf(overflowY.toPx(density) * scaleFactor, point.y),
         )
     }
 

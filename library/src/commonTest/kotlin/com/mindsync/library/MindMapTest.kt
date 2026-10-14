@@ -202,7 +202,7 @@ class MindMapTest {
     }
 
     @Test
-    fun rootDraggedTowardsTheTopStopsWhereTheTreeFits() = runComposeUiTest {
+    fun rootDraggedTowardsTheTopGoesThereAndTheMindMapPansToTheNodesAboveIt() = runComposeUiTest {
         val state = MindMapState()
         setMindMap(state)
         clickNode(state.tree.getRootNode())
@@ -215,17 +215,23 @@ class MindMapTest {
         onNodeWithTag(TAG).performTouchInput { swipe(center(state.tree.getRootNode()), Offset(300.dp.toPx(), 20.dp.toPx()), durationMillis = 200) }
         waitForIdle()
 
-        // The mind map is not moved past its top, so a tree that reached above it could not all be seen.
         val root = state.tree.getRootNode()
         assertEquals(300f, root.path.centerX.dpVal, 1f)
-        assertEquals((height / 2 + Dp(50f)).dpVal, root.path.centerY.dpVal, 0.01f)
+        assertEquals(20f, root.path.centerY.dpVal, 1f)
         val top = root.children.minOf { state.tree.getNode(it).path.centerY.dpVal }
-        assertTrue(top > 0f)
+        assertTrue(top < 0f)
 
         // The root stays there as the tree is arranged again.
         state.animateTreeChange()
         waitForIdle()
         assertEquals(root.path, state.tree.getRootNode().path)
+
+        // The mind map pans down as far as the nodes above its top need to be seen, and no further.
+        state.onTransform(Offset(0f, 10000f), 1f)
+        val reach = with(density) { (height.dpVal / 2 + 50f - root.path.centerY.dpVal).dp.toPx() }
+        assertEquals(0f, state.currentPoint.x)
+        assertEquals(reach, state.currentPoint.y, 0.5f)
+        assertTrue(with(density) { top.dp.toPx() } + state.currentPoint.y > 0f)
     }
 
     @Test
