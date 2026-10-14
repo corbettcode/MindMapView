@@ -62,6 +62,8 @@ class MindMapState(
     private var viewportSize = Size.Zero
     private var addNode: NodeData<*>? = null
     private var copiedBranch: CopiedBranch? by mutableStateOf(null)
+    // The nodes that are selected besides selectedNode, in the order they were selected.
+    private var otherSelectedIds by mutableStateOf(listOf<String>())
 
     var scaleFactor by mutableFloatStateOf(DEFAULT_ZOOM)
         private set
@@ -77,7 +79,27 @@ class MindMapState(
         private set
 
     val tree: Tree<*> get() = mindMapManager.getTree()
+    /** The node selected last, which the actions that take one node act on. */
     val selectedNode: NodeData<*>? get() = mindMapManager.getSelectedNode()
+
+    /** The nodes that are selected, in the order they were selected: [selectedNode] is the last of them. */
+    val selectedNodes: List<NodeData<*>>
+        get() = otherSelectedIds.mapNotNull { tree.nodes[it] } + listOfNotNull(selectedNode)
+
+    /**
+     * The selected nodes that are not below another selected one, in the order of the tree. Each of them
+     * stands for its branch, which the nodes selected below it are part of already.
+     */
+    val selectedBranches: List<NodeData<*>>
+        get() {
+            val ids = selectedNodes.map { it.id }.toSet()
+            val branches = mutableListOf<NodeData<*>>()
+            fun traverse(node: NodeData<*>) {
+                if (node.id in ids) branches.add(node) else node.children.forEach { traverse(tree.getNode(it)) }
+            }
+            if (ids.isNotEmpty()) traverse(tree.getRootNode())
+            return branches
+        }
 
     private var hoveredNodeId by mutableStateOf<String?>(null)
 
@@ -130,6 +152,7 @@ class MindMapState(
 
     fun setTree(tree: Tree<*>) {
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
+        otherSelectedIds = emptyList()
         mindMapManager.setTree(tree)
         placeRootIfNeeded()
         invalidate()
@@ -171,33 +194,70 @@ class MindMapState(
         return this.addNode
     }
 
-    fun removeNode() {
-        mindMapManager.getSelectedNode()?.let { node ->
-            val removeNodeCommand = RemoveNodeCommand(mindMapManager, node)
-            removeNodeCommand.execute()
-            animateTreeChange()
+    /** Selects the node alone, or no node when it is null. */
+    fun select(node: NodeData<*>?) {
+        otherSelectedIds = emptyList()
+        mindMapManager.setSelectedNode(node)
+        invalidate()
+    }
+
+    /**
+     * Adds the node to the selected nodes as [selectedNode], or takes it out of them when it is one of them
+     * already. The node selected before it is then [selectedNode] again.
+     */
+    fun toggleSelected(id: String) {
+        val node = tree.nodes[id] ?: return
+        val selected = mindMapManager.getSelectedNode()
+        when {
+            selected?.id == id -> {
+                val previous = otherSelectedIds.lastOrNull()
+                otherSelectedIds = otherSelectedIds.dropLast(1)
+                mindMapManager.setSelectedNode(previous?.let { tree.nodes[it] })
+            }
+            id in otherSelectedIds -> otherSelectedIds = otherSelectedIds - id
+            else -> {
+                otherSelectedIds = otherSelectedIds + listOfNotNull(selected?.id)
+                mindMapManager.setSelectedNode(node)
+            }
         }
+        invalidate()
+    }
+
+    /** Removes the selected nodes and the nodes below them. The root is not removed. */
+    fun removeNode() {
+        val nodes = selectedBranches.filter { it.parentId != null }
+        if (nodes.isEmpty()) return
+        nodes.forEach { RemoveNodeCommand(mindMapManager, it).execute() }
+        otherSelectedIds = emptyList()
+        animateTreeChange()
     }
 
     /** Whether there is a node that was copied with [copyNode] to paste with [pasteNode]. */
     val hasCopiedNode: Boolean get() = copiedBranch != null
 
     /**
-     * Copies the selected node and the nodes below it, with their attributes and the arrow links between
+     * Copies the selected nodes and the nodes below them, with their attributes and the arrow links between
      * them, as they are now: a node that is changed or removed afterwards is pasted as it was when it was
      * copied. An arrow link to or from a node that was not copied is left out, as it has no end to paste.
      */
     fun copyNode() {
-        val node = mindMapManager.getSelectedNode() ?: return
-        val root = copyBranch(tree.getNode(node.id))
+        val branches = selectedBranches
+        if (branches.isEmpty()) return
         val ids = mutableSetOf<String>()
-        tree.doPreorderTraversal(tree.getNode(node.id)) { ids.add(it.id) }
-        copiedBranch = CopiedBranch(root, tree.arrowLinks.filter { it.sourceId in ids && it.targetId in ids })
+        branches.forEach { branch -> tree.doPreorderTraversal(branch) { ids.add(it.id) } }
+        copiedBranch = CopiedBranch(
+            branches.map { copyBranch(it) }
+            , tree.arrowLinks.filter { it.sourceId in ids && it.targetId in ids }
+        )
     }
 
-    /** Copies the selected node as [copyNode] does, then removes it. The root is neither copied nor removed. */
+    /**
+     * Copies the selected nodes as [copyNode] does, then removes them. Nothing is cut when the root is one
+     * of them, as it is neither copied without the rest of the tree nor removed.
+     */
     fun cutNode() {
-        if (mindMapManager.getSelectedNode()?.parentId == null) return
+        val branches = selectedBranches
+        if (branches.isEmpty() || branches.any { it.parentId == null }) return
         copyNode()
         removeNode()
     }
@@ -228,7 +288,7 @@ class MindMapState(
             pastedIds[node.id] = id
             branch.children.forEach { paste(it, id) }
         }
-        paste(copied.root, parent.id)
+        copied.roots.forEach { paste(it, parent.id) }
         copied.arrowLinks.forEach { link ->
             tree.addArrowLink(
                 link.copy(
@@ -294,12 +354,14 @@ class MindMapState(
     }
 
     /**
-     * Folds the selected node, which hides the nodes below it, or unfolds it when it is folded. Only a node
-     * with children is folded, and the root never is.
+     * Folds the selected nodes, which hides the nodes below them, or unfolds them when there is none left of
+     * them to fold. Only a node with children is folded, and the root never is.
      */
     fun toggleFold() {
-        val node = mindMapManager.getSelectedNode() ?: return
-        changeFolds { tree.setFolded(node.id, !tree.isFolded(node.id)) }
+        val nodes = selectedNodes.map { tree.getNode(it.id) }.filter { isFoldable(it) }
+        if (nodes.isEmpty()) return
+        val isFolding = nodes.any { !tree.isFolded(it.id) }
+        changeFolds { nodes.forEach { tree.setFolded(it.id, isFolding) } }
     }
 
     /**
@@ -455,6 +517,7 @@ class MindMapState(
             mindMapManager.arrangeTree()
         }
         val node = tree.getNode(id)
+        otherSelectedIds = emptyList()
         mindMapManager.setSelectedNode(node)
         val position =
             Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
@@ -514,11 +577,17 @@ class MindMapState(
         if (tree.isRootPlaced) centerRootAgain() else placeRootIfNeeded()
     }
 
-    internal fun onTouchDown(position: Offset): NodeData<*>? {
+    // A touch that adds to the selection leaves it as it is where there is no node.
+    internal fun onTouchDown(
+        position: Offset
+        , isAddingToSelection: Boolean = false
+    ): NodeData<*>? {
         mindMapManager.setNotMoving()
         val touchedNode = findNode(toTreePoint(position))
-        mindMapManager.setSelectedNode(touchedNode)
-        invalidate()
+        when {
+            !isAddingToSelection -> select(touchedNode)
+            touchedNode != null -> toggleSelected(touchedNode.id)
+        }
         return touchedNode
     }
 
@@ -604,19 +673,25 @@ class MindMapState(
 
     internal fun onFoldMarkerClick(node: NodeData<*>) {
         mindMapManager.setNotMoving()
-        mindMapManager.setSelectedNode(node)
+        select(node)
         toggleFold()
     }
 
+    // The menu of a node that is one of the selected nodes acts on all of them, so they stay selected.
     internal fun onNodeMenuClick(node: NodeData<*>) {
-        mindMapManager.setSelectedNode(node)
-        invalidate()
+        if (selectedNodes.none { it.id == node.id }) {
+            select(node)
+        }
+        else if (selectedNode?.id != node.id) {
+            otherSelectedIds = otherSelectedIds - node.id + listOfNotNull(selectedNode?.id)
+            mindMapManager.setSelectedNode(node)
+            invalidate()
+        }
     }
 
     internal fun onAddButtonClick(node: NodeData<*>) {
         mindMapManager.setNotMoving()
-        mindMapManager.setSelectedNode(node)
-        invalidate()
+        select(node)
     }
 
     internal fun onNodeDrag(position: Offset) {
@@ -789,9 +864,9 @@ class MindMapState(
     }
 }
 
-// What was copied: a node with the nodes below it, and the arrow links between them.
+// What was copied: nodes with the nodes below them, and the arrow links between all of them.
 private class CopiedBranch(
-    val root: CopiedNode
+    val roots: List<CopiedNode>
     , val arrowLinks: List<ArrowLink>
 )
 

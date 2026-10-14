@@ -88,6 +88,7 @@ import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
@@ -396,17 +397,21 @@ private fun foldCommand(event: KeyEvent): FoldCommand? {
 }
 
 // The copied node goes on the system clipboard too, as an outline, to be pasted into other programs.
+// The outlines of the selected nodes follow each other, as the nodes of a text pasted as nodes do.
 private fun MindMapState.copyNodeToClipboard() {
-    val node = selectedNode ?: return
-    putOnClipboard(nodeOutline(tree, node.id))
+    val branches = selectedBranches.ifEmpty { return }
+    putOnClipboard(branches.joinToString("\n") { nodeOutline(tree, it.id) })
     copyNode()
 }
 
 private fun MindMapState.cutNodeToClipboard() {
-    val node = selectedNode?.takeIf { it.parentId != null } ?: return
-    putOnClipboard(nodeOutline(tree, node.id))
+    val branches = selectedBranches.takeIf { it.isRemovable() } ?: return
+    putOnClipboard(branches.joinToString("\n") { nodeOutline(tree, it.id) })
     cutNode()
 }
+
+// The root is never removed, and it is the only branch there is when it is selected.
+private fun List<NodeData<*>>.isRemovable(): Boolean = any { it.parentId != null }
 
 // The text on the clipboard when a node was copied last. While the clipboard holds it, it is the copied node
 // that is pasted, with all of what the outline of it leaves out.
@@ -547,7 +552,7 @@ private fun MindMapScreen(
                         enabled = selectedNode != null,
                         onAdd = { operation = Operation.Add(it) },
                         onEdit = { operation = Operation.Update },
-                        removeEnabled = selectedNode?.parentId != null,
+                        removeEnabled = state.selectedBranches.isRemovable(),
                         onRemove = removeNode,
                         onCut = { state.cutNodeToClipboard() },
                         onCopy = { state.copyNodeToClipboard() },
@@ -635,7 +640,7 @@ private fun MindMapScreen(
                                 isPasteEnabled = state.hasCopiedNode || hasClipboardText(),
                                 onPaste = { state.pasteFromClipboard(preferences) },
                                 // The root is not removed.
-                                isRemovable = node.parentId != null,
+                                isRemovable = state.selectedBranches.isRemovable(),
                                 onRemove = removeNode,
                                 onDismiss = { nodeMenu = null },
                             )
@@ -671,8 +676,9 @@ private fun MindMapScreen(
             )
         }
 
-        if (isRemoveConfirmOpen && selectedNode?.parentId != null) {
+        if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(
+                count = state.selectedBranches.size,
                 onConfirm = {
                     isRemoveConfirmOpen = false
                     state.removeNode()
@@ -1076,12 +1082,13 @@ private fun ViewMenu(
 
 @Composable
 private fun RemoveNodeDialog(
+    count: Int,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Remove node") },
+        title = { Text(if (count == 1) "Remove node" else "Remove $count nodes") },
         text = { Text("Are you sure?") },
         confirmButton = {
             Button(onClick = onConfirm) {

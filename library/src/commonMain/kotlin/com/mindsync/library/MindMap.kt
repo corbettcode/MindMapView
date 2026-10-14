@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
@@ -93,6 +94,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * its lines to its children start. The root has one for each side, as it has a set of children on each.
  * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
  * button, so [MindMapState.addNode] with that side then adds the child there.
+ *
+ * A click on a node while Shift is held down adds it to [MindMapState.selectedNodes], or takes it out of
+ * them when it is one of them, instead of selecting it alone. Such a click is not the start of a drag.
  *
  * A click on a link in the text of a node, one that is not the start of a drag, calls [onLinkClick] with
  * the node and the URL of the link. The click selects the node as any other click on it does.
@@ -194,9 +198,16 @@ fun MindMap(
                         }
                         return@awaitEachGesture
                     }
-                    val touchedNode = state.onTouchDown(down.position)
+                    // With Shift held down a click adds the node to the selected nodes, or takes it out of them.
+                    val isAddingToSelection = currentEvent.keyboardModifiers.isShiftPressed
+                    val touchedNode = state.onTouchDown(down.position, isAddingToSelection)
                     currentOnNodeClick(touchedNode)
-                    if (touchedNode == null) {
+                    if (touchedNode != null && isAddingToSelection) {
+                        down.consume()
+                        lastClickedNodeId = null
+                        waitForUpOrCancellation()?.consume()
+                    }
+                    else if (touchedNode == null) {
                         lastClickedNodeId = null
                         do {
                             val event = awaitPointerEvent()
@@ -291,7 +302,7 @@ fun MindMap(
             drawArrowLinks(state)
             drawLinkDrag(state)
 
-            state.selectedNode?.let { selectedNode ->
+            state.selectedNodes.filter { state.tree.isVisible(it.id) }.forEach { selectedNode ->
                 NodeDrawerFactory(
                     selectedNode
                     , drawInfo

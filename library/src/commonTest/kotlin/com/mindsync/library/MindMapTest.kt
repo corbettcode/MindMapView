@@ -99,6 +99,13 @@ class MindMapTest {
         waitForIdle()
     }
 
+    private fun ComposeUiTest.shiftClickNode(node: NodeData<*>) {
+        onNodeWithTag(TAG).performKeyInput { keyDown(Key.ShiftLeft) }
+        onNodeWithTag(TAG).performMouseInput { click(center(node)) }
+        onNodeWithTag(TAG).performKeyInput { keyUp(Key.ShiftLeft) }
+        waitForIdle()
+    }
+
     // Drags with the mouse from [from] to [to] while Ctrl is held down.
     private fun ComposeUiTest.ctrlDrag(
         from: NodeData<*>,
@@ -371,6 +378,78 @@ class MindMapTest {
             assertEquals(LayoutSide.LEFT, state.tree.sideOf(node.id))
             assertTrue(node.path.centerX.dpVal < root.path.centerX.dpVal)
         }
+    }
+
+    @Test
+    fun shiftClickAddsNodesToTheSelectionAndTakesThemOut() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        listOf("a", "b", "c").forEach { state.tree.addNode(it, rootId, it) }
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+        fun selectedIds() = state.selectedNodes.map { it.id }
+
+        clickNode(state.tree.getNode("a"))
+        shiftClickNode(state.tree.getNode("b"))
+        shiftClickNode(state.tree.getNode("c"))
+        assertEquals(listOf("a", "b", "c"), selectedIds())
+        assertEquals("c", state.selectedNode?.id)
+
+        shiftClickNode(state.tree.getNode("c"))
+        assertEquals(listOf("a", "b"), selectedIds())
+        assertEquals("b", state.selectedNode?.id)
+        shiftClickNode(state.tree.getNode("a"))
+        assertEquals(listOf("b"), selectedIds())
+
+        // A click without Shift selects the node alone again.
+        shiftClickNode(state.tree.getNode("c"))
+        clickNode(state.tree.getNode("a"))
+        assertEquals(listOf("a"), selectedIds())
+    }
+
+    @Test
+    fun selectedNodesAreCopiedRemovedAndFoldedTogether() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("a", rootId, "a")
+        state.tree.addNode("a1", "a", "a1")
+        state.tree.addNode("b", rootId, "b")
+        state.tree.addNode("b1", "b", "b1")
+        state.tree.addNode("target", rootId, "target")
+        state.tree.addArrowLink(ArrowLink("between", "a1", "b1"))
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        // A node below another selected one is part of its branch already.
+        clickNode(state.tree.getNode("b"))
+        shiftClickNode(state.tree.getNode("a"))
+        shiftClickNode(state.tree.getNode("a1"))
+        assertEquals(listOf("a", "b"), state.selectedBranches.map { it.id })
+
+        state.toggleFold()
+        assertTrue(state.tree.isFolded("a") && state.tree.isFolded("b"))
+        state.toggleFold()
+        assertFalse(state.tree.isFolded("a") || state.tree.isFolded("b"))
+
+        state.copyNode()
+        clickNode(state.tree.getNode("target"))
+        state.pasteNode()
+        waitForIdle()
+        val pasted = state.tree.getNode("target").children.map { state.tree.getNode(it) }
+        assertEquals(listOf("a", "b"), pasted.map { it.description })
+        val pastedLink = state.arrowLinks.single { it.id != "between" }
+        assertEquals(pasted.map { it.children.single() }, listOf(pastedLink.sourceId, pastedLink.targetId))
+
+        clickNode(state.tree.getNode("a"))
+        shiftClickNode(state.tree.getNode("b"))
+        state.removeNode()
+        waitForIdle()
+        assertEquals(listOf("target"), state.tree.getRootNode().children)
+        assertTrue(state.selectedNodes.isEmpty())
     }
 
     @Test
