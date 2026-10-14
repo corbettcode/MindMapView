@@ -180,7 +180,8 @@ private val RichTextSize.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
 private sealed interface Operation {
-    data class Add(val shape: NodeShape, val side: LayoutSide? = null) : Operation
+    // A shape that is not chosen is that of the last child of the node the new one is added to.
+    data class Add(val shape: NodeShape? = null, val side: LayoutSide? = null) : Operation
     data object Update : Operation
 }
 
@@ -482,7 +483,7 @@ private fun MindMapScreen(
                         , onNodeDoubleClick = { operation = Operation.Update }
                         , onAddChildClick = { _, side ->
                             onArrowLinkSourceIdChange(null)
-                            operation = Operation.Add(NodeShape.RECTANGLE, side)
+                            operation = Operation.Add(side = side)
                         }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
                         , onNodeMenu = { node, position ->
@@ -578,6 +579,11 @@ private fun MindMapScreen(
 
         operation?.let { currentOperation ->
             val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
+            val newNodeStyle = remember(currentOperation) {
+                (currentOperation as? Operation.Add)?.let { add ->
+                    selectedNode?.let { newNodeStyle(state.tree, it, add.side ?: state.layoutSide, add.shape) }
+                }
+            }
             EditNodeDialog(
                 title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
                 description =
@@ -588,15 +594,15 @@ private fun MindMapScreen(
                 note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
                 // The root stays the circle it is, so it is given no shape to choose from.
                 shape = when (currentOperation) {
-                    is Operation.Add -> currentOperation.shape
+                    is Operation.Add -> newNodeStyle?.shape
                     Operation.Update -> selectedNode?.takeIf { it.parentId != null }?.shape
                 },
                 color = when (currentOperation) {
-                    is Operation.Add -> currentOperation.shape.defaultColor
+                    is Operation.Add -> newNodeStyle?.color ?: Color.Unspecified
                     Operation.Update -> selectedNode?.color ?: Color.Unspecified
                 },
                 textColor = when (currentOperation) {
-                    is Operation.Add -> currentOperation.shape.defaultTextColor
+                    is Operation.Add -> newNodeStyle?.textColor ?: Color.Unspecified
                     Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
                 },
                 onSubmit = { description, note, shape, color, textColor ->
@@ -604,7 +610,7 @@ private fun MindMapScreen(
                         is Operation.Add -> {
                             state.addNode(
                                 description,
-                                shape ?: currentOperation.shape,
+                                shape ?: NodeShape.RECTANGLE,
                                 color,
                                 textColor,
                                 currentOperation.side ?: state.layoutSide,
