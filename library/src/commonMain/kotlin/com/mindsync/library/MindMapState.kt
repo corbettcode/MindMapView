@@ -255,14 +255,16 @@ class MindMapState(
     }
 
     /**
-     * Selects all of the nodes that are shown, as FreeMind does: those hidden in a folded node are not. The
-     * root is [selectedNode], and the start of the next range.
+     * Selects all of the nodes that are shown but the root, so they can be removed or cut together; those
+     * hidden in a folded node are not selected. The last of them is [selectedNode], and the start of the
+     * next range. Nothing changes when the root is the only node.
      */
     fun selectAll() {
-        val root = tree.getRootNode()
-        otherSelectedIds = visibleOrder() - root.id
-        rangeAnchorId = root.id
-        mindMapManager.setSelectedNode(root)
+        val ids = visibleOrder() - tree.getRootNode().id
+        val last = ids.lastOrNull() ?: return
+        otherSelectedIds = ids.dropLast(1)
+        rangeAnchorId = last
+        mindMapManager.setSelectedNode(tree.getNode(last))
         invalidate()
     }
 

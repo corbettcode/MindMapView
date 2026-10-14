@@ -452,7 +452,7 @@ class MindMapTest {
     }
 
     @Test
-    fun selectAllSelectsTheNodesThatAreShown() = runComposeUiTest {
+    fun selectAllSelectsTheNodesThatAreShownButTheRoot() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(400f), Dp(300f)))
         setMindMap(state)
         val rootId = state.tree.getRootNode().id
@@ -467,8 +467,18 @@ class MindMapTest {
         waitForIdle()
 
         state.selectAll()
-        assertEquals(setOf(rootId, "a", "a1", "b", "left"), state.selectedNodes.map { it.id }.toSet())
-        assertEquals(rootId, state.selectedNode?.id)
+        assertEquals(listOf("a", "a1", "b", "left"), state.selectedNodes.map { it.id })
+        assertEquals("left", state.selectedNode?.id)
+
+        // All of them can be removed together.
+        state.removeNode()
+        waitForIdle()
+        assertTrue(state.tree.getRootNode().children.isEmpty())
+
+        // With only the root left, the selection is not changed.
+        clickNode(state.tree.getRootNode())
+        state.selectAll()
+        assertEquals(listOf(rootId), state.selectedNodes.map { it.id })
     }
 
     @Test
