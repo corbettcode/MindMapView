@@ -330,7 +330,11 @@ fun main() = application {
                     arrowLinkSourceId = state.selectedNode?.id
                     true
                 }
-                // A dialog may have text of its own to copy and paste.
+                // A dialog may have text of its own to copy and paste, and to select all of.
+                !isDialogOpen && error == null && event.key == Key.A -> {
+                    state.selectAll()
+                    true
+                }
                 !isDialogOpen && error == null && event.key == Key.C -> {
                     state.copyNodeToClipboard()
                     true
@@ -559,6 +563,7 @@ private fun MindMapScreen(
                         // Read when the menu opens, as moveSide is: the clipboard may change in another program.
                         pasteEnabled = { selectedNode != null && (state.hasCopiedNode || hasClipboardText()) },
                         onPaste = { state.pasteFromClipboard(preferences) },
+                        onSelectAll = { state.selectAll() },
                         // Read when the menu opens: moving a node does not change the selected node.
                         moveSide = {
                             selectedNode?.takeIf { it.parentId != null }?.let { node ->
@@ -867,6 +872,7 @@ private fun EditMenu(
     onCopy: () -> Unit,
     pasteEnabled: () -> Boolean,
     onPaste: () -> Unit,
+    onSelectAll: () -> Unit,
     moveSide: () -> LayoutSide?,
     onMove: () -> Unit,
     links: () -> List<RichTextLink>,
@@ -963,6 +969,14 @@ private fun EditMenu(
                     onPaste()
                 },
                 enabled = pasteEnabled(),
+            )
+            DropdownMenuItem(
+                text = { Text("Select All") },
+                trailingIcon = { Text("Ctrl+A", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onSelectAll()
+                },
             )
             HorizontalDivider()
             val side = moveSide()

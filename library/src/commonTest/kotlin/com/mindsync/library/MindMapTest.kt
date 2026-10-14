@@ -452,6 +452,26 @@ class MindMapTest {
     }
 
     @Test
+    fun selectAllSelectsTheNodesThatAreShown() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(400f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("a", rootId, "a")
+        state.tree.addNode("a1", "a", "a1")
+        state.tree.addNode("b", rootId, "b")
+        state.tree.addNode("b1", "b", "b1")
+        state.tree.addNode("left", rootId, "left", side = LayoutSide.LEFT)
+        state.tree.setFolded("b", true)
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        state.selectAll()
+        assertEquals(setOf(rootId, "a", "a1", "b", "left"), state.selectedNodes.map { it.id }.toSet())
+        assertEquals(rootId, state.selectedNode?.id)
+    }
+
+    @Test
     fun selectedNodesAreCopiedRemovedAndFoldedTogether() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)

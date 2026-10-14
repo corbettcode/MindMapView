@@ -254,6 +254,18 @@ class MindMapState(
         invalidate()
     }
 
+    /**
+     * Selects all of the nodes that are shown, as FreeMind does: those hidden in a folded node are not. The
+     * root is [selectedNode], and the start of the next range.
+     */
+    fun selectAll() {
+        val root = tree.getRootNode()
+        otherSelectedIds = visibleOrder() - root.id
+        rangeAnchorId = root.id
+        mindMapManager.setSelectedNode(root)
+        invalidate()
+    }
+
     // The nodes that are shown, in the order a range of them is selected in.
     private fun visibleOrder(): List<String> {
         val root = tree.getRootNode()
