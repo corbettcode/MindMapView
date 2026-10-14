@@ -25,6 +25,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
@@ -237,9 +238,43 @@ class MindMapState(
                 )
             )
         }
-        // The pasted nodes come out of the node they are pasted into, as an added node does.
-        val parentPath = tree.getNode(parent.id).path
-        pastedIds.values.forEach { id ->
+        growOutOf(parent.id, pastedIds.values)
+    }
+
+    /**
+     * Adds the [nodes] and the nodes below them as the last children of the selected node, on [side] of the
+     * root when that is the selected node. Each of them is a [shape] in [color] with text in [textColor].
+     */
+    fun addNodes(
+        nodes: List<OutlineNode>
+        , shape: NodeShape = NodeShape.RECTANGLE
+        , color: Color = shape.defaultColor
+        , textColor: Color = shape.defaultTextColor
+        , side: LayoutSide = layoutSide
+    ) {
+        val parent = mindMapManager.getSelectedNode() ?: return
+        if (nodes.isEmpty()) return
+        val addedIds = mutableListOf<String>()
+        fun add(
+            node: OutlineNode
+            , parentId: String
+        ) {
+            val id = IdGenerator.makeRandomNodeId()
+            tree.addNode(id, parentId, node.description, shape, color, textColor, side)
+            addedIds.add(id)
+            node.children.forEach { add(it, id) }
+        }
+        nodes.forEach { add(it, parent.id) }
+        growOutOf(parent.id, addedIds)
+    }
+
+    // The nodes come out of the node they were added to, as a node that is added on its own does.
+    private fun growOutOf(
+        parentId: String
+        , ids: Collection<String>
+    ) {
+        val parentPath = tree.getNode(parentId).path
+        ids.forEach { id ->
             val node = tree.getNode(id)
             tree.updateNode(id, node.description, node.children, parentPath.centerX, parentPath.centerY)
         }

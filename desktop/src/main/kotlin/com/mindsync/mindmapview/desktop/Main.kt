@@ -104,7 +104,9 @@ import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
 import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.io.IOException
 import kotlin.math.roundToInt
@@ -338,7 +340,7 @@ fun main() = application {
                     true
                 }
                 !isDialogOpen && error == null && event.key == Key.V -> {
-                    state.pasteNode()
+                    state.pasteFromClipboard(preferences)
                     true
                 }
                 else -> false
@@ -406,12 +408,54 @@ private fun MindMapState.cutNodeToClipboard() {
     cutNode()
 }
 
+// The text on the clipboard when a node was copied last. While the clipboard holds it, it is the copied node
+// that is pasted, with all of what the outline of it leaves out.
+private var copiedNodeClipboardText: String? = null
+
 private fun putOnClipboard(text: String) {
-    try {
+    copiedNodeClipboardText = try {
         Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+        text
     } catch (e: IllegalStateException) {
         // Another program may have the clipboard for now; the node is still copied to paste in the mind map.
+        clipboardText()
     }
+}
+
+private fun clipboardText(): String? {
+    return try {
+        Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
+    } catch (e: IllegalStateException) {
+        null
+    } catch (e: UnsupportedFlavorException) {
+        null
+    } catch (e: IOException) {
+        null
+    }
+}
+
+private fun hasClipboardText(): Boolean {
+    return try {
+        Toolkit.getDefaultToolkit().systemClipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)
+    } catch (e: IllegalStateException) {
+        false
+    }
+}
+
+/**
+ * Pastes the node that was copied last, or the text on the clipboard as nodes when another program put it
+ * there since. The nodes of the text look like the last child of the node they are added to.
+ */
+private fun MindMapState.pasteFromClipboard(preferences: UserPreferences) {
+    val parent = selectedNode ?: return
+    val text = clipboardText()
+    val nodes = if (text == null || text == copiedNodeClipboardText) emptyList() else parseOutline(text)
+    if (nodes.isEmpty()) {
+        pasteNode()
+        return
+    }
+    val style = newNodeStyle(tree, parent, layoutSide, defaultShape = preferences.newNodeShape)
+    addNodes(nodes, style.shape, style.color, style.textColor)
 }
 
 private fun chooseFile(
@@ -507,8 +551,9 @@ private fun MindMapScreen(
                         onRemove = removeNode,
                         onCut = { state.cutNodeToClipboard() },
                         onCopy = { state.copyNodeToClipboard() },
-                        pasteEnabled = selectedNode != null && state.hasCopiedNode,
-                        onPaste = { state.pasteNode() },
+                        // Read when the menu opens, as moveSide is: the clipboard may change in another program.
+                        pasteEnabled = { selectedNode != null && (state.hasCopiedNode || hasClipboardText()) },
+                        onPaste = { state.pasteFromClipboard(preferences) },
                         // Read when the menu opens: moving a node does not change the selected node.
                         moveSide = {
                             selectedNode?.takeIf { it.parentId != null }?.let { node ->
@@ -587,8 +632,8 @@ private fun MindMapScreen(
                                 onFold = { state.toggleFold() },
                                 onCut = { state.cutNodeToClipboard() },
                                 onCopy = { state.copyNodeToClipboard() },
-                                isPasteEnabled = state.hasCopiedNode,
-                                onPaste = { state.pasteNode() },
+                                isPasteEnabled = state.hasCopiedNode || hasClipboardText(),
+                                onPaste = { state.pasteFromClipboard(preferences) },
                                 // The root is not removed.
                                 isRemovable = node.parentId != null,
                                 onRemove = removeNode,
@@ -814,7 +859,7 @@ private fun EditMenu(
     onRemove: () -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
-    pasteEnabled: Boolean,
+    pasteEnabled: () -> Boolean,
     onPaste: () -> Unit,
     moveSide: () -> LayoutSide?,
     onMove: () -> Unit,
@@ -911,7 +956,7 @@ private fun EditMenu(
                     expanded = false
                     onPaste()
                 },
-                enabled = pasteEnabled,
+                enabled = pasteEnabled(),
             )
             HorizontalDivider()
             val side = moveSide()

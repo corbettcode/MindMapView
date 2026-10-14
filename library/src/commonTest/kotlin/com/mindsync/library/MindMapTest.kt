@@ -35,6 +35,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.RectangleNodeData
@@ -339,6 +340,36 @@ class MindMapTest {
         pastedLinks.forEach {
             assertEquals(Color.Blue, it.color)
             assertTrue(it.hasStartArrow)
+        }
+    }
+
+    @Test
+    fun outlineIsAddedAsNodesBelowTheSelectedNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        clickNode(state.tree.getRootNode())
+
+        state.addNodes(
+            listOf(OutlineNode("first", listOf(OutlineNode("below"))), OutlineNode("second"))
+            , NodeShape.OVAL
+            , Color.Red
+            , Color.White
+            , LayoutSide.LEFT
+        )
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val (first, second) = root.children.map { state.tree.getNode(it) }
+        assertEquals("first", first.description)
+        assertEquals("second", second.description)
+        val below = state.tree.getNode(first.children.single())
+        assertEquals("below", below.description)
+        listOf(first, second, below).forEach { node ->
+            assertIs<OvalNodeData>(node)
+            assertEquals(Color.Red, node.color)
+            assertEquals(Color.White, node.textColor)
+            assertEquals(LayoutSide.LEFT, state.tree.sideOf(node.id))
+            assertTrue(node.path.centerX.dpVal < root.path.centerX.dpVal)
         }
     }
 

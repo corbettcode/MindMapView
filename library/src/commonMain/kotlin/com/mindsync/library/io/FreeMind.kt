@@ -19,6 +19,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
+import com.mindsync.library.util.RichText
 import kotlin.math.roundToInt
 
 /**
@@ -268,7 +269,7 @@ object FreeMind {
     private fun XmlElement.description(): String {
         val richContent = children.firstOrNull { it.name == "richcontent" && it.attributes["TYPE"] == "NODE" }?.rawContent
         if (richContent != null) return htmlBody(richContent)
-        return escapeHtml(attributes["TEXT"].orEmpty())
+        return RichText.fromPlainText(attributes["TEXT"].orEmpty())
     }
 
     // FreeMind keeps a node's note in a <richcontent> child of its own.
@@ -312,14 +313,6 @@ object FreeMind {
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("\n", "&#xa;")
-    }
-
-    private fun escapeHtml(text: String): String {
-        return text
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\n", "<br>")
     }
 }
 

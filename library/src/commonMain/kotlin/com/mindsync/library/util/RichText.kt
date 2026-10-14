@@ -53,6 +53,15 @@ object RichText {
         }.toAnnotatedString()
     }
 
+    /** Returns [text] as rich text that shows it as it is, its line breaks included. */
+    fun fromPlainText(text: String): String {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br>")
+    }
+
     /** Returns the links in [html], in the order they are in the text. */
     fun links(html: String): List<RichTextLink> {
         val state = RichTextState().setHtml(html)
