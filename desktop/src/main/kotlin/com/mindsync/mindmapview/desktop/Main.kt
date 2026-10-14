@@ -103,6 +103,8 @@ import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.io.File
 import java.io.IOException
 import kotlin.math.roundToInt
@@ -327,12 +329,12 @@ fun main() = application {
                 }
                 // A dialog may have text of its own to copy and paste.
                 !isDialogOpen && error == null && event.key == Key.C -> {
-                    state.copyNode()
+                    state.copyNodeToClipboard()
                     true
                 }
                 // A node that is cut can be pasted back, so it is removed without being confirmed.
                 !isDialogOpen && error == null && event.key == Key.X -> {
-                    state.cutNode()
+                    state.cutNodeToClipboard()
                     true
                 }
                 !isDialogOpen && error == null && event.key == Key.V -> {
@@ -388,6 +390,27 @@ private val FOLD_COMMANDS = listOf(
 private fun foldCommand(event: KeyEvent): FoldCommand? {
     return FOLD_COMMANDS.firstOrNull {
         it.key == event.key && it.isAlt == event.isAltPressed && it.isCtrl == event.isCtrlPressed && !event.isShiftPressed
+    }
+}
+
+// The copied node goes on the system clipboard too, as an outline, to be pasted into other programs.
+private fun MindMapState.copyNodeToClipboard() {
+    val node = selectedNode ?: return
+    putOnClipboard(nodeOutline(tree, node.id))
+    copyNode()
+}
+
+private fun MindMapState.cutNodeToClipboard() {
+    val node = selectedNode?.takeIf { it.parentId != null } ?: return
+    putOnClipboard(nodeOutline(tree, node.id))
+    cutNode()
+}
+
+private fun putOnClipboard(text: String) {
+    try {
+        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+    } catch (e: IllegalStateException) {
+        // Another program may have the clipboard for now; the node is still copied to paste in the mind map.
     }
 }
 
@@ -482,8 +505,8 @@ private fun MindMapScreen(
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = removeNode,
-                        onCut = { state.cutNode() },
-                        onCopy = { state.copyNode() },
+                        onCut = { state.cutNodeToClipboard() },
+                        onCopy = { state.copyNodeToClipboard() },
                         pasteEnabled = selectedNode != null && state.hasCopiedNode,
                         onPaste = { state.pasteNode() },
                         // Read when the menu opens: moving a node does not change the selected node.
@@ -562,8 +585,8 @@ private fun MindMapScreen(
                                     if (node.parentId == null || node.children.isEmpty()) null
                                     else state.tree.isFolded(nodeId),
                                 onFold = { state.toggleFold() },
-                                onCut = { state.cutNode() },
-                                onCopy = { state.copyNode() },
+                                onCut = { state.cutNodeToClipboard() },
+                                onCopy = { state.copyNodeToClipboard() },
                                 isPasteEnabled = state.hasCopiedNode,
                                 onPaste = { state.pasteNode() },
                                 // The root is not removed.
