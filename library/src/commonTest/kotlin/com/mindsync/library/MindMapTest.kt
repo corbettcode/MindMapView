@@ -41,6 +41,7 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.shape
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.layout.MindMapLeftLayoutManager
 import com.mindsync.library.model.DrawInfo
@@ -1528,6 +1529,63 @@ class MindMapTest {
         state.editNodeNote("")
         waitForIdle()
         assertEquals("", state.tree.getNode(child.id).note)
+    }
+
+    @Test
+    fun editNodeShapeChangesTheShapeAndKeepsTheRestOfTheNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", color = Color.Red, textColor = Color.White, note = "<p>a note</p>")
+        waitForIdle()
+        val child = assertIs<RectangleNodeData>(state.tree.getNode(state.tree.getRootNode().children.single()))
+        clickNode(child)
+        state.addNode("grandchild")
+        waitForIdle()
+        val grandchildId = state.tree.getNode(child.id).children.single()
+        val grandchildX = state.tree.getNode(grandchildId).path.centerX
+
+        state.editNodeShape(NodeShape.CIRCLE)
+        waitForIdle()
+
+        val circle = assertIs<CircleNodeData>(state.tree.getNode(child.id))
+        assertEquals("child", circle.description)
+        assertEquals("<p>a note</p>", circle.note)
+        assertEquals(Color.Red, circle.color)
+        assertEquals(Color.White, circle.textColor)
+        assertEquals(state.tree.getRootNode().id, circle.parentId)
+        assertEquals(listOf(grandchildId), circle.children)
+        assertEquals(listOf(child.id), state.tree.getRootNode().children)
+        assertEquals(child.path.centerY, circle.path.centerY)
+        assertTrue(circle.path.radius.dpVal > 0f)
+        assertIs<CircleNodeData>(state.selectedNode)
+
+        // The nodes below it are arranged again around a node that takes another room.
+        assertTrue(state.tree.getNode(grandchildId).path.centerX.dpVal != grandchildX.dpVal)
+        assertTrue(
+            state.tree.getNode(grandchildId).path.centerX.dpVal > (circle.path.centerX + circle.path.radius).dpVal
+        )
+
+        NodeShape.entries.forEach { shape ->
+            state.editNodeShape(shape)
+            waitForIdle()
+            assertEquals(shape, state.tree.getNode(child.id).shape)
+            assertEquals(listOf(grandchildId), state.tree.getNode(child.id).children)
+        }
+    }
+
+    @Test
+    fun editNodeShapeLeavesTheRootACircle() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        clickNode(state.tree.getRootNode())
+        val root = state.tree.getRootNode()
+
+        state.editNodeShape(NodeShape.RECTANGLE)
+        waitForIdle()
+
+        assertEquals(root, state.tree.getRootNode())
     }
 
     @Test

@@ -65,6 +65,7 @@ fun MindMapScreen() {
 ```
 
 - `addNode`, `editNodeText` and `removeNode` act on the selected node (`state.selectedNode`).
+- `editNodeShape` gives the selected node another shape and keeps the rest of it. The root stays a circle.
 - `rememberMindMapState()` places the root node at the center of the mind map. Pass `Tree<Any>(Dp(x), Dp(y))` to choose the position yourself.
 - The root has two sets of children: one laid out to its right and one to its left. `addNode` takes the `side` a child of the root is added to, which defaults to `state.layoutSide`. Setting `state.layoutSide` also moves every child of the root to that side.
 - Pass `onAddChildClick` to `MindMap` to draw a '+' button on every node, where its lines to its children start; the root gets one on each side. Clicking it selects that node and calls `onAddChildClick` with the node and the side, so a following `addNode` with that side adds the child there.
@@ -267,6 +268,7 @@ fun createNode(node: NodeData<*>?): Node? {
 binding.mindMapView.addNode(description)
 binding.mindMapView.editNodeText(description)
 binding.mindMapView.editNodeNote(note)
+binding.mindMapView.editNodeShape(shape)
 binding.mindMapView.addArrowLink(sourceId, targetId)
 binding.mindMapView.removeArrowLink(arrowLinkId)
 binding.mindMapView.toggleFold()

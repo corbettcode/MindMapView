@@ -87,6 +87,7 @@ import com.mindsync.library.MindMapState
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.model.LayoutSide
@@ -112,8 +113,8 @@ private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 
-private val EDIT_DIALOG_SIZE = DpSize(600.dp, 720.dp)
-private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 620.dp)
+private val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
+private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 670.dp)
 private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)
 private val ATTRIBUTES_DIALOG_MIN_SIZE = DpSize(420.dp, 320.dp)
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
@@ -398,8 +399,6 @@ private fun MindMapScreen(
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
-    // The side a '+' button was clicked on, while the shape of the node to add there is being chosen.
-    var shapeChoiceSide by remember { mutableStateOf<LayoutSide?>(null) }
     // The arrow link its menu is open for, and where in the mind map it was asked for.
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     // The node its menu is open for, and where in the mind map it was asked for.
@@ -409,7 +408,7 @@ private fun MindMapScreen(
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
-    val isDialogOpen = operation != null || shapeChoiceSide != null || attributesDialogOpen || isRemoveConfirmOpen
+    val isDialogOpen = operation != null || attributesDialogOpen || isRemoveConfirmOpen
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -483,7 +482,7 @@ private fun MindMapScreen(
                         , onNodeDoubleClick = { operation = Operation.Update }
                         , onAddChildClick = { _, side ->
                             onArrowLinkSourceIdChange(null)
-                            shapeChoiceSide = side
+                            operation = Operation.Add(NodeShape.RECTANGLE, side)
                         }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
                         , onNodeMenu = { node, position ->
@@ -568,16 +567,6 @@ private fun MindMapScreen(
             )
         }
 
-        shapeChoiceSide?.let { side ->
-            ShapeSelectorDialog(
-                onSelect = { shape ->
-                    shapeChoiceSide = null
-                    operation = Operation.Add(shape, side)
-                },
-                onDismiss = { shapeChoiceSide = null },
-            )
-        }
-
         if (attributesDialogOpen && selectedNode != null) {
             AttributesDialog(
                 attributes = remember(selectedNode.id) { state.tree.attributesOf(selectedNode.id) },
@@ -597,6 +586,11 @@ private fun MindMapScreen(
                 // The description of a new node is only a start, so typing replaces it.
                 isDescriptionSelected = currentOperation is Operation.Add,
                 note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
+                // The root stays the circle it is, so it is given no shape to choose from.
+                shape = when (currentOperation) {
+                    is Operation.Add -> currentOperation.shape
+                    Operation.Update -> selectedNode?.takeIf { it.parentId != null }?.shape
+                },
                 color = when (currentOperation) {
                     is Operation.Add -> currentOperation.shape.defaultColor
                     Operation.Update -> selectedNode?.color ?: Color.Unspecified
@@ -605,12 +599,12 @@ private fun MindMapScreen(
                     is Operation.Add -> currentOperation.shape.defaultTextColor
                     Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
                 },
-                onSubmit = { description, note, color, textColor ->
+                onSubmit = { description, note, shape, color, textColor ->
                     when (currentOperation) {
                         is Operation.Add -> {
                             state.addNode(
                                 description,
-                                currentOperation.shape,
+                                shape ?: currentOperation.shape,
                                 color,
                                 textColor,
                                 currentOperation.side ?: state.layoutSide,
@@ -619,6 +613,7 @@ private fun MindMapScreen(
                             onCreatedNodeCountChange(nodeNumber)
                         }
                         Operation.Update -> {
+                            shape?.let { state.editNodeShape(it) }
                             state.editNodeText(description)
                             state.editNodeNote(note)
                             state.editNodeColor(color)
@@ -931,30 +926,6 @@ private fun RemoveNodeDialog(
     )
 }
 
-@Composable
-private fun ShapeSelectorDialog(
-    onSelect: (NodeShape) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Shape") },
-        text = {
-            Column {
-                NodeShape.entries.forEach { shape ->
-                    DropdownMenuItem(text = { Text(shape.label) }, onClick = { onSelect(shape) })
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditNodeDialog(
@@ -962,9 +933,10 @@ private fun EditNodeDialog(
     description: String,
     isDescriptionSelected: Boolean,
     note: String,
+    shape: NodeShape?,
     color: Color,
     textColor: Color,
-    onSubmit: (description: String, note: String, color: Color, textColor: Color) -> Unit,
+    onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit,
     onDismiss: () -> Unit,
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
@@ -977,6 +949,7 @@ private fun EditNodeDialog(
     val descriptionFocusRequester = remember { FocusRequester() }
     val noteState = remember { RichTextState().setHtml(note) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
+    var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
@@ -995,6 +968,19 @@ private fun EditNodeDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize().padding(24.dp),
             ) {
+                selectedShape?.let { currentShape ->
+                    ShapePicker(
+                        selectedShape = currentShape,
+                        onSelect = { newShape ->
+                            // A color that was not chosen is that of the shape, so it goes along with the shape.
+                            if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
+                            if (selectedTextColor == currentShape.defaultTextColor) {
+                                selectedTextColor = newShape.defaultTextColor
+                            }
+                            selectedShape = newShape
+                        },
+                    )
+                }
                 EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
                 RichTextToolbar(richTextState)
                 OutlinedRichTextEditor(
@@ -1036,6 +1022,7 @@ private fun EditNodeDialog(
                                 DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
                                 // An editor that was emptied still holds an empty paragraph, which is no note.
                                 if (noteState.annotatedString.text.isBlank()) "" else noteState.toHtml(),
+                                selectedShape,
                                 selectedColor,
                                 selectedTextColor,
                             )
@@ -1590,6 +1577,32 @@ private fun EmojiPicker(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ShapePicker(
+    selectedShape: NodeShape,
+    onSelect: (NodeShape) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Shape", modifier = Modifier.width(PICKER_LABEL_WIDTH))
+        NodeShape.entries.forEach { shape ->
+            val isSelected = shape == selectedShape
+            val borderColor =
+                if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+            Text(
+                shape.label,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(if (isSelected) 3.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .clickable { onSelect(shape) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
         }
     }
 }

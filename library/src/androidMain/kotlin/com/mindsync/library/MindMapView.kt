@@ -122,6 +122,10 @@ class MindMapView @JvmOverloads constructor(
         state.removeArrowLink(id)
     }
 
+    fun editNodeShape(shape: NodeShape) {
+        state.editNodeShape(shape)
+    }
+
     fun editNodeColor(color: Color) {
         state.editNodeColor(color)
     }

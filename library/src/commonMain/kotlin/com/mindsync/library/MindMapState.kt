@@ -273,6 +273,15 @@ class MindMapState(
         }
     }
 
+    /** Gives the selected node another shape. The root stays the circle it is. */
+    fun editNodeShape(shape: NodeShape) {
+        mindMapManager.getSelectedNode()?.let { node ->
+            tree.updateNodeShape(node.id, shape)
+            mindMapManager.update(tree)
+            animateTreeChange()
+        }
+    }
+
     fun editNodeTextColor(textColor: Color) {
         mindMapManager.getSelectedNode()?.let { node ->
             tree.updateNodeTextColor(node.id, textColor)

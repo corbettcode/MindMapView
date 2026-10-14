@@ -390,6 +390,77 @@ class Tree<T> {
             }
     }
 
+    /**
+     * Gives the node another shape and keeps the rest of it. Only where the node is stays of its path: its
+     * size is that of a new node, until it is measured for its text again. The root stays the circle it is.
+     */
+    fun updateNodeShape(
+        targetId: String,
+        shape: NodeShape,
+    ) {
+        val targetNode =
+            _nodes[targetId]
+                ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
+        val parentId = targetNode.parentId
+        if (parentId == null || targetNode.shape == shape) return
+        val newNode: NodeData<*> =
+            when (shape) {
+                NodeShape.CIRCLE ->
+                    NodeGenerator.makeNode(CircleNodeData::class, targetNode.description, parentId).let {
+                        it.copy(
+                            id = targetId,
+                            alpha = targetNode.alpha,
+                            children = targetNode.children,
+                            color = targetNode.color,
+                            note = targetNode.note,
+                            path = it.path.copy(centerX = targetNode.path.centerX, centerY = targetNode.path.centerY),
+                            strokeWidth = targetNode.strokeWidth,
+                            textColor = targetNode.textColor,
+                        )
+                    }
+                NodeShape.RECTANGLE ->
+                    NodeGenerator.makeNode(RectangleNodeData::class, targetNode.description, parentId).let {
+                        it.copy(
+                            id = targetId,
+                            alpha = targetNode.alpha,
+                            children = targetNode.children,
+                            color = targetNode.color,
+                            note = targetNode.note,
+                            path = it.path.copy(centerX = targetNode.path.centerX, centerY = targetNode.path.centerY),
+                            strokeWidth = targetNode.strokeWidth,
+                            textColor = targetNode.textColor,
+                        )
+                    }
+                NodeShape.STADIUM ->
+                    NodeGenerator.makeNode(StadiumNodeData::class, targetNode.description, parentId).let {
+                        it.copy(
+                            id = targetId,
+                            alpha = targetNode.alpha,
+                            children = targetNode.children,
+                            color = targetNode.color,
+                            note = targetNode.note,
+                            path = it.path.copy(centerX = targetNode.path.centerX, centerY = targetNode.path.centerY),
+                            strokeWidth = targetNode.strokeWidth,
+                            textColor = targetNode.textColor,
+                        )
+                    }
+                NodeShape.OVAL ->
+                    NodeGenerator.makeNode(OvalNodeData::class, targetNode.description, parentId).let {
+                        it.copy(
+                            id = targetId,
+                            alpha = targetNode.alpha,
+                            children = targetNode.children,
+                            color = targetNode.color,
+                            note = targetNode.note,
+                            path = it.path.copy(centerX = targetNode.path.centerX, centerY = targetNode.path.centerY),
+                            strokeWidth = targetNode.strokeWidth,
+                            textColor = targetNode.textColor,
+                        )
+                    }
+            }
+        _nodes[targetId] = newNode as NodeData<T>
+    }
+
     fun updateNodeNote(
         targetId: String,
         note: String,
