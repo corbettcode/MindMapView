@@ -232,3 +232,6 @@ fabric.properties
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/android,androidstudio,kotlin,java,macos
+
+# Mind maps saved while trying the desktop app, named for the day they were saved
+/desktop/[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9]*.mm
