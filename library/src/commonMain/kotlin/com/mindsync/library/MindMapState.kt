@@ -60,7 +60,7 @@ class MindMapState(
     private var density = Density(1f)
     private var viewportSize = Size.Zero
     private var addNode: NodeData<*>? = null
-    private var copiedNode: CopiedNode? by mutableStateOf(null)
+    private var copiedBranch: CopiedBranch? by mutableStateOf(null)
 
     var scaleFactor by mutableFloatStateOf(DEFAULT_ZOOM)
         private set
@@ -179,15 +179,19 @@ class MindMapState(
     }
 
     /** Whether there is a node that was copied with [copyNode] to paste with [pasteNode]. */
-    val hasCopiedNode: Boolean get() = copiedNode != null
+    val hasCopiedNode: Boolean get() = copiedBranch != null
 
     /**
-     * Copies the selected node and the nodes below it, with their attributes, as they are now: a node that
-     * is changed or removed afterwards is pasted as it was when it was copied.
+     * Copies the selected node and the nodes below it, with their attributes and the arrow links between
+     * them, as they are now: a node that is changed or removed afterwards is pasted as it was when it was
+     * copied. An arrow link to or from a node that was not copied is left out, as it has no end to paste.
      */
     fun copyNode() {
         val node = mindMapManager.getSelectedNode() ?: return
-        copiedNode = copyBranch(tree.getNode(node.id))
+        val root = copyBranch(tree.getNode(node.id))
+        val ids = mutableSetOf<String>()
+        tree.doPreorderTraversal(tree.getNode(node.id)) { ids.add(it.id) }
+        copiedBranch = CopiedBranch(root, tree.arrowLinks.filter { it.sourceId in ids && it.targetId in ids })
     }
 
     /** Copies the selected node as [copyNode] does, then removes it. The root is neither copied nor removed. */
@@ -209,8 +213,9 @@ class MindMapState(
      */
     fun pasteNode(side: LayoutSide = layoutSide) {
         val parent = mindMapManager.getSelectedNode() ?: return
-        val copied = copiedNode ?: return
-        val pastedIds = mutableListOf<String>()
+        val copied = copiedBranch ?: return
+        // The id each copied node is pasted with, as the copied nodes may still be in the tree.
+        val pastedIds = mutableMapOf<String, String>()
         fun paste(
             branch: CopiedNode
             , parentId: String
@@ -219,13 +224,22 @@ class MindMapState(
             val node = branch.node
             tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
             tree.setAttributes(id, branch.attributes)
-            pastedIds.add(id)
+            pastedIds[node.id] = id
             branch.children.forEach { paste(it, id) }
         }
-        paste(copied, parent.id)
+        paste(copied.root, parent.id)
+        copied.arrowLinks.forEach { link ->
+            tree.addArrowLink(
+                link.copy(
+                    id = IdGenerator.makeRandomNodeId()
+                    , sourceId = pastedIds.getValue(link.sourceId)
+                    , targetId = pastedIds.getValue(link.targetId)
+                )
+            )
+        }
         // The pasted nodes come out of the node they are pasted into, as an added node does.
         val parentPath = tree.getNode(parent.id).path
-        pastedIds.forEach { id ->
+        pastedIds.values.forEach { id ->
             val node = tree.getNode(id)
             tree.updateNode(id, node.description, node.children, parentPath.centerX, parentPath.centerY)
         }
@@ -739,6 +753,12 @@ class MindMapState(
         private const val DEFAULT_ZOOM = 1f
     }
 }
+
+// What was copied: a node with the nodes below it, and the arrow links between them.
+private class CopiedBranch(
+    val root: CopiedNode
+    , val arrowLinks: List<ArrowLink>
+)
 
 // A copied node, which is pasted with the nodes below it and the attributes of each of them.
 private class CopiedNode(

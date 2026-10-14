@@ -298,6 +298,8 @@ class MindMapTest {
         state.tree.addNode("child", "parent", "child")
         state.tree.setAttributes("child", listOf(NodeAttribute("name", "value")))
         state.tree.addNode("other", rootId, "other")
+        state.tree.addArrowLink(ArrowLink("inside", "child", "parent", Color.Blue, hasStartArrow = true))
+        state.tree.addArrowLink(ArrowLink("outside", "child", "other"))
         state.setTree(state.tree)
         state.animateTreeChange()
         waitForIdle()
@@ -326,6 +328,17 @@ class MindMapTest {
             assertEquals("child", child.description)
             assertEquals(listOf(NodeAttribute("name", "value")), state.tree.attributesOf(child.id))
             assertTrue(node.path.centerX.dpVal > state.tree.getNode("other").path.centerX.dpVal)
+        }
+        // Only the arrow link between copied nodes is pasted, once for each paste, between the pasted nodes.
+        val pastedLinks = state.arrowLinks.filter { it.id != "inside" && it.id != "outside" }
+        assertEquals(
+            pasted.map { state.tree.getNode(it.children.single()).id to it.id }.toSet()
+            , pastedLinks.map { it.sourceId to it.targetId }.toSet()
+        )
+        assertEquals(2, pastedLinks.size)
+        pastedLinks.forEach {
+            assertEquals(Color.Blue, it.color)
+            assertTrue(it.hasStartArrow)
         }
     }
 
