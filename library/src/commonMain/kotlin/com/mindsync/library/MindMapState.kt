@@ -190,6 +190,13 @@ class MindMapState(
         copiedNode = copyBranch(tree.getNode(node.id))
     }
 
+    /** Copies the selected node as [copyNode] does, then removes it. The root is neither copied nor removed. */
+    fun cutNode() {
+        if (mindMapManager.getSelectedNode()?.parentId == null) return
+        copyNode()
+        removeNode()
+    }
+
     private fun copyBranch(node: NodeData<*>): CopiedNode = CopiedNode(
         node = node
         , attributes = tree.attributesOf(node.id)

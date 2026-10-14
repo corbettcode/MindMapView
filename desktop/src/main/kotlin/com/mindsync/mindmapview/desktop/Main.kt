@@ -330,6 +330,11 @@ fun main() = application {
                     state.copyNode()
                     true
                 }
+                // A node that is cut can be pasted back, so it is removed without being confirmed.
+                !isDialogOpen && error == null && event.key == Key.X -> {
+                    state.cutNode()
+                    true
+                }
                 !isDialogOpen && error == null && event.key == Key.V -> {
                     state.pasteNode()
                     true
@@ -477,6 +482,7 @@ private fun MindMapScreen(
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = removeNode,
+                        onCut = { state.cutNode() },
                         onCopy = { state.copyNode() },
                         pasteEnabled = selectedNode != null && state.hasCopiedNode,
                         onPaste = { state.pasteNode() },
@@ -556,6 +562,7 @@ private fun MindMapScreen(
                                     if (node.parentId == null || node.children.isEmpty()) null
                                     else state.tree.isFolded(nodeId),
                                 onFold = { state.toggleFold() },
+                                onCut = { state.cutNode() },
                                 onCopy = { state.copyNode() },
                                 isPasteEnabled = state.hasCopiedNode,
                                 onPaste = { state.pasteNode() },
@@ -782,6 +789,7 @@ private fun EditMenu(
     onEdit: () -> Unit,
     removeEnabled: Boolean,
     onRemove: () -> Unit,
+    onCut: () -> Unit,
     onCopy: () -> Unit,
     pasteEnabled: Boolean,
     onPaste: () -> Unit,
@@ -855,6 +863,15 @@ private fun EditMenu(
                 enabled = removeEnabled,
             )
             HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Cut") },
+                trailingIcon = { Text("Ctrl+X", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onCut()
+                },
+                enabled = removeEnabled,
+            )
             DropdownMenuItem(
                 text = { Text("Copy") },
                 trailingIcon = { Text("Ctrl+C", style = MaterialTheme.typography.labelMedium) },
@@ -1212,6 +1229,7 @@ private fun NodeMenu(
     onMove: () -> Unit,
     isFolded: Boolean?,
     onFold: () -> Unit,
+    onCut: () -> Unit,
     onCopy: () -> Unit,
     isPasteEnabled: Boolean,
     onPaste: () -> Unit,
@@ -1259,6 +1277,15 @@ private fun NodeMenu(
                     onClick = {
                         onDismiss()
                         onFold()
+                    },
+                )
+            }
+            if (isRemovable) {
+                DropdownMenuItem(
+                    text = { Text("Cut") },
+                    onClick = {
+                        onDismiss()
+                        onCut()
                     },
                 )
             }

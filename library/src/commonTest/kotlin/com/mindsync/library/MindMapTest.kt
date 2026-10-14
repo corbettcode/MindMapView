@@ -330,6 +330,37 @@ class MindMapTest {
     }
 
     @Test
+    fun cutNodeIsRemovedAndPastedElsewhere() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("cut", rootId, "cut")
+        state.tree.addNode("below", "cut", "below")
+        state.tree.addNode("other", rootId, "other")
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        clickNode(state.tree.getRootNode())
+        state.cutNode()
+        assertFalse(state.hasCopiedNode)
+        assertEquals(listOf("cut", "other"), state.tree.getRootNode().children)
+
+        clickNode(state.tree.getNode("cut"))
+        state.cutNode()
+        waitForIdle()
+        assertEquals(listOf("other"), state.tree.getRootNode().children)
+        assertNull(state.selectedNode)
+
+        clickNode(state.tree.getNode("other"))
+        state.pasteNode()
+        waitForIdle()
+        val pasted = state.tree.getNode(state.tree.getNode("other").children.single())
+        assertEquals("cut", pasted.description)
+        assertEquals("below", state.tree.getNode(pasted.children.single()).description)
+    }
+
+    @Test
     fun addEditAndRemoveStadiumNode() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
