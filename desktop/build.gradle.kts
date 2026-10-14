@@ -15,6 +15,9 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.material3)
     implementation(libs.richeditor.compose)
+    implementation(libs.flexmark)
+    implementation(libs.flexmark.ext.gfm.strikethrough)
+    implementation(libs.flexmark.html2md.converter)
     testImplementation(libs.kotlin.test)
 }
 

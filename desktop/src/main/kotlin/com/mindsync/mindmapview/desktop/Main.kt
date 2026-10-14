@@ -1238,8 +1238,8 @@ private fun EditNodeDialog(
     var noteState by remember { mutableStateOf<RichTextState?>(null) }
     LaunchedEffect(Unit) { noteState = noteWithImages(note) }
     val scope = rememberCoroutineScope()
-    // The HTML of the note while it is shown as it is, for markup to be typed that takes effect.
-    var noteSource by remember { mutableStateOf<String?>(null) }
+    // The note as Markdown while it is shown so, for markup to be typed that takes effect.
+    var noteMarkdown by remember { mutableStateOf<String?>(null) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
@@ -1316,43 +1316,43 @@ private fun EditNodeDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (noteSource == null) noteState?.let { RichTextToolbar(it) }
+                    if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
                     RichTextToggle(
-                        label = "</>",
+                        label = "MD",
                         labelStyle = SpanStyle(fontFamily = FontFamily.Monospace),
-                        checked = noteSource != null,
+                        checked = noteMarkdown != null,
                         onToggle = {
-                            val source = noteSource
-                            if (source == null) {
-                                noteSource = noteState?.let { noteHtml(it) } ?: note
+                            val markdown = noteMarkdown
+                            if (markdown == null) {
+                                noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
                             }
                             else {
                                 scope.launch {
-                                    noteState = noteWithImages(noteFromSource(source))
-                                    noteSource = null
+                                    noteState = noteWithImages(noteFromMarkdown(markdown))
+                                    noteMarkdown = null
                                 }
                             }
                         },
                     )
                 }
-                val source = noteSource
+                val markdown = noteMarkdown
                 val currentNoteState = noteState
                 val noteModifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .onSizeChanged { if (noteHeight == null) noteHeight = with(density) { it.height.toDp() } }
-                if (source == null && currentNoteState == null) {
+                if (markdown == null && currentNoteState == null) {
                     Box(modifier = noteModifier)
                 }
-                else if (source == null && currentNoteState != null) {
+                else if (markdown == null && currentNoteState != null) {
                     CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                         OutlinedRichTextEditor(state = currentNoteState, modifier = noteModifier)
                     }
                 }
-                else if (source != null) {
+                else if (markdown != null) {
                     OutlinedTextField(
-                        value = source,
-                        onValueChange = { noteSource = it },
+                        value = markdown,
+                        onValueChange = { noteMarkdown = it },
                         textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace),
                         modifier = Modifier.fillMaxWidth().weight(1f),
                     )
@@ -1368,7 +1368,7 @@ private fun EditNodeDialog(
                         onClick = {
                             onSubmit(
                                 DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
-                                noteSource?.let { noteFromSource(it) } ?: noteState?.let { noteHtml(it) } ?: note,
+                                noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note,
                                 selectedShape,
                                 selectedColor,
                                 selectedTextColor,

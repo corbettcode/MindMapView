@@ -32,8 +32,11 @@ class NoteHtmlTest {
     @Test
     fun imageWithASizeKeepsIt() {
         assertEquals(
-            "<p><img src=\"https://e.org/x.png\" width=\"100.0\" height=\"50.0\"></p>",
+            "<p><img src=\"https://e.org/x.png\" width=\"100\" height=\"50\"></p>",
             noteFromSource("<p><img src=\"https://e.org/x.png\" width=\"100\" height=\"50\"></p>"),
         )
+        // A size is read again as it was written.
+        val note = noteFromSource("<p><img src=\"https://e.org/x.png\" width=\"100\" height=\"50\"></p>")
+        assertEquals(note, noteFromSource(note))
     }
 }

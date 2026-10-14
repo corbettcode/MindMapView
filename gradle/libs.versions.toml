@@ -11,6 +11,7 @@ appcompat = "1.8.0"
 material = "1.14.0"
 activity = "1.13.0"
 richEditor = "1.2.1"
+flexmark = "0.64.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,6 +27,9 @@ compose-foundation = { group = "org.jetbrains.compose.foundation", name = "found
 compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "composeMultiplatform" }
 compose-ui-test = { group = "org.jetbrains.compose.ui", name = "ui-test", version.ref = "composeMultiplatform" }
 richeditor-compose = { group = "com.mohamedrejeb.richeditor", name = "richeditor-compose", version.ref = "richEditor" }
+flexmark = { group = "com.vladsch.flexmark", name = "flexmark", version.ref = "flexmark" }
+flexmark-ext-gfm-strikethrough = { group = "com.vladsch.flexmark", name = "flexmark-ext-gfm-strikethrough", version.ref = "flexmark" }
+flexmark-html2md-converter = { group = "com.vladsch.flexmark", name = "flexmark-html2md-converter", version.ref = "flexmark" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 
 [plugins]

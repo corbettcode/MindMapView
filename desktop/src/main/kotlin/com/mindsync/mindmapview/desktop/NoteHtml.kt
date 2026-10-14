@@ -2,8 +2,10 @@ package com.mindsync.mindmapview.desktop
 
 import com.mohamedrejeb.richeditor.model.RichTextState
 
-// The editor writes a size of 0 for an image that was given none, which would hide it when it is read again.
+// The editor writes a size of 0 for an image that was given none, which would hide it when it is read again,
+// and writes a size it only reads when it is a whole number as one with a fraction.
 private val UNSIZED_IMAGE = Regex(""" width="0\.0" height="0\.0"""")
+private val WHOLE_IMAGE_SIZE = Regex("""( (?:width|height)="\d+)\.0"""")
 
 /**
  * Returns the note in [state] as HTML, or none for an editor that was emptied: that still holds an empty
@@ -11,7 +13,7 @@ private val UNSIZED_IMAGE = Regex(""" width="0\.0" height="0\.0"""")
  */
 internal fun noteHtml(state: RichTextState): String {
     if (state.annotatedString.text.isBlank()) return ""
-    return state.toHtml().replace(UNSIZED_IMAGE, "")
+    return state.toHtml().replace(UNSIZED_IMAGE, "").replace(WHOLE_IMAGE_SIZE, "$1\"")
 }
 
 /** Returns [html] in a new editor once its images are loaded: one that is loaded later does not show. */
