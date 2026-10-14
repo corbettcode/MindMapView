@@ -57,6 +57,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -286,6 +287,46 @@ class MindMapTest {
         waitForIdle()
         assertTrue(state.tree.getRootNode().children.isEmpty())
         assertNull(state.selectedNode)
+    }
+
+    @Test
+    fun copiedNodeIsPastedWithTheNodesBelowItAsTheyWereWhenCopied() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("parent", rootId, "parent", NodeShape.OVAL, Color.Red, Color.White, note = "a note")
+        state.tree.addNode("child", "parent", "child")
+        state.tree.setAttributes("child", listOf(NodeAttribute("name", "value")))
+        state.tree.addNode("other", rootId, "other")
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        assertFalse(state.hasCopiedNode)
+        clickNode(state.tree.getNode("parent"))
+        state.copyNode()
+        assertTrue(state.hasCopiedNode)
+        state.editNodeText("changed after copying")
+
+        clickNode(state.tree.getNode("other"))
+        state.pasteNode()
+        state.pasteNode()
+        waitForIdle()
+
+        val pasted = state.tree.getNode("other").children.map { state.tree.getNode(it) }
+        assertEquals(2, pasted.size)
+        assertNotEquals(pasted[0].id, pasted[1].id)
+        pasted.forEach { node ->
+            assertIs<OvalNodeData>(node)
+            assertEquals("parent", node.description)
+            assertEquals("a note", node.note)
+            assertEquals(Color.Red, node.color)
+            assertEquals(Color.White, node.textColor)
+            val child = state.tree.getNode(node.children.single())
+            assertEquals("child", child.description)
+            assertEquals(listOf(NodeAttribute("name", "value")), state.tree.attributesOf(child.id))
+            assertTrue(node.path.centerX.dpVal > state.tree.getNode("other").path.centerX.dpVal)
+        }
     }
 
     @Test

@@ -29,6 +29,7 @@ import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
@@ -59,6 +60,7 @@ class MindMapState(
     private var density = Density(1f)
     private var viewportSize = Size.Zero
     private var addNode: NodeData<*>? = null
+    private var copiedNode: CopiedNode? by mutableStateOf(null)
 
     var scaleFactor by mutableFloatStateOf(DEFAULT_ZOOM)
         private set
@@ -174,6 +176,54 @@ class MindMapState(
             removeNodeCommand.execute()
             animateTreeChange()
         }
+    }
+
+    /** Whether there is a node that was copied with [copyNode] to paste with [pasteNode]. */
+    val hasCopiedNode: Boolean get() = copiedNode != null
+
+    /**
+     * Copies the selected node and the nodes below it, with their attributes, as they are now: a node that
+     * is changed or removed afterwards is pasted as it was when it was copied.
+     */
+    fun copyNode() {
+        val node = mindMapManager.getSelectedNode() ?: return
+        copiedNode = copyBranch(tree.getNode(node.id))
+    }
+
+    private fun copyBranch(node: NodeData<*>): CopiedNode = CopiedNode(
+        node = node
+        , attributes = tree.attributesOf(node.id)
+        , children = node.children.map { copyBranch(tree.getNode(it)) }
+    )
+
+    /**
+     * Adds what was copied with [copyNode] as the last child of the selected node, on [side] of the root
+     * when that is the selected node. It can be pasted again and again, each time as nodes of their own.
+     */
+    fun pasteNode(side: LayoutSide = layoutSide) {
+        val parent = mindMapManager.getSelectedNode() ?: return
+        val copied = copiedNode ?: return
+        val pastedIds = mutableListOf<String>()
+        fun paste(
+            branch: CopiedNode
+            , parentId: String
+        ) {
+            val id = IdGenerator.makeRandomNodeId()
+            val node = branch.node
+            tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
+            tree.setAttributes(id, branch.attributes)
+            pastedIds.add(id)
+            branch.children.forEach { paste(it, id) }
+        }
+        paste(copied, parent.id)
+        // The pasted nodes come out of the node they are pasted into, as an added node does.
+        val parentPath = tree.getNode(parent.id).path
+        pastedIds.forEach { id ->
+            val node = tree.getNode(id)
+            tree.updateNode(id, node.description, node.children, parentPath.centerX, parentPath.centerY)
+        }
+        mindMapManager.update(tree)
+        animateTreeChange()
     }
 
     /**
@@ -682,3 +732,10 @@ class MindMapState(
         private const val DEFAULT_ZOOM = 1f
     }
 }
+
+// A copied node, which is pasted with the nodes below it and the attributes of each of them.
+private class CopiedNode(
+    val node: NodeData<*>
+    , val attributes: List<NodeAttribute>
+    , val children: List<CopiedNode>
+)

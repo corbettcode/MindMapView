@@ -325,6 +325,15 @@ fun main() = application {
                     arrowLinkSourceId = state.selectedNode?.id
                     true
                 }
+                // A dialog may have text of its own to copy and paste.
+                !isDialogOpen && error == null && event.key == Key.C -> {
+                    state.copyNode()
+                    true
+                }
+                !isDialogOpen && error == null && event.key == Key.V -> {
+                    state.pasteNode()
+                    true
+                }
                 else -> false
             }
         }
@@ -468,6 +477,9 @@ private fun MindMapScreen(
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
                         onRemove = removeNode,
+                        onCopy = { state.copyNode() },
+                        pasteEnabled = selectedNode != null && state.hasCopiedNode,
+                        onPaste = { state.pasteNode() },
                         // Read when the menu opens: moving a node does not change the selected node.
                         moveSide = {
                             selectedNode?.takeIf { it.parentId != null }?.let { node ->
@@ -544,6 +556,9 @@ private fun MindMapScreen(
                                     if (node.parentId == null || node.children.isEmpty()) null
                                     else state.tree.isFolded(nodeId),
                                 onFold = { state.toggleFold() },
+                                onCopy = { state.copyNode() },
+                                isPasteEnabled = state.hasCopiedNode,
+                                onPaste = { state.pasteNode() },
                                 // The root is not removed.
                                 isRemovable = node.parentId != null,
                                 onRemove = removeNode,
@@ -767,6 +782,9 @@ private fun EditMenu(
     onEdit: () -> Unit,
     removeEnabled: Boolean,
     onRemove: () -> Unit,
+    onCopy: () -> Unit,
+    pasteEnabled: Boolean,
+    onPaste: () -> Unit,
     moveSide: () -> LayoutSide?,
     onMove: () -> Unit,
     links: () -> List<RichTextLink>,
@@ -835,6 +853,25 @@ private fun EditMenu(
                     onRemove()
                 },
                 enabled = removeEnabled,
+            )
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Copy") },
+                trailingIcon = { Text("Ctrl+C", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onCopy()
+                },
+                enabled = enabled,
+            )
+            DropdownMenuItem(
+                text = { Text("Paste") },
+                trailingIcon = { Text("Ctrl+V", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onPaste()
+                },
+                enabled = pasteEnabled,
             )
             HorizontalDivider()
             val side = moveSide()
@@ -1175,6 +1212,9 @@ private fun NodeMenu(
     onMove: () -> Unit,
     isFolded: Boolean?,
     onFold: () -> Unit,
+    onCopy: () -> Unit,
+    isPasteEnabled: Boolean,
+    onPaste: () -> Unit,
     isRemovable: Boolean,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
@@ -1222,6 +1262,21 @@ private fun NodeMenu(
                     },
                 )
             }
+            DropdownMenuItem(
+                text = { Text("Copy") },
+                onClick = {
+                    onDismiss()
+                    onCopy()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Paste") },
+                onClick = {
+                    onDismiss()
+                    onPaste()
+                },
+                enabled = isPasteEnabled,
+            )
             if (isRemovable) {
                 HorizontalDivider()
                 DropdownMenuItem(
