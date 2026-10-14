@@ -85,7 +85,7 @@ class Tree<T> {
     }
 
     // The child of the root the node is, or is below; the root for the root itself.
-    private fun branchOf(id: String): NodeData<*> {
+    internal fun branchOf(id: String): NodeData<*> {
         var node = getNode(id)
         while (node.parentId != null && node.parentId != ROOT_ID) {
             node = getNode(node.parentId)

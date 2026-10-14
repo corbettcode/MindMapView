@@ -837,6 +837,37 @@ class MindMapTest {
     }
 
     @Test
+    fun movingSelectedNodesMovesTheirBranchesToTheOtherSideOfTheLastSelectedOne() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(400f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("a", rootId, "a")
+        state.tree.addNode("a1", "a", "a1")
+        state.tree.addNode("b", rootId, "b")
+        state.tree.addNode("c", rootId, "c", side = LayoutSide.LEFT)
+        state.tree.addNode("d", rootId, "d")
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        // Two nodes of one branch move it once, and a branch on the side they go to already stays there.
+        clickNode(state.tree.getNode("c"))
+        shiftClickNode(state.tree.getNode("a1"))
+        shiftClickNode(state.tree.getNode("a"))
+        shiftClickNode(state.tree.getNode("b"))
+        state.moveNodeToOtherSide()
+        waitForIdle()
+        listOf("a", "a1", "b", "c").forEach { assertEquals(LayoutSide.LEFT, state.tree.sideOf(it), it) }
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf("d"))
+
+        // Nothing is moved while the root is the node selected last.
+        shiftClickNode(state.tree.getRootNode())
+        state.moveNodeToOtherSide()
+        waitForIdle()
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf("a"))
+    }
+
+    @Test
     fun leftLayoutMovesTheRootRightUntilTheTreeFits() {
         val tree = Tree<Any>(Dp(60f), Dp(300f))
         tree.addNode("first", tree.getRootNode().id, "first", NodeShape.RECTANGLE, side = LayoutSide.LEFT)

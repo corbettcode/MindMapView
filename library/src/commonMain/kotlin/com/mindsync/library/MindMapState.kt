@@ -343,14 +343,19 @@ class MindMapState(
     }
 
     /**
-     * Moves the branch the selected node is in, the child of the root it is or is below, to the other
-     * side of the root. Nothing is moved when the root is selected.
+     * Moves the branches the selected nodes are in, the children of the root they are or are below, to the
+     * other side of the root from the one [selectedNode] is on, so they all end up on the same side. Nothing
+     * is moved when [selectedNode] is the root, and the root is in no branch to move.
      */
     fun moveNodeToOtherSide() {
-        mindMapManager.getSelectedNode()?.takeIf { it.parentId != null }?.let { node ->
-            tree.moveToOtherSide(node.id)
-            animateTreeChange()
-        }
+        val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
+        val side = if (tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
+        selectedNodes
+            .filter { it.parentId != null }
+            .map { tree.branchOf(it.id).id }
+            .distinct()
+            .forEach { tree.setRootChildSide(it, side) }
+        animateTreeChange()
     }
 
     /**
