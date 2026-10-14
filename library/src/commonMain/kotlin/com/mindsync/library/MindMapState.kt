@@ -64,6 +64,8 @@ class MindMapState(
     private var copiedBranch: CopiedBranch? by mutableStateOf(null)
     // The nodes that are selected besides selectedNode, in the order they were selected.
     private var otherSelectedIds by mutableStateOf(listOf<String>())
+    // The node a range of nodes is selected from: the one selected alone, or added or taken out, last.
+    private var rangeAnchorId: String? = null
 
     var scaleFactor by mutableFloatStateOf(DEFAULT_ZOOM)
         private set
@@ -197,6 +199,7 @@ class MindMapState(
     /** Selects the node alone, or no node when it is null. */
     fun select(node: NodeData<*>?) {
         otherSelectedIds = emptyList()
+        rangeAnchorId = node?.id
         mindMapManager.setSelectedNode(node)
         invalidate()
     }
@@ -207,6 +210,7 @@ class MindMapState(
      */
     fun toggleSelected(id: String) {
         val node = tree.nodes[id] ?: return
+        rangeAnchorId = id
         val selected = mindMapManager.getSelectedNode()
         when {
             selected?.id == id -> {
@@ -221,6 +225,45 @@ class MindMapState(
             }
         }
         invalidate()
+    }
+
+    /**
+     * Selects the nodes from the one the range starts at, the node selected alone or added or taken out
+     * last, to the node with the id [id], which is then [selectedNode]. Of two nodes of one parent, on one
+     * side of the root, the range is their siblings between them; of other nodes, it is the nodes shown
+     * between them, the root and the branches on its right coming before those on its left, each from top
+     * to bottom. The start of the range stays where it is, for the next range to start there too.
+     */
+    fun selectRange(id: String) {
+        val node = tree.nodes[id] ?: return
+        val anchor = rangeAnchorId?.let { tree.nodes[it] } ?: mindMapManager.getSelectedNode()
+        val order = visibleOrder()
+        val from = anchor?.let { order.indexOf(it.id) } ?: -1
+        val to = order.indexOf(id)
+        if (anchor == null || from == -1 || to == -1) {
+            select(node)
+            return
+        }
+        val isSiblings = anchor.parentId == node.parentId && tree.sideOf(anchor.id) == tree.sideOf(id)
+        val range = order
+            .subList(minOf(from, to), maxOf(from, to) + 1)
+            .filter { !isSiblings || tree.getNode(it).parentId == node.parentId }
+        // The range is selected towards the node it ends at, which is selected last.
+        otherSelectedIds = (if (from <= to) range else range.reversed()) - id
+        mindMapManager.setSelectedNode(node)
+        invalidate()
+    }
+
+    // The nodes that are shown, in the order a range of them is selected in.
+    private fun visibleOrder(): List<String> {
+        val root = tree.getRootNode()
+        val ids = mutableListOf(root.id)
+        listOf(LayoutSide.RIGHT, LayoutSide.LEFT).forEach { side ->
+            tree.visibleChildren(root)
+                .filter { tree.sideOf(it) == side }
+                .forEach { branchId -> tree.doVisiblePreorderTraversal(tree.getNode(branchId)) { ids.add(it.id) } }
+        }
+        return ids
     }
 
     /** Removes the selected nodes and the nodes below them. The root is not removed. */
@@ -523,6 +566,7 @@ class MindMapState(
         }
         val node = tree.getNode(id)
         otherSelectedIds = emptyList()
+        rangeAnchorId = id
         mindMapManager.setSelectedNode(node)
         val position =
             Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
@@ -582,16 +626,18 @@ class MindMapState(
         if (tree.isRootPlaced) centerRootAgain() else placeRootIfNeeded()
     }
 
-    // A touch that adds to the selection leaves it as it is where there is no node.
+    // A touch that changes the selection in another way than selecting a node alone leaves it as it is
+    // where there is no node.
     internal fun onTouchDown(
         position: Offset
-        , isAddingToSelection: Boolean = false
+        , selectionChange: SelectionChange = SelectionChange.SELECT
     ): NodeData<*>? {
         mindMapManager.setNotMoving()
         val touchedNode = findNode(toTreePoint(position))
         when {
-            !isAddingToSelection -> select(touchedNode)
-            touchedNode != null -> toggleSelected(touchedNode.id)
+            selectionChange == SelectionChange.SELECT -> select(touchedNode)
+            touchedNode == null -> {}
+            selectionChange == SelectionChange.RANGE -> selectRange(touchedNode.id)
         }
         return touchedNode
     }
@@ -867,6 +913,14 @@ class MindMapState(
     companion object {
         private const val DEFAULT_ZOOM = 1f
     }
+}
+
+// How a touch on a node changes the selected nodes: it selects the node alone, selects a range of nodes
+// up to it, or leaves the selection to be changed once it is known whether the touch is a click or a drag.
+internal enum class SelectionChange {
+    SELECT,
+    RANGE,
+    LATER,
 }
 
 // What was copied: nodes with the nodes below them, and the arrow links between all of them.

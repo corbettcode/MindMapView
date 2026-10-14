@@ -99,12 +99,19 @@ class MindMapTest {
         waitForIdle()
     }
 
-    private fun ComposeUiTest.shiftClickNode(node: NodeData<*>) {
-        onNodeWithTag(TAG).performKeyInput { keyDown(Key.ShiftLeft) }
+    private fun ComposeUiTest.clickNodeWith(
+        key: Key
+        , node: NodeData<*>
+    ) {
+        onNodeWithTag(TAG).performKeyInput { keyDown(key) }
         onNodeWithTag(TAG).performMouseInput { click(center(node)) }
-        onNodeWithTag(TAG).performKeyInput { keyUp(Key.ShiftLeft) }
+        onNodeWithTag(TAG).performKeyInput { keyUp(key) }
         waitForIdle()
     }
+
+    private fun ComposeUiTest.ctrlClickNode(node: NodeData<*>) = clickNodeWith(Key.CtrlLeft, node)
+
+    private fun ComposeUiTest.shiftClickNode(node: NodeData<*>) = clickNodeWith(Key.ShiftLeft, node)
 
     // Drags with the mouse from [from] to [to] while Ctrl is held down.
     private fun ComposeUiTest.ctrlDrag(
@@ -381,7 +388,7 @@ class MindMapTest {
     }
 
     @Test
-    fun shiftClickAddsNodesToTheSelectionAndTakesThemOut() = runComposeUiTest {
+    fun ctrlClickAddsNodesToTheSelectionAndTakesThemOut() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
         val rootId = state.tree.getRootNode().id
@@ -392,21 +399,56 @@ class MindMapTest {
         fun selectedIds() = state.selectedNodes.map { it.id }
 
         clickNode(state.tree.getNode("a"))
-        shiftClickNode(state.tree.getNode("b"))
-        shiftClickNode(state.tree.getNode("c"))
+        ctrlClickNode(state.tree.getNode("b"))
+        ctrlClickNode(state.tree.getNode("c"))
         assertEquals(listOf("a", "b", "c"), selectedIds())
         assertEquals("c", state.selectedNode?.id)
 
-        shiftClickNode(state.tree.getNode("c"))
+        ctrlClickNode(state.tree.getNode("c"))
         assertEquals(listOf("a", "b"), selectedIds())
         assertEquals("b", state.selectedNode?.id)
-        shiftClickNode(state.tree.getNode("a"))
+        ctrlClickNode(state.tree.getNode("a"))
         assertEquals(listOf("b"), selectedIds())
 
-        // A click without Shift selects the node alone again.
-        shiftClickNode(state.tree.getNode("c"))
+        // A click without Ctrl selects the node alone again.
+        ctrlClickNode(state.tree.getNode("c"))
         clickNode(state.tree.getNode("a"))
         assertEquals(listOf("a"), selectedIds())
+    }
+
+    @Test
+    fun shiftClickSelectsTheRangeOfNodesFromTheNodeClickedBefore() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(400f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        listOf("a", "b", "c", "d").forEach { state.tree.addNode(it, rootId, it) }
+        state.tree.addNode("b1", "b", "b1")
+        state.tree.addNode("left", rootId, "left", side = LayoutSide.LEFT)
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+        fun selectedIds() = state.selectedNodes.map { it.id }
+
+        // Of siblings, the range is the siblings between them, towards the node clicked last.
+        clickNode(state.tree.getNode("d"))
+        shiftClickNode(state.tree.getNode("b"))
+        assertEquals(listOf("d", "c", "b"), selectedIds())
+        assertEquals("b", state.selectedNode?.id)
+
+        // The range starts at the same node again.
+        shiftClickNode(state.tree.getNode("a"))
+        assertEquals(listOf("d", "c", "b", "a"), selectedIds())
+
+        // Of other nodes, it is the nodes shown between them.
+        clickNode(state.tree.getNode("b1"))
+        shiftClickNode(state.tree.getNode("left"))
+        assertEquals(listOf("b1", "c", "d", "left"), selectedIds())
+
+        // A node added with Ctrl is where the next range starts.
+        clickNode(state.tree.getNode("a"))
+        ctrlClickNode(state.tree.getNode("c"))
+        shiftClickNode(state.tree.getNode("d"))
+        assertEquals(listOf("c", "d"), selectedIds())
     }
 
     @Test
@@ -426,8 +468,8 @@ class MindMapTest {
 
         // A node below another selected one is part of its branch already.
         clickNode(state.tree.getNode("b"))
-        shiftClickNode(state.tree.getNode("a"))
-        shiftClickNode(state.tree.getNode("a1"))
+        ctrlClickNode(state.tree.getNode("a"))
+        ctrlClickNode(state.tree.getNode("a1"))
         assertEquals(listOf("a", "b"), state.selectedBranches.map { it.id })
 
         state.toggleFold()
@@ -445,7 +487,7 @@ class MindMapTest {
         assertEquals(pasted.map { it.children.single() }, listOf(pastedLink.sourceId, pastedLink.targetId))
 
         clickNode(state.tree.getNode("a"))
-        shiftClickNode(state.tree.getNode("b"))
+        ctrlClickNode(state.tree.getNode("b"))
         state.removeNode()
         waitForIdle()
         assertEquals(listOf("target"), state.tree.getRootNode().children)
@@ -852,16 +894,16 @@ class MindMapTest {
 
         // Two nodes of one branch move it once, and a branch on the side they go to already stays there.
         clickNode(state.tree.getNode("c"))
-        shiftClickNode(state.tree.getNode("a1"))
-        shiftClickNode(state.tree.getNode("a"))
-        shiftClickNode(state.tree.getNode("b"))
+        ctrlClickNode(state.tree.getNode("a1"))
+        ctrlClickNode(state.tree.getNode("a"))
+        ctrlClickNode(state.tree.getNode("b"))
         state.moveNodeToOtherSide()
         waitForIdle()
         listOf("a", "a1", "b", "c").forEach { assertEquals(LayoutSide.LEFT, state.tree.sideOf(it), it) }
         assertEquals(LayoutSide.RIGHT, state.tree.sideOf("d"))
 
         // Nothing is moved while the root is the node selected last.
-        shiftClickNode(state.tree.getRootNode())
+        ctrlClickNode(state.tree.getRootNode())
         state.moveNodeToOtherSide()
         waitForIdle()
         assertEquals(LayoutSide.LEFT, state.tree.sideOf("a"))

@@ -95,8 +95,10 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
  * button, so [MindMapState.addNode] with that side then adds the child there.
  *
- * A click on a node while Shift is held down adds it to [MindMapState.selectedNodes], or takes it out of
- * them when it is one of them, instead of selecting it alone. Such a click is not the start of a drag.
+ * A click on a node while Ctrl is held down adds it to [MindMapState.selectedNodes], or takes it out of
+ * them when it is one of them, instead of selecting it alone; a click with Ctrl on a link selects the node
+ * alone, as a click on a link does. A click while Shift is held down selects the range of nodes up to the
+ * node, see [MindMapState.selectRange]; it is not the start of a drag.
  *
  * A click on a link in the text of a node, one that is not the start of a drag, calls [onLinkClick] with
  * the node and the URL of the link. The click selects the node as any other click on it does.
@@ -198,11 +200,18 @@ fun MindMap(
                         }
                         return@awaitEachGesture
                     }
-                    // With Shift held down a click adds the node to the selected nodes, or takes it out of them.
-                    val isAddingToSelection = currentEvent.keyboardModifiers.isShiftPressed
-                    val touchedNode = state.onTouchDown(down.position, isAddingToSelection)
+                    // With Shift held down a click selects a range of nodes. With Ctrl it adds the node to the
+                    // selected nodes, or takes it out of them, unless it is a drag or a click on a link.
+                    val isRange = currentEvent.keyboardModifiers.isShiftPressed
+                    val isCtrl = currentEvent.keyboardModifiers.isCtrlPressed
+                    val selectionChange = when {
+                        isRange -> SelectionChange.RANGE
+                        isCtrl -> SelectionChange.LATER
+                        else -> SelectionChange.SELECT
+                    }
+                    val touchedNode = state.onTouchDown(down.position, selectionChange)
                     currentOnNodeClick(touchedNode)
-                    if (touchedNode != null && isAddingToSelection) {
+                    if (touchedNode != null && isRange) {
                         down.consume()
                         lastClickedNodeId = null
                         waitForUpOrCancellation()?.consume()
@@ -218,9 +227,14 @@ fun MindMap(
                     else {
                         down.consume()
                         // With Ctrl held down a drag links the node to the one it is dropped on instead of moving it.
-                        val isLinkDrag = currentEvent.keyboardModifiers.isCtrlPressed
+                        val isLinkDrag = isCtrl
                         val onDrag: (Offset) -> Unit = if (isLinkDrag) state::onLinkDrag else state::onNodeDrag
                         val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        val link = if (dragStart == null) state.findLink(down.position) else null
+                        if (isCtrl) {
+                            if (dragStart == null && link == null) state.toggleSelected(touchedNode.id)
+                            else state.select(touchedNode)
+                        }
                         if (dragStart != null) {
                             onDrag(dragStart.position)
                             drag(dragStart.id) { change ->
@@ -229,13 +243,12 @@ fun MindMap(
                             }
                         }
                         if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
-                        if (dragStart == null) {
-                            state.findLink(down.position)?.let { (node, url) -> currentOnLinkClick(node, url) }
-                        }
-                        // A second click on the same node shortly after the first is a double click; a drag is not a click.
-                        val isSecondClick = lastClickedNodeId == touchedNode.id &&
+                        link?.let { (node, url) -> currentOnLinkClick(node, url) }
+                        // A second click on the same node shortly after the first is a double click; a drag is not a
+                        // click, nor is one that changes which nodes are selected.
+                        val isSecondClick = !isCtrl && lastClickedNodeId == touchedNode.id &&
                             down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis
-                        if (dragStart != null || isSecondClick) {
+                        if (dragStart != null || isSecondClick || isCtrl) {
                             lastClickedNodeId = null
                         }
                         else {
