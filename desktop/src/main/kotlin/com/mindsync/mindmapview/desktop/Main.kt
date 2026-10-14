@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
@@ -73,6 +74,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -117,6 +119,8 @@ private val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
 private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 670.dp)
 private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)
 private val ATTRIBUTES_DIALOG_MIN_SIZE = DpSize(420.dp, 320.dp)
+private val PREFERENCES_DIALOG_SIZE = DpSize(560.dp, 300.dp)
+private val PREFERENCES_LABEL_WIDTH = 128.dp
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
 private val LINK_MENU_MAX_WIDTH = 480.dp
@@ -179,6 +183,9 @@ private val NodeShape.label: String
 private val RichTextSize.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
+private val ThemeMode.label: String
+    get() = name.lowercase().replaceFirstChar { it.uppercase() }
+
 private sealed interface Operation {
     // A shape that is not chosen is that of the last child of the node the new one is added to.
     data class Add(val shape: NodeShape? = null, val side: LayoutSide? = null) : Operation
@@ -215,6 +222,9 @@ fun main() = application {
 
     val recentFiles = remember { RecentFiles.ofUser() }
     var recentPaths by remember { mutableStateOf(recentFiles.paths) }
+
+    val preferencesStore = remember { UserPreferencesStore.ofUser() }
+    var preferences by remember { mutableStateOf(preferencesStore.preferences) }
 
     fun save(target: File) {
         try {
@@ -336,6 +346,8 @@ fun main() = application {
             attributesDialogOpen = attributesDialogOpen,
             onAttributesDialogOpenChange = { attributesDialogOpen = it },
             onDialogOpenChange = { isDialogOpen = it },
+            preferences = preferences,
+            onPreferencesChange = { preferences = preferencesStore.update(it) },
         )
     }
 }
@@ -397,6 +409,8 @@ private fun MindMapScreen(
     attributesDialogOpen: Boolean,
     onAttributesDialogOpenChange: (Boolean) -> Unit,
     onDialogOpenChange: (Boolean) -> Unit,
+    preferences: UserPreferences,
+    onPreferencesChange: (UserPreferences) -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -405,11 +419,14 @@ private fun MindMapScreen(
     // The node its menu is open for, and where in the mind map it was asked for.
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
+    var isPreferencesOpen by remember { mutableStateOf(false) }
+    // A node that is removed without being confirmed is removed at once.
+    val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
-    val isDialogOpen = operation != null || attributesDialogOpen || isRemoveConfirmOpen
+    val isDialogOpen = operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -435,7 +452,12 @@ private fun MindMapScreen(
         notePopup = note to state.hoverPosition
     }
 
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+    val isDarkTheme = when (preferences.themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {
@@ -445,7 +467,7 @@ private fun MindMapScreen(
                         onAdd = { operation = Operation.Add(it) },
                         onEdit = { operation = Operation.Update },
                         removeEnabled = selectedNode?.parentId != null,
-                        onRemove = { isRemoveConfirmOpen = true },
+                        onRemove = removeNode,
                         // Read when the menu opens: moving a node does not change the selected node.
                         moveSide = {
                             selectedNode?.takeIf { it.parentId != null }?.let { node ->
@@ -460,6 +482,7 @@ private fun MindMapScreen(
                         onOpenLink = openLink,
                         onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                         onEditAttributes = { onAttributesDialogOpenChange(true) },
+                        onPreferences = { isPreferencesOpen = true },
                     )
                     ViewMenu(
                         onFit = { state.fitScreen() },
@@ -523,7 +546,7 @@ private fun MindMapScreen(
                                 onFold = { state.toggleFold() },
                                 // The root is not removed.
                                 isRemovable = node.parentId != null,
-                                onRemove = { isRemoveConfirmOpen = true },
+                                onRemove = removeNode,
                                 onDismiss = { nodeMenu = null },
                             )
                         }
@@ -577,11 +600,21 @@ private fun MindMapScreen(
             )
         }
 
+        if (isPreferencesOpen) {
+            PreferencesDialog(
+                preferences = preferences
+                , onSubmit = onPreferencesChange
+                , onDismiss = { isPreferencesOpen = false }
+            )
+        }
+
         operation?.let { currentOperation ->
             val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
             val newNodeStyle = remember(currentOperation) {
                 (currentOperation as? Operation.Add)?.let { add ->
-                    selectedNode?.let { newNodeStyle(state.tree, it, add.side ?: state.layoutSide, add.shape) }
+                    selectedNode?.let {
+                        newNodeStyle(state.tree, it, add.side ?: state.layoutSide, add.shape, preferences.newNodeShape)
+                    }
                 }
             }
             EditNodeDialog(
@@ -610,7 +643,7 @@ private fun MindMapScreen(
                         is Operation.Add -> {
                             state.addNode(
                                 description,
-                                shape ?: NodeShape.RECTANGLE,
+                                shape ?: preferences.newNodeShape,
                                 color,
                                 textColor,
                                 currentOperation.side ?: state.layoutSide,
@@ -740,6 +773,7 @@ private fun EditMenu(
     onOpenLink: (String) -> Unit,
     onAddArrowLink: () -> Unit,
     onEditAttributes: () -> Unit,
+    onPreferences: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
@@ -850,6 +884,14 @@ private fun EditMenu(
                     }
                 }
             }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Preferences...") },
+                onClick = {
+                    expanded = false
+                    onPreferences()
+                },
+            )
         }
     }
 }
@@ -930,6 +972,78 @@ private fun RemoveNodeDialog(
             }
         },
     )
+}
+
+// The preferences take effect when they are confirmed, as the changes of the other dialogs do.
+@Composable
+private fun PreferencesDialog(
+    preferences: UserPreferences,
+    onSubmit: (UserPreferences) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var edited by remember { mutableStateOf(preferences) }
+
+    DialogWindow(
+        onCloseRequest = onDismiss
+        , state = rememberDialogState(size = PREFERENCES_DIALOG_SIZE)
+        , title = "Preferences"
+        , resizable = false
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+                , modifier = Modifier.fillMaxSize().padding(24.dp)
+            ) {
+                ChoicePicker(
+                    label = "Theme"
+                    , choices = ThemeMode.entries
+                    , choiceLabel = { it.label }
+                    , selectedChoice = edited.themeMode
+                    , onSelect = { edited = edited.copy(themeMode = it) }
+                    , labelWidth = PREFERENCES_LABEL_WIDTH
+                )
+                ChoicePicker(
+                    label = "New node shape"
+                    , choices = NodeShape.entries
+                    , choiceLabel = { it.label }
+                    , selectedChoice = edited.newNodeShape
+                    , onSelect = { edited = edited.copy(newNodeShape = it) }
+                    , labelWidth = PREFERENCES_LABEL_WIDTH
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                    , modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
+                        .padding(end = 12.dp)
+                ) {
+                    Checkbox(
+                        checked = edited.isRemoveConfirmed
+                        , onCheckedChange = null
+                        , modifier = Modifier.padding(8.dp)
+                    )
+                    Text("Ask before removing a node")
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                    , verticalAlignment = Alignment.Bottom
+                    , modifier = Modifier.fillMaxWidth().weight(1f)
+                ) {
+                    Button(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            onSubmit(edited)
+                            onDismiss()
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1592,21 +1706,39 @@ private fun ShapePicker(
     selectedShape: NodeShape,
     onSelect: (NodeShape) -> Unit,
 ) {
+    ChoicePicker(
+        label = "Shape"
+        , choices = NodeShape.entries
+        , choiceLabel = { it.label }
+        , selectedChoice = selectedShape
+        , onSelect = onSelect
+    )
+}
+
+@Composable
+private fun <T> ChoicePicker(
+    label: String,
+    choices: List<T>,
+    choiceLabel: (T) -> String,
+    selectedChoice: T,
+    onSelect: (T) -> Unit,
+    labelWidth: Dp = PICKER_LABEL_WIDTH,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Shape", modifier = Modifier.width(PICKER_LABEL_WIDTH))
-        NodeShape.entries.forEach { shape ->
-            val isSelected = shape == selectedShape
+        Text(label, modifier = Modifier.width(labelWidth))
+        choices.forEach { choice ->
+            val isSelected = choice == selectedChoice
             val borderColor =
                 if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
             Text(
-                shape.label,
+                choiceLabel(choice),
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .border(if (isSelected) 3.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
-                    .clickable { onSelect(shape) }
+                    .clickable { onSelect(choice) }
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }

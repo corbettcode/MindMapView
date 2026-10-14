@@ -16,13 +16,22 @@ class NewNodeStyleTest {
         parentId: String,
         side: LayoutSide = LayoutSide.RIGHT,
         shape: NodeShape? = null,
-    ) = newNodeStyle(tree, tree.getNode(parentId), side, shape)
+        defaultShape: NodeShape = NodeShape.RECTANGLE,
+    ) = newNodeStyle(tree, tree.getNode(parentId), side, shape, defaultShape)
 
     @Test
     fun nodeOfAParentWithoutChildrenIsARectangleInItsOwnColors() {
         assertEquals(
             NewNodeStyle(NodeShape.RECTANGLE, NodeShape.RECTANGLE.defaultColor, NodeShape.RECTANGLE.defaultTextColor),
             style(rootId),
+        )
+    }
+
+    @Test
+    fun nodeOfAParentWithoutChildrenIsOfTheDefaultShape() {
+        assertEquals(
+            NewNodeStyle(NodeShape.OVAL, NodeShape.OVAL.defaultColor, NodeShape.OVAL.defaultTextColor),
+            style(rootId, defaultShape = NodeShape.OVAL),
         )
     }
 

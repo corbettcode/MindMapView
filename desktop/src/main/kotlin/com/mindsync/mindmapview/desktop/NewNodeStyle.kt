@@ -18,7 +18,7 @@ internal data class NewNodeStyle(
 
 /**
  * Returns the style of a node that is added to [parent]: that of the last child of [parent], for the nodes
- * of a parent to look alike, or a rectangle in its own colors when there is none. The root has a set of
+ * of a parent to look alike, or a [defaultShape] in its own colors when there is none. The root has a set of
  * children for each side, so it is the last one on [side] that counts for it.
  *
  * A [shape] that was chosen is kept, and only takes the colors of a last child of that shape.
@@ -28,11 +28,12 @@ internal fun newNodeStyle(
     parent: NodeData<*>,
     side: LayoutSide,
     shape: NodeShape? = null,
+    defaultShape: NodeShape = NodeShape.RECTANGLE,
 ): NewNodeStyle {
     val lastChild = parent.children
         .lastOrNull { parent.parentId != null || tree.sideOf(it) == side }
         ?.let { tree.getNode(it) }
-    val newShape = shape ?: lastChild?.shape ?: NodeShape.RECTANGLE
+    val newShape = shape ?: lastChild?.shape ?: defaultShape
     return lastChild
         ?.takeIf { it.shape == newShape }
         ?.let { NewNodeStyle(newShape, it.color, it.textColor) }
