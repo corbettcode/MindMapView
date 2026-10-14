@@ -56,8 +56,15 @@
       <node ID="da8daa58-220e-4d84-9efb-acfe7c5582d2" TEXT="Rock Salt" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
         <attribute NAME="shape" VALUE="stadium"/>
       </node>
-      <node ID="eddfa919-f611-4294-a5d0-676ee6427d78" TEXT="Chert" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
-        <attribute NAME="shape" VALUE="stadium"/>
+      <node ID="66e78657-e2bd-40d7-a468-528ce1702a3d" TEXT="Siliceous" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
+        <attribute NAME="shape" VALUE="rectangle"/>
+        <node ID="eddfa919-f611-4294-a5d0-676ee6427d78" TEXT="Chert" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+          <attribute NAME="shape" VALUE="stadium"/>
+          <node ID="046f31cd-cfe0-4faa-806f-1b0b75e38bd4" TEXT="Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+            <richcontent TYPE="NOTE"><html><head></head><body><p><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Jasper_outcrop_in_the_Bucegi_Mountains.jpg?width=400"/></p></body></html></richcontent>
+            <attribute NAME="shape" VALUE="stadium"/>
+          </node>
+        </node>
       </node>
     </node>
     <node ID="51fe56e3-96a9-4df2-b0ae-403c7ce741f2" TEXT="Organic" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
