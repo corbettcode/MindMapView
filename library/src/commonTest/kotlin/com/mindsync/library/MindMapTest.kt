@@ -1945,6 +1945,20 @@ class MindMapTest {
     }
 
     @Test
+    fun freeMindRoundTripKeepsImagesInNotes() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        val note = "<p>see <img src=\"https://e.org/x.png\" width=\"100.0\"></p>"
+        tree.addNode("a", tree.getRootNode().id, "first", note = note)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<p>see <img src=\"https://e.org/x.png\" width=\"100.0\"/></p>" in written)
+
+        val read = FreeMind.read(written)
+        assertEquals("<p>see <img src=\"https://e.org/x.png\" width=\"100.0\"/></p>", read.getNode("a").note)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
     fun freeMindNotesAreRead() {
         val content = """
             <map version="1.0.1">

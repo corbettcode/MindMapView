@@ -290,7 +290,10 @@ object FreeMind {
 
     // <richcontent> holds XHTML, so the HTML of a description has to be made well-formed XML.
     private fun toXhtml(html: String): String {
-        return html.replace(Regex("<br\\s*>"), "<br/>").replace("&nbsp;", "&#160;")
+        return html
+            .replace(Regex("<br\\s*>"), "<br/>")
+            .replace(Regex("<img(\\s[^>]*?)?\\s*/?>"), "<img$1/>")
+            .replace("&nbsp;", "&#160;")
     }
 
     private fun htmlBody(richContent: String): String {

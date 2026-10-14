@@ -36,7 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -64,11 +66,15 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +106,9 @@ import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextLink
 import com.mindsync.library.util.RichTextSize
 import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.model.LocalImageLoader
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
@@ -111,6 +119,7 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.io.IOException
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import org.jetbrains.skia.Image
 
@@ -121,7 +130,10 @@ private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 
 private val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
-private val EDIT_DIALOG_MIN_SIZE = DpSize(480.dp, 670.dp)
+private val EDIT_DIALOG_MIN_WIDTH = 480.dp
+private const val NOTE_LINES = 4
+// The room an outlined text field leaves above and below its text.
+private val TEXT_FIELD_VERTICAL_PADDING = 32.dp
 private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)
 private val ATTRIBUTES_DIALOG_MIN_SIZE = DpSize(420.dp, 320.dp)
 private val PREFERENCES_DIALOG_SIZE = DpSize(560.dp, 300.dp)
@@ -549,6 +561,8 @@ private fun MindMapScreen(
         notePopup = null
         val note = hoveredNode?.note?.takeIf { it.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
         delay(NOTE_POPUP_DELAY_MILLIS)
+        // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
+        UrlImageLoader.preload(note)
         notePopup = note to state.hoverPosition
     }
 
@@ -1220,21 +1234,42 @@ private fun EditNodeDialog(
         }
     }
     val descriptionFocusRequester = remember { FocusRequester() }
-    val noteState = remember { RichTextState().setHtml(note) }
+    // Made once the images of the note are loaded, as an image that is loaded later does not show.
+    var noteState by remember { mutableStateOf<RichTextState?>(null) }
+    LaunchedEffect(Unit) { noteState = noteWithImages(note) }
+    val scope = rememberCoroutineScope()
+    // The HTML of the note while it is shown as it is, for markup to be typed that takes effect.
+    var noteSource by remember { mutableStateOf<String?>(null) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
-    // A window of its own, so it can be resized: the note takes the room the rest leaves.
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    val lineStyle = LocalTextStyle.current
+    val noteMinHeight = remember(density, lineStyle) {
+        val lines = textMeasurer.measure("\n".repeat(NOTE_LINES - 1), lineStyle).size.height
+        with(density) { lines.toDp() } + TEXT_FIELD_VERTICAL_PADDING
+    }
+    var noteHeight by remember { mutableStateOf<Dp?>(null) }
+    val dialogState = rememberDialogState(size = EDIT_DIALOG_SIZE)
+
+    // A window of its own, so it can be resized: the note takes the room the rest leaves, which is four lines
+    // to start with and at the least.
     DialogWindow(
         onCloseRequest = onDismiss,
-        state = rememberDialogState(size = EDIT_DIALOG_SIZE),
+        state = dialogState,
         title = title,
     ) {
         LaunchedEffect(Unit) {
-            window.minimumSize = with(EDIT_DIALOG_MIN_SIZE) { Dimension(width.value.toInt(), height.value.toInt()) }
             descriptionFocusRequester.requestFocus()
+        }
+        // The rest of the dialog is only known once it is laid out, so the window is fitted to it then.
+        LaunchedEffect(noteHeight != null) {
+            val height = dialogState.size.height - ((noteHeight ?: return@LaunchedEffect) - noteMinHeight)
+            dialogState.size = DpSize(dialogState.size.width, height)
+            window.minimumSize = Dimension(EDIT_DIALOG_MIN_WIDTH.value.toInt(), height.value.toInt())
         }
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -1277,11 +1312,51 @@ private fun EditNodeDialog(
                     onSelect = { selectedTextColor = it },
                 )
                 Text("Note", style = MaterialTheme.typography.titleSmall)
-                RichTextToolbar(noteState)
-                OutlinedRichTextEditor(
-                    state = noteState,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (noteSource == null) noteState?.let { RichTextToolbar(it) }
+                    RichTextToggle(
+                        label = "</>",
+                        labelStyle = SpanStyle(fontFamily = FontFamily.Monospace),
+                        checked = noteSource != null,
+                        onToggle = {
+                            val source = noteSource
+                            if (source == null) {
+                                noteSource = noteState?.let { noteHtml(it) } ?: note
+                            }
+                            else {
+                                scope.launch {
+                                    noteState = noteWithImages(noteFromSource(source))
+                                    noteSource = null
+                                }
+                            }
+                        },
+                    )
+                }
+                val source = noteSource
+                val currentNoteState = noteState
+                val noteModifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .onSizeChanged { if (noteHeight == null) noteHeight = with(density) { it.height.toDp() } }
+                if (source == null && currentNoteState == null) {
+                    Box(modifier = noteModifier)
+                }
+                else if (source == null && currentNoteState != null) {
+                    CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
+                        OutlinedRichTextEditor(state = currentNoteState, modifier = noteModifier)
+                    }
+                }
+                else if (source != null) {
+                    OutlinedTextField(
+                        value = source,
+                        onValueChange = { noteSource = it },
+                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     modifier = Modifier.fillMaxWidth(),
@@ -1293,8 +1368,7 @@ private fun EditNodeDialog(
                         onClick = {
                             onSubmit(
                                 DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
-                                // An editor that was emptied still holds an empty paragraph, which is no note.
-                                if (noteState.annotatedString.text.isBlank()) "" else noteState.toHtml(),
+                                noteSource?.let { noteFromSource(it) } ?: noteState?.let { noteHtml(it) } ?: note,
                                 selectedShape,
                                 selectedColor,
                                 selectedTextColor,
@@ -1589,7 +1663,7 @@ private fun NotePopup(
     position: Offset,
 ) {
     val linkColor = MaterialTheme.colorScheme.primary
-    val text = remember(note, linkColor) { RichText.parse(note, linkColor) }
+    val noteState = remember(note, linkColor) { RichTextState().apply { config.linkColor = linkColor }.setHtml(note) }
     val shape = RoundedCornerShape(8.dp)
 
     Layout(
@@ -1603,7 +1677,7 @@ private fun NotePopup(
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
                     .padding(12.dp),
             ) {
-                Text(text, color = MaterialTheme.colorScheme.onSurface)
+                RichTextView(noteState, color = MaterialTheme.colorScheme.onSurface, imageLoader = UrlImageLoader)
             }
         },
         modifier = Modifier.fillMaxSize(),
