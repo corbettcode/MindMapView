@@ -57,7 +57,7 @@ class Tree<T> {
                         , Dp(50f)
                     )
                 , textColor = Color.Black
-            ) as NodeData<T>
+            )
     }
 
     constructor(
@@ -283,8 +283,8 @@ class Tree<T> {
             is StadiumNodeData -> parentNode.copy(children = newChildren)
             is OvalNodeData -> parentNode.copy(children = newChildren)
         }
-        _nodes[parentId] = newParent as NodeData<T>
-        _nodes[targetId] = newNode as NodeData<T>
+        _nodes[parentId] = newParent
+        _nodes[targetId] = newNode
         // A folded node would hide the child it is given.
         foldedIds.remove(parentId)
         setRootChildSide(targetId, side)
@@ -315,8 +315,8 @@ class Tree<T> {
                 is StadiumNodeData -> parentNode.copy(children = newNodes)
                 is OvalNodeData -> parentNode.copy(children = newNodes)
             }
-        _nodes[targetId] = newTargetNode as NodeData<T>
-        _nodes[parentId] = newParentNode as NodeData<T>
+        _nodes[targetId] = newTargetNode
+        _nodes[parentId] = newParentNode
         foldedIds.remove(parentId)
         setRootChildSide(targetId, side)
     }
@@ -340,7 +340,7 @@ class Tree<T> {
                     is StadiumNodeData -> parentNode.copy(children = newChildren)
                     is OvalNodeData -> parentNode.copy(children = newChildren)
                 }
-            _nodes[parentId] = newParent as NodeData<T>
+            _nodes[parentId] = newParent
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
         leftRootChildIds.remove(targetId)
     }
@@ -485,7 +485,7 @@ class Tree<T> {
                         )
                     }
             }
-        _nodes[targetId] = newNode as NodeData<T>
+        _nodes[targetId] = newNode
     }
 
     fun updateNodeNote(

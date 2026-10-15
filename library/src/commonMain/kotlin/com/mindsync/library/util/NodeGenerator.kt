@@ -10,6 +10,7 @@ import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 
 object NodeGenerator {
@@ -21,34 +22,42 @@ object NodeGenerator {
         val id = IdGenerator.makeRandomNodeId()
 
         return when (nodeClass) {
-            CircleNodeData::class -> CircleNodeData(
-                id = id,
-                parentId = parentId,
-                path = CirclePath(Dp(0f), Dp(0f), Dp(50f)),  // 예시로 CirclePath 설정
-                description = description,
-                children = listOf()
-            ) as N
-            RectangleNodeData::class -> RectangleNodeData(
-                id = id,
-                parentId = parentId,
-                path = RectanglePath(Dp(0f), Dp(0f), Dp(100f), Dp(50f)),  // 예시로 RectanglePath 설정
-                description = description,
-                children = listOf()
-            ) as N
-            StadiumNodeData::class -> StadiumNodeData(
-                id = id,
-                parentId = parentId,
-                path = StadiumPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
-                description = description,
-                children = listOf()
-            ) as N
-            OvalNodeData::class -> OvalNodeData(
-                id = id,
-                parentId = parentId,
-                path = OvalPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
-                description = description,
-                children = listOf()
-            ) as N
+            CircleNodeData::class -> nodeClass.cast(
+                CircleNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = CirclePath(Dp(0f), Dp(0f), Dp(50f)),  // 예시로 CirclePath 설정
+                    description = description,
+                    children = listOf()
+                )
+            )
+            RectangleNodeData::class -> nodeClass.cast(
+                RectangleNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = RectanglePath(Dp(0f), Dp(0f), Dp(100f), Dp(50f)),  // 예시로 RectanglePath 설정
+                    description = description,
+                    children = listOf()
+                )
+            )
+            StadiumNodeData::class -> nodeClass.cast(
+                StadiumNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = StadiumPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            OvalNodeData::class -> nodeClass.cast(
+                OvalNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = OvalPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
             else -> throw IllegalArgumentException("Unsupported Node type")
         }
     }
