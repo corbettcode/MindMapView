@@ -369,23 +369,24 @@ fun main() = application {
                     showFind()
                     true
                 }
-                event.key == Key.N -> {
+                // A dialog is about the mind map as it is, so neither another one nor a change of it comes in between.
+                !isDialogOpen && error == null && event.key == Key.N -> {
                     fileActions.new()
                     true
                 }
-                event.key == Key.O -> {
+                !isDialogOpen && error == null && event.key == Key.O -> {
                     fileActions.open()
                     true
                 }
-                event.key == Key.S -> {
+                !isDialogOpen && error == null && event.key == Key.S -> {
                     if (event.isShiftPressed) fileActions.saveAs() else fileActions.save()
                     true
                 }
-                event.key == Key.M -> {
+                !isDialogOpen && error == null && event.key == Key.M -> {
                     state.moveNodeToOtherSide()
                     true
                 }
-                event.key == Key.L -> {
+                !isDialogOpen && error == null && event.key == Key.L -> {
                     arrowLinkSourceId = state.selectedNode?.id
                     true
                 }
