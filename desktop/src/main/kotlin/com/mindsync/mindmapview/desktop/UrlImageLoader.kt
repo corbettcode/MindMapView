@@ -6,6 +6,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.ImageData
 import com.mohamedrejeb.richeditor.model.ImageLoader
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,10 @@ private const val USER_AGENT = "MindMapView/1.0 (https://github.com/hegleB/MindM
  * Loads the images of rich text from their web addresses. Rich text only makes room for an image that is
  * loaded when it is laid out, so the images of a note are loaded with [preload] before it is shown. An image
  * that cannot be loaded shows nothing: the address may not be an image.
+ *
+ * The rich text library has its image loading as experimental.
  */
+@OptIn(ExperimentalRichTextApi::class)
 internal object UrlImageLoader : ImageLoader {
     // Each image is fetched once, not every time a note that shows it is shown again, and so is a failure.
     private val images = ConcurrentHashMap<String, ImageBitmap>()

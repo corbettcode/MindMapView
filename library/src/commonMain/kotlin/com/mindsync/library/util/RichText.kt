@@ -6,6 +6,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.em
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichSpanStyle
 import com.mohamedrejeb.richeditor.model.RichTextState
 
@@ -79,6 +80,8 @@ object RichText {
     }
 
     // The editor only tells what a given range of its text is, so the links are found a character at a time.
+    // The rich text library has the style of a range as experimental, and it is the only way to the links.
+    @OptIn(ExperimentalRichTextApi::class)
     private fun linkRanges(state: RichTextState): List<Pair<TextRange, String>> {
         val length = state.annotatedString.text.length
         val ranges = mutableListOf<Pair<TextRange, String>>()

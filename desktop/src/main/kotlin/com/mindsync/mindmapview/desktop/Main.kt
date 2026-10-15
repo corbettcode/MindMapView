@@ -105,6 +105,7 @@ import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextLink
 import com.mindsync.library.util.RichTextSize
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.LocalImageLoader
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
@@ -1760,6 +1761,8 @@ private fun AttributesDialog(
 }
 
 // The popup takes no pointer input, so the pointer stays over the mind map below it while it is shown.
+// The image loader is what shows the images of a note, and the rich text library has it as experimental.
+@OptIn(ExperimentalRichTextApi::class)
 @Composable
 private fun NotePopup(
     note: String,
