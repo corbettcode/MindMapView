@@ -236,6 +236,13 @@ fun main() = application {
     var isDialogOpen by remember { mutableStateOf(false) }
     // How many nodes were added to the mind map since it was started or opened.
     var createdNodeCount by remember { mutableStateOf(0) }
+    // The text to find, which is kept when the find bar is closed for F3 to find it again.
+    var findText by remember { mutableStateOf("") }
+    var isFindOpen by remember { mutableStateOf(false) }
+    // While the find bar has the focus, keys are typed into it rather than acting on the map.
+    var isFindFocused by remember { mutableStateOf(false) }
+    // Each change of it has the find bar take the focus, with its text selected.
+    var findFocusRequest by remember { mutableStateOf(0) }
 
     val recentFiles = remember { RecentFiles.ofUser() }
     var recentPaths by remember { mutableStateOf(recentFiles.paths) }
@@ -275,6 +282,20 @@ fun main() = application {
             error = "Could not open ${chosen.name}: ${e.message}"
             recentPaths = recentFiles.remove(chosen)
         }
+    }
+
+    fun showFind() {
+        isFindOpen = true
+        findFocusRequest++
+    }
+
+    // Goes from the selected node to the match in [direction]: a node clicked meanwhile is where it goes on from.
+    fun find(
+        direction: FindDirection,
+        fromId: String? = state.selectedNode?.id,
+    ) {
+        val matchIds = state.findNodes(findText).map { it.id }
+        nextMatch(state.tree, matchIds, fromId, direction)?.let { state.goToNode(it) }
     }
 
     val fileActions = FileActions(
@@ -317,11 +338,21 @@ fun main() = application {
                     arrowLinkSourceId = null
                     true
                 }
-                !isDialogOpen && error == null && foldCommand(event) != null -> {
+                !isDialogOpen && !isFindFocused && error == null && foldCommand(event) != null -> {
                     foldCommand(event)?.run?.invoke(state)
                     true
                 }
+                // F3 finds again after the find bar is closed, as FreeMind's Find Next does.
+                !isDialogOpen && error == null && event.key == Key.F3 -> {
+                    if (findText.isBlank()) showFind()
+                    else find(if (event.isShiftPressed) FindDirection.PREVIOUS else FindDirection.NEXT)
+                    true
+                }
                 !event.isCtrlPressed -> false
+                !isDialogOpen && error == null && event.key == Key.F -> {
+                    showFind()
+                    true
+                }
                 event.key == Key.N -> {
                     fileActions.new()
                     true
@@ -343,29 +374,29 @@ fun main() = application {
                     true
                 }
                 // A dialog may have text of its own to copy and paste, and to select all of.
-                !isDialogOpen && error == null && event.key == Key.A -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.A -> {
                     state.selectAll()
                     true
                 }
-                !isDialogOpen && error == null && event.key == Key.C -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.C -> {
                     state.copyNodeToClipboard()
                     true
                 }
                 // A node that is cut can be pasted back, so it is removed without being confirmed.
-                !isDialogOpen && error == null && event.key == Key.X -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.X -> {
                     state.cutNodeToClipboard()
                     true
                 }
-                !isDialogOpen && error == null && event.key == Key.V -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.V -> {
                     state.pasteFromClipboard(preferences)
                     true
                 }
                 // A dialog's text fields undo their own typing.
-                !isDialogOpen && error == null && event.key == Key.Z -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.Z -> {
                     if (event.isShiftPressed) state.redo() else state.undo()
                     true
                 }
-                !isDialogOpen && error == null && event.key == Key.Y -> {
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.Y -> {
                     state.redo()
                     true
                 }
@@ -402,6 +433,29 @@ fun main() = application {
             onDialogOpenChange = { isDialogOpen = it },
             preferences = preferences,
             onPreferencesChange = { preferences = preferencesStore.update(it) },
+            onFind = { showFind() },
+            findBar = {
+                if (isFindOpen) {
+                    val matchIds = state.findNodes(findText).map { it.id }
+                    FindBar(
+                        text = findText,
+                        onTextChange = {
+                            findText = it
+                            find(FindDirection.NEXT, fromId = null)
+                        },
+                        countText = findCountText(matchIds, state.selectedNode?.id),
+                        hasMatches = matchIds.isNotEmpty(),
+                        focusRequest = findFocusRequest,
+                        onFocusChange = { isFindFocused = it },
+                        onNext = { find(FindDirection.NEXT) },
+                        onPrevious = { find(FindDirection.PREVIOUS) },
+                        onClose = {
+                            isFindOpen = false
+                            isFindFocused = false
+                        },
+                    )
+                }
+            },
         )
     }
 }
@@ -532,6 +586,8 @@ private fun MindMapScreen(
     onDialogOpenChange: (Boolean) -> Unit,
     preferences: UserPreferences,
     onPreferencesChange: (UserPreferences) -> Unit,
+    onFind: () -> Unit,
+    findBar: @Composable () -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -616,6 +672,7 @@ private fun MindMapScreen(
                         onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                         onEditAttributes = { onAttributesDialogOpenChange(true) },
                         onPreferences = { isPreferencesOpen = true },
+                        onFind = onFind,
                     )
                     ViewMenu(
                         onFit = { state.fitScreen() },
@@ -624,6 +681,7 @@ private fun MindMapScreen(
                         onFold = { it.run(state) },
                     )
                 }
+                findBar()
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     MindMap(
@@ -921,6 +979,7 @@ private fun EditMenu(
     onAddArrowLink: () -> Unit,
     onEditAttributes: () -> Unit,
     onPreferences: () -> Unit,
+    onFind: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var addExpanded by remember { mutableStateOf(false) }
@@ -1036,6 +1095,14 @@ private fun EditMenu(
                 onClick = {
                     expanded = false
                     onSelectAll()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Find...") },
+                trailingIcon = { Text("Ctrl+F", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onFind()
                 },
             )
             HorizontalDivider()

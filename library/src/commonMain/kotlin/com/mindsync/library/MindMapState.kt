@@ -664,6 +664,25 @@ class MindMapState(
     }
 
     /**
+     * Returns the nodes whose description or note holds [text], ignoring case, in the order of the tree: each
+     * node before the nodes below it. The text they show is searched, not their markup. Nodes hidden in a
+     * folded node are found too, and [goToNode] shows them. Blank text finds none.
+     */
+    fun findNodes(text: String): List<NodeData<*>> {
+        // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+        drawTick
+        if (text.isBlank()) return emptyList()
+        val found = mutableListOf<NodeData<*>>()
+        tree.doPreorderTraversal { node ->
+            val isMatch = listOf(node.description, node.note).any { html ->
+                html.isNotEmpty() && RichText.parse(html).text.contains(text, ignoreCase = true)
+            }
+            if (isMatch) found.add(node)
+        }
+        return found
+    }
+
+    /**
      * Selects a node and, when it is out of view, moves the mind map to bring it to the center. A node that
      * is hidden in a folded node is shown first, by unfolding the nodes above it.
      */
