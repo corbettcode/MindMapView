@@ -3,6 +3,7 @@ package com.mindsync.library.util
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.em
@@ -52,6 +53,16 @@ object RichText {
         return AnnotatedString.Builder(text).apply {
             links.forEach { (range, url) -> addStringAnnotation(LINK_TAG, url, range.start, range.end) }
         }.toAnnotatedString()
+    }
+
+    /** Returns [html] with [style] over all of its text, as an editor gives it when all of it is styled so. */
+    fun withStyle(
+        html: String
+        , style: SpanStyle
+    ): String {
+        val state = RichTextState().setHtml(html)
+        state.addSpanStyle(style, TextRange(0, state.annotatedString.text.length))
+        return state.toHtml()
     }
 
     /** Returns [text] as rich text that shows it as it is, its line breaks included. */

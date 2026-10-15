@@ -2,6 +2,10 @@ package com.mindsync.library.io
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
@@ -20,6 +24,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.RichText
+import com.mindsync.library.util.RichTextSize
 import kotlin.math.roundToInt
 
 /**
@@ -37,6 +42,7 @@ object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
     private const val ARROW = "Default"
     private const val NO_ARROW = "None"
+    private const val DEFAULT_FONT_POINTS = 12f
 
     fun write(tree: Tree<*>): String = buildString {
         append("<map version=\"1.0.1\">\n")
@@ -266,10 +272,24 @@ object FreeMind {
     }
 
     // FreeMind keeps a node's text in TEXT when it is plain, and in a <richcontent> child when it is formatted.
+    // The <font> of a node styles all of its text, which a description holds as the rich text of its own.
     private fun XmlElement.description(): String {
         val richContent = children.firstOrNull { it.name == "richcontent" && it.attributes["TYPE"] == "NODE" }?.rawContent
-        if (richContent != null) return htmlBody(richContent)
-        return RichText.fromPlainText(attributes["TEXT"].orEmpty())
+        val description = richContent?.let { htmlBody(it) } ?: RichText.fromPlainText(attributes["TEXT"].orEmpty())
+        val style = children.firstOrNull { it.name == "font" }?.fontStyle() ?: return description
+        return RichText.withStyle(description, style)
+    }
+
+    // The style of FreeMind's <font>, or null when it is the style text has anyway. Its size is in points, of
+    // which FreeMind's default has 12, and is the nearest size text can have. Its NAME is not kept: nodes share
+    // their font.
+    private fun XmlElement.fontStyle(): SpanStyle? {
+        val size = attributes["SIZE"]?.toFloatOrNull()?.let { RichTextSize.of((it / DEFAULT_FONT_POINTS).em) }
+        val style = SpanStyle(
+            fontWeight = if (attributes["BOLD"] == "true") FontWeight.Bold else null
+            , fontStyle = if (attributes["ITALIC"] == "true") FontStyle.Italic else null
+        ).merge(size?.spanStyle)
+        return style.takeIf { it != SpanStyle() }
     }
 
     // FreeMind keeps a node's note in a <richcontent> child of its own.

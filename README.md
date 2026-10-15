@@ -94,6 +94,8 @@ state.setTree(FreeMind.read(content))
 state.animateTreeChange() // positions are not stored in the file, so arrange the tree
 ```
 
+FreeMind's own `<font>` of a node is read as the style of all of its text: bold, italic, and the nearest size text can have, of which FreeMind's 12 points are the normal one. The name of its font is not kept. The style is saved as the rich text of the node, as a style chosen in an editor is.
+
 `HtmlOutline.write(tree)` writes a tree as a web page of nested lists, with the notes and attributes of the nodes. A node with children folds in a browser, and starts out folded as it is in the tree.
 
 ## Sample apps

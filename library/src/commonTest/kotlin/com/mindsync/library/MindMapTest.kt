@@ -1178,7 +1178,11 @@ class MindMapTest {
 
         val tree = FreeMind.read(content)
         val root = tree.getRootNode()
-        assertEquals("Tom &amp; Jerry<br>second line", root.description)
+        // FreeMind's <font> sizes all of the text, here as large text.
+        val rootText = RichText.parse(root.description)
+        assertEquals("Tom & Jerry second line", rootText.text)
+        assertEquals(RichTextSize.LARGE, rootText.sizeOf("Tom & Jerry"))
+        assertEquals(RichTextSize.LARGE, rootText.sizeOf("second line"))
         assertEquals(Color.LightGray, root.color)
         assertEquals(listOf("ID_2", "ID_3"), root.children)
 
