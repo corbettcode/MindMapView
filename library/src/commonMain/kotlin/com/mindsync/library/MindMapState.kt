@@ -182,6 +182,26 @@ class MindMapState(
     /** Makes the last change that was undone again. */
     fun redo() = restore { history.redo(it) }
 
+    // The map as it was when it was saved last, or shown when it was not saved since.
+    private var savedSnapshot: TreeSnapshot? = null
+
+    /**
+     * Whether the map is another one than it was when [markSaved] was called last, or [setTree] when that was
+     * later. It is what a file of it holds that counts, so where its nodes are is no change. Undoing the changes
+     * since leaves it unmodified again.
+     */
+    val isModified: Boolean
+        get() {
+            historyTick
+            return savedSnapshot?.hasSameContentAs(tree.snapshot()) == false
+        }
+
+    /** Takes the map as it is now as the one that is saved, which [isModified] tells changes from. */
+    fun markSaved() {
+        savedSnapshot = tree.snapshot()
+        historyTick++
+    }
+
     /** Makes the [changes] to the map one change, which [undo] undoes all at once. */
     fun groupChanges(changes: () -> Unit) = recordChange(changes)
 
@@ -219,14 +239,19 @@ class MindMapState(
 
     init {
         mindMapManager.setTree(tree)
+        savedSnapshot = tree.snapshot()
     }
 
-    /** Shows another tree. What there was to undo and redo is of the tree before it, and is forgotten. */
+    /**
+     * Shows another tree, which is taken as the one that is saved. What there was to undo and redo is of the tree
+     * before it, and is forgotten.
+     */
     fun setTree(tree: Tree<*>) {
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         otherSelectedIds = emptyList()
         mindMapManager.setTree(tree)
         history.clear()
+        savedSnapshot = tree.snapshot()
         historyTick++
         placeRootIfNeeded()
         invalidate()

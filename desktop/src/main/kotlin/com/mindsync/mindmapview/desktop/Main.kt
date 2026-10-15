@@ -124,7 +124,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import org.jetbrains.skia.Image
 
-private const val APP_NAME = "MindMapView"
+internal const val APP_NAME = "MindMapView"
 private const val APP_ICON_RESOURCE = "/icon.png"
 private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
@@ -244,6 +244,8 @@ fun main() = application {
     var isFindFocused by remember { mutableStateOf(false) }
     // Each change of it has the find bar take the focus, with its text selected.
     var findFocusRequest by remember { mutableStateOf(0) }
+    // What waits for the unsaved changes to be saved or not, while that is asked.
+    var afterSaveChoice by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val recentFiles = remember { RecentFiles.ofUser() }
     var recentPaths by remember { mutableStateOf(recentFiles.paths) }
@@ -251,21 +253,32 @@ fun main() = application {
     val preferencesStore = remember { UserPreferencesStore.ofUser() }
     var preferences by remember { mutableStateOf(preferencesStore.preferences) }
 
-    fun save(target: File) {
+    // Returns whether the mind map is saved.
+    fun save(target: File): Boolean {
         try {
             target.writeText(FreeMind.write(state.tree))
+            state.markSaved()
             // A mind map that is saved under a new name is one to open again, as one that was opened is.
             if (target != file) recentPaths = recentFiles.add(target)
             file = target
+            return true
         } catch (e: IOException) {
             error = "Could not save ${target.name}: ${e.message}"
+            return false
         }
     }
 
-    fun saveAs() {
-        chooseFile(frame, "Save As", FileDialog.SAVE, file)?.let { chosen ->
-            save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
-        }
+    // Returns whether the mind map is saved: no file may be chosen to save it to.
+    fun saveAs(): Boolean {
+        val chosen = chooseFile(frame, "Save As", FileDialog.SAVE, file) ?: return false
+        return save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
+    }
+
+    fun saveMap(): Boolean = file?.let { save(it) } ?: saveAs()
+
+    // The unsaved changes of the mind map would be lost, so whether to save them is asked first.
+    fun afterSavingChanges(action: () -> Unit) {
+        if (state.isModified) afterSaveChoice = action else action()
     }
 
     // A mind map that cannot be opened is no recent file any longer.
@@ -301,20 +314,22 @@ fun main() = application {
 
     val fileActions = FileActions(
         new = {
-            state.setTree(Tree<Any>())
-            file = null
-            createdNodeCount = 0
+            afterSavingChanges {
+                state.setTree(Tree<Any>())
+                file = null
+                createdNodeCount = 0
+            }
         },
-        open = { chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { open(it) } },
-        openRecent = { open(it) },
-        save = { file?.let { save(it) } ?: saveAs() },
+        open = { afterSavingChanges { chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { open(it) } } },
+        openRecent = { afterSavingChanges { open(it) } },
+        save = { saveMap() },
         saveAs = { saveAs() },
     )
 
     Window(
-        onCloseRequest = ::exitApplication
+        onCloseRequest = { afterSavingChanges(::exitApplication) }
         , icon = appIcon
-        , title = file?.let { "${it.name} - $APP_NAME" } ?: APP_NAME
+        , title = windowTitle(file?.name, state.isModified)
         , onPreviewKeyEvent = { event ->
             when {
                 event.type != KeyEventType.KeyDown -> false
@@ -434,6 +449,12 @@ fun main() = application {
             onDialogOpenChange = { isDialogOpen = it },
             preferences = preferences,
             onPreferencesChange = { preferences = preferencesStore.update(it) },
+            saveQuestion = afterSaveChoice?.let { saveChangesQuestion(file?.name) },
+            onSaveChoice = { choice ->
+                val action = afterSaveChoice
+                afterSaveChoice = null
+                if (goesOn(choice) { saveMap() }) action?.invoke()
+            },
             onFind = { showFind() },
             findBar = {
                 if (isFindOpen) {
@@ -587,6 +608,8 @@ private fun MindMapScreen(
     onDialogOpenChange: (Boolean) -> Unit,
     preferences: UserPreferences,
     onPreferencesChange: (UserPreferences) -> Unit,
+    saveQuestion: String?,
+    onSaveChoice: (SaveChoice) -> Unit,
     onFind: () -> Unit,
     findBar: @Composable () -> Unit,
 ) {
@@ -604,7 +627,8 @@ private fun MindMapScreen(
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     val hoveredNode = state.hoveredNode
-    val isDialogOpen = operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen
+    val isDialogOpen =
+        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || saveQuestion != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -776,6 +800,8 @@ private fun MindMapScreen(
                 },
             )
         }
+
+        saveQuestion?.let { question -> SaveChangesDialog(question, onSaveChoice) }
 
         if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(
@@ -1240,6 +1266,33 @@ private fun RemoveNodeDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
+            }
+        },
+    )
+}
+
+@Composable
+private fun SaveChangesDialog(
+    question: String,
+    onChoice: (SaveChoice) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { onChoice(SaveChoice.CANCEL) },
+        title = { Text(question) },
+        text = { Text("Your changes are lost if you don't save them.") },
+        confirmButton = {
+            Button(onClick = { onChoice(SaveChoice.SAVE) }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { onChoice(SaveChoice.DISCARD) }) {
+                    Text("Don't Save")
+                }
+                TextButton(onClick = { onChoice(SaveChoice.CANCEL) }) {
+                    Text("Cancel")
+                }
             }
         },
     )
