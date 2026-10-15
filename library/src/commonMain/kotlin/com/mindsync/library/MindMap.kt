@@ -306,13 +306,9 @@ fun MindMap(
             scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
         }) {
             drawAttachedNode(state, drawInfo)
-            drawLines(state, drawInfo, lineColor)
-            if (onAddChildClick != null) {
-                drawAddButtons(state, drawInfo, lineColor, addIconColor)
+            drawMap(state, drawInfo, measure, lineColor) {
+                if (onAddChildClick != null) drawAddButtons(state, drawInfo, lineColor, addIconColor)
             }
-            drawFoldMarkers(state, drawInfo, lineColor)
-            drawTree(state, drawInfo, measure)
-            drawArrowLinks(state)
             drawLinkDrag(state)
 
             state.selectedNodes.filter { state.tree.isVisible(it.id) }.forEach { selectedNode ->
@@ -326,6 +322,24 @@ fun MindMap(
             }
         }
     }
+}
+
+/**
+ * Draws the mind map itself, in the pixels of the tree: its lines, its fold markers, its nodes and its arrow
+ * links. What is drawn over the lines and under the nodes, as the buttons that add a child, is [underNodes].
+ */
+internal fun DrawScope.drawMap(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , measureTextSize: MeasureTextSize
+    , lineColor: Color
+    , underNodes: DrawScope.() -> Unit = {}
+) {
+    drawLines(state, drawInfo, lineColor)
+    underNodes()
+    drawFoldMarkers(state, drawInfo, lineColor)
+    drawTree(state, drawInfo, measureTextSize)
+    drawArrowLinks(state)
 }
 
 private fun DrawScope.drawTree(

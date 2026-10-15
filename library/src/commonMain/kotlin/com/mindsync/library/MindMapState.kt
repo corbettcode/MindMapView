@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Density
@@ -686,6 +687,21 @@ class MindMapState(
             tree.removeArrowLink(id)
             invalidate()
         }
+    }
+
+    /**
+     * Returns the whole mind map as an image, whatever part of it is in view: the nodes that are shown, their
+     * lines and their arrow links, in the colors of a light theme on white. It is [pixelsPerDp], or smaller when
+     * its largest side would be more than [maxSide] pixels. Returns null until the mind map is shown, as only then
+     * are its nodes measured and arranged.
+     */
+    fun exportImage(
+        pixelsPerDp: Float = 2f
+        , maxSide: Int = 16_000
+    ): ImageBitmap? {
+        val measureTextSize = mindMapManager.getMeasureTextSize() ?: return null
+        if (!tree.isRootPlaced) return null
+        return mapImage(this, density, measureTextSize, pixelsPerDp, maxSide)
     }
 
     /**

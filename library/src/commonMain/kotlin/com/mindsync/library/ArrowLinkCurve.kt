@@ -145,7 +145,7 @@ private fun chord(
     return Dp(sqrt(maxOf(0f, radius.dpVal * radius.dpVal - offsetY.dpVal * offsetY.dpVal)))
 }
 
-private fun halfWidth(node: NodeData<*>): Dp {
+internal fun halfWidth(node: NodeData<*>): Dp {
     return when (node) {
         is CircleNodeData -> node.path.radius
         is RectangleNodeData -> node.path.width / 2
@@ -154,7 +154,7 @@ private fun halfWidth(node: NodeData<*>): Dp {
     }
 }
 
-private fun halfHeight(node: NodeData<*>): Dp {
+internal fun halfHeight(node: NodeData<*>): Dp {
     return when (node) {
         is CircleNodeData -> node.path.radius
         is RectangleNodeData -> node.path.height / 2

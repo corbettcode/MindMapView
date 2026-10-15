@@ -99,6 +99,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.library.util.DescriptionEmoji
@@ -216,6 +217,8 @@ private class FileActions(
     val openRecent: (File) -> Unit,
     val save: () -> Unit,
     val saveAs: () -> Unit,
+    val exportImage: () -> Unit,
+    val exportHtml: () -> Unit,
 )
 
 private val appIcon: BitmapPainter? by lazy {
@@ -271,7 +274,22 @@ fun main() = application {
     // Returns whether the mind map is saved: no file may be chosen to save it to.
     fun saveAs(): Boolean {
         val chosen = chooseFile(frame, "Save As", FileDialog.SAVE, file) ?: return false
-        return save(if (chosen.extension.isEmpty()) File(chosen.path + FREE_MIND_EXTENSION) else chosen)
+        return save(withExtension(chosen, FREE_MIND_EXTENSION))
+    }
+
+    // An export is no save of the mind map, so the changes it has are as unsaved as they were.
+    fun export(
+        extension: String,
+        write: (File) -> Unit,
+    ) {
+        val suggested = File(file?.parent, exportFileName(file?.name, extension))
+        val chosen = chooseFile(frame, "Export", FileDialog.SAVE, suggested, extension) ?: return
+        val target = withExtension(chosen, extension)
+        try {
+            write(target)
+        } catch (e: IOException) {
+            error = "Could not export ${target.name}: ${e.message}"
+        }
     }
 
     fun saveMap(): Boolean = file?.let { save(it) } ?: saveAs()
@@ -324,6 +342,12 @@ fun main() = application {
         openRecent = { afterSavingChanges { open(it) } },
         save = { saveMap() },
         saveAs = { saveAs() },
+        exportImage = {
+            export(PNG_EXTENSION) { target ->
+                writePng(state.exportImage() ?: throw IOException("the mind map is not shown yet"), target)
+            }
+        },
+        exportHtml = { export(HTML_EXTENSION) { it.writeText(HtmlOutline.write(state.tree)) } },
     )
 
     Window(
@@ -580,11 +604,12 @@ private fun chooseFile(
     title: String,
     mode: Int,
     current: File?,
+    extension: String = FREE_MIND_EXTENSION,
 ): File? {
     val dialog = FileDialog(window, title, mode)
-    dialog.setFilenameFilter { _, name -> name.endsWith(FREE_MIND_EXTENSION, ignoreCase = true) }
+    dialog.setFilenameFilter { _, name -> name.endsWith(extension, ignoreCase = true) }
     dialog.directory = current?.parent
-    dialog.file = current?.name ?: "*$FREE_MIND_EXTENSION"
+    dialog.file = current?.name ?: "*$extension"
     dialog.isVisible = true
     val name = dialog.file ?: return null
     return File(dialog.directory, name)
@@ -919,6 +944,7 @@ private fun FileMenu(
     onExpandedChange: (Boolean) -> Unit,
 ) {
     var recentExpanded by remember { mutableStateOf(false) }
+    var exportExpanded by remember { mutableStateOf(false) }
 
     Box {
         TextButton(onClick = { onExpandedChange(true) }) {
@@ -929,6 +955,7 @@ private fun FileMenu(
             onDismissRequest = {
                 onExpandedChange(false)
                 recentExpanded = false
+                exportExpanded = false
             },
         ) {
             FileMenuItem("New", "Ctrl+N", actions.new, onExpandedChange)
@@ -963,6 +990,29 @@ private fun FileMenu(
             HorizontalDivider()
             FileMenuItem("Save", "Ctrl+S", actions.save, onExpandedChange)
             FileMenuItem("Save As...", "Ctrl+Shift+S", actions.saveAs, onExpandedChange)
+            HorizontalDivider()
+            Box {
+                DropdownMenuItem(
+                    text = { Text("Export") },
+                    trailingIcon = { Text("\u25B8") },
+                    onClick = { exportExpanded = true },
+                )
+                DropdownMenu(expanded = exportExpanded, onDismissRequest = { exportExpanded = false }) {
+                    listOf(
+                        "As Image (PNG)..." to actions.exportImage,
+                        "As HTML Outline..." to actions.exportHtml,
+                    ).forEach { (text, export) ->
+                        DropdownMenuItem(
+                            text = { Text(text) },
+                            onClick = {
+                                exportExpanded = false
+                                onExpandedChange(false)
+                                export()
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }
