@@ -130,6 +130,7 @@ private const val APP_ICON_RESOURCE = "/icon.png"
 private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
+private const val SUCCESS_MESSAGE_MILLIS = 3000L
 
 private val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
 private val EDIT_DIALOG_MIN_WIDTH = 480.dp
@@ -211,6 +212,9 @@ private sealed interface Operation {
     data object Update : Operation
 }
 
+// Not a data class, so that the same message shown again is a new one and is shown for its full time again.
+private class SuccessMessage(val text: String)
+
 private class FileActions(
     val new: () -> Unit,
     val open: () -> Unit,
@@ -231,6 +235,7 @@ fun main() = application {
     val state = rememberMindMapState()
     var file by remember { mutableStateOf<File?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<SuccessMessage?>(null) }
     var frame by remember { mutableStateOf<Frame?>(null) }
     var fileMenuExpanded by remember { mutableStateOf(false) }
     // The node an arrow link is being added from, while the node it leads to is being chosen.
@@ -264,6 +269,7 @@ fun main() = application {
             // A mind map that is saved under a new name is one to open again, as one that was opened is.
             if (target != file) recentPaths = recentFiles.add(target)
             file = target
+            successMessage = SuccessMessage("Saved ${target.name}")
             return true
         } catch (e: IOException) {
             error = "Could not save ${target.name}: ${e.message}"
@@ -461,6 +467,8 @@ fun main() = application {
             error = error,
             onError = { error = it },
             onErrorDismiss = { error = null },
+            successMessage = successMessage,
+            onSuccessMessageDismiss = { successMessage = null },
             fileActions = fileActions,
             recentPaths = recentPaths,
             fileMenuExpanded = fileMenuExpanded,
@@ -621,6 +629,8 @@ private fun MindMapScreen(
     error: String?,
     onError: (String) -> Unit,
     onErrorDismiss: () -> Unit,
+    successMessage: SuccessMessage?,
+    onSuccessMessageDismiss: () -> Unit,
     fileActions: FileActions,
     recentPaths: List<String>,
     fileMenuExpanded: Boolean,
@@ -658,6 +668,12 @@ private fun MindMapScreen(
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
+
+    LaunchedEffect(successMessage) {
+        if (successMessage == null) return@LaunchedEffect
+        delay(SUCCESS_MESSAGE_MILLIS)
+        onSuccessMessageDismiss()
+    }
 
     val uriHandler = LocalUriHandler.current
     val windowInfo = LocalWindowInfo.current
@@ -769,6 +785,15 @@ private fun MindMapScreen(
                                 "Click the node the arrow should point to. Esc cancels.",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
+                        }
+                    }
+                    successMessage?.let { message ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+                        ) {
+                            Text(message.text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                         }
                     }
                     nodeMenu?.let { (nodeId, position) ->
