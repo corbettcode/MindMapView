@@ -178,6 +178,33 @@ class Tree<T> {
         _arrowLinks.removeAll { it.sourceId in ids || it.targetId in ids }
     }
 
+    // Nodes are not changed in place but replaced, so the snapshot can share them with the tree.
+    internal fun snapshot(): TreeSnapshot = TreeSnapshot(
+        nodes = _nodes.toMap()
+        , leftRootChildIds = leftRootChildIds.toSet()
+        , nodeAttributes = nodeAttributes.toMap()
+        , foldedIds = foldedIds.toSet()
+        , arrowLinks = _arrowLinks.toList()
+        , isRootPlaced = isRootPlaced
+        , isRootCentered = isRootCentered
+        , isRootDragged = isRootDragged
+    )
+
+    internal fun restore(snapshot: TreeSnapshot) {
+        _nodes = snapshot.nodes.toMutableMap()
+        leftRootChildIds.clear()
+        leftRootChildIds.addAll(snapshot.leftRootChildIds)
+        nodeAttributes.clear()
+        nodeAttributes.putAll(snapshot.nodeAttributes)
+        foldedIds.clear()
+        foldedIds.addAll(snapshot.foldedIds)
+        _arrowLinks.clear()
+        _arrowLinks.addAll(snapshot.arrowLinks)
+        isRootPlaced = snapshot.isRootPlaced
+        isRootCentered = snapshot.isRootCentered
+        isRootDragged = snapshot.isRootDragged
+    }
+
     fun copy(nodes: Map<String, NodeData<T>>): Tree<T> {
         return Tree(nodes)
     }

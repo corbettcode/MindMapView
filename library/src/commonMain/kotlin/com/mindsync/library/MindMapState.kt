@@ -30,6 +30,7 @@ import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.LayoutSide
@@ -144,18 +145,89 @@ class MindMapState(
         get() = defaultSide
         set(value) {
             defaultSide = value
-            tree.getRootNode().children.forEach { tree.setRootChildSide(it, value) }
+            recordChange { tree.getRootNode().children.forEach { tree.setRootChildSide(it, value) } }
             animateTreeChange()
         }
+
+    private val history = UndoHistory<TreeSnapshot>()
+
+    // The history is no state of its own, so reading the tick is what tells a reader of a change.
+    private var historyTick by mutableIntStateOf(0)
+
+    private var isRecording = false
+
+    // The root dragged by the user, as the tree was before it was, until the drag ends.
+    private var rootDragStart: TreeSnapshot? = null
+
+    /** Whether there is a change to the map to undo with [undo]. */
+    val canUndo: Boolean
+        get() {
+            historyTick
+            return history.canUndo
+        }
+
+    /** Whether there is a change that was undone to redo with [redo]. */
+    val canRedo: Boolean
+        get() {
+            historyTick
+            return history.canRedo
+        }
+
+    /**
+     * Puts the map back as it was before the last change to it. The selected nodes that are still there stay
+     * selected.
+     */
+    fun undo() = restore { history.undo(it) }
+
+    /** Makes the last change that was undone again. */
+    fun redo() = restore { history.redo(it) }
+
+    /** Makes the [changes] to the map one change, which [undo] undoes all at once. */
+    fun groupChanges(changes: () -> Unit) = recordChange(changes)
+
+    // A change within another one is part of it, so only the outermost one is recorded.
+    private inline fun recordChange(change: () -> Unit) {
+        if (isRecording) return change()
+        val before = tree.snapshot()
+        isRecording = true
+        try {
+            change()
+        }
+        finally {
+            isRecording = false
+            if (!before.hasSameContentAs(tree.snapshot())) record(before)
+        }
+    }
+
+    private fun record(before: TreeSnapshot) {
+        history.record(before)
+        historyTick++
+    }
+
+    private fun restore(step: (current: TreeSnapshot) -> TreeSnapshot?) {
+        val snapshot = step(tree.snapshot()) ?: return
+        historyTick++
+        treeChangeJob?.cancel()
+        tree.restore(snapshot)
+        val selectedIds = selectedNodes.map { it.id }.filter { it in tree.nodes }
+        otherSelectedIds = selectedIds.dropLast(1)
+        mindMapManager.setSelectedNode(selectedIds.lastOrNull()?.let { tree.getNode(it) })
+        if (rangeAnchorId !in tree.nodes) rangeAnchorId = null
+        mindMapManager.setTree(tree)
+        animateTreeChange()
+    }
 
     init {
         mindMapManager.setTree(tree)
     }
 
+    /** Shows another tree. What there was to undo and redo is of the tree before it, and is forgotten. */
     fun setTree(tree: Tree<*>) {
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         otherSelectedIds = emptyList()
         mindMapManager.setTree(tree)
+        history.clear()
+        historyTick++
         placeRootIfNeeded()
         invalidate()
     }
@@ -168,28 +240,30 @@ class MindMapState(
         side: LayoutSide = layoutSide,
         note: String = "",
     ) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            val addNode: NodeData<*> = when (shape) {
-                NodeShape.CIRCLE ->
-                    NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor, note = note)
-                NodeShape.RECTANGLE ->
-                    NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor, note = note)
-                NodeShape.STADIUM ->
-                    NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor, note = note)
-                NodeShape.OVAL ->
-                    NodeGenerator.makeNode(OvalNodeData::class, description, node.id)
-                        .copy(color = color, textColor = textColor, note = note)
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                val addNode: NodeData<*> = when (shape) {
+                    NodeShape.CIRCLE ->
+                        NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
+                            .copy(color = color, textColor = textColor, note = note)
+                    NodeShape.RECTANGLE ->
+                        NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
+                            .copy(color = color, textColor = textColor, note = note)
+                    NodeShape.STADIUM ->
+                        NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
+                            .copy(color = color, textColor = textColor, note = note)
+                    NodeShape.OVAL ->
+                        NodeGenerator.makeNode(OvalNodeData::class, description, node.id)
+                            .copy(color = color, textColor = textColor, note = note)
+                }
+                this.addNode = addNode
+                // Only the root has a set of children for each side; below it a child is on the side of its parent.
+                val addSide = if (node.parentId == null) side else tree.sideOf(node.id)
+                val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
+                addNodeCommand.execute()
             }
-            this.addNode = addNode
-            // Only the root has a set of children for each side; below it a child is on the side of its parent.
-            val addSide = if (node.parentId == null) side else tree.sideOf(node.id)
-            val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
-            addNodeCommand.execute()
+            animateTreeChange()
         }
-        animateTreeChange()
     }
 
     fun getAddNode(): NodeData<*>? {
@@ -282,11 +356,13 @@ class MindMapState(
 
     /** Removes the selected nodes and the nodes below them. The root is not removed. */
     fun removeNode() {
-        val nodes = selectedBranches.filter { it.parentId != null }
-        if (nodes.isEmpty()) return
-        nodes.forEach { RemoveNodeCommand(mindMapManager, it).execute() }
-        otherSelectedIds = emptyList()
-        animateTreeChange()
+        recordChange {
+            val nodes = selectedBranches.filter { it.parentId != null }
+            if (nodes.isEmpty()) return
+            nodes.forEach { RemoveNodeCommand(mindMapManager, it).execute() }
+            otherSelectedIds = emptyList()
+            animateTreeChange()
+        }
     }
 
     /** Whether there is a node that was copied with [copyNode] to paste with [pasteNode]. */
@@ -330,32 +406,34 @@ class MindMapState(
      * when that is the selected node. It can be pasted again and again, each time as nodes of their own.
      */
     fun pasteNode(side: LayoutSide = layoutSide) {
-        val parent = mindMapManager.getSelectedNode() ?: return
-        val copied = copiedBranch ?: return
-        // The id each copied node is pasted with, as the copied nodes may still be in the tree.
-        val pastedIds = mutableMapOf<String, String>()
-        fun paste(
-            branch: CopiedNode
-            , parentId: String
-        ) {
-            val id = IdGenerator.makeRandomNodeId()
-            val node = branch.node
-            tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
-            tree.setAttributes(id, branch.attributes)
-            pastedIds[node.id] = id
-            branch.children.forEach { paste(it, id) }
-        }
-        copied.roots.forEach { paste(it, parent.id) }
-        copied.arrowLinks.forEach { link ->
-            tree.addArrowLink(
-                link.copy(
-                    id = IdGenerator.makeRandomNodeId()
-                    , sourceId = pastedIds.getValue(link.sourceId)
-                    , targetId = pastedIds.getValue(link.targetId)
+        recordChange {
+            val parent = mindMapManager.getSelectedNode() ?: return
+            val copied = copiedBranch ?: return
+            // The id each copied node is pasted with, as the copied nodes may still be in the tree.
+            val pastedIds = mutableMapOf<String, String>()
+            fun paste(
+                branch: CopiedNode
+                , parentId: String
+            ) {
+                val id = IdGenerator.makeRandomNodeId()
+                val node = branch.node
+                tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
+                tree.setAttributes(id, branch.attributes)
+                pastedIds[node.id] = id
+                branch.children.forEach { paste(it, id) }
+            }
+            copied.roots.forEach { paste(it, parent.id) }
+            copied.arrowLinks.forEach { link ->
+                tree.addArrowLink(
+                    link.copy(
+                        id = IdGenerator.makeRandomNodeId()
+                        , sourceId = pastedIds.getValue(link.sourceId)
+                        , targetId = pastedIds.getValue(link.targetId)
+                    )
                 )
-            )
+            }
+            growOutOf(parent.id, pastedIds.values)
         }
-        growOutOf(parent.id, pastedIds.values)
     }
 
     /**
@@ -369,20 +447,22 @@ class MindMapState(
         , textColor: Color = shape.defaultTextColor
         , side: LayoutSide = layoutSide
     ) {
-        val parent = mindMapManager.getSelectedNode() ?: return
-        if (nodes.isEmpty()) return
-        val addedIds = mutableListOf<String>()
-        fun add(
-            node: OutlineNode
-            , parentId: String
-        ) {
-            val id = IdGenerator.makeRandomNodeId()
-            tree.addNode(id, parentId, node.description, shape, color, textColor, side)
-            addedIds.add(id)
-            node.children.forEach { add(it, id) }
+        recordChange {
+            val parent = mindMapManager.getSelectedNode() ?: return
+            if (nodes.isEmpty()) return
+            val addedIds = mutableListOf<String>()
+            fun add(
+                node: OutlineNode
+                , parentId: String
+            ) {
+                val id = IdGenerator.makeRandomNodeId()
+                tree.addNode(id, parentId, node.description, shape, color, textColor, side)
+                addedIds.add(id)
+                node.children.forEach { add(it, id) }
+            }
+            nodes.forEach { add(it, parent.id) }
+            growOutOf(parent.id, addedIds)
         }
-        nodes.forEach { add(it, parent.id) }
-        growOutOf(parent.id, addedIds)
     }
 
     // The nodes come out of the node they were added to, as a node that is added on its own does.
@@ -405,14 +485,16 @@ class MindMapState(
      * is moved when [selectedNode] is the root, and the root is in no branch to move.
      */
     fun moveNodeToOtherSide() {
-        val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
-        val side = if (tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
-        selectedNodes
-            .filter { it.parentId != null }
-            .map { tree.branchOf(it.id).id }
-            .distinct()
-            .forEach { tree.setRootChildSide(it, side) }
-        animateTreeChange()
+        recordChange {
+            val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
+            val side = if (tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
+            selectedNodes
+                .filter { it.parentId != null }
+                .map { tree.branchOf(it.id).id }
+                .distinct()
+                .forEach { tree.setRootChildSide(it, side) }
+            animateTreeChange()
+        }
     }
 
     /**
@@ -484,54 +566,68 @@ class MindMapState(
 
     // The folds are those of the selected node and the nodes below it, so none of them hides the selected node.
     private fun changeFolds(change: () -> Unit) {
-        change()
-        animateTreeChange()
-    }
-
-    fun editNodeText(description: String) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            val updateNodeCommand = UpdateNodeCommand(mindMapManager, node, description)
-            updateNodeCommand.execute()
+        recordChange {
+            change()
             animateTreeChange()
         }
     }
 
+    fun editNodeText(description: String) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                val updateNodeCommand = UpdateNodeCommand(mindMapManager, node, description)
+                updateNodeCommand.execute()
+                animateTreeChange()
+            }
+        }
+    }
+
     fun editNodeColor(color: Color) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            tree.updateNodeColor(node.id, color)
-            invalidate()
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.updateNodeColor(node.id, color)
+                invalidate()
+            }
         }
     }
 
     /** Gives the selected node another shape. The root stays the circle it is. */
     fun editNodeShape(shape: NodeShape) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            tree.updateNodeShape(node.id, shape)
-            mindMapManager.update(tree)
-            animateTreeChange()
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.updateNodeShape(node.id, shape)
+                mindMapManager.update(tree)
+                animateTreeChange()
+            }
         }
     }
 
     fun editNodeTextColor(textColor: Color) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            tree.updateNodeTextColor(node.id, textColor)
-            invalidate()
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.updateNodeTextColor(node.id, textColor)
+                invalidate()
+            }
         }
     }
 
     /** Gives the selected node these attributes in place of the ones it has. */
     fun editNodeAttributes(attributes: List<NodeAttribute>) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            tree.setAttributes(node.id, attributes)
-            mindMapManager.update(tree)
-            animateTreeChange()
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setAttributes(node.id, attributes)
+                mindMapManager.update(tree)
+                animateTreeChange()
+            }
         }
     }
 
     fun editNodeNote(note: String) {
-        mindMapManager.getSelectedNode()?.let { node ->
-            tree.updateNodeNote(node.id, note)
-            invalidate()
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.updateNodeNote(node.id, note)
+                invalidate()
+            }
         }
     }
 
@@ -546,21 +642,25 @@ class MindMapState(
         if (sourceId == targetId || sourceId !in tree.nodes || targetId !in tree.nodes) return null
         tree.arrowLinks.firstOrNull { it.sourceId == sourceId && it.targetId == targetId }?.let { return it }
         val link = ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId)
-        tree.addArrowLink(link)
+        recordChange { tree.addArrowLink(link) }
         invalidate()
         return link
     }
 
     /** Replaces the arrow link with the id of [link], to change its color or its arrowheads. */
     fun updateArrowLink(link: ArrowLink) {
-        if (tree.arrowLinks.none { it.id == link.id }) return
-        tree.addArrowLink(link)
-        invalidate()
+        recordChange {
+            if (tree.arrowLinks.none { it.id == link.id }) return
+            tree.addArrowLink(link)
+            invalidate()
+        }
     }
 
     fun removeArrowLink(id: String) {
-        tree.removeArrowLink(id)
-        invalidate()
+        recordChange {
+            tree.removeArrowLink(id)
+            invalidate()
+        }
     }
 
     /**
@@ -570,10 +670,12 @@ class MindMapState(
     fun goToNode(id: String) {
         if (id !in tree.nodes) return
         if (!tree.isVisible(id)) {
-            var parentId = tree.getNode(id).parentId
-            while (parentId != null) {
-                tree.setFolded(parentId, false)
-                parentId = tree.getNode(parentId).parentId
+            recordChange {
+                var parentId = tree.getNode(id).parentId
+                while (parentId != null) {
+                    tree.setFolded(parentId, false)
+                    parentId = tree.getNode(parentId).parentId
+                }
             }
             treeChangeJob?.cancel()
             mindMapManager.arrangeTree()
@@ -765,6 +867,7 @@ class MindMapState(
         // The root is attached to no other node, so it is not moving as they are: the tree goes along with it.
         if (selectedNode.parentId == null) {
             treeChangeJob?.cancel()
+            if (rootDragStart == null) rootDragStart = tree.snapshot()
             tree.moveRoot(Dp(Px(point.x).toDp(density)), Dp(Px(point.y).toDp(density)))
             mindMapManager.arrangeTree()
             invalidate()
@@ -795,11 +898,18 @@ class MindMapState(
                 val side =
                     if (selectedNode.path.centerX.dpVal < attachedNode.path.centerX.dpVal) LayoutSide.LEFT
                     else LayoutSide.RIGHT
-                tree.removeNode(selectedNode.id)
-                tree.attachNode(selectedNode.id, attachedNode.id, side)
+                recordChange {
+                    tree.removeNode(selectedNode.id)
+                    tree.attachNode(selectedNode.id, attachedNode.id, side)
+                }
                 onNodeMove(tree, selectedNode, attachedNode)
             }
         }
+        // Where the root is is not part of what is compared for a change, so the drag is recorded on its own.
+        rootDragStart?.let { start ->
+            if (start.nodes[tree.getRootNode().id]?.path != tree.getRootNode().path) record(start)
+        }
+        rootDragStart = null
         attachedNode = null
         animateTreeChange()
     }
@@ -821,8 +931,14 @@ class MindMapState(
         val attachedNode = this.attachedNode
         if (linkDragPoint != null && selectedNode != null && attachedNode != null) {
             val link = tree.arrowLinks.firstOrNull { it.sourceId == selectedNode.id && it.targetId == attachedNode.id }
-            if (link == null) tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), selectedNode.id, attachedNode.id))
-            else tree.removeArrowLink(link.id)
+            recordChange {
+                if (link == null) {
+                    tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), selectedNode.id, attachedNode.id))
+                }
+                else {
+                    tree.removeArrowLink(link.id)
+                }
+            }
             onNodeLink(tree, selectedNode, attachedNode, link == null)
         }
         linkDragPoint = null

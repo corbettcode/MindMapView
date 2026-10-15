@@ -360,6 +360,15 @@ fun main() = application {
                     state.pasteFromClipboard(preferences)
                     true
                 }
+                // A dialog's text fields undo their own typing.
+                !isDialogOpen && error == null && event.key == Key.Z -> {
+                    if (event.isShiftPressed) state.redo() else state.undo()
+                    true
+                }
+                !isDialogOpen && error == null && event.key == Key.Y -> {
+                    state.redo()
+                    true
+                }
                 else -> false
             }
         }
@@ -577,6 +586,10 @@ private fun MindMapScreen(
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {
                     FileMenu(fileActions, recentPaths, fileMenuExpanded, onFileMenuExpandedChange)
                     EditMenu(
+                        canUndo = state.canUndo,
+                        onUndo = { state.undo() },
+                        canRedo = state.canRedo,
+                        onRedo = { state.redo() },
                         enabled = selectedNode != null,
                         onAdd = { operation = Operation.Add(it) },
                         onEdit = { operation = Operation.Update },
@@ -776,7 +789,7 @@ private fun MindMapScreen(
                             )
                             onCreatedNodeCountChange(nodeNumber)
                         }
-                        Operation.Update -> {
+                        Operation.Update -> state.groupChanges {
                             shape?.let { state.editNodeShape(it) }
                             state.editNodeText(description)
                             state.editNodeNote(note)
@@ -887,6 +900,10 @@ private fun FileMenuItem(
 
 @Composable
 private fun EditMenu(
+    canUndo: Boolean,
+    onUndo: () -> Unit,
+    canRedo: Boolean,
+    onRedo: () -> Unit,
     enabled: Boolean,
     onAdd: (NodeShape) -> Unit,
     onEdit: () -> Unit,
@@ -921,6 +938,25 @@ private fun EditMenu(
                 linksExpanded = false
             },
         ) {
+            DropdownMenuItem(
+                text = { Text("Undo") },
+                trailingIcon = { Text("Ctrl+Z", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onUndo()
+                },
+                enabled = canUndo,
+            )
+            DropdownMenuItem(
+                text = { Text("Redo") },
+                trailingIcon = { Text("Ctrl+Y", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onRedo()
+                },
+                enabled = canRedo,
+            )
+            HorizontalDivider()
             Box {
                 DropdownMenuItem(
                     text = { Text("Add") },
