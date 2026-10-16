@@ -6,6 +6,9 @@
     <attribute NAME="shape" VALUE="rectangle"/>
     <node ID="9e2d4d4a-c69e-4ce3-93f3-adae733b2a61" TEXT="Extrusive" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
       <attribute NAME="shape" VALUE="stadium"/>
+      <node ID="6e11c58f-bc36-4b54-9c95-3440304f0e7d" TEXT="Andesite" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+        <attribute NAME="shape" VALUE="stadium"/>
+      </node>
       <node ID="7e8b919f-7fa7-4367-b68e-5f25837efaed" TEXT="Basalt" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
         <attribute NAME="shape" VALUE="stadium"/>
       </node>
@@ -63,6 +66,27 @@
           <node ID="046f31cd-cfe0-4faa-806f-1b0b75e38bd4" TEXT="Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
             <richcontent TYPE="NOTE"><html><head></head><body><p><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Jasper_outcrop_in_the_Bucegi_Mountains.jpg?width=400"/></p></body></html></richcontent>
             <attribute NAME="shape" VALUE="stadium"/>
+            <node ID="9404b5e3-bfb8-4b07-8eb3-bbc0cf7e8851" TEXT="Red Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+              <attribute NAME="shape" VALUE="stadium"/>
+            </node>
+            <node ID="8d13628f-c24d-42e5-9c28-f562d8923cb3" TEXT="Picture Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+              <attribute NAME="shape" VALUE="stadium"/>
+            </node>
+            <node ID="fe117cd8-f852-430b-99f2-89f134f803dc" TEXT="Ocean Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+              <attribute NAME="shape" VALUE="stadium"/>
+            </node>
+            <node ID="86390bc3-ca46-4b80-b028-63678ff80b50" TEXT="Dalmatian Jasper" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+              <attribute NAME="shape" VALUE="stadium"/>
+            </node>
+          </node>
+          <node ID="a90d45ec-d087-41cf-9458-3814f4e6f0af" TEXT="Flint" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+            <attribute NAME="shape" VALUE="stadium"/>
+          </node>
+          <node ID="cd9c8eed-d583-4c3f-9c56-e69d85aa0041" TEXT="Diatomite" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+            <attribute NAME="shape" VALUE="stadium"/>
+          </node>
+          <node ID="88599b11-101e-479c-ba08-02249f785cca" TEXT="Radiolarite" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+            <attribute NAME="shape" VALUE="stadium"/>
           </node>
         </node>
       </node>
@@ -105,6 +129,9 @@
         <attribute NAME="shape" VALUE="stadium"/>
       </node>
       <node ID="2920c194-1b51-4e56-aeac-ffe2138fc49c" TEXT="Marble" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+        <attribute NAME="shape" VALUE="stadium"/>
+      </node>
+      <node ID="3e1c343f-12be-4d16-881a-2face59427de" TEXT="Eclogite" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
         <attribute NAME="shape" VALUE="stadium"/>
       </node>
     </node>
