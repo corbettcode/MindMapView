@@ -18,36 +18,36 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun EditDescriptionDialog(
-    description: String,
-    onSubmit: (String) -> Unit,
-    onDismiss: () -> Unit,
+    description: String
+    , onSubmit: (String) -> Unit
+    , onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf(description) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
+        onDismissRequest = onDismiss
+        , text = {
             OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp),
+                value = text
+                , onValueChange = { text = it }
+                , textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+                , modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp)
             )
-        },
-        confirmButton = {
+        }
+        , confirmButton = {
             Button(
                 onClick = {
                     onSubmit(text)
                     onDismiss()
-                },
+                }
             ) {
                 Text("확인")
             }
-        },
-        dismissButton = {
+        }
+        , dismissButton = {
             Button(onClick = onDismiss) {
                 Text("취소")
             }
-        },
+        }
     )
 }
