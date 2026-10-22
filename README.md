@@ -113,6 +113,21 @@ FreeMind's own `<font>` of a node is read as the style of all of its text: bold,
 ## Sample apps
 - Android: `./gradlew :app:installDebug`
 - Desktop: `./gradlew :desktop:run`
+- Web: `./gradlew :desktop:wasmJsBrowserDevelopmentRun` runs the desktop app in a browser.
+
+### Publishing the web app
+`./gradlew :desktop:wasmJsBrowserDistribution` writes the app as a static web site to
+`desktop/build/dist/wasmJs/productionExecutable`. Any static host can serve that folder (GitHub Pages, Netlify, an
+S3 bucket), as long as it serves `.wasm` files as `application/wasm`. It needs a browser with WebAssembly garbage
+collection: Chrome or Edge 119, Firefox 120, Safari 18.2 or later.
+
+In the browser the app works as on the desktop, except:
+- In Chrome and Edge, Save writes back to the file that was opened. Other browsers download the map instead.
+- There is no Recent menu: a web page cannot open a file again by its path.
+- Pasting text from other programs asks for the browser's permission first.
+- A note's images only show when their site allows other sites to load them.
+- Preferences are kept in the browser's local storage.
+- Some shortcuts, such as Ctrl+N, belong to the browser; use the menus for those.
 
 ## Android View
 `MindMapView` is still available on Android as a View that hosts the composable.
