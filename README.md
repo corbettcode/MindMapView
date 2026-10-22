@@ -2,6 +2,8 @@
 
 You can easily draw mind maps. It allows for node creation, deletion, as well as zooming and moving.
 
+**[Try it in your browser](https://corbettcode.github.io/MindMapView/)**: the desktop app, running as a web page.
+
 ```
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -113,7 +115,8 @@ FreeMind's own `<font>` of a node is read as the style of all of its text: bold,
 ## Sample apps
 - Android: `./gradlew :app:installDebug`
 - Desktop: `./gradlew :desktop:run`
-- Web: `./gradlew :desktop:wasmJsBrowserDevelopmentRun` runs the desktop app in a browser.
+- Web: `./gradlew :desktop:wasmJsBrowserDevelopmentRun` runs the desktop app in a browser. It is published at
+  https://corbettcode.github.io/MindMapView/.
 
 ### Publishing the web app
 `./gradlew :desktop:wasmJsBrowserDistribution` writes the app as a static web site to
