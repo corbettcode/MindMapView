@@ -96,7 +96,7 @@ class MeasureTextSize(
                     maxOf(
                         (Dp(Px(width).toDp(density) / 2) + drawInfo.padding).dpVal,
                         ((Dp(Px(height).toDp(density)) + drawInfo.padding * 2) / 2).dpVal,
-                    ),
+                    ) * CIRCLE_SCALE,
                 )
             nodeData.copy(
                 id = nodeData.id,
@@ -152,6 +152,7 @@ class MeasureTextSize(
         private const val RICH_TEXT_CACHE_SIZE = 256
         private const val OVAL_TEXT_FIT_RATIO = 1.4142135f
         private const val ROOT_OVAL_SCALE = 1.21f
+        private const val CIRCLE_SCALE = 0.9f
         private const val ATTRIBUTE_TEXT_SCALE = 0.85f
         private const val ATTRIBUTE_TABLE_GAP = 6f
         private const val ATTRIBUTE_CELL_PADDING_X = 5f
