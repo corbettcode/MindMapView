@@ -336,6 +336,8 @@ fun MindMap(
                 )
                 .createStrokeNode()
                 .drawNode(this)
+                // The note marker sits on the node's edge, so it is drawn again to stay above the border.
+                if (selectedNode.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(selectedNode), drawInfo)
             }
         }
     }
