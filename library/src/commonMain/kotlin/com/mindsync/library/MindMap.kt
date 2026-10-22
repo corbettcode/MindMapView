@@ -102,8 +102,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * Draws the mind map held by [state]. The mind map fills the size given by [modifier], so pass a size
  * modifier such as `Modifier.fillMaxSize()`.
  *
- * When [onAddChildClick] is given, every node gets a '+' button in the color of the lines, drawn where
- * its lines to its children start. The root has one for each side, as it has a set of children on each.
+ * When [onAddChildClick] is given, the selected nodes and the node under the mouse pointer get a '+' button in
+ * the color of the lines, drawn where their lines to their children start. The button stays while the pointer
+ * moves on from the node to it. The root has one for each side, as it has a set of children on each.
  * Clicking a button selects its node and calls [onAddChildClick] with the node and the side of the
  * button, so [MindMapState.addNode] with that side then adds the child there.
  *
@@ -280,7 +281,8 @@ fun MindMap(
                         when (event.type) {
                             PointerEventType.Move, PointerEventType.Enter ->
                                 state.onHover(event.changes.firstOrNull()?.takeIf { !it.pressed }?.position)
-                            PointerEventType.Press, PointerEventType.Exit -> state.onHover(null)
+                            PointerEventType.Press -> state.onHover(null)
+                            PointerEventType.Exit -> state.onPointerExit()
                         }
                         // The gestures above only follow the primary button, so the secondary one is seen here.
                         if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
@@ -672,8 +674,9 @@ private fun DrawScope.drawAddButtons(
     val arm = radius * ADD_BUTTON_ARM_RATIO
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
+    val shownIds = state.addButtonNodes().map { it.id }.toSet()
     forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
-        if (state.tree.isFolded(node.id)) return@forEachNodeWithLineColor
+        if (node.id !in shownIds) return@forEachNodeWithLineColor
         state.addButtonSides(node).forEach { side ->
             val center = addButtonCenter(node, side)
             drawCircle(color = color, radius = radius, center = center)

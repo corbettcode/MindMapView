@@ -111,6 +111,10 @@ class MindMapState(
     /** The node the mouse pointer is over while no button is pressed, or null when it is over none. */
     val hoveredNode: NodeData<*>? get() = hoveredNodeId?.let { tree.nodes[it] }
 
+    // The node whose add buttons are shown for the mouse pointer: the one it is over, and still the one whose add
+    // buttons it went on to or is pressing.
+    private var addButtonHoverNodeId by mutableStateOf<String?>(null)
+
     /** Where in the bounds of the mind map the mouse pointer last was. */
     var hoverPosition by mutableStateOf(Offset.Zero)
         private set
@@ -861,6 +865,35 @@ class MindMapState(
     internal fun onHover(position: Offset?) {
         if (position != null) hoverPosition = position
         hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
+        if (position != null) {
+            val point = toTreePoint(position)
+            addButtonHoverNodeId = hoveredNodeId
+                ?: addButtonHoverNodeId?.takeIf { id -> tree.nodes[id]?.let { isOnAddButton(it, point) } == true }
+        }
+    }
+
+    internal fun onPointerExit() {
+        onHover(null)
+        addButtonHoverNodeId = null
+    }
+
+    /**
+     * The nodes whose add buttons are shown: the selected ones and the one the mouse pointer is over. A folded
+     * node has its fold marker there instead.
+     */
+    internal fun addButtonNodes(): List<NodeData<*>> {
+        val ids = (selectedNodes.map { it.id } + listOfNotNull(addButtonHoverNodeId)).toSet()
+        return ids
+            .mapNotNull { tree.nodes[it] }
+            .filter { tree.isVisible(it.id) && !tree.isFolded(it.id) }
+    }
+
+    private fun isOnAddButton(
+        node: NodeData<*>
+        , point: Offset
+    ): Boolean {
+        val radius = ADD_BUTTON_RADIUS.toPx(density)
+        return addButtonSides(node).any { side -> (point - density.addButtonCenter(node, side)).getDistance() <= radius }
     }
 
     internal fun findNodeAt(position: Offset): NodeData<*>? = findNode(toTreePoint(position))
@@ -913,9 +946,7 @@ class MindMapState(
         val point = toTreePoint(position)
         val radius = ADD_BUTTON_RADIUS.toPx(density)
         var button: Pair<NodeData<*>, LayoutSide>? = null
-        tree.doVisiblePreorderTraversal { node ->
-            // A folded node has its fold marker there instead.
-            if (tree.isFolded(node.id)) return@doVisiblePreorderTraversal
+        addButtonNodes().forEach { node ->
             addButtonSides(node).forEach { side ->
                 if ((point - density.addButtonCenter(node, side)).getDistance() <= radius) {
                     button = node to side

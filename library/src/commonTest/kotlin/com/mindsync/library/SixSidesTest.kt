@@ -201,6 +201,7 @@ class SixSidesTest {
                 , onAddChildClick = { _, side -> sides.add(side) }
             )
         }
+        state.goToNode(state.tree.getRootNode().id)
         waitForIdle()
 
         LayoutSide.entries.forEach { side ->

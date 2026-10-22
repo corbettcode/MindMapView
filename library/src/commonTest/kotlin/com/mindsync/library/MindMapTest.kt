@@ -731,7 +731,8 @@ class MindMapTest {
         waitForIdle()
         val root = state.tree.getRootNode()
 
-        // A leaf node has an add button too.
+        // A leaf node has an add button too, once it is selected.
+        clickNode(root)
         onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(root)) }
         waitForIdle()
         assertEquals(listOf(root.id), addChildClicks)
@@ -744,7 +745,13 @@ class MindMapTest {
         clickNode(first)
         assertEquals(first.id, state.selectedNode?.id)
 
-        onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(state.tree.getRootNode())) }
+        // The add button of a node that is not selected is there while the mouse pointer is over the node, and
+        // stays while the pointer goes on to it.
+        onNodeWithTag(TAG).performMouseInput {
+            moveTo(center(state.tree.getRootNode()))
+            moveTo(addButtonCenter(state.tree.getRootNode()))
+            click(addButtonCenter(state.tree.getRootNode()))
+        }
         waitForIdle()
         assertEquals(listOf(root.id), addChildClicks)
         assertEquals(root.id, state.selectedNode?.id)
@@ -752,6 +759,40 @@ class MindMapTest {
         state.addNode("second")
         waitForIdle()
         assertEquals(2, state.tree.getRootNode().children.size)
+    }
+
+    @Test
+    fun addButtonsAreShownOnlyOnSelectedAndHoveredNodes() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        val root = state.tree.getRootNode()
+        val first = state.tree.getNode(root.children.single())
+        fun shownIds() = state.addButtonNodes().map { it.id }
+
+        assertEquals(listOf(root.id), shownIds())
+        assertNull(state.findAddButton(with(density) { addButtonCenter(first) }))
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(first)) }
+        waitForIdle()
+        assertEquals(setOf(root.id, first.id), shownIds().toSet())
+
+        // It stays while the pointer is on the button, and goes once the pointer leaves both.
+        onNodeWithTag(TAG).performMouseInput { moveTo(addButtonCenter(first)) }
+        waitForIdle()
+        assertEquals(setOf(root.id, first.id), shownIds().toSet())
+        onNodeWithTag(TAG).performMouseInput { moveTo(addButtonCenter(first) + Offset(0f, 200f)) }
+        waitForIdle()
+        assertEquals(listOf(root.id), shownIds())
+
+        // Selecting another node moves the buttons with the selection.
+        clickNode(first)
+        onNodeWithTag(TAG).performMouseInput { moveTo(Offset(1f, 1f)) }
+        waitForIdle()
+        assertEquals(listOf(first.id), shownIds())
     }
 
     @Test
@@ -782,7 +823,7 @@ class MindMapTest {
         assertEquals(first.path.leftX().dpVal - 50f, second.path.rightX().dpVal, 0.01f)
 
         // The add button moves to the left edge with the lines.
-        clickNode(second)
+        clickNode(first)
         onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(first, LayoutSide.LEFT)) }
         waitForIdle()
         assertEquals(listOf(first.id), addChildClicks)
@@ -800,6 +841,7 @@ class MindMapTest {
         waitForIdle()
 
         // The root has an add button on each side, which reports the side it is on.
+        clickNode(state.tree.getRootNode())
         onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(state.tree.getRootNode(), LayoutSide.LEFT)) }
         waitForIdle()
         assertEquals(listOf(LayoutSide.LEFT), addChildSides)
@@ -835,6 +877,7 @@ class MindMapTest {
 
         // Its add button is on the left, and the sides survive a FreeMind round trip.
         addChildClicks.clear()
+        clickNode(belowLeft)
         onNodeWithTag(TAG).performTouchInput { click(addButtonCenter(belowLeft, LayoutSide.LEFT)) }
         waitForIdle()
         assertEquals(listOf(belowLeft.id), addChildClicks)
