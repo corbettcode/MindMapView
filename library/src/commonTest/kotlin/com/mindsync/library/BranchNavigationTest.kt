@@ -55,6 +55,40 @@ class BranchNavigationTest {
     }
 
     @Test
+    fun selectionGoesToTheNextOrPreviousChildOfTheSameParent() = runComposeUiTest {
+        val tree = tree()
+        tree.addNode("a3", "a", "a3")
+        val state = MindMapState(tree)
+        setContent { MindMap(state = state, modifier = Modifier.size(800.dp, 600.dp)) }
+        waitForIdle()
+
+        state.goToNode("a1")
+        state.selectSibling(isNext = true)
+        assertEquals("a2", state.selectedNode?.id)
+        state.selectSibling(isNext = true)
+        assertEquals("a3", state.selectedNode?.id)
+        // The end of the list is where it stops.
+        state.selectSibling(isNext = true)
+        assertEquals("a3", state.selectedNode?.id)
+        state.selectSibling(isNext = false)
+        state.selectSibling(isNext = false)
+        assertEquals("a1", state.selectedNode?.id)
+        state.selectSibling(isNext = false)
+        assertEquals("a1", state.selectedNode?.id)
+
+        // An only child, a child of the root and the root have none to go to.
+        state.goToNode("a1x")
+        state.selectSibling(isNext = true)
+        assertEquals("a1x", state.selectedNode?.id)
+        state.goToNode("a")
+        state.selectSibling(isNext = true)
+        assertEquals("a", state.selectedNode?.id)
+        state.goToNode(state.tree.getRootNode().id)
+        state.selectSibling(isNext = true)
+        assertEquals(state.tree.getRootNode().id, state.selectedNode?.id)
+    }
+
+    @Test
     fun aFoldedNodeIsNotGoneDownFromAndNoSelectionStaysNone() = runComposeUiTest {
         val state = MindMapState(tree())
         setContent { MindMap(state = state, modifier = Modifier.size(800.dp, 600.dp)) }

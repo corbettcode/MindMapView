@@ -331,13 +331,21 @@ fun main() = application {
                     true
                 }
                 !event.isCtrlPressed -> false
-                // A text field moves by words with these keys, so they only go along a branch outside of one.
+                // A text field moves by words and paragraphs with these keys, so they only go round the map outside of one.
                 !isDialogOpen && !isFindFocused && error == null && event.key == Key.DirectionLeft -> {
                     state.selectParent()
                     true
                 }
                 !isDialogOpen && !isFindFocused && error == null && event.key == Key.DirectionRight -> {
                     state.selectFirstChild()
+                    true
+                }
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.DirectionDown -> {
+                    state.selectSibling(isNext = true)
+                    true
+                }
+                !isDialogOpen && !isFindFocused && error == null && event.key == Key.DirectionUp -> {
+                    state.selectSibling(isNext = false)
                     true
                 }
                 !isDialogOpen && error == null && event.key == Key.F -> {

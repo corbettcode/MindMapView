@@ -770,6 +770,18 @@ class MindMapState(
     }
 
     /**
+     * Selects the next child of the parent of the selected node after it, or the one before it, as they are
+     * listed, which is from the top down. Nothing changes at the end of the list, nor for a child of the root,
+     * whose children are in sets around it rather than in one list.
+     */
+    fun selectSibling(isNext: Boolean) {
+        val parentId = selectedNode?.parentId?.takeIf { it != tree.getRootNode().id } ?: return
+        val siblings = tree.getNode(parentId).children
+        val index = siblings.indexOf(selectedNode?.id) + if (isNext) 1 else -1
+        siblings.getOrNull(index)?.let { goToNode(it) }
+    }
+
+    /**
      * Selects a node and, when it is out of view, moves the mind map to bring it to the center. A node that
      * is hidden in a folded node is shown first, by unfolding the nodes above it.
      */
