@@ -76,9 +76,10 @@ private val NOTE_POPUP_GAP = 16.dp
 val LINK_MENU_MAX_WIDTH = 480.dp
 private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
 
-// The description a new node starts out with is this and the number of the node.
-private const val NEW_NODE_DESCRIPTION = "node "
-private val NUMBERED_DESCRIPTION = Regex(Regex.escape(NEW_NODE_DESCRIPTION) + "(\\d+)")
+// The description a new node starts out with is this and the number of the node. Maps made before it had an
+// underscore have "node " and a number, which are counted as well.
+private const val NEW_NODE_DESCRIPTION = "node_"
+private val NUMBERED_DESCRIPTION = Regex("node[ _](\\d+)")
 val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
