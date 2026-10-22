@@ -1,7 +1,6 @@
 package com
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -63,13 +62,7 @@ fun FileMenu(
                     recentPaths.forEach { path ->
                         val recentFile = File(path)
                         DropdownMenuItem(
-                            // Mind maps in different folders may share a name, so the folder is shown too.
-                            text = {
-                                Column {
-                                    Text(recentFile.name)
-                                    Text(recentFile.parent.orEmpty(), style = MaterialTheme.typography.labelSmall)
-                                }
-                            },
+                            text = { Text(recentFile.name) },
                             onClick = {
                                 recentExpanded = false
                                 onExpandedChange(false)
