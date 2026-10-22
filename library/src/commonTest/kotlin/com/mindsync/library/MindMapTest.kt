@@ -2194,6 +2194,28 @@ class MindMapTest {
     }
 
     @Test
+    fun centeringANodeMovesItToTheMiddleOfTheView() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        fun onScreen(node: NodeData<*>) = with(density) {
+            Offset(node.path.centerX.dpVal.dp.toPx(), node.path.centerY.dpVal.dp.toPx())
+        } * state.scaleFactor + state.currentPoint
+        // The root starts out in the middle of the view.
+        val middle = onScreen(state.tree.getRootNode())
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val child = state.tree.getNode(state.tree.getRootNode().children.first())
+        assertNotEquals(middle, onScreen(child))
+
+        state.centerNode(child.id)
+        waitForIdle()
+        assertEquals(middle.x, onScreen(child).x, 0.5f)
+        assertEquals(middle.y, onScreen(child).y, 0.5f)
+    }
+
+    @Test
     fun goingToAHiddenNodeUnfoldsTheNodesAboveIt() = runComposeUiTest {
         val fold = stateToFold()
         val state = fold.state

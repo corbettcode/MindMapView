@@ -18,6 +18,8 @@ import com.mindsync.mindmapview.desktop.FoldCommand
 @Composable
 fun ViewMenu(
     onFit: () -> Unit,
+    isCenterEnabled: Boolean,
+    onCenter: () -> Unit,
     showAttributes: Boolean,
     onShowAttributesChange: (Boolean) -> Unit,
     onFold: (FoldCommand) -> Unit,
@@ -34,6 +36,15 @@ fun ViewMenu(
                 onClick = {
                     expanded = false
                     onFit()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Center Selected Node") },
+                trailingIcon = { Text("Ctrl+Alt+C", style = MaterialTheme.typography.labelMedium) },
+                enabled = isCenterEnabled,
+                onClick = {
+                    expanded = false
+                    onCenter()
                 },
             )
             HorizontalDivider()

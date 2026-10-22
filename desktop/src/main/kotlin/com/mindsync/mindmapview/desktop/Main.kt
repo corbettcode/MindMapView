@@ -318,6 +318,10 @@ fun main() = application {
                     else find(if (event.isShiftPressed) FindDirection.PREVIOUS else FindDirection.NEXT)
                     true
                 }
+                !isDialogOpen && error == null && event.isCtrlPressed && event.isAltPressed && event.key == Key.C -> {
+                    state.selectedNode?.let { state.centerNode(it.id) }
+                    true
+                }
                 !event.isCtrlPressed -> false
                 !isDialogOpen && error == null && event.key == Key.F -> {
                     showFind()
@@ -671,6 +675,8 @@ private fun MindMapScreen(
                     )
                     ViewMenu(
                         onFit = { state.fitScreen() },
+                        isCenterEnabled = state.selectedNode != null,
+                        onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
                         showAttributes = state.showAttributes,
                         onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
@@ -735,6 +741,7 @@ private fun MindMapScreen(
                                 onEdit = { operation = Operation.Update },
                                 onEditAttributes = { onAttributesDialogOpenChange(true) },
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
+                                onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
                                 isFolded =
@@ -908,6 +915,7 @@ private fun NodeMenu(
     onEdit: () -> Unit,
     onEditAttributes: () -> Unit,
     onLink: () -> Unit,
+    onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
     onFold: () -> Unit,
@@ -940,6 +948,13 @@ private fun NodeMenu(
                 onClick = {
                     onDismiss()
                     onLink()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Center") },
+                onClick = {
+                    onDismiss()
+                    onCenter()
                 },
             )
             if (side != null) {

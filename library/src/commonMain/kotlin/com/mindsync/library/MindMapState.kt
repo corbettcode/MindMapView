@@ -763,14 +763,30 @@ class MindMapState(
         otherSelectedIds = emptyList()
         rangeAnchorId = id
         mindMapManager.setSelectedNode(node)
-        val position =
-            Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
-        if (!viewportSize.isEmpty() && !Rect(Offset.Zero, viewportSize).contains(position)) {
-            val moved = currentPoint + Offset(viewportSize.width / 2, viewportSize.height / 2) - position
-            currentPoint = limitPan(moved)
+        if (!viewportSize.isEmpty() && !Rect(Offset.Zero, viewportSize).contains(screenPosition(node))) {
+            currentPoint = limitPan(panToCenter(node))
         }
         invalidate()
     }
+
+    /**
+     * Moves the view so the node is in the middle of it. The view goes no further past the top and left of
+     * the tree than it can be panned, so a node near them may stay short of the middle.
+     */
+    fun centerNode(id: String) {
+        val node = tree.nodes[id] ?: return
+        if (viewportSize.isEmpty()) return
+        currentPoint = limitPan(panToCenter(node))
+        invalidate()
+    }
+
+    private fun screenPosition(
+        node: NodeData<*>
+    ): Offset = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint
+
+    private fun panToCenter(
+        node: NodeData<*>
+    ): Offset = currentPoint + Offset(viewportSize.width / 2, viewportSize.height / 2) - screenPosition(node)
 
     fun fitScreen() {
         if (viewportSize.isEmpty()) return
