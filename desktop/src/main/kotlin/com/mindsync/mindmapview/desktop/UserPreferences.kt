@@ -31,6 +31,7 @@ internal class UserPreferencesStore(
             , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull() ?: defaults.isRemoveConfirmed
             , nodeColors = read(NODE_COLORS)?.let(::parseColorList) ?: defaults.nodeColors
             , textColors = read(TEXT_COLORS)?.let(::parseColorList) ?: defaults.textColors
+            , arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList) ?: defaults.arrowLinkColors
         )
     }
         private set
@@ -42,6 +43,7 @@ internal class UserPreferencesStore(
         write(IS_REMOVE_CONFIRMED, newPreferences.isRemoveConfirmed.toString())
         write(NODE_COLORS, newPreferences.nodeColors.joinToString(",") { it.toHex() })
         write(TEXT_COLORS, newPreferences.textColors.joinToString(",") { it.toHex() })
+        write(ARROW_LINK_COLORS, newPreferences.arrowLinkColors.joinToString(",") { it.toHex() })
         return preferences
     }
 
@@ -51,6 +53,7 @@ internal class UserPreferencesStore(
         const val IS_REMOVE_CONFIRMED = "isRemoveConfirmed"
         const val NODE_COLORS = "nodeColors"
         const val TEXT_COLORS = "textColors"
+        const val ARROW_LINK_COLORS = "arrowLinkColors"
 
         /** The preferences of the user, kept in the preferences of the user that Java keeps. */
         fun ofUser(): UserPreferencesStore {

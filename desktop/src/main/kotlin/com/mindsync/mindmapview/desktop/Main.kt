@@ -104,7 +104,8 @@ val DEFAULT_TEXT_COLORS = listOf(
     Color(0xFF274E13),
 )
 
-val ARROW_LINK_COLORS = listOf(
+// The arrow link colors offered until the user chooses their own in the preferences.
+val DEFAULT_ARROW_LINK_COLORS = listOf(
     ArrowLink.DEFAULT_COLOR,
     Color(0xFF5C5C5C),
     Color(0xFFB3261E),
@@ -761,6 +762,7 @@ private fun MindMapScreen(
                                 onGoTo = { state.goToNode(it) },
                                 onChange = { state.updateArrowLink(it) },
                                 onRemove = { state.removeArrowLink(link.id) },
+                                colors = preferences.arrowLinkColors,
                                 onDismiss = { arrowLinkMenu = null },
                             )
                         }
@@ -1013,6 +1015,7 @@ private fun ArrowLinkMenu(
     onGoTo: (nodeId: String) -> Unit,
     onChange: (ArrowLink) -> Unit,
     onRemove: () -> Unit,
+    colors: List<Color>,
     onDismiss: () -> Unit,
 ) {
     // A drop down menu opens at the box it is in, so an empty box is put where the click was.
@@ -1048,7 +1051,7 @@ private fun ArrowLinkMenu(
             Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                 ColorPicker(
                     label = "Color",
-                    colors = remember(link.color) { (ARROW_LINK_COLORS + link.color).distinct() },
+                    colors = remember(link.color, colors) { (colors + link.color).distinct() },
                     selectedColor = link.color,
                     onSelect = {
                         onDismiss()

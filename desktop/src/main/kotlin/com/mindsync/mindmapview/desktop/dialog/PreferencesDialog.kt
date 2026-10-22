@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.mindsync.library.data.NodeShape
+import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.ThemeMode
@@ -43,7 +44,7 @@ import com.mindsync.mindmapview.desktop.parseHexColor
 import com.mindsync.mindmapview.desktop.toHex
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
-private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 700.dp)
+private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 760.dp)
 private val PREFERENCES_LABEL_WIDTH = 128.dp
 private val EDITOR_BUTTON_WIDTH = 140.dp
 
@@ -60,6 +61,8 @@ data class UserPreferences(
     val nodeColors: List<Color> = DEFAULT_NODE_COLORS,
     // The text colors offered when a node is added or edited.
     val textColors: List<Color> = DEFAULT_TEXT_COLORS,
+    // The colors offered for an arrow link.
+    val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS,
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
@@ -125,6 +128,12 @@ fun PreferencesDialog(
                             , colors = edited.textColors
                             , defaults = DEFAULT_TEXT_COLORS
                             , onChange = { edited = edited.copy(textColors = it) }
+                        )
+                        , EditableColors(
+                            label = "Arrow link colors"
+                            , colors = edited.arrowLinkColors
+                            , defaults = DEFAULT_ARROW_LINK_COLORS
+                            , onChange = { edited = edited.copy(arrowLinkColors = it) }
                         )
                     )
                 )

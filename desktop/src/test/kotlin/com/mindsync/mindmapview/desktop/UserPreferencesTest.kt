@@ -24,6 +24,7 @@ class UserPreferencesTest {
             , isRemoveConfirmed = false
             , nodeColors = listOf(Color(0xFF123456), Color.White)
             , textColors = listOf(Color(0xFFABCDEF))
+            , arrowLinkColors = listOf(Color(0xFF654321), Color.Black)
         )
         assertEquals(changed, store().update(changed))
         assertEquals(changed, store().preferences)
@@ -36,6 +37,7 @@ class UserPreferencesTest {
         stored[UserPreferencesStore.IS_REMOVE_CONFIRMED] = "maybe"
         stored[UserPreferencesStore.NODE_COLORS] = "#123456,teal"
         stored[UserPreferencesStore.TEXT_COLORS] = "#12"
+        stored[UserPreferencesStore.ARROW_LINK_COLORS] = "#123456,"
         assertEquals(UserPreferences(), store().preferences)
     }
 
