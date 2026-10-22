@@ -9,7 +9,7 @@ enum class NodeShape(
     val defaultColor: Color
     , val defaultTextColor: Color
 ) {
-    CIRCLE(Color(0xFFE1719F), Color.White),
+    CIRCLE(Color(0xFF2D5728), Color.White),
     RECTANGLE(Color(0xFFFFCF96), Color.Black),
     STADIUM(Color(0xFFB9BC81), Color.Black),
     OVAL(Color(0xFF9BC4E2), Color.Black),
