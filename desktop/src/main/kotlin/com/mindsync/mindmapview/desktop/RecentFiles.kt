@@ -42,3 +42,12 @@ internal class RecentFiles(
         }
     }
 }
+
+/** Returns the file names that more than one of the paths ends in. */
+internal fun sharedNames(
+    paths: List<String>
+): Set<String> = paths
+    .groupingBy { File(it).name }
+    .eachCount()
+    .filterValues { it > 1 }
+    .keys

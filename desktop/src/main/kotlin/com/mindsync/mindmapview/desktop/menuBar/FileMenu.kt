@@ -1,6 +1,7 @@
 package com
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -12,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.mindsync.mindmapview.desktop.sharedNames
 import java.io.File
 
 class FileActions(
@@ -59,10 +61,19 @@ fun FileMenu(
                     enabled = recentPaths.isNotEmpty(),
                 )
                 DropdownMenu(expanded = recentExpanded, onDismissRequest = { recentExpanded = false }) {
+                    val sharedNames = sharedNames(recentPaths)
                     recentPaths.forEach { path ->
                         val recentFile = File(path)
                         DropdownMenuItem(
-                            text = { Text(recentFile.name) },
+                            // The folder tells apart mind maps of the same name.
+                            text = {
+                                Column {
+                                    Text(recentFile.name)
+                                    if (recentFile.name in sharedNames) {
+                                        Text(recentFile.parent.orEmpty(), style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            },
                             onClick = {
                                 recentExpanded = false
                                 onExpandedChange(false)

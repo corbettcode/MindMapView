@@ -49,4 +49,10 @@ class RecentFilesTest {
         stored = (1..12).map { path("$it.mm") } + path("1.mm")
         assertEquals((1..10).map { path("$it.mm") }, recentFiles().paths)
     }
+
+    @Test
+    fun sharedNamesAreTheNamesOfFilesInMoreThanOneFolder() {
+        val paths = listOf("/one/a.mm", "/two/a.mm", "/one/b.mm", "/two/c.mm")
+        assertEquals(setOf("a.mm"), sharedNames(paths))
+    }
 }
