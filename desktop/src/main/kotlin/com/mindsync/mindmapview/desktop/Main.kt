@@ -169,6 +169,8 @@ fun main() = application {
     var isFindFocused by remember { mutableStateOf(false) }
     // Each change of it has the find bar take the focus, with its text selected.
     var findFocusRequest by remember { mutableStateOf(0) }
+    // Each change of it adds a child to the selected node, as its '+' button does.
+    var addChildRequest by remember { mutableStateOf(0) }
     // What waits for the unsaved changes to be saved or not, while that is asked.
     var afterSaveChoice by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -322,6 +324,12 @@ fun main() = application {
                     state.selectedNode?.let { state.centerNode(it.id) }
                     true
                 }
+                // '+' is typed with Shift on some keyboards, so it is known by the character as well as the key.
+                !isDialogOpen && !isFindFocused && error == null && !event.isCtrlPressed && !event.isAltPressed &&
+                    state.selectedNode != null && event.isPlus() -> {
+                    addChildRequest++
+                    true
+                }
                 !event.isCtrlPressed -> false
                 !isDialogOpen && error == null && event.key == Key.F -> {
                     showFind()
@@ -408,6 +416,7 @@ fun main() = application {
             attributesDialogOpen = attributesDialogOpen,
             onAttributesDialogOpenChange = { attributesDialogOpen = it },
             onDialogOpenChange = { isDialogOpen = it },
+            addChildRequest = addChildRequest,
             preferences = preferences,
             onPreferencesChange = { preferences = preferencesStore.update(it) },
             saveQuestion = afterSaveChoice?.let { saveChangesQuestion(file?.name) },
@@ -570,6 +579,7 @@ private fun MindMapScreen(
     attributesDialogOpen: Boolean,
     onAttributesDialogOpenChange: (Boolean) -> Unit,
     onDialogOpenChange: (Boolean) -> Unit,
+    addChildRequest: Int,
     preferences: UserPreferences,
     onPreferencesChange: (UserPreferences) -> Unit,
     saveQuestion: String?,
@@ -596,6 +606,13 @@ private fun MindMapScreen(
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
+
+    // As a click on a '+' button of the node does. Of the root's buttons, that of the side new children go to.
+    fun addChild(side: LayoutSide?) {
+        onArrowLinkSourceIdChange(null)
+        operation = Operation.Add(side = side)
+    }
+    LaunchedEffect(addChildRequest) { if (addChildRequest > 0) addChild(side = null) }
 
     LaunchedEffect(successMessage) {
         if (successMessage == null) return@LaunchedEffect
@@ -696,10 +713,7 @@ private fun MindMapScreen(
                             }
                         }
                         , onNodeDoubleClick = { operation = Operation.Update }
-                        , onAddChildClick = { _, side ->
-                            onArrowLinkSourceIdChange(null)
-                            operation = Operation.Add(side = side)
-                        }
+                        , onAddChildClick = { _, side -> addChild(side) }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
                         , onNodeMenu = { node, position ->
                             onArrowLinkSourceIdChange(null)
@@ -1257,3 +1271,5 @@ fun RichTextState.setSize(size: RichTextSize) {
     removeSpanStyle(SpanStyle(fontSize = currentSpanStyle.fontSize))
     if (size != RichTextSize.NORMAL) addSpanStyle(size.spanStyle)
 }
+
+private fun KeyEvent.isPlus(): Boolean = key == Key.Plus || key == Key.NumPadAdd || utf16CodePoint == '+'.code
