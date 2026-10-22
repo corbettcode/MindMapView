@@ -751,6 +751,25 @@ class MindMapState(
     }
 
     /**
+     * Selects the parent of the selected node, one node up its branch towards the root. Nothing changes when
+     * the root or no node is selected.
+     */
+    fun selectParent() {
+        val parentId = selectedNode?.parentId ?: return
+        goToNode(parentId)
+    }
+
+    /**
+     * Selects the first child of the selected node, one node down its branch. Nothing changes when the root or
+     * no node is selected, nor when the selected node has no children shown: none, or folded ones.
+     */
+    fun selectFirstChild() {
+        val node = selectedNode?.takeIf { it.parentId != null } ?: return
+        val childId = tree.visibleChildren(tree.getNode(node.id)).firstOrNull() ?: return
+        goToNode(childId)
+    }
+
+    /**
      * Selects a node and, when it is out of view, moves the mind map to bring it to the center. A node that
      * is hidden in a folded node is shown first, by unfolding the nodes above it.
      */
