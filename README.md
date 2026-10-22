@@ -121,6 +121,9 @@ FreeMind's own `<font>` of a node is read as the style of all of its text: bold,
 S3 bucket), as long as it serves `.wasm` files as `application/wasm`. It needs a browser with WebAssembly garbage
 collection: Chrome or Edge 119, Firefox 120, Safari 18.2 or later.
 
+The `Web app` workflow (`.github/workflows/web.yml`) builds the site and publishes it on GitHub Pages at each push
+to main. Pages has to be turned on once, with GitHub Actions as its source (Settings → Pages → Source).
+
 In the browser the app works as on the desktop, except:
 - In Chrome and Edge, Save writes back to the file that was opened. Other browsers download the map instead.
 - There is no Recent menu: a web page cannot open a file again by its path.
