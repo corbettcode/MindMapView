@@ -1,7 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-/** What to do with the unsaved changes of a mind map before another one is shown or the app is closed. */
-internal enum class SaveChoice { SAVE, DISCARD, CANCEL }
+import com.mindsync.mindmapview.desktop.dialog.SaveChoice
 
 /** The title of the window: the name of the file shown, marked with a * while it has unsaved changes. */
 internal fun windowTitle(fileName: String?, isModified: Boolean): String {
@@ -16,7 +15,10 @@ internal fun saveChangesQuestion(fileName: String?): String =
  * Whether to go on to what the [choice] was asked for. Only [SaveChoice.SAVE] calls [save], and the map may
  * not be saved after all: no file is chosen to save it to, or it cannot be written.
  */
-internal fun goesOn(choice: SaveChoice, save: () -> Boolean): Boolean = when (choice) {
+internal fun goesOn(
+    choice: SaveChoice
+    , save: () -> Boolean
+): Boolean = when (choice) {
     SaveChoice.SAVE -> save()
     SaveChoice.DISCARD -> true
     SaveChoice.CANCEL -> false

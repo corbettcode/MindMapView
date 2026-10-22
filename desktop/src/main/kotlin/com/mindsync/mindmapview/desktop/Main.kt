@@ -1,117 +1,52 @@
 package com.mindsync.mindmapview.desktop
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconToggleButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.isCtrlPressed
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.DialogWindow
-import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberDialogState
+import com.FileActions
+import com.FileMenu
 import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
-import com.mindsync.library.data.ArrowLink
-import com.mindsync.library.data.NodeAttribute
-import com.mindsync.library.data.NodeData
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.shape
-import com.mindsync.library.data.Tree
+import com.mindsync.library.data.*
 import com.mindsync.library.io.FreeMind
-import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.io.HtmlOutline
+import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
-import com.mindsync.library.util.RichTextLink
 import com.mindsync.library.util.RichTextSize
+import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.dialog.*
+import com.mindsync.mindmapview.desktop.menuBar.EditMenu
+import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichTextState
-import com.mohamedrejeb.richeditor.model.LocalImageLoader
-import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
-import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
+import kotlinx.coroutines.delay
+import org.jetbrains.skia.Image
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
@@ -122,43 +57,36 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.io.IOException
 import kotlin.math.roundToInt
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import org.jetbrains.skia.Image
+import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
 
 internal const val APP_NAME = "MindMapView"
 private const val APP_ICON_RESOURCE = "/icon.png"
-private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 private const val SUCCESS_MESSAGE_MILLIS = 3000L
 
-private val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
-private val EDIT_DIALOG_MIN_WIDTH = 480.dp
-private const val NOTE_LINES = 4
+val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
+val EDIT_DIALOG_MIN_WIDTH = 480.dp
+const val NOTE_LINES = 4
 // The room an outlined text field leaves above and below its text.
-private val TEXT_FIELD_VERTICAL_PADDING = 32.dp
+val TEXT_FIELD_VERTICAL_PADDING = 32.dp
 private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)
 private val ATTRIBUTES_DIALOG_MIN_SIZE = DpSize(420.dp, 320.dp)
-private val PREFERENCES_DIALOG_SIZE = DpSize(560.dp, 300.dp)
-private val PREFERENCES_LABEL_WIDTH = 128.dp
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
-private val LINK_MENU_MAX_WIDTH = 480.dp
+val LINK_MENU_MAX_WIDTH = 480.dp
 private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
 
 // The description a new node starts out with is this and the number of the node.
 private const val NEW_NODE_DESCRIPTION = "node "
 private val NUMBERED_DESCRIPTION = Regex(Regex.escape(NEW_NODE_DESCRIPTION) + "(\\d+)")
-private val LINK_DIALOG_FIELD_WIDTH = 400.dp
+val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
-private val LINK_SCHEMES = listOf("http", "https", "mailto")
+val LINK_SCHEMES = listOf("http", "https", "mailto")
 private val URL_SCHEME = Regex("^([A-Za-z][A-Za-z0-9+.-]*):")
 
-// Wide enough for the longest of the picker labels, so the pickers line up.
-private val PICKER_LABEL_WIDTH = 56.dp
-
-private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
+// The fill colors offered for a node until the user chooses their own in the preferences.
+val DEFAULT_NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D),
     Color(0xFF4B877B),
     Color(0xFF336770),
@@ -166,7 +94,8 @@ private val NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF6FA8DC),
 )
 
-private val TEXT_COLORS = listOf(
+// The text colors offered for a node until the user chooses their own in the preferences.
+val DEFAULT_TEXT_COLORS = listOf(
     Color.Black,
     Color.White,
     Color(0xFF5C5C5C),
@@ -175,7 +104,7 @@ private val TEXT_COLORS = listOf(
     Color(0xFF274E13),
 )
 
-private val ARROW_LINK_COLORS = listOf(
+val ARROW_LINK_COLORS = listOf(
     ArrowLink.DEFAULT_COLOR,
     Color(0xFF5C5C5C),
     Color(0xFFB3261E),
@@ -197,13 +126,10 @@ private enum class ArrowHeads(
     NONE("\u2014  No Arrowheads", false, false),
 }
 
-private val NodeShape.label: String
+val NodeShape.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
-private val RichTextSize.label: String
-    get() = name.lowercase().replaceFirstChar { it.uppercase() }
-
-private val ThemeMode.label: String
+val RichTextSize.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
 private sealed interface Operation {
@@ -214,17 +140,6 @@ private sealed interface Operation {
 
 // Not a data class, so that the same message shown again is a new one and is shown for its full time again.
 private class SuccessMessage(val text: String)
-
-private class FileActions(
-    val new: () -> Unit,
-    val open: () -> Unit,
-    val openRecent: (File) -> Unit,
-    val save: () -> Unit,
-    val saveAs: () -> Unit,
-    val exportImage: () -> Unit,
-    val exportHtml: () -> Unit,
-    val exportFreeMind: () -> Unit,
-)
 
 private val appIcon: BitmapPainter? by lazy {
     object {}.javaClass.getResourceAsStream(APP_ICON_RESOURCE)?.use { stream ->
@@ -524,7 +439,7 @@ fun main() = application {
 }
 
 // FreeMind's own keys for folding.
-private class FoldCommand(
+class FoldCommand(
     val label: String,
     val shortcut: String,
     val isAlt: Boolean,
@@ -533,7 +448,7 @@ private class FoldCommand(
     val run: (MindMapState) -> Unit,
 )
 
-private val FOLD_COMMANDS = listOf(
+val FOLD_COMMANDS = listOf(
     FoldCommand("Toggle Folded", "Space", isAlt = false, isCtrl = false, Key.Spacebar) { it.toggleFold() },
     FoldCommand("Toggle Children Folded", "Ctrl+Space", isAlt = false, isCtrl = true, Key.Spacebar) { it.toggleChildrenFold() },
     FoldCommand("Fold One Level", "Alt+PageUp", isAlt = true, isCtrl = false, Key.PageUp) { it.foldOneLevel() },
@@ -715,7 +630,14 @@ private fun MindMapScreen(
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-                    FileMenu(fileActions, recentPaths, fileMenuExpanded, onFileMenuExpandedChange)
+
+                    FileMenu(
+                        fileActions
+                        , recentPaths
+                        , fileMenuExpanded
+                        , onFileMenuExpandedChange
+                    )
+
                     EditMenu(
                         canUndo = state.canUndo,
                         onUndo = { state.undo() },
@@ -779,7 +701,9 @@ private fun MindMapScreen(
                         // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
+
                     notePopup?.let { (note, position) -> NotePopup(note, position) }
+
                     if (arrowLinkSourceId != null) {
                         Surface(
                             color = MaterialTheme.colorScheme.inverseSurface,
@@ -917,6 +841,8 @@ private fun MindMapScreen(
                     is Operation.Add -> newNodeStyle?.textColor ?: Color.Unspecified
                     Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
                 },
+                nodeColors = preferences.nodeColors,
+                textColors = preferences.textColors,
                 onSubmit = { description, note, shape, color, textColor ->
                     when (currentOperation) {
                         is Operation.Add -> {
@@ -964,669 +890,6 @@ private fun nextNodeNumber(
     return maxOf(nodeCount, highestNumber, createdNodeCount) + 1
 }
 
-// Drawn by Compose instead of the window's native menu bar, whose drop down closes as soon as the mouse
-// button is released under XWayland.
-@Composable
-private fun FileMenu(
-    actions: FileActions,
-    recentPaths: List<String>,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-) {
-    var recentExpanded by remember { mutableStateOf(false) }
-    var exportExpanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(onClick = { onExpandedChange(true) }) {
-            Text("File")
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                onExpandedChange(false)
-                recentExpanded = false
-                exportExpanded = false
-            },
-        ) {
-            FileMenuItem("New", "Ctrl+N", actions.new, onExpandedChange)
-            FileMenuItem("Open...", "Ctrl+O", actions.open, onExpandedChange)
-            Box {
-                DropdownMenuItem(
-                    text = { Text("Recent") },
-                    trailingIcon = { Text("\u25B8") },
-                    onClick = { recentExpanded = true },
-                    enabled = recentPaths.isNotEmpty(),
-                )
-                DropdownMenu(expanded = recentExpanded, onDismissRequest = { recentExpanded = false }) {
-                    recentPaths.forEach { path ->
-                        val recentFile = File(path)
-                        DropdownMenuItem(
-                            // Mind maps in different folders may share a name, so the folder is shown too.
-                            text = {
-                                Column {
-                                    Text(recentFile.name)
-                                    Text(recentFile.parent.orEmpty(), style = MaterialTheme.typography.labelSmall)
-                                }
-                            },
-                            onClick = {
-                                recentExpanded = false
-                                onExpandedChange(false)
-                                actions.openRecent(recentFile)
-                            },
-                        )
-                    }
-                }
-            }
-            HorizontalDivider()
-            FileMenuItem("Save", "Ctrl+S", actions.save, onExpandedChange)
-            FileMenuItem("Save As...", "Ctrl+Shift+S", actions.saveAs, onExpandedChange)
-            HorizontalDivider()
-            Box {
-                DropdownMenuItem(
-                    text = { Text("Export") },
-                    trailingIcon = { Text("\u25B8") },
-                    onClick = { exportExpanded = true },
-                )
-                DropdownMenu(expanded = exportExpanded, onDismissRequest = { exportExpanded = false }) {
-                    listOf(
-                        "As Image (PNG)..." to actions.exportImage,
-                        "As HTML Outline..." to actions.exportHtml,
-                        "As FreeMind Map (.mm)..." to actions.exportFreeMind,
-                    ).forEach { (text, export) ->
-                        DropdownMenuItem(
-                            text = { Text(text) },
-                            onClick = {
-                                exportExpanded = false
-                                onExpandedChange(false)
-                                export()
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FileMenuItem(
-    text: String,
-    shortcut: String,
-    onClick: () -> Unit,
-    onExpandedChange: (Boolean) -> Unit,
-) {
-    DropdownMenuItem(
-        text = { Text(text) },
-        trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
-        onClick = {
-            onExpandedChange(false)
-            onClick()
-        },
-    )
-}
-
-@Composable
-private fun EditMenu(
-    canUndo: Boolean,
-    onUndo: () -> Unit,
-    canRedo: Boolean,
-    onRedo: () -> Unit,
-    enabled: Boolean,
-    onAdd: (NodeShape) -> Unit,
-    onEdit: () -> Unit,
-    removeEnabled: Boolean,
-    onRemove: () -> Unit,
-    onCut: () -> Unit,
-    onCopy: () -> Unit,
-    pasteEnabled: () -> Boolean,
-    onPaste: () -> Unit,
-    onSelectAll: () -> Unit,
-    canMove: () -> Boolean,
-    onMoveAround: (isClockwise: Boolean) -> Unit,
-    links: () -> List<RichTextLink>,
-    onOpenLink: (String) -> Unit,
-    onAddArrowLink: () -> Unit,
-    onEditAttributes: () -> Unit,
-    onPreferences: () -> Unit,
-    onFind: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var addExpanded by remember { mutableStateOf(false) }
-    var linksExpanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(onClick = { expanded = true }) {
-            Text("Edit")
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-                addExpanded = false
-                linksExpanded = false
-            },
-        ) {
-            DropdownMenuItem(
-                text = { Text("Undo") },
-                trailingIcon = { Text("Ctrl+Z", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onUndo()
-                },
-                enabled = canUndo,
-            )
-            DropdownMenuItem(
-                text = { Text("Redo") },
-                trailingIcon = { Text("Ctrl+Y", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onRedo()
-                },
-                enabled = canRedo,
-            )
-            HorizontalDivider()
-            Box {
-                DropdownMenuItem(
-                    text = { Text("Add") },
-                    trailingIcon = { Text("\u25B8") },
-                    onClick = { addExpanded = true },
-                    enabled = enabled,
-                )
-                DropdownMenu(expanded = addExpanded, onDismissRequest = { addExpanded = false }) {
-                    NodeShape.entries.forEach { shape ->
-                        DropdownMenuItem(
-                            text = { Text(shape.label) },
-                            onClick = {
-                                addExpanded = false
-                                expanded = false
-                                onAdd(shape)
-                            },
-                        )
-                    }
-                }
-            }
-            DropdownMenuItem(
-                text = { Text("Edit") },
-                onClick = {
-                    expanded = false
-                    onEdit()
-                },
-                enabled = enabled,
-            )
-            DropdownMenuItem(
-                text = { Text("Attributes...") },
-                trailingIcon = { Text("Alt+F9", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onEditAttributes()
-                },
-                enabled = enabled,
-            )
-            DropdownMenuItem(
-                text = { Text("Remove") },
-                onClick = {
-                    expanded = false
-                    onRemove()
-                },
-                enabled = removeEnabled,
-            )
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text("Cut") },
-                trailingIcon = { Text("Ctrl+X", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onCut()
-                },
-                enabled = removeEnabled,
-            )
-            DropdownMenuItem(
-                text = { Text("Copy") },
-                trailingIcon = { Text("Ctrl+C", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onCopy()
-                },
-                enabled = enabled,
-            )
-            DropdownMenuItem(
-                text = { Text("Paste") },
-                trailingIcon = { Text("Ctrl+V", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onPaste()
-                },
-                enabled = pasteEnabled(),
-            )
-            DropdownMenuItem(
-                text = { Text("Select All") },
-                trailingIcon = { Text("Ctrl+A", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onSelectAll()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Find...") },
-                trailingIcon = { Text("Ctrl+F", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onFind()
-                },
-            )
-            HorizontalDivider()
-            val isMoveEnabled = canMove()
-            listOf(
-                Triple("Move Clockwise \u21BB", "Ctrl+M", true)
-                , Triple("Move Counterclockwise \u21BA", "Ctrl+Shift+M", false)
-            ).forEach { (text, shortcut, isClockwise) ->
-                DropdownMenuItem(
-                    text = { Text(text) },
-                    trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
-                    onClick = {
-                        expanded = false
-                        onMoveAround(isClockwise)
-                    },
-                    enabled = isMoveEnabled,
-                )
-            }
-            DropdownMenuItem(
-                text = { Text("Add Arrow Link") },
-                trailingIcon = { Text("Ctrl+L", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onAddArrowLink()
-                },
-                enabled = enabled,
-            )
-            val nodeLinks = links()
-            Box {
-                DropdownMenuItem(
-                    text = { Text("Open Link") },
-                    trailingIcon = { Text("\u25B8") },
-                    onClick = { linksExpanded = true },
-                    enabled = nodeLinks.isNotEmpty(),
-                )
-                DropdownMenu(expanded = linksExpanded, onDismissRequest = { linksExpanded = false }) {
-                    nodeLinks.forEach { link ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    if (link.text == link.url) link.url else "${link.text} \u2014 ${link.url}",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.widthIn(max = LINK_MENU_MAX_WIDTH),
-                                )
-                            },
-                            onClick = {
-                                linksExpanded = false
-                                expanded = false
-                                onOpenLink(link.url)
-                            },
-                        )
-                    }
-                }
-            }
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text("Preferences...") },
-                onClick = {
-                    expanded = false
-                    onPreferences()
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun ViewMenu(
-    onFit: () -> Unit,
-    showAttributes: Boolean,
-    onShowAttributesChange: (Boolean) -> Unit,
-    onFold: (FoldCommand) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(onClick = { expanded = true }) {
-            Text("View")
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text("Fit") },
-                onClick = {
-                    expanded = false
-                    onFit()
-                },
-            )
-            HorizontalDivider()
-            // The one of the two that is in effect is checked.
-            DropdownMenuItem(
-                text = { Text("Show All Attributes") },
-                leadingIcon = { if (showAttributes) Text("\u2713") },
-                trailingIcon = { Text("Alt+S", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onShowAttributesChange(true)
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Show No Attributes") },
-                leadingIcon = { if (!showAttributes) Text("\u2713") },
-                trailingIcon = { Text("Alt+H", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onShowAttributesChange(false)
-                },
-            )
-            HorizontalDivider()
-            FOLD_COMMANDS.forEach { command ->
-                DropdownMenuItem(
-                    text = { Text(command.label) },
-                    trailingIcon = { Text(command.shortcut, style = MaterialTheme.typography.labelMedium) },
-                    onClick = {
-                        expanded = false
-                        onFold(command)
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RemoveNodeDialog(
-    count: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (count == 1) "Remove node" else "Remove $count nodes") },
-        text = { Text("Are you sure?") },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("Remove")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
-}
-
-@Composable
-private fun SaveChangesDialog(
-    question: String,
-    onChoice: (SaveChoice) -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = { onChoice(SaveChoice.CANCEL) },
-        title = { Text(question) },
-        text = { Text("Your changes are lost if you don't save them.") },
-        confirmButton = {
-            Button(onClick = { onChoice(SaveChoice.SAVE) }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = { onChoice(SaveChoice.DISCARD) }) {
-                    Text("Don't Save")
-                }
-                TextButton(onClick = { onChoice(SaveChoice.CANCEL) }) {
-                    Text("Cancel")
-                }
-            }
-        },
-    )
-}
-
-// The preferences take effect when they are confirmed, as the changes of the other dialogs do.
-@Composable
-private fun PreferencesDialog(
-    preferences: UserPreferences,
-    onSubmit: (UserPreferences) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var edited by remember { mutableStateOf(preferences) }
-
-    DialogWindow(
-        onCloseRequest = onDismiss
-        , state = rememberDialogState(size = PREFERENCES_DIALOG_SIZE)
-        , title = "Preferences"
-        , resizable = false
-    ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-                , modifier = Modifier.fillMaxSize().padding(24.dp)
-            ) {
-                ChoicePicker(
-                    label = "Theme"
-                    , choices = ThemeMode.entries
-                    , choiceLabel = { it.label }
-                    , selectedChoice = edited.themeMode
-                    , onSelect = { edited = edited.copy(themeMode = it) }
-                    , labelWidth = PREFERENCES_LABEL_WIDTH
-                )
-                ChoicePicker(
-                    label = "New node shape"
-                    , choices = NodeShape.entries
-                    , choiceLabel = { it.label }
-                    , selectedChoice = edited.newNodeShape
-                    , onSelect = { edited = edited.copy(newNodeShape = it) }
-                    , labelWidth = PREFERENCES_LABEL_WIDTH
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                    , modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
-                        .padding(end = 12.dp)
-                ) {
-                    Checkbox(
-                        checked = edited.isRemoveConfirmed
-                        , onCheckedChange = null
-                        , modifier = Modifier.padding(8.dp)
-                    )
-                    Text("Ask before removing a node")
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                    , verticalAlignment = Alignment.Bottom
-                    , modifier = Modifier.fillMaxWidth().weight(1f)
-                ) {
-                    Button(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Button(
-                        onClick = {
-                            onSubmit(edited)
-                            onDismiss()
-                        }
-                    ) {
-                        Text("OK")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EditNodeDialog(
-    title: String,
-    description: String,
-    isDescriptionSelected: Boolean,
-    note: String,
-    shape: NodeShape?,
-    color: Color,
-    textColor: Color,
-    onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    // The emoji in front of the description is picked on its own, so it is kept out of the editor.
-    val (emoji, text) = remember { DescriptionEmoji.split(description) }
-    val richTextState = remember {
-        RichTextState().setHtml(text).apply {
-            if (isDescriptionSelected) selection = TextRange(0, annotatedString.text.length)
-        }
-    }
-    val descriptionFocusRequester = remember { FocusRequester() }
-    // Made once the images of the note are loaded, as an image that is loaded later does not show.
-    var noteState by remember { mutableStateOf<RichTextState?>(null) }
-    LaunchedEffect(Unit) { noteState = noteWithImages(note) }
-    val scope = rememberCoroutineScope()
-    // The note as Markdown while it is shown so, for markup to be typed that takes effect.
-    var noteMarkdown by remember { mutableStateOf<String?>(null) }
-    var selectedEmoji by remember { mutableStateOf(emoji) }
-    var selectedShape by remember { mutableStateOf(shape) }
-    var selectedColor by remember { mutableStateOf(color) }
-    var selectedTextColor by remember { mutableStateOf(textColor) }
-
-    val density = LocalDensity.current
-    val textMeasurer = rememberTextMeasurer()
-    val lineStyle = LocalTextStyle.current
-    val noteMinHeight = remember(density, lineStyle) {
-        val lines = textMeasurer.measure("\n".repeat(NOTE_LINES - 1), lineStyle).size.height
-        with(density) { lines.toDp() } + TEXT_FIELD_VERTICAL_PADDING
-    }
-    var noteHeight by remember { mutableStateOf<Dp?>(null) }
-    val dialogState = rememberDialogState(size = EDIT_DIALOG_SIZE)
-
-    // A window of its own, so it can be resized: the note takes the room the rest leaves, which is four lines
-    // to start with and at the least.
-    DialogWindow(
-        onCloseRequest = onDismiss,
-        state = dialogState,
-        title = title,
-    ) {
-        LaunchedEffect(Unit) {
-            descriptionFocusRequester.requestFocus()
-        }
-        // The rest of the dialog is only known once it is laid out, so the window is fitted to it then.
-        LaunchedEffect(noteHeight != null) {
-            val height = dialogState.size.height - ((noteHeight ?: return@LaunchedEffect) - noteMinHeight)
-            dialogState.size = DpSize(dialogState.size.width, height)
-            window.minimumSize = Dimension(EDIT_DIALOG_MIN_WIDTH.value.toInt(), height.value.toInt())
-        }
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-            ) {
-                selectedShape?.let { currentShape ->
-                    ShapePicker(
-                        selectedShape = currentShape,
-                        onSelect = { newShape ->
-                            // A color that was not chosen is that of the shape, so it goes along with the shape.
-                            if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
-                            if (selectedTextColor == currentShape.defaultTextColor) {
-                                selectedTextColor = newShape.defaultTextColor
-                            }
-                            selectedShape = newShape
-                        },
-                    )
-                }
-                EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
-                RichTextToolbar(richTextState)
-                OutlinedRichTextEditor(
-                    state = richTextState,
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 120.dp, max = 200.dp)
-                        .focusRequester(descriptionFocusRequester),
-                )
-                ColorPicker(
-                    label = "Fill",
-                    colors = remember(color) { (NODE_COLORS + color).distinct() },
-                    selectedColor = selectedColor,
-                    onSelect = { selectedColor = it },
-                )
-                ColorPicker(
-                    label = "Text",
-                    colors = remember(textColor) { (TEXT_COLORS + textColor).distinct() },
-                    selectedColor = selectedTextColor,
-                    onSelect = { selectedTextColor = it },
-                )
-                Text("Note", style = MaterialTheme.typography.titleSmall)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
-                    RichTextToggle(
-                        label = "MD",
-                        labelStyle = SpanStyle(fontFamily = FontFamily.Monospace),
-                        checked = noteMarkdown != null,
-                        onToggle = {
-                            val markdown = noteMarkdown
-                            if (markdown == null) {
-                                noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
-                            }
-                            else {
-                                scope.launch {
-                                    noteState = noteWithImages(noteFromMarkdown(markdown))
-                                    noteMarkdown = null
-                                }
-                            }
-                        },
-                    )
-                }
-                val markdown = noteMarkdown
-                val currentNoteState = noteState
-                val noteModifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .onSizeChanged { if (noteHeight == null) noteHeight = with(density) { it.height.toDp() } }
-                if (markdown == null && currentNoteState == null) {
-                    Box(modifier = noteModifier)
-                }
-                else if (markdown == null && currentNoteState != null) {
-                    CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
-                        OutlinedRichTextEditor(state = currentNoteState, modifier = noteModifier)
-                    }
-                }
-                else if (markdown != null) {
-                    OutlinedTextField(
-                        value = markdown,
-                        onValueChange = { noteMarkdown = it },
-                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace),
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Button(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Button(
-                        onClick = {
-                            onSubmit(
-                                DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
-                                noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note,
-                                selectedShape,
-                                selectedColor,
-                                selectedTextColor,
-                            )
-                            onDismiss()
-                        },
-                    ) {
-                        Text("OK")
-                    }
-                }
-            }
-        }
-    }
-}
 
 // The text of a node as a menu shows it: without its markup, on one line and cut short.
 private fun nodeLabel(description: String?): String {
@@ -1910,8 +1173,8 @@ private fun AttributesDialog(
 @OptIn(ExperimentalRichTextApi::class)
 @Composable
 private fun NotePopup(
-    note: String,
-    position: Offset,
+    note: String
+    , position: Offset
 ) {
     val linkColor = MaterialTheme.colorScheme.primary
     val noteState = remember(note, linkColor) { RichTextState().apply { config.linkColor = linkColor }.setHtml(note) }
@@ -1949,76 +1212,8 @@ private fun NotePopup(
     }
 }
 
-@Composable
-private fun RichTextToolbar(state: RichTextState) {
-    val spanStyle = state.currentSpanStyle
-    val decoration = spanStyle.textDecoration ?: TextDecoration.None
-    var linkDialogOpen by remember { mutableStateOf(false) }
-
-    if (linkDialogOpen) {
-        LinkDialog(
-            url = state.selectedLinkUrl,
-            onSubmit = { state.setLink(it) },
-            onRemove = { state.removeLink() },
-            onDismiss = { linkDialogOpen = false },
-        )
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RichTextToggle(
-            label = "B",
-            labelStyle = SpanStyle(fontWeight = FontWeight.Bold),
-            checked = spanStyle.fontWeight == FontWeight.Bold,
-            onToggle = { state.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) },
-        )
-        RichTextToggle(
-            label = "I",
-            labelStyle = SpanStyle(fontStyle = FontStyle.Italic),
-            checked = spanStyle.fontStyle == FontStyle.Italic,
-            onToggle = { state.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) },
-        )
-        RichTextToggle(
-            label = "U",
-            labelStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-            checked = TextDecoration.Underline in decoration,
-            onToggle = { state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline)) },
-        )
-        RichTextToggle(
-            label = "S",
-            labelStyle = SpanStyle(textDecoration = TextDecoration.LineThrough),
-            checked = TextDecoration.LineThrough in decoration,
-            onToggle = { state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) },
-        )
-        RichTextToggle(
-            label = "\u2022",
-            labelStyle = SpanStyle(),
-            checked = state.isUnorderedList,
-            onToggle = { state.toggleUnorderedList() },
-        )
-        RichTextToggle(
-            label = "1.",
-            labelStyle = SpanStyle(),
-            checked = state.isOrderedList,
-            onToggle = { state.toggleOrderedList() },
-        )
-        RichTextToggle(
-            label = "\uD83D\uDD17",
-            labelStyle = SpanStyle(),
-            checked = state.isLink,
-            onToggle = { linkDialogOpen = true },
-        )
-        RichTextSizeSelect(
-            selectedSize = RichTextSize.of(spanStyle.fontSize),
-            onSelect = { state.setSize(it) },
-        )
-    }
-}
-
 // The link the cursor is in is changed; otherwise the selection becomes a link, or the URL is put in as one.
-private fun RichTextState.setLink(url: String) {
+fun RichTextState.setLink(url: String) {
     when {
         isLink -> updateLink(url)
         !selection.collapsed -> addLinkToSelection(url)
@@ -2026,10 +1221,10 @@ private fun RichTextState.setLink(url: String) {
     }
 }
 
-private fun linkScheme(url: String): String? = URL_SCHEME.find(url)?.groupValues?.get(1)?.lowercase()
+fun linkScheme(url: String): String? = URL_SCHEME.find(url)?.groupValues?.get(1)?.lowercase()
 
 // An address typed without a scheme is taken to be a mail address when it looks like one, and a web address otherwise.
-private fun completeUrl(input: String): String {
+fun completeUrl(input: String): String {
     val url = input.trim()
     return when {
         url.isEmpty() || linkScheme(url) != null -> url
@@ -2038,242 +1233,9 @@ private fun completeUrl(input: String): String {
     }
 }
 
-@Composable
-private fun LinkDialog(
-    url: String?,
-    onSubmit: (String) -> Unit,
-    onRemove: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var input by remember { mutableStateOf(url.orEmpty()) }
-    val completed = completeUrl(input)
-    val isOpenable = linkScheme(completed) in LINK_SCHEMES
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (url == null) "Add link" else "Edit link") },
-        text = {
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                label = { Text("Address") },
-                placeholder = { Text("https://") },
-                singleLine = true,
-                isError = input.isNotBlank() && !isOpenable,
-                supportingText = {
-                    if (input.isNotBlank() && !isOpenable) Text("Only web and mail addresses can be linked to.")
-                },
-                modifier = Modifier.width(LINK_DIALOG_FIELD_WIDTH).focusRequester(focusRequester),
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSubmit(completed)
-                    onDismiss()
-                },
-                enabled = isOpenable,
-            ) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (url != null) {
-                    TextButton(
-                        onClick = {
-                            onRemove()
-                            onDismiss()
-                        },
-                    ) {
-                        Text("Remove link")
-                    }
-                }
-                Button(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-            }
-        },
-    )
-}
-
-private fun RichTextState.setSize(size: RichTextSize) {
+fun RichTextState.setSize(size: RichTextSize) {
     // A size is only taken away by the very size the text has, so a selection is first given one size throughout.
     if (!selection.collapsed) addSpanStyle(SpanStyle(fontSize = 1.em))
     removeSpanStyle(SpanStyle(fontSize = currentSpanStyle.fontSize))
     if (size != RichTextSize.NORMAL) addSpanStyle(size.spanStyle)
-}
-
-// Like the toggles, the select does not take focus, so the editor keeps its selection while a size is chosen.
-@Composable
-private fun RichTextSizeSelect(
-    selectedSize: RichTextSize,
-    onSelect: (RichTextSize) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(
-            onClick = { expanded = true },
-            modifier = Modifier.focusProperties { canFocus = false },
-        ) {
-            Text("${selectedSize.label} \u25BE")
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            properties = PopupProperties(focusable = false),
-        ) {
-            RichTextSize.entries.forEach { size ->
-                DropdownMenuItem(
-                    text = { Text(size.label, style = LocalTextStyle.current.merge(size.spanStyle)) },
-                    onClick = {
-                        expanded = false
-                        onSelect(size)
-                    },
-                )
-            }
-        }
-    }
-}
-
-// The toggles do not take focus, so the editor keeps its selection while a style is applied.
-@Composable
-private fun RichTextToggle(
-    label: String,
-    labelStyle: SpanStyle,
-    checked: Boolean,
-    onToggle: () -> Unit,
-) {
-    FilledTonalIconToggleButton(
-        checked = checked,
-        onCheckedChange = { onToggle() },
-        modifier = Modifier.focusProperties { canFocus = false },
-    ) {
-        Text(label, style = LocalTextStyle.current.merge(labelStyle))
-    }
-}
-
-@Composable
-private fun EmojiPicker(
-    selectedEmoji: String?,
-    onSelect: (String?) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("Emoji", maxLines = 1, softWrap = false, modifier = Modifier.width(PICKER_LABEL_WIDTH))
-        Box {
-            TextButton(onClick = { expanded = true }) {
-                Text(selectedEmoji ?: "None")
-            }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                DropdownMenuItem(
-                    text = { Text("None") },
-                    onClick = {
-                        expanded = false
-                        onSelect(null)
-                    },
-                )
-                HorizontalDivider()
-                DescriptionEmoji.EMOJIS.chunked(EMOJI_PICKER_COLUMNS).forEach { emojis ->
-                    Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-                        emojis.forEach { emoji ->
-                            val borderColor =
-                                if (emoji == selectedEmoji) MaterialTheme.colorScheme.onSurface else Color.Transparent
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, borderColor, CircleShape)
-                                    .clickable {
-                                        expanded = false
-                                        onSelect(emoji)
-                                    },
-                            ) {
-                                Text(emoji)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShapePicker(
-    selectedShape: NodeShape,
-    onSelect: (NodeShape) -> Unit,
-) {
-    ChoicePicker(
-        label = "Shape"
-        , choices = NodeShape.entries
-        , choiceLabel = { it.label }
-        , selectedChoice = selectedShape
-        , onSelect = onSelect
-    )
-}
-
-@Composable
-private fun <T> ChoicePicker(
-    label: String,
-    choices: List<T>,
-    choiceLabel: (T) -> String,
-    selectedChoice: T,
-    onSelect: (T) -> Unit,
-    labelWidth: Dp = PICKER_LABEL_WIDTH,
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, modifier = Modifier.width(labelWidth))
-        choices.forEach { choice ->
-            val isSelected = choice == selectedChoice
-            val borderColor =
-                if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-            Text(
-                choiceLabel(choice),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(if (isSelected) 3.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
-                    .clickable { onSelect(choice) }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ColorPicker(
-    label: String,
-    colors: List<Color>,
-    selectedColor: Color,
-    onSelect: (Color) -> Unit,
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, modifier = Modifier.width(PICKER_LABEL_WIDTH))
-        colors.forEach { color ->
-            val borderColor =
-                if (color == selectedColor) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .border(if (color == selectedColor) 3.dp else 1.dp, borderColor, CircleShape)
-                    .clickable { onSelect(color) },
-            )
-        }
-    }
 }

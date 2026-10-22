@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
+import com.mindsync.mindmapview.desktop.dialog.SaveChoice
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
