@@ -617,7 +617,7 @@ private fun MindMapScreen(
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
-    var notePopup by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
         operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || saveQuestion != null
@@ -652,13 +652,13 @@ private fun MindMapScreen(
             }
         }
     }
-    LaunchedEffect(hoveredNode?.id, hoveredNode?.note, isDialogOpen) {
+    LaunchedEffect(hoveredNode?.id, hoveredNode?.note, hoveredNode?.color, hoveredNode?.textColor, isDialogOpen) {
         notePopup = null
-        val note = hoveredNode?.note?.takeIf { it.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
+        val node = hoveredNode?.takeIf { it.note.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
         delay(NOTE_POPUP_DELAY_MILLIS)
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
-        UrlImageLoader.preload(note)
-        notePopup = note to state.hoverPosition
+        UrlImageLoader.preload(node.note)
+        notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition)
     }
 
     val isDarkTheme = when (preferences.themeMode) {
@@ -741,7 +741,7 @@ private fun MindMapScreen(
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
 
-                    notePopup?.let { (note, position) -> NotePopup(note, position) }
+                    notePopup?.let { NotePopup(it) }
 
                     if (arrowLinkSourceId != null) {
                         Surface(
@@ -1218,15 +1218,23 @@ private fun AttributesDialog(
     }
 }
 
+// A note as its popup shows it: in the colors of its node, by where the pointer was.
+private class NotePopupContent(
+    val note: String
+    , val color: Color
+    , val textColor: Color
+    , val position: Offset
+)
+
 // The popup takes no pointer input, so the pointer stays over the mind map below it while it is shown.
 // The image loader is what shows the images of a note, and the rich text library has it as experimental.
 @OptIn(ExperimentalRichTextApi::class)
 @Composable
-private fun NotePopup(
-    note: String
-    , position: Offset
-) {
-    val linkColor = MaterialTheme.colorScheme.primary
+private fun NotePopup(content: NotePopupContent) {
+    val note = content.note
+    val position = content.position
+    // The popup is in the colors of its node, so its links are in the node's text color too.
+    val linkColor = content.textColor
     val noteState = remember(note, linkColor) { RichTextState().apply { config.linkColor = linkColor }.setHtml(note) }
     val shape = RoundedCornerShape(8.dp)
 
@@ -1237,11 +1245,11 @@ private fun NotePopup(
                     .widthIn(max = NOTE_POPUP_MAX_SIZE.width)
                     .heightIn(max = NOTE_POPUP_MAX_SIZE.height)
                     .shadow(4.dp, shape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+                    .background(content.color, shape)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
                     .padding(12.dp),
             ) {
-                RichTextView(noteState, color = MaterialTheme.colorScheme.onSurface, imageLoader = UrlImageLoader)
+                RichTextView(noteState, color = content.textColor, imageLoader = UrlImageLoader)
             }
         },
         modifier = Modifier.fillMaxSize(),
