@@ -75,6 +75,10 @@ class MindMapView @JvmOverloads constructor(
         state.moveNodeToOtherSide()
     }
 
+    fun moveNodeAround(isClockwise: Boolean) {
+        state.moveNodeAround(isClockwise)
+    }
+
     fun fitScreen() {
         state.fitScreen()
     }

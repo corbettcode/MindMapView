@@ -99,6 +99,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.rememberMindMapState
@@ -127,7 +128,6 @@ import org.jetbrains.skia.Image
 
 internal const val APP_NAME = "MindMapView"
 private const val APP_ICON_RESOURCE = "/icon.png"
-private const val FREE_MIND_EXTENSION = ".mm"
 private const val EMOJI_PICKER_COLUMNS = 8
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 private const val SUCCESS_MESSAGE_MILLIS = 3000L
@@ -223,6 +223,7 @@ private class FileActions(
     val saveAs: () -> Unit,
     val exportImage: () -> Unit,
     val exportHtml: () -> Unit,
+    val exportFreeMind: () -> Unit,
 )
 
 private val appIcon: BitmapPainter? by lazy {
@@ -264,7 +265,7 @@ fun main() = application {
     // Returns whether the mind map is saved.
     fun save(target: File): Boolean {
         try {
-            target.writeText(FreeMind.write(state.tree))
+            target.writeText(MindMapViewFile.write(state.tree))
             state.markSaved()
             // A mind map that is saved under a new name is one to open again, as one that was opened is.
             if (target != file) recentPaths = recentFiles.add(target)
@@ -277,10 +278,12 @@ fun main() = application {
         }
     }
 
-    // Returns whether the mind map is saved: no file may be chosen to save it to.
+    // Returns whether the mind map is saved: no file may be chosen to save it to. A map opened from a FreeMind
+    // file is saved in this app's own format, next to that file.
     fun saveAs(): Boolean {
-        val chosen = chooseFile(frame, "Save As", FileDialog.SAVE, file) ?: return false
-        return save(withExtension(chosen, FREE_MIND_EXTENSION))
+        val suggested = file?.let { mindMapViewFileFor(it) }
+        val chosen = chooseFile(frame, "Save As", FileDialog.SAVE, suggested) ?: return false
+        return save(mindMapViewFileFor(withExtension(chosen, MIND_MAP_VIEW_EXTENSION)))
     }
 
     // An export is no save of the mind map, so the changes it has are as unsaved as they were.
@@ -289,7 +292,7 @@ fun main() = application {
         write: (File) -> Unit,
     ) {
         val suggested = File(file?.parent, exportFileName(file?.name, extension))
-        val chosen = chooseFile(frame, "Export", FileDialog.SAVE, suggested, extension) ?: return
+        val chosen = chooseFile(frame, "Export", FileDialog.SAVE, suggested, listOf(extension)) ?: return
         val target = withExtension(chosen, extension)
         try {
             write(target)
@@ -298,7 +301,7 @@ fun main() = application {
         }
     }
 
-    fun saveMap(): Boolean = file?.let { save(it) } ?: saveAs()
+    fun saveMap(): Boolean = file?.takeIf { isSavedTo(it) }?.let { save(it) } ?: saveAs()
 
     // The unsaved changes of the mind map would be lost, so whether to save them is asked first.
     fun afterSavingChanges(action: () -> Unit) {
@@ -308,7 +311,7 @@ fun main() = application {
     // A mind map that cannot be opened is no recent file any longer.
     fun open(chosen: File) {
         try {
-            state.setTree(FreeMind.read(chosen.readText()))
+            state.setTree(readMap(chosen.name, chosen.readText()))
             state.animateTreeChange()
             file = chosen
             createdNodeCount = 0
@@ -344,7 +347,11 @@ fun main() = application {
                 createdNodeCount = 0
             }
         },
-        open = { afterSavingChanges { chooseFile(frame, "Open", FileDialog.LOAD, file)?.let { open(it) } } },
+        open = {
+            afterSavingChanges {
+                chooseFile(frame, "Open", FileDialog.LOAD, file, OPENABLE_EXTENSIONS)?.let { open(it) }
+            }
+        },
         openRecent = { afterSavingChanges { open(it) } },
         save = { saveMap() },
         saveAs = { saveAs() },
@@ -354,6 +361,7 @@ fun main() = application {
             }
         },
         exportHtml = { export(HTML_EXTENSION) { it.writeText(HtmlOutline.write(state.tree)) } },
+        exportFreeMind = { export(FREE_MIND_EXTENSION) { it.writeText(FreeMind.write(state.tree)) } },
     )
 
     Window(
@@ -413,7 +421,7 @@ fun main() = application {
                     true
                 }
                 !isDialogOpen && error == null && event.key == Key.M -> {
-                    state.moveNodeToOtherSide()
+                    state.moveNodeAround(isClockwise = !event.isShiftPressed)
                     true
                 }
                 !isDialogOpen && error == null && event.key == Key.L -> {
@@ -612,12 +620,12 @@ private fun chooseFile(
     title: String,
     mode: Int,
     current: File?,
-    extension: String = FREE_MIND_EXTENSION,
+    extensions: List<String> = listOf(MIND_MAP_VIEW_EXTENSION),
 ): File? {
     val dialog = FileDialog(window, title, mode)
-    dialog.setFilenameFilter { _, name -> name.endsWith(extension, ignoreCase = true) }
+    dialog.setFilenameFilter { _, name -> extensions.any { name.endsWith(it, ignoreCase = true) } }
     dialog.directory = current?.parent
-    dialog.file = current?.name ?: "*$extension"
+    dialog.file = current?.name ?: "*${extensions.first()}"
     dialog.isVisible = true
     val name = dialog.file ?: return null
     return File(dialog.directory, name)
@@ -720,18 +728,15 @@ private fun MindMapScreen(
                         onRemove = removeNode,
                         onCut = { state.cutNodeToClipboard() },
                         onCopy = { state.copyNodeToClipboard() },
-                        // Read when the menu opens, as moveSide is: the clipboard may change in another program.
+                        // Read when the menu opens, as canMove is: the clipboard may change in another program.
                         pasteEnabled = { selectedNode != null && (state.hasCopiedNode || hasClipboardText()) },
                         onPaste = { state.pasteFromClipboard(preferences) },
                         onSelectAll = { state.selectAll() },
                         // Read when the menu opens: moving a node does not change the selected node.
-                        moveSide = {
-                            selectedNode?.takeIf { it.parentId != null }?.let { node ->
-                                if (state.tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
-                            }
-                        },
-                        onMove = { state.moveNodeToOtherSide() },
-                        // Read when the menu opens, as moveSide is.
+                        // The root is in no branch, so it is not moved.
+                        canMove = { selectedNode?.parentId != null },
+                        onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
+                        // Read when the menu opens, as canMove is.
                         links = {
                             selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
                         },
@@ -805,7 +810,7 @@ private fun MindMapScreen(
                                 onEdit = { operation = Operation.Update },
                                 onEditAttributes = { onAttributesDialogOpenChange(true) },
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
-                                onMove = { state.moveNodeToOtherSide() },
+                                onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
                                 isFolded =
                                     if (node.parentId == null || node.children.isEmpty()) null
@@ -899,7 +904,7 @@ private fun MindMapScreen(
                 // The description of a new node is only a start, so typing replaces it.
                 isDescriptionSelected = currentOperation is Operation.Add,
                 note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
-                // The root stays the circle it is, so it is given no shape to choose from.
+                // The root stays the oval it is, so it is given no shape to choose from.
                 shape = when (currentOperation) {
                     is Operation.Add -> newNodeStyle?.shape
                     Operation.Update -> selectedNode?.takeIf { it.parentId != null }?.shape
@@ -1026,6 +1031,7 @@ private fun FileMenu(
                     listOf(
                         "As Image (PNG)..." to actions.exportImage,
                         "As HTML Outline..." to actions.exportHtml,
+                        "As FreeMind Map (.mm)..." to actions.exportFreeMind,
                     ).forEach { (text, export) ->
                         DropdownMenuItem(
                             text = { Text(text) },
@@ -1075,8 +1081,8 @@ private fun EditMenu(
     pasteEnabled: () -> Boolean,
     onPaste: () -> Unit,
     onSelectAll: () -> Unit,
-    moveSide: () -> LayoutSide?,
-    onMove: () -> Unit,
+    canMove: () -> Boolean,
+    onMoveAround: (isClockwise: Boolean) -> Unit,
     links: () -> List<RichTextLink>,
     onOpenLink: (String) -> Unit,
     onAddArrowLink: () -> Unit,
@@ -1209,16 +1215,21 @@ private fun EditMenu(
                 },
             )
             HorizontalDivider()
-            val side = moveSide()
-            DropdownMenuItem(
-                text = { Text(if (side == LayoutSide.LEFT) "Move to Left Side" else "Move to Right Side") },
-                trailingIcon = { Text("Ctrl+M", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onMove()
-                },
-                enabled = side != null,
-            )
+            val isMoveEnabled = canMove()
+            listOf(
+                Triple("Move Clockwise \u21BB", "Ctrl+M", true)
+                , Triple("Move Counterclockwise \u21BA", "Ctrl+Shift+M", false)
+            ).forEach { (text, shortcut, isClockwise) ->
+                DropdownMenuItem(
+                    text = { Text(text) },
+                    trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
+                    onClick = {
+                        expanded = false
+                        onMoveAround(isClockwise)
+                    },
+                    enabled = isMoveEnabled,
+                )
+            }
             DropdownMenuItem(
                 text = { Text("Add Arrow Link") },
                 trailingIcon = { Text("Ctrl+L", style = MaterialTheme.typography.labelMedium) },
@@ -1632,7 +1643,7 @@ private fun NodeMenu(
     onEdit: () -> Unit,
     onEditAttributes: () -> Unit,
     onLink: () -> Unit,
-    onMove: () -> Unit,
+    onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
     onFold: () -> Unit,
     onCut: () -> Unit,
@@ -1667,15 +1678,20 @@ private fun NodeMenu(
                 },
             )
             if (side != null) {
-                DropdownMenuItem(
-                    text = { Text("Move") },
-                    // The arrow is the way the node goes: to the side of the root it is not on.
-                    trailingIcon = { Text(if (side == LayoutSide.RIGHT) "\u2190" else "\u2192") },
-                    onClick = {
-                        onDismiss()
-                        onMove()
-                    },
-                )
+                // The branch goes to the next of the root's add buttons round from the one it is at.
+                listOf(
+                    Triple("Move Clockwise", "\u21BB", true)
+                    , Triple("Move Counterclockwise", "\u21BA", false)
+                ).forEach { (text, icon, isClockwise) ->
+                    DropdownMenuItem(
+                        text = { Text(text) },
+                        trailingIcon = { Text(icon) },
+                        onClick = {
+                            onDismiss()
+                            onMoveAround(isClockwise)
+                        },
+                    )
+                }
             }
             if (isFolded != null) {
                 DropdownMenuItem(

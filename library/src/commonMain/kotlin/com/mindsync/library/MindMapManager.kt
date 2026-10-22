@@ -8,16 +8,13 @@ import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
-import com.mindsync.library.layout.MindMapLeftLayoutManager
-import com.mindsync.library.layout.MindMapRightLayoutManager
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 
 class MindMapManager {
     private lateinit var tree: Tree<*>
     private var selectNode: NodeData<*>? by mutableStateOf(null)
-    private val rightLayoutManager = MindMapRightLayoutManager()
-    private val leftLayoutManager = MindMapLeftLayoutManager()
+    private val layoutManagers = LayoutSide.entries.associateWith { MindMapLayoutManager(it) }
     private var measureTextSize: MeasureTextSize? = null
     private var isMoving = false
 
@@ -82,26 +79,21 @@ class MindMapManager {
         return this.selectNode
     }
 
-    fun getLayoutManager(side: LayoutSide): MindMapLayoutManager {
-        return when (side) {
-            LayoutSide.RIGHT -> rightLayoutManager
-            LayoutSide.LEFT -> leftLayoutManager
-        }
-    }
+    fun getLayoutManager(side: LayoutSide): MindMapLayoutManager = layoutManagers.getValue(side)
 
-    // The root is placed once for both of its sets of children, then each side is arranged around it.
+    // The root is placed once for all of its sets of children, then each side is arranged around it.
     // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
     fun arrangeTree() {
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
-        rightLayoutManager.arrangeChildren(root, tree)
-        leftLayoutManager.arrangeChildren(root, tree)
+        layoutManagers.values.forEach { it.arrangeChildren(root, tree) }
     }
 
     private fun fittedRoot(): NodeData<*> {
         val totalHeight = measureHeight(tree.getRootNode())
-        val root = rightLayoutManager.adjustRoot(tree.getRootNode(), tree, totalHeight)
-        return leftLayoutManager.adjustRoot(root, tree, totalHeight)
+        return layoutManagers.values.fold(tree.getRootNode() as NodeData<*>) { root, manager ->
+            manager.adjustRoot(root, tree, totalHeight)
+        }
     }
 
     /**
@@ -113,14 +105,24 @@ class MindMapManager {
         return fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
     }
 
+    /**
+     * Returns the height of the node and the nodes below it, as if they were centered on it: twice as far as
+     * they reach above or below it.
+     */
     fun measureHeight(node: NodeData<*>): Dp {
-        val rightHeight = rightLayoutManager.measureChildHeight(node, tree)
-        val leftHeight = leftLayoutManager.measureChildHeight(node, tree)
-        return if (leftHeight.dpVal > rightHeight.dpVal) leftHeight else rightHeight
+        val reach = layoutManagers.values.maxOf { manager ->
+            if (node.parentId == null) {
+                maxOf(manager.reachAbove(node, tree).dpVal, manager.reachBelow(node, tree).dpVal)
+            }
+            else {
+                manager.measureChildHeight(node, tree).dpVal / 2
+            }
+        }
+        return Dp(reach * 2)
     }
 
     fun measureWidth(node: NodeData<*>): Dp {
-        return rightLayoutManager.measureChildWidth(node, tree)
+        return getLayoutManager(LayoutSide.RIGHT).measureChildWidth(node, tree)
     }
 
     fun deepCopyTree(): Map<String, NodeData<*>> {

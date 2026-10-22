@@ -26,7 +26,7 @@ class AddNodeCommand(
             is StadiumNodeData -> parent.path.width()
             is OvalNodeData -> parent.path.width()
         }
-        val centerX = if (side == LayoutSide.LEFT) parentX - width - Dp(20f) else parentX + width + Dp(20f)
+        val centerX = if (side.isLeft) parentX - width - Dp(20f) else parentX + width + Dp(20f)
         val updatedNode = when (addNode) {
             is CircleNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
             is RectangleNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))

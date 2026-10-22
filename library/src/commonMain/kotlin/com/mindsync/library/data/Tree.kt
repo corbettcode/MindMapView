@@ -21,8 +21,8 @@ class Tree<T> {
     internal var isRootDragged = false
         private set
 
-    // The root has a set of children for each side; these are the ones on its left.
-    private val leftRootChildIds = mutableSetOf<String>()
+    // The root has a set of children for each side; the side of each child of the root that is not on its right.
+    private val rootChildSides = mutableMapOf<String, LayoutSide>()
 
     private val nodeAttributes = mutableMapOf<String, List<NodeAttribute>>()
 
@@ -44,17 +44,18 @@ class Tree<T> {
     ) {
         _nodes = mutableMapOf()
         _nodes[ROOT_ID] =
-            CircleNodeData(
+            OvalNodeData(
                 id = ROOT_ID
                 , children = listOf()
                 , color = Color.LightGray
                 , description = DescriptionEmoji.prepend(ROOT_EMOJI, "root")
                 , parentId = null
                 , path =
-                    CirclePath(
+                    OvalPath(
                         rootCenterX
                         , rootCenterY
-                        , Dp(50f)
+                        , Dp(72.6f)
+                        , Dp(48.4f)
                     )
                 , textColor = Color.Black
             )
@@ -70,18 +71,16 @@ class Tree<T> {
      * Returns the side of the root the node is on: the side of the child of the root it is, or is below.
      * The root itself is on neither side, and [LayoutSide.RIGHT] is returned for it.
      */
-    fun sideOf(id: String): LayoutSide {
-        return if (branchOf(id).id in leftRootChildIds) LayoutSide.LEFT else LayoutSide.RIGHT
-    }
+    fun sideOf(id: String): LayoutSide = rootChildSides[branchOf(id).id] ?: LayoutSide.RIGHT
 
     /**
      * Moves the branch the node is in, the child of the root it is or is below, to the other side of the
-     * root. The root itself is in no branch, and nothing is moved for it.
+     * root, at the same height. The root itself is in no branch, and nothing is moved for it.
      */
     fun moveToOtherSide(id: String) {
         val branch = branchOf(id)
         if (branch.parentId == null) return
-        setRootChildSide(branch.id, if (sideOf(branch.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT)
+        setRootChildSide(branch.id, sideOf(branch.id).mirrored)
     }
 
     // The child of the root the node is, or is below; the root for the root itself.
@@ -100,11 +99,11 @@ class Tree<T> {
         childId: String
         , side: LayoutSide
     ) {
-        if (side == LayoutSide.LEFT && _nodes[childId]?.parentId == ROOT_ID) {
-            leftRootChildIds.add(childId)
+        if (side != LayoutSide.RIGHT && _nodes[childId]?.parentId == ROOT_ID) {
+            rootChildSides[childId] = side
         }
         else {
-            leftRootChildIds.remove(childId)
+            rootChildSides.remove(childId)
         }
     }
 
@@ -181,7 +180,7 @@ class Tree<T> {
     // Nodes are not changed in place but replaced, so the snapshot can share them with the tree.
     internal fun snapshot(): TreeSnapshot = TreeSnapshot(
         nodes = _nodes.toMap()
-        , leftRootChildIds = leftRootChildIds.toSet()
+        , rootChildSides = rootChildSides.toMap()
         , nodeAttributes = nodeAttributes.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
@@ -192,8 +191,8 @@ class Tree<T> {
 
     internal fun restore(snapshot: TreeSnapshot) {
         _nodes = snapshot.nodes.toMutableMap()
-        leftRootChildIds.clear()
-        leftRootChildIds.addAll(snapshot.leftRootChildIds)
+        rootChildSides.clear()
+        rootChildSides.putAll(snapshot.rootChildSides)
         nodeAttributes.clear()
         nodeAttributes.putAll(snapshot.nodeAttributes)
         foldedIds.clear()
@@ -209,10 +208,10 @@ class Tree<T> {
         return Tree(nodes)
     }
 
-    fun getRootNode(): CircleNodeData {
+    fun getRootNode(): OvalNodeData {
         _nodes[ROOT_ID]
             ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_NODE_NOT_EXIST.message)
-        return _nodes[ROOT_ID] as CircleNodeData
+        return _nodes[ROOT_ID] as OvalNodeData
     }
 
     fun setRootNode(root: NodeData<*>) {
@@ -342,7 +341,7 @@ class Tree<T> {
                 }
             _nodes[parentId] = newParent
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
-        leftRootChildIds.remove(targetId)
+        rootChildSides.remove(targetId)
     }
 
     fun updateNode(
@@ -419,7 +418,7 @@ class Tree<T> {
 
     /**
      * Gives the node another shape and keeps the rest of it. Only where the node is stays of its path: its
-     * size is that of a new node, until it is measured for its text again. The root stays the circle it is.
+     * size is that of a new node, until it is measured for its text again. The root stays the oval it is.
      */
     fun updateNodeShape(
         targetId: String,

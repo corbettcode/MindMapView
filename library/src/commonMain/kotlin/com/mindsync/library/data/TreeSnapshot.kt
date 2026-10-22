@@ -1,9 +1,11 @@
 package com.mindsync.library.data
 
+import com.mindsync.library.model.LayoutSide
+
 /** All there is of a [Tree] at one time, to put it back as it was. */
 internal class TreeSnapshot(
     val nodes: Map<String, NodeData<*>>
-    , val leftRootChildIds: Set<String>
+    , val rootChildSides: Map<String, LayoutSide>
     , val nodeAttributes: Map<String, List<NodeAttribute>>
     , val foldedIds: Set<String>
     , val arrowLinks: List<ArrowLink>
@@ -17,7 +19,7 @@ internal class TreeSnapshot(
      */
     fun hasSameContentAs(other: TreeSnapshot): Boolean =
         nodes.mapValues { it.value.content() } == other.nodes.mapValues { it.value.content() }
-            && leftRootChildIds == other.leftRootChildIds
+            && rootChildSides == other.rootChildSides
             && nodeAttributes == other.nodeAttributes
             && foldedIds == other.foldedIds
             && arrowLinks == other.arrowLinks

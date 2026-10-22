@@ -57,7 +57,12 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
@@ -72,10 +77,16 @@ private const val NOTE_MARKER_STROKE_RATIO = 0.1f
 // cos 45°: how far along each radius the top right of a round edge is.
 private const val TOP_RIGHT_OF_ARC = 0.70710677f
 
-internal val ADD_BUTTON_RADIUS = Dp(10f)
+internal val ADD_BUTTON_RADIUS = Dp(6f)
+
+// How finely the edge of the root is measured to space its add buttons evenly along it.
+private const val ROOT_EDGE_STEPS = 360
+
+// Half the spacing between the root and its children: how far out of the root a line to a slanted side turns.
+private val SLANTED_LINE_BEND = Dp(25f)
 private val LINK_DRAG_DASH = Dp(6f)
 internal val NOTE_MARKER_SIZE = Dp(12f)
-private val FOLD_MARKER_WIDTH = Dp(3f)
+private val FOLD_MARKER_WIDTH = Dp(2f)
 
 // How near to an arrow link a click on it has to be.
 internal val ARROW_LINK_REACH = Dp(8f)
@@ -521,18 +532,30 @@ private fun DrawScope.drawLines(
     forEachNodeWithLineColor(tree, drawInfo, lineColor) { toNode, color ->
         val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLineColor
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
-            val isRightSide = tree.sideOf(toNode.id) == LayoutSide.RIGHT
-            val startX = getNodeEdgeX(node, isRightEdge = isRightSide)
-            val startY = node.path.centerY.toPx(this)
+            val side = tree.sideOf(toNode.id)
+            val isRightSide = !side.isLeft
+            // The lines to the children on a slanted side of the root leave it along that side's line.
+            val start =
+                if (node.parentId == null && side.isSlanted) rootEdgePoint(node, side, Dp(0f))
+                else Offset(getNodeEdgeX(node, isRightEdge = isRightSide), node.path.centerY.toPx(this))
+            val startX = start.x
+            val startY = start.y
 
             val endX = getNodeEdgeX(toNode, isRightEdge = isRightSide.not())
             val endY = toNode.path.centerY.toPx(this)
 
-            val midX = (startX + endX) / 2
-
             path.reset()
             path.moveTo(startX, startY)
-            path.cubicTo(midX, startY, midX, endY, endX, endY)
+            if (node.parentId == null && side.isSlanted) {
+                // The line turns up or down right by the root, before the children straight out to that side,
+                // and so runs past them rather than across them.
+                val bendX = startX + (if (isRightSide) 1f else -1f) * SLANTED_LINE_BEND.toPx(this)
+                path.cubicTo(bendX, endY, bendX, endY, endX, endY)
+            }
+            else {
+                val midX = (startX + endX) / 2
+                path.cubicTo(midX, startY, midX, endY, endX, endY)
+            }
 
             drawPath(
                 path = path
@@ -675,12 +698,54 @@ internal fun Density.addButtonCenter(
     node: NodeData<*>
     , side: LayoutSide = LayoutSide.RIGHT
 ): Offset {
+    // The root's buttons are each on the line of their side, so they are evenly spaced around it.
+    if (node.parentId == null) return rootEdgePoint(node, side, ADD_BUTTON_RADIUS)
     val radius = ADD_BUTTON_RADIUS.toPx(this)
-    val centerX = when (side) {
-        LayoutSide.RIGHT -> getNodeEdgeX(node, isRightEdge = true) + radius
-        LayoutSide.LEFT -> getNodeEdgeX(node, isRightEdge = false) - radius
-    }
+    val centerX =
+        if (side.isLeft) getNodeEdgeX(node, isRightEdge = false) - radius
+        else getNodeEdgeX(node, isRightEdge = true) + radius
     return Offset(centerX, node.path.centerY.toPx(this))
+}
+
+// The point [beyond] out of the edge of the root, which is an oval, where the button and the lines of [side]
+// are. The six sides are spaced evenly along the edge, starting from its right end, and the point is out of
+// the edge square to it.
+internal fun Density.rootEdgePoint(
+    root: NodeData<*>
+    , side: LayoutSide
+    , beyond: Dp
+): Offset {
+    val (radiusX, radiusY) = when (root) {
+        is OvalNodeData -> root.path.radiusX.toPx(this) to root.path.radiusY.toPx(this)
+        else -> (getNodeEdgeX(root, isRightEdge = true) - root.path.centerX.toPx(this)).let { it to it }
+    }
+    val sideIndex = ((side.angleDegrees / 60f).roundToInt() + LayoutSide.entries.size) % LayoutSide.entries.size
+    val t = parameterAtArcFraction(radiusX, radiusY, sideIndex.toFloat() / LayoutSide.entries.size)
+    // Up is the negative y of the screen.
+    val edge = Offset(radiusX * cos(t), -radiusY * sin(t))
+    val normal = Offset(radiusY * cos(t), -radiusX * sin(t)).let { it / it.getDistance() }
+    return Offset(root.path.centerX.toPx(this), root.path.centerY.toPx(this)) + edge + normal * beyond.toPx(this)
+}
+
+// The angle t of the point (radiusX cos t, radiusY sin t) of an ellipse that is [fraction] of the way round its
+// edge, counterclockwise from its right end.
+private fun parameterAtArcFraction(
+    radiusX: Float
+    , radiusY: Float
+    , fraction: Float
+): Float {
+    val steps = ROOT_EDGE_STEPS
+    val step = 2f * PI.toFloat() / steps
+    val lengths = FloatArray(steps + 1)
+    for (i in 1..steps) {
+        val t = (i - 0.5f) * step
+        lengths[i] = lengths[i - 1] + step * sqrt((radiusX * sin(t)).pow(2) + (radiusY * cos(t)).pow(2))
+    }
+    val target = lengths[steps] * fraction
+    val i = (1..steps).firstOrNull { lengths[it] >= target } ?: return 0f
+    val segment = lengths[i] - lengths[i - 1]
+    val within = if (segment > 0f) (target - lengths[i - 1]) / segment else 0f
+    return (i - 1 + within) * step
 }
 
 private fun Density.getNodeEdgeX(

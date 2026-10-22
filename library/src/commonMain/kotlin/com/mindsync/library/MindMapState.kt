@@ -372,7 +372,7 @@ class MindMapState(
     private fun visibleOrder(): List<String> {
         val root = tree.getRootNode()
         val ids = mutableListOf(root.id)
-        listOf(LayoutSide.RIGHT, LayoutSide.LEFT).forEach { side ->
+        VISIBLE_SIDE_ORDER.forEach { side ->
             tree.visibleChildren(root)
                 .filter { tree.sideOf(it) == side }
                 .forEach { branchId -> tree.doVisiblePreorderTraversal(tree.getNode(branchId)) { ids.add(it.id) } }
@@ -513,7 +513,26 @@ class MindMapState(
     fun moveNodeToOtherSide() {
         recordChange {
             val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
-            val side = if (tree.sideOf(node.id) == LayoutSide.LEFT) LayoutSide.RIGHT else LayoutSide.LEFT
+            val side = tree.sideOf(node.id).mirrored
+            selectedNodes
+                .filter { it.parentId != null }
+                .map { tree.branchOf(it.id).id }
+                .distinct()
+                .forEach { tree.setRootChildSide(it, side) }
+            animateTreeChange()
+        }
+    }
+
+    /**
+     * Moves the branches the selected nodes are in, the children of the root they are or are below, to the
+     * next side of the root round from the one [selectedNode] is on, clockwise or counterclockwise, so they all
+     * end up on the same side. Nothing is moved when [selectedNode] is the root, and the root is in no branch
+     * to move.
+     */
+    fun moveNodeAround(isClockwise: Boolean) {
+        recordChange {
+            val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
+            val side = tree.sideOf(node.id).next(isClockwise)
             selectedNodes
                 .filter { it.parentId != null }
                 .map { tree.branchOf(it.id).id }
@@ -954,10 +973,11 @@ class MindMapState(
             val selectedNode = mindMapManager.getSelectedNode()
             val attachedNode = this.attachedNode
             if (selectedNode != null && attachedNode != null) {
-                // A node dropped on the root joins the children on the side of the root it was dropped on.
-                val side =
-                    if (selectedNode.path.centerX.dpVal < attachedNode.path.centerX.dpVal) LayoutSide.LEFT
-                    else LayoutSide.RIGHT
+                // A node dropped on the root joins the children on the side of the root it was dropped nearest to.
+                val side = LayoutSide.nearest(
+                    (selectedNode.path.centerX - attachedNode.path.centerX).dpVal
+                    , (selectedNode.path.centerY - attachedNode.path.centerY).dpVal
+                )
                 recordChange {
                     tree.removeNode(selectedNode.id)
                     tree.attachNode(selectedNode.id, attachedNode.id, side)
@@ -1102,6 +1122,16 @@ class MindMapState(
 
     companion object {
         private const val DEFAULT_ZOOM = 1f
+
+        // The right sides come first, as they did when the root had only a left and a right side, each top down.
+        private val VISIBLE_SIDE_ORDER = listOf(
+            LayoutSide.UPPER_RIGHT
+            , LayoutSide.RIGHT
+            , LayoutSide.LOWER_RIGHT
+            , LayoutSide.UPPER_LEFT
+            , LayoutSide.LEFT
+            , LayoutSide.LOWER_LEFT
+        )
     }
 }
 

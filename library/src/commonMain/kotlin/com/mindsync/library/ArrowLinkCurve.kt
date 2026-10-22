@@ -10,7 +10,6 @@ import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
-import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
 import kotlin.math.sqrt
@@ -102,7 +101,7 @@ private fun isOnRightEdge(
     return when {
         (other.path.centerX - halfWidth(other)).dpVal >= (node.path.centerX + halfWidth(node)).dpVal -> true
         (other.path.centerX + halfWidth(other)).dpVal <= (node.path.centerX - halfWidth(node)).dpVal -> false
-        else -> tree.sideOf(if (node.parentId == null) other.id else node.id) == LayoutSide.RIGHT
+        else -> !tree.sideOf(if (node.parentId == null) other.id else node.id).isLeft
     }
 }
 

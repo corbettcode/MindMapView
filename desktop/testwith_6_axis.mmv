@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <rootposition x="806.0" y="396.0"/>
+  <node id="root" color="#ffcccccc" textColor="#ff000000" text="🌱 root">
+    <node id="b2b9eaae-7eb7-4059-8175-d587c1bddf32" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 1&lt;/p&gt;"/>
+    <node id="47f37633-9460-4496-8a8e-ded5fccc7874" shape="rectangle" side="upper_left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 2&lt;/p&gt;"/>
+    <node id="afe87106-71bd-44ec-8304-7151edd8b496" shape="rectangle" side="left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 4&lt;/p&gt;"/>
+    <node id="8e16783a-ce24-408d-b1d1-e755474716bf" shape="rectangle" side="lower_left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 5&lt;/p&gt;"/>
+    <node id="fbe28dc7-ddee-44d8-9604-7d974f11e0ce" shape="rectangle" side="lower_right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 6&lt;/p&gt;"/>
+    <node id="49700fbe-a535-42dc-b638-88c0c452f079" shape="rectangle" side="upper_right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 3&lt;/p&gt;"/>
+  </node>
+</mindmapview>

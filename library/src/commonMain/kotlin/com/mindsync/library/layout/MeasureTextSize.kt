@@ -133,9 +133,11 @@ class MeasureTextSize(
         }
 
         // An ellipse holds a rectangle of the text's proportions when each radius is √2 times half that side.
+        // The root is larger than an oval node with its text would be.
         is OvalNodeData -> {
-            val newRadiusX = Dp(Px(width).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2
-            val newRadiusY = Dp(Px(height).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2
+            val scale = if (nodeData.parentId == null) ROOT_OVAL_SCALE else 1f
+            val newRadiusX = (Dp(Px(width).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2) * scale
+            val newRadiusY = (Dp(Px(height).toDp(density)) / 2 * OVAL_TEXT_FIT_RATIO + drawInfo.padding / 2) * scale
             nodeData.copy(
                 id = nodeData.id,
                 parentId = nodeData.parentId,
@@ -149,6 +151,7 @@ class MeasureTextSize(
     companion object {
         private const val RICH_TEXT_CACHE_SIZE = 256
         private const val OVAL_TEXT_FIT_RATIO = 1.4142135f
+        private const val ROOT_OVAL_SCALE = 1.21f
         private const val ATTRIBUTE_TEXT_SCALE = 0.85f
         private const val ATTRIBUTE_TABLE_GAP = 6f
         private const val ATTRIBUTE_CELL_PADDING_X = 5f

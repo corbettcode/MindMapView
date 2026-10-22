@@ -9,16 +9,12 @@ import androidx.compose.ui.unit.em
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
-import com.mindsync.library.data.CirclePath
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
-import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
-import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
@@ -34,7 +30,8 @@ import kotlin.math.roundToInt
  * `<attribute NAME="shape">` child, which FreeMind preserves. It is written in front of the node's own
  * attributes, which are FreeMind's `<attribute>` children as well: the first one named `shape` that holds a
  * shape is read as the shape, and every other one as an attribute. The side of the root a child of the root is
- * on is kept in FreeMind's own `POSITION`. Arrow links are kept as FreeMind's own `<arrowlink>` children of
+ * on is kept in FreeMind's own `POSITION`, which only has a left and a right: a child of the root above or
+ * below it is kept on the side it is to the left or right of. Arrow links are kept as FreeMind's own `<arrowlink>` children of
  * the node they start at. Node positions are not stored: a map that
  * was read needs to be arranged, for example with `MindMapState.animateTreeChange()`.
  */
@@ -109,7 +106,7 @@ object FreeMind {
 
         append(indent).append("<node ID=\"").append(escapeXml(node.id)).append('"')
         if (plainText != null) append(" TEXT=\"").append(escapeXml(plainText)).append('"')
-        if (depth == 1) append(" POSITION=\"").append(tree.sideOf(node.id).name.lowercase()).append('"')
+        if (depth == 1) append(" POSITION=\"").append(tree.sideOf(node.id).horizontal.name.lowercase()).append('"')
         if (tree.isFolded(node.id)) append(" FOLDED=\"true\"")
         append(" BACKGROUND_COLOR=\"").append(node.color.toHex()).append('"')
         append(" COLOR=\"").append(node.textColor.toHex()).append("\">\n")
@@ -160,48 +157,7 @@ object FreeMind {
         val description = element.description()
         val note = element.note()
 
-        val node = when (shape) {
-            NodeShape.CIRCLE -> CircleNodeData(
-                id = id,
-                parentId = parentId,
-                path = CirclePath(Dp(0f), Dp(0f), Dp(0f)),
-                description = description,
-                children = children,
-                color = color,
-                textColor = textColor,
-                note = note,
-            )
-            NodeShape.RECTANGLE -> RectangleNodeData(
-                id = id,
-                parentId = parentId,
-                path = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
-                description = description,
-                children = children,
-                color = color,
-                textColor = textColor,
-                note = note,
-            )
-            NodeShape.STADIUM -> StadiumNodeData(
-                id = id,
-                parentId = parentId,
-                path = StadiumPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
-                description = description,
-                children = children,
-                color = color,
-                textColor = textColor,
-                note = note,
-            )
-            NodeShape.OVAL -> OvalNodeData(
-                id = id,
-                parentId = parentId,
-                path = OvalPath(Dp(0f), Dp(0f), Dp(0f), Dp(0f)),
-                description = description,
-                children = children,
-                color = color,
-                textColor = textColor,
-                note = note,
-            )
-        }
+        val node = unplacedNode(shape, id, parentId, description, children, color, textColor, note)
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
         tree.setFolded(id, element.attributes["FOLDED"] == "true")
@@ -337,135 +293,4 @@ object FreeMind {
             .replace("\"", "&quot;")
             .replace("\n", "&#xa;")
     }
-}
-
-private class XmlElement(
-    val name: String,
-    val attributes: Map<String, String>,
-    val children: List<XmlElement>,
-    val rawContent: String?,
-)
-
-private val ENTITY = Regex("&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);")
-
-private fun decodeEntities(text: String): String {
-    if ('&' !in text) return text
-    return ENTITY.replace(text) { match ->
-        val entity = match.groupValues[1]
-        when {
-            entity.startsWith("#x") -> entity.substring(2).toIntOrNull(16)?.let(::codePointToString)
-            entity.startsWith("#") -> entity.substring(1).toIntOrNull()?.let(::codePointToString)
-            entity == "amp" -> "&"
-            entity == "lt" -> "<"
-            entity == "gt" -> ">"
-            entity == "quot" -> "\""
-            entity == "apos" -> "'"
-            entity == "nbsp" -> "\u00A0"
-            else -> null
-        } ?: match.value
-    }
-}
-
-private fun codePointToString(codePoint: Int): String? {
-    return when {
-        codePoint in 0..0xFFFF -> codePoint.toChar().toString()
-        codePoint <= 0x10FFFF -> {
-            val offset = codePoint - 0x10000
-            charArrayOf((0xD800 + (offset shr 10)).toChar(), (0xDC00 + (offset and 0x3FF)).toChar()).concatToString()
-        }
-        else -> null
-    }
-}
-
-/**
- * Just enough of an XML parser for FreeMind maps: elements and attributes, with text content ignored. The
- * content of a <richcontent> element is HTML, so it is kept as it is written instead of being parsed.
- */
-private class XmlParser(private val source: String) {
-    private var position = 0
-
-    fun parse(): List<XmlElement> = parseElements()
-
-    private fun parseElements(): List<XmlElement> {
-        val elements = mutableListOf<XmlElement>()
-        while (true) {
-            position = source.indexOf('<', position)
-            if (position == -1) {
-                position = source.length
-                return elements
-            }
-            when {
-                source.startsWith("<!--", position) -> skipPast("-->")
-                source.startsWith("<?", position) -> skipPast("?>")
-                source.startsWith("<!", position) -> skipPast(">")
-                source.startsWith("</", position) -> {
-                    skipPast(">")
-                    return elements
-                }
-                else -> elements.add(parseElement())
-            }
-        }
-    }
-
-    private fun parseElement(): XmlElement {
-        position++
-        val name = readWhile { !it.isWhitespace() && it != '/' && it != '>' }
-        val attributes = mutableMapOf<String, String>()
-        while (true) {
-            skipWhitespace()
-            when (peek()) {
-                '>' -> {
-                    position++
-                    break
-                }
-                '/' -> {
-                    skipPast(">")
-                    return XmlElement(name, attributes, emptyList(), null)
-                }
-                else -> {
-                    val attributeName = readWhile { !it.isWhitespace() && it != '=' && it != '/' && it != '>' }
-                    skipWhitespace()
-                    if (peek() != '=') continue
-                    position++
-                    skipWhitespace()
-                    val quote = peek()
-                    if (quote != '"' && quote != '\'') throw malformed()
-                    position++
-                    val end = source.indexOf(quote, position)
-                    if (end == -1) throw malformed()
-                    attributes[attributeName] = decodeEntities(source.substring(position, end))
-                    position = end + 1
-                }
-            }
-        }
-        if (name == "richcontent") {
-            val end = source.indexOf("</richcontent>", position)
-            if (end == -1) throw malformed()
-            val rawContent = source.substring(position, end)
-            position = end + "</richcontent>".length
-            return XmlElement(name, attributes, emptyList(), rawContent)
-        }
-        return XmlElement(name, attributes, parseElements(), null)
-    }
-
-    private fun peek(): Char = if (position < source.length) source[position] else throw malformed()
-
-    private fun skipWhitespace() {
-        while (position < source.length && source[position].isWhitespace()) position++
-    }
-
-    private fun readWhile(predicate: (Char) -> Boolean): String {
-        val start = position
-        while (position < source.length && predicate(source[position])) position++
-        if (position == start) throw malformed()
-        return source.substring(start, position)
-    }
-
-    private fun skipPast(terminator: String) {
-        val end = source.indexOf(terminator, position)
-        if (end == -1) throw malformed()
-        position = end + terminator.length
-    }
-
-    private fun malformed() = IllegalArgumentException("Not a FreeMind map: malformed XML near character $position")
 }
