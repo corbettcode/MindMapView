@@ -74,8 +74,10 @@ class MindMapTest {
     private val arrowLinkMenus = mutableListOf<Pair<String, Offset>>()
     private val nodeMenus = mutableListOf<Pair<String, Offset>>()
     private val linkChanges = mutableListOf<Triple<String, String, Boolean>>()
+    private var mindMapState: MindMapState? = null
 
     private fun ComposeUiTest.setMindMap(state: MindMapState) {
+        mindMapState = state
         setContent {
             MindMap(
                 state = state,
@@ -132,8 +134,11 @@ class MindMapTest {
         waitForIdle()
     }
 
+    // Where the node is on the screen, after the view has been moved or zoomed.
     private fun androidx.compose.ui.unit.Density.center(node: NodeData<*>): Offset {
-        return Offset(node.path.centerX.dpVal.dp.toPx(), node.path.centerY.dpVal.dp.toPx())
+        val position = Offset(node.path.centerX.dpVal.dp.toPx(), node.path.centerY.dpVal.dp.toPx())
+        val state = mindMapState ?: return position
+        return position * state.scaleFactor + state.currentPoint
     }
 
     @Test
@@ -415,6 +420,27 @@ class MindMapTest {
         ctrlClickNode(state.tree.getNode("c"))
         clickNode(state.tree.getNode("a"))
         assertEquals(listOf("a"), selectedIds())
+    }
+
+    @Test
+    fun ctrlClickCentersTheNodeItAddsButNotTheOneItTakesOut() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(400f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        listOf("a", "b", "c").forEach { state.tree.addNode(it, rootId, it) }
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+        val middle = with(density) { Offset(400.dp.toPx(), 300.dp.toPx()) }
+
+        clickNode(state.tree.getNode("a"))
+        ctrlClickNode(state.tree.getNode("c"))
+        assertEquals(middle, with(density) { center(state.tree.getNode("c")) })
+
+        val before = state.currentPoint
+        ctrlClickNode(state.tree.getNode("a"))
+        assertEquals(listOf("c"), state.selectedNodes.map { it.id })
+        assertEquals(before, state.currentPoint)
     }
 
     @Test

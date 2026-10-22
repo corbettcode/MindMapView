@@ -214,7 +214,7 @@ fun MindMap(
                         return@awaitEachGesture
                     }
                     // With Shift held down a click selects a range of nodes. With Ctrl it adds the node to the
-                    // selected nodes, or takes it out of them, unless it is a drag or a click on a link.
+                    // selected nodes and centers it, or takes it out of them, unless it is a drag or a click on a link.
                     val isRange = currentEvent.keyboardModifiers.isShiftPressed
                     val isCtrl = currentEvent.keyboardModifiers.isCtrlPressed
                     val selectionChange = when {
@@ -245,7 +245,10 @@ fun MindMap(
                         val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                         val link = if (dragStart == null) state.findLink(down.position) else null
                         if (isCtrl) {
-                            if (dragStart == null && link == null) state.toggleSelected(touchedNode.id)
+                            if (dragStart == null && link == null) {
+                                state.toggleSelected(touchedNode.id)
+                                if (state.selectedNode?.id == touchedNode.id) state.centerNode(touchedNode.id)
+                            }
                             else state.select(touchedNode)
                         }
                         if (dragStart != null) {
