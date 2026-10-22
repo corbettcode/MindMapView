@@ -58,6 +58,7 @@ import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
 import com.mindsync.mindmapview.desktop.component.RichTextToggle
 import com.mindsync.mindmapview.desktop.component.RichTextToolbar
+import com.mindsync.mindmapview.desktop.component.noteTextColor
 import com.mindsync.mindmapview.desktop.component.ShapePicker
 import com.mindsync.mindmapview.desktop.noteFromMarkdown
 import com.mindsync.mindmapview.desktop.noteHtml
@@ -261,14 +262,23 @@ fun EditNodeDialog(
                 }
                 else if (markdown == null && currentNoteState != null) {
                     CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
-                        OutlinedRichTextEditor(state = currentNoteState, modifier = noteModifier)
+                        OutlinedRichTextEditor(
+                            state = currentNoteState
+                            , textStyle = LocalTextStyle.current.copy(color = noteTextColor())
+                            , modifier = noteModifier
+                        )
                     }
                 }
                 else if (markdown != null) {
                     OutlinedTextField(
                         value = markdown,
                         onValueChange = { noteMarkdown = it },
-                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace),
+                        textStyle = LocalTextStyle
+                            .current
+                            .copy(
+                                fontFamily = FontFamily.Monospace
+                                , color = noteTextColor()
+                            ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
