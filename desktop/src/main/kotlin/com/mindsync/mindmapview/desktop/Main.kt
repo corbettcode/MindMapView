@@ -66,7 +66,7 @@ private const val SUCCESS_MESSAGE_MILLIS = 3000L
 
 val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
 val EDIT_DIALOG_MIN_WIDTH = 480.dp
-const val NOTE_LINES = 4
+const val NOTE_LINES = 3
 // The room an outlined text field leaves above and below its text.
 val TEXT_FIELD_VERTICAL_PADDING = 32.dp
 private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)

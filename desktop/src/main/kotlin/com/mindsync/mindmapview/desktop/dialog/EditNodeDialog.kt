@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,7 +59,6 @@ import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
 import com.mindsync.mindmapview.desktop.component.RichTextToggle
 import com.mindsync.mindmapview.desktop.component.RichTextToolbar
-import com.mindsync.mindmapview.desktop.component.noteTextColor
 import com.mindsync.mindmapview.desktop.component.ShapePicker
 import com.mindsync.mindmapview.desktop.noteFromMarkdown
 import com.mindsync.mindmapview.desktop.noteHtml
@@ -67,6 +67,7 @@ import com.mindsync.mindmapview.desktop.noteWithImages
 import com.mohamedrejeb.richeditor.model.LocalImageLoader
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.launch
 import java.awt.Dimension
 
@@ -111,6 +112,7 @@ fun EditNodeDialog(
         val lines = textMeasurer.measure("\n".repeat(NOTE_LINES - 1), lineStyle).size.height
         with(density) { lines.toDp() } + TEXT_FIELD_VERTICAL_PADDING
     }
+    // The height the note is laid out with, which the window grows to keep at [noteMinHeight] at the least.
     var noteHeight by remember { mutableStateOf<Dp?>(null) }
     val dialogState = rememberDialogState(size = EDIT_DIALOG_SIZE)
     var isDescriptionFocused by remember { mutableStateOf(false) }
@@ -127,7 +129,7 @@ fun EditNodeDialog(
         onDismiss()
     }
 
-    // A window of its own, so it can be resized: the note takes the room the rest leaves, which is four lines
+    // A window of its own, so it can be resized: the note takes the room the rest leaves, which is three lines
     // to start with and at the least.
     DialogWindow(
         onCloseRequest = onDismiss
@@ -137,11 +139,17 @@ fun EditNodeDialog(
         LaunchedEffect(Unit) {
             descriptionFocusRequester.requestFocus()
         }
-        // The rest of the dialog is only known once it is laid out, so the window is fitted to it then.
-        LaunchedEffect(noteHeight != null) {
-            val height = dialogState.size.height - ((noteHeight ?: return@LaunchedEffect) - noteMinHeight)
-            dialogState.size = DpSize(dialogState.size.width, height)
-            window.minimumSize = Dimension(EDIT_DIALOG_MIN_WIDTH.value.toInt(), height.value.toInt())
+        // The rest of the dialog is only known once it is laid out, so the window is fitted to it then, and grown
+        // again whenever the rest takes more room, as the node's text may as it gets more lines.
+        var isFitted by remember { mutableStateOf(false) }
+        LaunchedEffect(noteHeight) {
+            val height = noteHeight ?: return@LaunchedEffect
+            val minWindowHeight = dialogState.size.height - (height - noteMinHeight)
+            window.minimumSize = Dimension(EDIT_DIALOG_MIN_WIDTH.value.toInt(), minWindowHeight.value.toInt())
+            if (!isFitted || height < noteMinHeight) {
+                dialogState.size = DpSize(dialogState.size.width, minWindowHeight)
+                isFitted = true
+            }
         }
         // Enter clicks OK, wherever the focus is but in the note, whose lines are typed with Enter. A line of the
         // node's text is typed with Alt+Enter instead.
@@ -255,7 +263,7 @@ fun EditNodeDialog(
                 val noteModifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .onSizeChanged { if (noteHeight == null) noteHeight = with(density) { it.height.toDp() } }
+                    .onSizeChanged { noteHeight = with(density) { it.height.toDp() } }
                     .onFocusChanged { isNoteFocused = it.hasFocus }
                 if (markdown == null && currentNoteState == null) {
                     Box(modifier = noteModifier)
@@ -264,7 +272,12 @@ fun EditNodeDialog(
                     CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                         OutlinedRichTextEditor(
                             state = currentNoteState
-                            , textStyle = LocalTextStyle.current.copy(color = noteTextColor())
+                            , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
+                            , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
+                                textColor = selectedTextColor
+                                , containerColor = selectedColor
+                                , cursorColor = selectedTextColor
+                            )
                             , modifier = noteModifier
                         )
                     }
@@ -277,12 +290,16 @@ fun EditNodeDialog(
                             .current
                             .copy(
                                 fontFamily = FontFamily.Monospace
-                                , color = noteTextColor()
+                                , color = selectedTextColor
                             ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .onFocusChanged { isNoteFocused = it.hasFocus },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = selectedTextColor
+                            , unfocusedTextColor = selectedTextColor
+                            , focusedContainerColor = selectedColor
+                            , unfocusedContainerColor = selectedColor
+                            , cursorColor = selectedTextColor
+                        ),
+                        modifier = noteModifier,
                     )
                 }
                 Row(
