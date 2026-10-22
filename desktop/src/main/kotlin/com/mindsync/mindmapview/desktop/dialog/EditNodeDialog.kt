@@ -27,7 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
@@ -105,6 +112,19 @@ fun EditNodeDialog(
     }
     var noteHeight by remember { mutableStateOf<Dp?>(null) }
     val dialogState = rememberDialogState(size = EDIT_DIALOG_SIZE)
+    var isDescriptionFocused by remember { mutableStateOf(false) }
+    var isNoteFocused by remember { mutableStateOf(false) }
+
+    fun submit() {
+        onSubmit(
+            DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml())
+            , noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note
+            , selectedShape
+            , selectedColor
+            , selectedTextColor
+        )
+        onDismiss()
+    }
 
     // A window of its own, so it can be resized: the note takes the room the rest leaves, which is four lines
     // to start with and at the least.
@@ -122,7 +142,27 @@ fun EditNodeDialog(
             dialogState.size = DpSize(dialogState.size.width, height)
             window.minimumSize = Dimension(EDIT_DIALOG_MIN_WIDTH.value.toInt(), height.value.toInt())
         }
-        Surface(modifier = Modifier.fillMaxSize()) {
+        // Enter clicks OK, wherever the focus is but in the note, whose lines are typed with Enter. A line of the
+        // node's text is typed with Alt+Enter instead.
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .onPreviewKeyEvent { event ->
+                    when {
+                        event.key != Key.Enter && event.key != Key.NumPadEnter -> false
+                        isNoteFocused -> false
+                        event.type != KeyEventType.KeyDown -> true
+                        event.isAltPressed -> {
+                            if (isDescriptionFocused) richTextState.replaceSelectedText("\n")
+                            true
+                        }
+                        else -> {
+                            submit()
+                            true
+                        }
+                    }
+                }
+        ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -140,15 +180,31 @@ fun EditNodeDialog(
                         },
                     )
                 }
-                EmojiPicker(selectedEmoji = selectedEmoji, onSelect = { selectedEmoji = it })
+
+                EmojiPicker(
+                    selectedEmoji = selectedEmoji
+                    , onSelect = {
+                        selectedEmoji = it
+                    }
+                )
+
                 RichTextToolbar(richTextState)
+
                 OutlinedRichTextEditor(
-                    state = richTextState,
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                    modifier = Modifier
+                    state = richTextState
+                    , textStyle = LocalTextStyle
+                        .current
+                        .copy(
+                            textAlign = TextAlign.Center
+                        )
+                    , modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 120.dp, max = 200.dp)
-                        .focusRequester(descriptionFocusRequester),
+                        .heightIn(
+                            min = 120.dp
+                            , max = 200.dp
+                        )
+                        .focusRequester(descriptionFocusRequester)
+                        .onFocusChanged { isDescriptionFocused = it.hasFocus }
                 )
 
                 ColorPicker(
@@ -199,6 +255,7 @@ fun EditNodeDialog(
                     .fillMaxWidth()
                     .weight(1f)
                     .onSizeChanged { if (noteHeight == null) noteHeight = with(density) { it.height.toDp() } }
+                    .onFocusChanged { isNoteFocused = it.hasFocus }
                 if (markdown == null && currentNoteState == null) {
                     Box(modifier = noteModifier)
                 }
@@ -212,7 +269,10 @@ fun EditNodeDialog(
                         value = markdown,
                         onValueChange = { noteMarkdown = it },
                         textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace),
-                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .onFocusChanged { isNoteFocused = it.hasFocus },
                     )
                 }
                 Row(
@@ -222,18 +282,7 @@ fun EditNodeDialog(
                     Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
-                    Button(
-                        onClick = {
-                            onSubmit(
-                                DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml()),
-                                noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note,
-                                selectedShape,
-                                selectedColor,
-                                selectedTextColor,
-                            )
-                            onDismiss()
-                        },
-                    ) {
+                    Button(onClick = ::submit) {
                         Text("OK")
                     }
                 }
