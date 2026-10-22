@@ -53,13 +53,20 @@ fun findActiveUser(
 ```
 
 ```kotlin
-OutlinedTextField(
-    value = uiState.emailAddress
-    , onValueChange = viewModel::onEmailChange
-    , label = { Text("Email Address") }
-    , singleLine = true
-    , keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-    , modifier = Modifier.fillMaxWidth()
+OutlinedRichTextEditor(
+    state = richTextState
+    , textStyle = LocalTextStyle
+        .current
+        .copy(
+            textAlign = TextAlign.Center
+        )
+    , modifier = Modifier
+        .fillMaxWidth()
+        .heightIn(
+            min = 120.dp
+            , max = 200.dp
+        )
+        .focusRequester(descriptionFocusRequester)
 )
 ```
 
