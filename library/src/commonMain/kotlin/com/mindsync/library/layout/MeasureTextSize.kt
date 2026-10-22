@@ -12,6 +12,7 @@ import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.DrawInfo
@@ -117,6 +118,17 @@ class MeasureTextSize(
                 description = nodeData.description,
                 children = nodeData.children,
             )
+        }
+
+        // A square is as wide and as tall as the longer of the two sides its text needs.
+        is SquareNodeData -> {
+            val side = Dp(
+                maxOf(
+                    (Dp(Px(width).toDp(density)) + drawInfo.padding).dpVal
+                    , (Dp(Px(height).toDp(density)) + drawInfo.padding).dpVal
+                )
+            )
+            nodeData.copy(path = nodeData.path.copy(width = side, height = side))
         }
 
         // The text sits between the straight sides, so the caps add to the width on either end.

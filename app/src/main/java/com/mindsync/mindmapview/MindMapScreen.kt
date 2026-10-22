@@ -32,6 +32,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.rememberMindMapState
 import com.mindsync.mindmapview.model.CircleNode
@@ -168,6 +169,22 @@ private fun createNode(node: NodeData<*>?): Node? {
             node.description,
             node.children
         )
+
+        // The sample app has no square of its own, so a square is shown as the rectangle it is drawn as.
+        is SquareNodeData -> node.parentId?.let { parentId ->
+            RectangleNode(
+                node.id,
+                parentId,
+                RectanglePath(
+                    Dp(node.path.centerX.dpVal),
+                    Dp(node.path.centerY.dpVal),
+                    Dp(node.path.width.dpVal),
+                    Dp(node.path.height.dpVal)
+                ),
+                node.description,
+                node.children
+            )
+        }
 
         is StadiumNodeData -> StadiumNode(
             node.id,

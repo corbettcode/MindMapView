@@ -39,6 +39,7 @@ import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
 import com.mindsync.library.data.Tree
@@ -1307,6 +1308,83 @@ class MindMapTest {
     }
 
     @Test
+    fun addEditAndRemoveSquareNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", NodeShape.SQUARE)
+        waitForIdle()
+
+        val root = state.tree.getRootNode()
+        val child = assertIs<SquareNodeData>(state.tree.getNode(root.children.single()))
+        assertEquals(NodeShape.SQUARE, child.shape)
+        assertEquals(NodeShape.SQUARE.defaultColor, child.color)
+        assertEquals(NodeShape.SQUARE.defaultTextColor, child.textColor)
+        assertEquals(child.path.width.dpVal, child.path.height.dpVal, 0.01f)
+        assertTrue(child.path.leftX().dpVal > (root.path.centerX + root.path.radiusX).dpVal)
+
+        clickNode(child)
+        assertEquals(child.id, state.selectedNode?.id)
+        state.editNodeText("a much longer description")
+        waitForIdle()
+        val wider = assertIs<SquareNodeData>(state.tree.getNode(child.id))
+        assertTrue(wider.path.width.dpVal > child.path.width.dpVal)
+        assertEquals(wider.path.width.dpVal, wider.path.height.dpVal, 0.01f)
+
+        state.removeNode()
+        waitForIdle()
+        assertTrue(state.tree.getRootNode().children.isEmpty())
+    }
+
+    @Test
+    fun squareIsAsLargeAsTheLongerSideOfARectangleWithTheSameText() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("the same text", NodeShape.RECTANGLE)
+        waitForIdle()
+        state.addNode("the same text", NodeShape.SQUARE)
+        waitForIdle()
+
+        val (rectangleId, squareId) = state.tree.getRootNode().children
+        val rectangle = assertIs<RectangleNodeData>(state.tree.getNode(rectangleId))
+        val square = assertIs<SquareNodeData>(state.tree.getNode(squareId))
+        val longerSide = maxOf(rectangle.path.width.dpVal, rectangle.path.height.dpVal)
+        assertEquals(longerSide, square.path.width.dpVal, 0.01f)
+        assertEquals(longerSide, square.path.height.dpVal, 0.01f)
+    }
+
+    @Test
+    fun nodeChangedToASquareKeepsItsPlaceInTheTree() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, "first", NodeShape.RECTANGLE)
+        tree.addNode("b", "a", "second", NodeShape.RECTANGLE)
+
+        tree.updateNodeShape("a", NodeShape.SQUARE)
+
+        val a = assertIs<SquareNodeData>(tree.getNode("a"))
+        assertEquals("first", a.description)
+        assertEquals(listOf("b"), a.children)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsSquare() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, "first", NodeShape.SQUARE)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<attribute NAME=\"shape\" VALUE=\"square\"/>" in written)
+
+        val read = FreeMind.read(written)
+        val a = assertIs<SquareNodeData>(read.getNode("a"))
+        assertEquals("first", a.description)
+        assertEquals(NodeShape.SQUARE.defaultColor, a.color)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
     fun ovalWidthAndHeightEachFollowTheText() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
@@ -2017,6 +2095,10 @@ class MindMapTest {
             assertTrue(marker.x > center.x && marker.y < center.y)
             when (node) {
                 is RectangleNodeData -> {
+                    assertEquals(with(density) { node.path.rightX().dpVal.dp.toPx() }, marker.x, 0.01f)
+                    assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
+                }
+                is SquareNodeData -> {
                     assertEquals(with(density) { node.path.rightX().dpVal.dp.toPx() }, marker.x, 0.01f)
                     assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
                 }

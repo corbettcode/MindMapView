@@ -48,6 +48,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.AttributeTable
@@ -478,6 +479,10 @@ internal fun Density.noteMarkerCenter(node: NodeData<*>): Offset {
             offsetX = node.path.width / 2
             offsetY = node.path.height / 2
         }
+        is SquareNodeData -> {
+            offsetX = node.path.width / 2
+            offsetY = node.path.height / 2
+        }
         is StadiumNodeData -> {
             offsetX = node.path.length / 2 + node.path.radius * TOP_RIGHT_OF_ARC
             offsetY = node.path.radius * TOP_RIGHT_OF_ARC
@@ -497,12 +502,14 @@ private fun DrawScope.drawAttachedNode(
     state.attachedNode?.let { attachedNode ->
         val height = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.height
+            is SquareNodeData -> attachedNode.path.height
             is StadiumNodeData -> attachedNode.path.height()
             is OvalNodeData -> attachedNode.path.height()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         val width = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.width
+            is SquareNodeData -> attachedNode.path.width
             is StadiumNodeData -> attachedNode.path.width()
             is OvalNodeData -> attachedNode.path.width()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
@@ -589,6 +596,11 @@ private fun Density.edgePoint(
             isRound = true
         }
         is RectangleNodeData -> {
+            halfWidth = node.path.width / 2
+            halfHeight = node.path.height / 2
+            isRound = false
+        }
+        is SquareNodeData -> {
             halfWidth = node.path.width / 2
             halfHeight = node.path.height / 2
             isRound = false
@@ -757,6 +769,7 @@ private fun Density.getNodeEdgeX(
         when (node) {
             is CircleNodeData -> node.path.radius.toPx(this)
             is RectangleNodeData -> node.path.width.toPx(this) / 2
+            is SquareNodeData -> node.path.width.toPx(this) / 2
             is StadiumNodeData -> node.path.width().toPx(this) / 2
             is OvalNodeData -> node.path.width().toPx(this) / 2
         }

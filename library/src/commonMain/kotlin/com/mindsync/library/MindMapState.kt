@@ -29,6 +29,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
@@ -274,6 +275,9 @@ class MindMapState(
                             .copy(color = color, textColor = textColor, note = note)
                     NodeShape.RECTANGLE ->
                         NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
+                            .copy(color = color, textColor = textColor, note = note)
+                    NodeShape.SQUARE ->
+                        NodeGenerator.makeNode(SquareNodeData::class, description, node.id)
                             .copy(color = color, textColor = textColor, note = note)
                     NodeShape.STADIUM ->
                         NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
@@ -1125,6 +1129,9 @@ class MindMapState(
                     point.y in (node.path.centerY - node.path.radius).toPx(density)..(node.path.centerY + node.path.radius).toPx(density)
 
             is RectangleNodeData ->
+                point.x in node.path.leftX().toPx(density)..node.path.rightX().toPx(density) &&
+                    point.y in node.path.topY().toPx(density)..node.path.bottomY().toPx(density)
+            is SquareNodeData ->
                 point.x in node.path.leftX().toPx(density)..node.path.rightX().toPx(density) &&
                     point.y in node.path.topY().toPx(density)..node.path.bottomY().toPx(density)
 

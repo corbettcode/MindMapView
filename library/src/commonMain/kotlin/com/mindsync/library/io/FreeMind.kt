@@ -14,6 +14,7 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
@@ -167,6 +168,7 @@ object FreeMind {
     private fun NodeData<*>.shape(): NodeShape = when (this) {
         is CircleNodeData -> NodeShape.CIRCLE
         is RectangleNodeData -> NodeShape.RECTANGLE
+        is SquareNodeData -> NodeShape.SQUARE
         is StadiumNodeData -> NodeShape.STADIUM
         is OvalNodeData -> NodeShape.OVAL
     }

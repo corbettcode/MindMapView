@@ -7,6 +7,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.toPx
@@ -19,13 +20,8 @@ class NodeDrawerFactory(
     fun createStrokeNode(): NodeDrawer {
         val stroke = Stroke(width = drawInfo.strokeWidth.toPx(density))
         return when(node) {
-            is RectangleNodeData -> {
-                RectangleNodeDrawer(
-                    node,
-                    drawInfo.strokeColor,
-                    stroke,
-                )
-            }
+            is RectangleNodeData -> RectangleNodeDrawer(node.path, node.textColor, drawInfo.strokeColor, stroke)
+            is SquareNodeData -> RectangleNodeDrawer(node.path, node.textColor, drawInfo.strokeColor, stroke)
             is StadiumNodeData -> {
                 StadiumNodeDrawer(
                     node,
@@ -52,13 +48,8 @@ class NodeDrawerFactory(
 
     fun createNodeDrawer(): NodeDrawer {
         return when (node) {
-            is RectangleNodeData -> {
-                RectangleNodeDrawer(
-                    node,
-                    node.color,
-                    Fill,
-                )
-            }
+            is RectangleNodeData -> RectangleNodeDrawer(node.path, node.textColor, node.color, Fill)
+            is SquareNodeData -> RectangleNodeDrawer(node.path, node.textColor, node.color, Fill)
 
             is StadiumNodeData -> {
                 StadiumNodeDrawer(

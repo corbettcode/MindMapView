@@ -155,3 +155,36 @@ data class OvalNodeData(
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
+
+/** A node drawn as a square: a rectangle whose width and height are both the larger side its text needs. */
+data class SquareNodeData(
+    override val id: String
+    , override var alpha: Float = 0f
+    , override val children: List<String>
+    , override val color: Color = NodeShape.SQUARE.defaultColor
+    , override val description: String
+    , override var isAnimating: Boolean = false
+    , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
+    , override val parentId: String?
+    , override val path: RectanglePath = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
+    , override var strokeWidth: Float = 1f
+    , override val textColor: Color = NodeShape.SQUARE.defaultTextColor
+) : NodeData<SquareNodeData>(
+    id
+    , alpha
+    , children
+    , color
+    , description
+    , isAnimating
+    , isDrawingLine
+    , note
+    , parentId
+    , path
+    , strokeWidth
+    , textColor
+) {
+    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<SquareNodeData> {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}

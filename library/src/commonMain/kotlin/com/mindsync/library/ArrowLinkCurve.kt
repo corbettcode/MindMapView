@@ -8,6 +8,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
@@ -131,6 +132,7 @@ private fun edgeDistance(
     return when (node) {
         is CircleNodeData -> chord(node.path.radius, offsetY)
         is RectangleNodeData -> node.path.width / 2
+        is SquareNodeData -> node.path.width / 2
         is StadiumNodeData -> node.path.length / 2 + chord(node.path.radius, offsetY)
         is OvalNodeData -> node.path.radiusX * (chord(node.path.radiusY, offsetY).dpVal / node.path.radiusY.dpVal)
     }
@@ -148,6 +150,7 @@ internal fun halfWidth(node: NodeData<*>): Dp {
     return when (node) {
         is CircleNodeData -> node.path.radius
         is RectangleNodeData -> node.path.width / 2
+        is SquareNodeData -> node.path.width / 2
         is StadiumNodeData -> node.path.width() / 2
         is OvalNodeData -> node.path.width() / 2
     }
@@ -157,6 +160,7 @@ internal fun halfHeight(node: NodeData<*>): Dp {
     return when (node) {
         is CircleNodeData -> node.path.radius
         is RectangleNodeData -> node.path.height / 2
+        is SquareNodeData -> node.path.height / 2
         is StadiumNodeData -> node.path.height() / 2
         is OvalNodeData -> node.path.height() / 2
     }

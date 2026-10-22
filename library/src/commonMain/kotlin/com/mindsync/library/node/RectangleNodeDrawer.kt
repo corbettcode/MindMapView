@@ -8,20 +8,21 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
-import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
 
 class RectangleNodeDrawer(
-    private val node: RectangleNodeData,
+    private val path: RectanglePath,
+    private val textColor: Color,
     private val color: Color,
     private val style: DrawStyle,
 ) : NodeDrawer {
     override fun drawNode(drawScope: DrawScope) {
         drawScope.drawRoundRect(
             color = color,
-            topLeft = Offset(node.path.leftX().toPx(drawScope), node.path.topY().toPx(drawScope)),
-            size = Size(node.path.width.toPx(drawScope), node.path.height.toPx(drawScope)),
+            topLeft = Offset(path.leftX().toPx(drawScope), path.topY().toPx(drawScope)),
+            size = Size(path.width.toPx(drawScope), path.height.toPx(drawScope)),
             cornerRadius = CornerRadius(Dp(ROUNDED_CORNER_RADIUS).toPx(drawScope)),
             style = style,
         )
@@ -30,10 +31,10 @@ class RectangleNodeDrawer(
     override fun drawText(drawScope: DrawScope, text: TextLayoutResult) {
         drawScope.drawText(
             textLayoutResult = text,
-            color = node.textColor,
+            color = textColor,
             topLeft = Offset(
-                node.path.centerX.toPx(drawScope) - text.size.width / 2f,
-                node.path.centerY.toPx(drawScope) - text.size.height / 2f,
+                path.centerX.toPx(drawScope) - text.size.width / 2f,
+                path.centerY.toPx(drawScope) - text.size.height / 2f,
             ),
         )
     }
