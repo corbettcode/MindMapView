@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <rootposition x="1056.4839" y="644.2009"/>
+  <node id="root" color="#ffcccccc" textColor="#ff000000" text="&lt;p&gt;🌱 Weekly Planer&lt;/p&gt;">
+    <node id="bdc13e3d-0730-4d7e-8e1b-61f3aa7a42df" shape="rectangle" side="left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Saturday&lt;/p&gt;">
+      <node id="e6a9e265-9791-4e0d-9c4e-bf3ab09c845d" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="2a9708d9-d45b-4629-a20d-c7faa0a5103d" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="ac55b606-bc5a-47f4-88e5-b34d95c7b81f" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="32dcb2f8-1156-4d48-b4e2-303dd11fef31" shape="rectangle" side="left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Sunday&lt;/p&gt;">
+      <node id="c13c4e45-2ad4-45fd-a5fb-ace67caa70e4" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="24cf8ee4-8519-4bee-9736-752bc939285f" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="ae0520e5-a033-4b59-9899-c8655bcd35f5" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="0a258031-65c7-4c71-a9d2-5937b52d2d5c" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Monday&lt;/p&gt;">
+      <node id="83dd18e4-0200-48fa-97be-19f1e5066558" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="41733f8f-7ced-4fb0-ab6c-0235fbed7589" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="0cf79de4-ee5e-4dd5-9237-550eb38b9414" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="69a23e63-0e26-46bf-8d5d-7153060700ab" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Tuesday&lt;/p&gt;">
+      <node id="bee8e051-b68b-4ed3-b644-bea43017e142" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="933f8cc2-7eb3-463e-9c1b-8554e3bab47c" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="df99606c-d001-47d2-bb57-85df354a558a" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="1ac28942-3978-41e4-8183-700b4e18907e" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Wednesday&lt;/p&gt;">
+      <node id="628e8aed-b4be-47af-87c1-fccb5a200711" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="ba32222b-449b-41bc-bc93-4ab8a0b9441e" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="a656187d-2254-438a-8e60-20ef6862b9fb" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="37dfa4d2-b2cb-4b4d-8361-79e0b143c2c3" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Thursday&lt;/p&gt;">
+      <node id="a1cbec6a-9fd1-469e-af45-a39a16973f8d" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="216db53e-b08a-4a1a-b56d-05e84f1388cb" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="01e7c598-74fd-4a36-b85d-e05f5277b4bf" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+    <node id="4cd6e06c-6929-45a0-ba48-66dbf0da85ff" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Friday&lt;/p&gt;">
+      <node id="a633a15e-3100-49db-859d-591e86880239" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Work&lt;/p&gt;"/>
+      <node id="71386afa-216b-40cb-9855-ffdc26d2c448" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Personal&lt;/p&gt;"/>
+      <node id="679505d1-ef68-4577-be27-2a604070ca02" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Free time&lt;/p&gt;"/>
+    </node>
+  </node>
+</mindmapview>
