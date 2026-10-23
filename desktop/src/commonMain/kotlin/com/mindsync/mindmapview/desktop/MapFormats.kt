@@ -3,6 +3,7 @@ package com.mindsync.mindmapview.desktop
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.MindMapViewFile
+import com.mohamedrejeb.richeditor.model.RichTextState
 
 /** The extension of the files mind maps are saved in, which keep all there is of a mind map. */
 internal const val MIND_MAP_VIEW_EXTENSION = "." + MindMapViewFile.EXTENSION
@@ -11,6 +12,24 @@ internal const val MIND_MAP_VIEW_EXTENSION = "." + MindMapViewFile.EXTENSION
 internal const val FREE_MIND_EXTENSION = ".mm"
 
 internal val OPENABLE_EXTENSIONS = listOf(MIND_MAP_VIEW_EXTENSION, FREE_MIND_EXTENSION)
+
+/** The name of a mind map that has no file yet, and whose root node has no text to name it after. */
+internal const val NEW_MAP_NAME = "mindmap"
+
+private const val MAX_NEW_MAP_NAME_LENGTH = 100
+
+// Characters that a file name may not have on one system or another.
+private val UNSAFE_FILE_NAME_CHARACTERS = Regex("""[\\/:*?"<>|\p{Cntrl}]""")
+private val WHITESPACE = Regex("""\s+""")
+
+// The parts emoji are made of: a file dialog may not show them, and shows other characters in their place.
+private const val EMOJI_VARIATION = '\uFE0F'
+private const val ZERO_WIDTH_JOINER = '\u200D'
+private const val KEYCAP = '\u20E3'
+
+private fun Char.isEmojiPart(): Boolean =
+    isSurrogate() || category == CharCategory.OTHER_SYMBOL || this == EMOJI_VARIATION || this == ZERO_WIDTH_JOINER
+        || this == KEYCAP
 
 internal const val PNG_EXTENSION = ".png"
 internal const val HTML_EXTENSION = ".html"
@@ -49,6 +68,29 @@ internal fun mindMapViewFileName(
     fileName.endsWith(FREE_MIND_EXTENSION, ignoreCase = true) ->
         fileName.dropLast(FREE_MIND_EXTENSION.length) + MIND_MAP_VIEW_EXTENSION
     else -> fileName + MIND_MAP_VIEW_EXTENSION
+}
+
+/**
+ * Returns the name to suggest for a mind map that has no file yet: the text of its root node, whose description is
+ * [rootDescription], made fit to be a file name. Emoji, such as the one a root node starts with, are dropped.
+ * Leading and trailing dots are dropped too, as a name that starts with one is hidden, and one that ends with one
+ * is not kept on Windows.
+ */
+internal fun newMapFileName(
+    rootDescription: String
+): String {
+    val text = RichTextState()
+        .setHtml(rootDescription)
+        .annotatedString
+        .text
+    val name = text
+        .filterNot { it.isEmojiPart() }
+        .replace(UNSAFE_FILE_NAME_CHARACTERS, " ")
+        .replace(WHITESPACE, " ")
+        .trim(' ', '.')
+        .take(MAX_NEW_MAP_NAME_LENGTH)
+        .trimEnd(' ', '.')
+    return name.ifEmpty { NEW_MAP_NAME } + MIND_MAP_VIEW_EXTENSION
 }
 
 /** The name of the file at [path], on any platform's paths. */

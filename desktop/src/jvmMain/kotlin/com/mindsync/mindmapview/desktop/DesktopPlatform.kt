@@ -32,8 +32,11 @@ internal class DesktopPlatform(
         override suspend fun chooseToOpen(current: MapDocument?): MapDocument? =
             chooseFile("Open", FileDialog.LOAD, current?.file, OPENABLE_EXTENSIONS)?.let(::DesktopDocument)
 
-        override suspend fun chooseToSave(current: MapDocument?): MapDocument? {
-            val suggested = current?.file?.let { mindMapViewFileFor(it) }
+        override suspend fun chooseToSave(
+            current: MapDocument?
+            , newName: String
+        ): MapDocument? {
+            val suggested = current?.file?.let { mindMapViewFileFor(it) } ?: File(newName)
             val chosen = chooseFile("Save As", FileDialog.SAVE, suggested) ?: return null
             return DesktopDocument(mindMapViewFileFor(withExtension(chosen, MIND_MAP_VIEW_EXTENSION)))
         }

@@ -194,9 +194,10 @@ internal class MindMapApp(
     }
 
     // Returns whether the mind map is saved: no file may be chosen to save it to. A map opened from a FreeMind
-    // file is saved in this app's own format, next to that file.
+    // file is saved in this app's own format, next to that file. A new map is named after its root node.
     private suspend fun saveAs(): Boolean {
-        val target = platform.files.chooseToSave(document) ?: return false
+        val newName = newMapFileName(state.tree.getRootNode().description)
+        val target = platform.files.chooseToSave(document, newName) ?: return false
         return save(target)
     }
 

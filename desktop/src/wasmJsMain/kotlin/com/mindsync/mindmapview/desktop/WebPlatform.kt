@@ -11,7 +11,6 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val PREFERENCES_PREFIX = "mindmapview.preferences."
-private const val NEW_MAP_NAME = "mindmap"
 
 /** A file the user chose in the browser, which [js] is the JavaScript object of. */
 internal class WebDocument(
@@ -44,8 +43,11 @@ internal object WebPlatform : AppPlatform {
             jsChooseFileToOpen(OPENABLE_EXTENSIONS.joinToString(",")).await<JsAny?>()?.let(::WebDocument)
         }
 
-        override suspend fun chooseToSave(current: MapDocument?): MapDocument? = withFileErrors {
-            val name = mindMapViewFileName(current?.name ?: NEW_MAP_NAME)
+        override suspend fun chooseToSave(
+            current: MapDocument?
+            , newName: String
+        ): MapDocument? = withFileErrors {
+            val name = current?.name?.let(::mindMapViewFileName) ?: newName
             jsChooseFileToSave(name, "Mind maps", "application/x-mindmapview", MIND_MAP_VIEW_EXTENSION)
                 .await<JsAny?>()
                 ?.let(::WebDocument)

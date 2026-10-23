@@ -35,8 +35,14 @@ interface MapFiles {
     /** Returns the mind map the user chooses to open, or null when they choose none. */
     suspend fun chooseToOpen(current: MapDocument?): MapDocument?
 
-    /** Returns where the user chooses to save the mind map in [current] to, in this app's own format. */
-    suspend fun chooseToSave(current: MapDocument?): MapDocument?
+    /**
+     * Returns where the user chooses to save the mind map in [current] to, in this app's own format. A mind map
+     * that has no file yet suggests [newName].
+     */
+    suspend fun chooseToSave(
+        current: MapDocument?
+        , newName: String
+    ): MapDocument?
 
     /** Returns where the user chooses to export the mind map in [current] to, as a file with [extension]. */
     suspend fun chooseToExport(
