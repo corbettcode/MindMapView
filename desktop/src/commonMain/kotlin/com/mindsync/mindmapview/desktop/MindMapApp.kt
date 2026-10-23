@@ -37,6 +37,7 @@ import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.dialog.*
+import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
 import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
@@ -579,6 +580,8 @@ private fun MindMapScreen(
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
     var isPreferencesOpen by remember { mutableStateOf(false) }
+    var isReadmeOpen by remember { mutableStateOf(false) }
+    var isAboutOpen by remember { mutableStateOf(false) }
     // A node that is removed without being confirmed is removed at once.
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
@@ -586,7 +589,8 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
-        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || saveQuestion != null
+        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
+            || isAboutOpen || saveQuestion != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -681,6 +685,10 @@ private fun MindMapScreen(
                         showAttributes = state.showAttributes,
                         onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
+                    )
+                    HelpMenu(
+                        onReadme = { isReadmeOpen = true }
+                        , onAbout = { isAboutOpen = true }
                     )
                 }
                 findBar()
@@ -820,6 +828,14 @@ private fun MindMapScreen(
                 , onSubmit = onPreferencesChange
                 , onDismiss = { isPreferencesOpen = false }
             )
+        }
+
+        if (isReadmeOpen) {
+            ReadmeDialog(onDismiss = { isReadmeOpen = false })
+        }
+
+        if (isAboutOpen) {
+            AboutDialog(onDismiss = { isAboutOpen = false })
         }
 
         operation?.let { currentOperation ->
