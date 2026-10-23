@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Density
 import com.mindsync.library.animator.AnimationStrategy
@@ -1108,17 +1109,21 @@ class MindMapState(
         invalidate()
     }
 
+    // The point of the map at the center of the screen stays there while zooming.
     internal fun onTransform(pan: Offset, zoom: Float) {
+        val center = viewportSize.center
         scaleFactor *= zoom
-        currentPoint = limitPan(currentPoint + pan)
+        currentPoint = limitPan(center - (center - currentPoint) * zoom + pan)
     }
 
-    // The mind map is not panned past its left and top, other than to the nodes a dragged root left there.
+    // The mind map is not panned past its left and top, other than to the nodes a dragged root left there, or as far as
+    // zooming out around the center of the screen moved it.
     private fun limitPan(point: Offset): Offset {
         val (overflowX, overflowY) = mindMapManager.measureOverflow()
+        val zoomedOut = viewportSize.center * maxOf(0f, 1f - scaleFactor)
         return Offset(
-            minOf(overflowX.toPx(density) * scaleFactor, point.x),
-            minOf(overflowY.toPx(density) * scaleFactor, point.y),
+            minOf(maxOf(overflowX.toPx(density) * scaleFactor, zoomedOut.x), point.x),
+            minOf(maxOf(overflowY.toPx(density) * scaleFactor, zoomedOut.y), point.y),
         )
     }
 

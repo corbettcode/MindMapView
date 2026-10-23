@@ -258,6 +258,23 @@ class MindMapTest {
     }
 
     @Test
+    fun zoomKeepsTheCenterOfTheScreen() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        waitForIdle()
+        val screenCenter = with(density) { Offset(400.dp.toPx(), 300.dp.toPx()) }
+        val mapCenter = (screenCenter - state.currentPoint) / state.scaleFactor
+
+        state.onTransform(Offset.Zero, 2f)
+        assertEquals(screenCenter.x, (mapCenter * state.scaleFactor + state.currentPoint).x, 0.5f)
+        assertEquals(screenCenter.y, (mapCenter * state.scaleFactor + state.currentPoint).y, 0.5f)
+
+        state.onTransform(Offset.Zero, 0.25f)
+        assertEquals(screenCenter.x, (mapCenter * state.scaleFactor + state.currentPoint).x, 0.5f)
+        assertEquals(screenCenter.y, (mapCenter * state.scaleFactor + state.currentPoint).y, 0.5f)
+    }
+
+    @Test
     fun rootIsALightGrayOvalWithBlackText() {
         val root: NodeData<*> = Tree<Any>(Dp(150f), Dp(300f)).getRootNode()
         assertIs<OvalNodeData>(root)
