@@ -264,6 +264,24 @@ class MindMapState(
         invalidate()
     }
 
+    /**
+     * Puts the nodes of [tree] in place of those of the map, as one change: unlike [setTree], it can be undone, and
+     * the map is modified until it is saved.
+     */
+    fun replaceTree(tree: Tree<*>) {
+        recordChange {
+            treeChangeJob?.cancel()
+            this.tree.restore(tree.snapshot())
+            val selectedIds = selectedNodes.map { it.id }.filter { it in this.tree.nodes }
+            otherSelectedIds = selectedIds.dropLast(1)
+            mindMapManager.setSelectedNode(selectedIds.lastOrNull()?.let { this.tree.getNode(it) })
+            if (rangeAnchorId !in this.tree.nodes) rangeAnchorId = null
+            mindMapManager.setTree(this.tree)
+            placeRootIfNeeded()
+            animateTreeChange()
+        }
+    }
+
     fun addNode(
         description: String,
         shape: NodeShape = NodeShape.RECTANGLE,

@@ -15,6 +15,7 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -50,6 +51,24 @@ class ModifiedTest {
         val state = stateWithNodes()
 
         assertFalse(state.isModified)
+    }
+
+    @Test
+    fun replacingTheTreeModifiesTheMapAndCanBeUndone() = runComposeUiTest {
+        val state = stateWithNodes()
+        val imported = Tree<Any>(Dp(150f), Dp(300f))
+        val rootId = imported.getRootNode().id
+        imported.addNode("imported", rootId, "imported")
+
+        state.replaceTree(imported)
+
+        assertTrue(state.isModified)
+        assertEquals(setOf(rootId, "imported"), state.tree.nodes.keys)
+
+        state.undo()
+
+        assertFalse(state.isModified)
+        assertEquals(setOf(rootId, "first", "belowFirst", "second"), state.tree.nodes.keys)
     }
 
     @Test

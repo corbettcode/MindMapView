@@ -164,6 +164,8 @@ internal class MindMapApp(
     private var addChildRequest by mutableStateOf(0)
     // What waits for the unsaved changes to be saved or not, while that is asked.
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
+    // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
+    private var isImportConfirmOpen by mutableStateOf(false)
 
     private val recentMaps = platform.recentMaps
     private var recentPaths by mutableStateOf(recentMaps?.paths)
@@ -239,6 +241,28 @@ internal class MindMapApp(
         }
     }
 
+    // The imported map takes the place of the nodes of this one, which keeps its file: saving it saves it there.
+    private suspend fun importMap() {
+        val chosen = platform.files.chooseToOpen(document) ?: return
+        try {
+            state.replaceTree(readMap(chosen.name, platform.files.read(chosen)))
+        } catch (e: MapFileException) {
+            error = "Could not import ${chosen.name}: ${e.message}"
+        } catch (e: IllegalArgumentException) {
+            error = "Could not import ${chosen.name}: ${e.message}"
+        }
+    }
+
+    // A map with only its root has no nodes to lose, so it is not asked about.
+    private fun startImport() {
+        if (state.tree.nodes.size > 1) isImportConfirmOpen = true else scope.launch { importMap() }
+    }
+
+    private fun onImportChoice(isConfirmed: Boolean) {
+        isImportConfirmOpen = false
+        if (isConfirmed) scope.launch { importMap() }
+    }
+
     /** Closes the app with [exit], once the unsaved changes are saved or let go. */
     fun close(exit: () -> Unit) = afterSavingChanges { exit() }
 
@@ -266,6 +290,7 @@ internal class MindMapApp(
         },
         open = { afterSavingChanges { platform.files.chooseToOpen(document)?.let { open(it) } } },
         openRecent = { path -> recentMaps?.let { recent -> afterSavingChanges { open(recent.documentAt(path)) } } },
+        import = ::startImport,
         save = { scope.launch { saveMap() } },
         saveAs = { scope.launch { saveAs() } },
         exportImage = {
@@ -481,6 +506,8 @@ internal class MindMapApp(
             onPreferencesChange = { preferences = platform.preferencesStore.update(it) },
             saveQuestion = afterSaveChoice?.let { saveChangesQuestion(document?.name) },
             onSaveChoice = ::onSaveChoice,
+            isImportConfirmOpen = isImportConfirmOpen,
+            onImportChoice = ::onImportChoice,
             onFind = { showFind() },
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
@@ -565,6 +592,8 @@ private fun MindMapScreen(
     onPreferencesChange: (UserPreferences) -> Unit,
     saveQuestion: String?,
     onSaveChoice: (SaveChoice) -> Unit,
+    isImportConfirmOpen: Boolean,
+    onImportChoice: (isConfirmed: Boolean) -> Unit,
     onFind: () -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
@@ -591,7 +620,7 @@ private fun MindMapScreen(
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
         operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
-            || isAboutOpen || saveQuestion != null
+            || isAboutOpen || saveQuestion != null || isImportConfirmOpen
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -802,6 +831,10 @@ private fun MindMapScreen(
         }
 
         saveQuestion?.let { question -> SaveChangesDialog(question, onSaveChoice) }
+
+        if (isImportConfirmOpen) {
+            ImportDialog(onChoice = onImportChoice)
+        }
 
         if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(

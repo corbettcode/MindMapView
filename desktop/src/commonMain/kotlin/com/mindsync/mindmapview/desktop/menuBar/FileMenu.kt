@@ -21,6 +21,7 @@ class FileActions(
     val new: () -> Unit,
     val open: () -> Unit,
     val openRecent: (path: String) -> Unit,
+    val import: () -> Unit,
     val save: () -> Unit,
     val saveAs: () -> Unit,
     val exportImage: () -> Unit,
@@ -85,6 +86,7 @@ fun FileMenu(
                     }
                 }
             }
+            FileMenuItem("Import...", null, actions.import, onExpandedChange)
             HorizontalDivider()
             FileMenuItem("Save", "Ctrl+S", actions.save, onExpandedChange)
             FileMenuItem("Save As...", "Ctrl+Shift+S", actions.saveAs, onExpandedChange)
@@ -119,13 +121,13 @@ fun FileMenu(
 @Composable
 fun FileMenuItem(
     text: String,
-    shortcut: String,
+    shortcut: String?,
     onClick: () -> Unit,
     onExpandedChange: (Boolean) -> Unit,
 ) {
     DropdownMenuItem(
         text = { Text(text) },
-        trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
+        trailingIcon = shortcut?.let { { Text(it, style = MaterialTheme.typography.labelMedium) } },
         onClick = {
             onExpandedChange(false)
             onClick()
