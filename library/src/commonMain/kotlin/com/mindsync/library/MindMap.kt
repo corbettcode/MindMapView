@@ -235,11 +235,28 @@ fun MindMap(
                     }
                     else if (touchedNode == null) {
                         lastClickedNodeId = null
-                        do {
-                            val event = awaitPointerEvent()
-                            state.onTransform(event.calculatePan(), event.calculateZoom())
-                            event.changes.forEach { if (it.positionChanged()) it.consume() }
-                        } while (event.changes.any { it.pressed })
+                        // Away from the nodes, a drag that starts on an arrow link reshapes it instead of panning.
+                        val draggedLink = state.findArrowLink(down.position)
+                        if (draggedLink != null) {
+                            down.consume()
+                            val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                            if (dragStart != null) {
+                                state.onArrowLinkDragStart(draggedLink, down.position)
+                                state.onArrowLinkDrag(dragStart.position)
+                                drag(dragStart.id) { change ->
+                                    state.onArrowLinkDrag(change.position)
+                                    change.consume()
+                                }
+                                state.onArrowLinkDrop()
+                            }
+                        }
+                        else {
+                            do {
+                                val event = awaitPointerEvent()
+                                state.onTransform(event.calculatePan(), event.calculateZoom())
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            } while (event.changes.any { it.pressed })
+                        }
                     }
                     else {
                         down.consume()

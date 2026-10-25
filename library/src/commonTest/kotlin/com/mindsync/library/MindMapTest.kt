@@ -60,6 +60,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -1733,6 +1734,45 @@ class MindMapTest {
 
         state.goToNode(secondId)
         assertEquals(secondId, state.selectedNode?.id)
+    }
+
+    @Test
+    fun draggingAnArrowLinkBendsItWhereItIsGrabbed() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        state.addNode("second")
+        waitForIdle()
+        val (firstId, secondId) = state.tree.getRootNode().children
+        val link = assertIs<ArrowLink>(state.addArrowLink(firstId, secondId))
+        waitForIdle()
+        val curve = assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, link) })
+        val grabbed = curve.pointAt(0.5f)
+        val moved = with(density) { Offset(80.dp.toPx(), 20.dp.toPx()) }
+        val view = state.currentPoint
+
+        onNodeWithTag(TAG).performMouseInput {
+            val start = grabbed * state.scaleFactor + state.currentPoint
+            moveTo(start)
+            press()
+            (1..4).forEach { step -> moveTo(start + moved * (step / 4f)) }
+            release()
+        }
+        waitForIdle()
+
+        // The curve follows the pointer where it was grabbed, and the view is not panned by the drag.
+        val bent = state.arrowLinks.single()
+        assertNotNull(bent.startInclination)
+        assertNotNull(bent.endInclination)
+        val bentCurve = assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, bent) })
+        assertEquals(0f, bentCurve.distanceTo(grabbed + moved), 1f)
+        assertEquals(view, state.currentPoint)
+
+        // The whole drag is one change.
+        state.undo()
+        assertEquals(listOf(link), state.arrowLinks)
     }
 
     @Test

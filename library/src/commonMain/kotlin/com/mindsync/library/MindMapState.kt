@@ -23,6 +23,7 @@ import com.mindsync.library.command.AddNodeCommand
 import com.mindsync.library.command.RemoveNodeCommand
 import com.mindsync.library.command.UpdateNodeCommand
 import com.mindsync.library.data.ArrowLink
+import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
@@ -165,6 +166,9 @@ class MindMapState(
 
     // The root dragged by the user, as the tree was before it was, until the drag ends.
     private var rootDragStart: TreeSnapshot? = null
+
+    // The arrow link being reshaped by the user, as it was when the drag started, until the drag ends.
+    private var arrowLinkDrag: ArrowLinkDrag? = null
 
     /** Whether there is a change to the map to undo with [undo]. */
     val canUndo: Boolean
@@ -1127,6 +1131,53 @@ class MindMapState(
         invalidate()
     }
 
+    // The link is reshaped from where it is grabbed: the further along the curve, the more its end's control
+    // point follows the pointer.
+    internal fun onArrowLinkDragStart(
+        link: ArrowLink
+        , position: Offset
+    ) {
+        val curve = density.arrowLinkCurve(tree, link) ?: return
+        val grabbed = toTreePoint(position)
+        val t = curve.nearestT(grabbed).coerceIn(MIN_GRAB_T, 1 - MIN_GRAB_T)
+        arrowLinkDrag = ArrowLinkDrag(
+            linkId = link.id
+            , before = tree.snapshot()
+            , startInclination = curve.startControl - curve.start
+            , endInclination = curve.endControl - curve.end
+            , grabbed = grabbed
+            , t = t
+        )
+    }
+
+    // Moving both control points by the least that moves the grabbed point of the curve with the pointer.
+    internal fun onArrowLinkDrag(position: Offset) {
+        val drag = arrowLinkDrag ?: return
+        val link = tree.arrowLinks.firstOrNull { it.id == drag.linkId } ?: return
+        val moved = toTreePoint(position) - drag.grabbed
+        val u = 1 - drag.t
+        val startWeight = 3 * u * u * drag.t
+        val endWeight = 3 * u * drag.t * drag.t
+        val norm = startWeight * startWeight + endWeight * endWeight
+        tree.addArrowLink(
+            link.copy(
+                startInclination = toInclination(drag.startInclination + moved * (startWeight / norm))
+                , endInclination = toInclination(drag.endInclination + moved * (endWeight / norm))
+            )
+        )
+        invalidate()
+    }
+
+    internal fun onArrowLinkDrop() {
+        val drag = arrowLinkDrag ?: return
+        arrowLinkDrag = null
+        if (!drag.before.hasSameContentAs(tree.snapshot())) record(drag.before)
+        invalidate()
+    }
+
+    private fun toInclination(offset: Offset): ArrowLinkInclination =
+        ArrowLinkInclination(Dp(Px(offset.x).toDp(density)), Dp(Px(offset.y).toDp(density)))
+
     // The point of the map at the center of the screen stays there while zooming.
     internal fun onTransform(pan: Offset, zoom: Float) {
         val center = viewportSize.center
@@ -1262,4 +1313,16 @@ private class CopiedNode(
     val node: NodeData<*>
     , val attributes: List<NodeAttribute>
     , val children: List<CopiedNode>
+)
+
+// Near an end of the curve the control points barely move it, so a grab there is taken as a little further in.
+private const val MIN_GRAB_T = 0.15f
+
+private class ArrowLinkDrag(
+    val linkId: String
+    , val before: TreeSnapshot
+    , val startInclination: Offset
+    , val endInclination: Offset
+    , val grabbed: Offset
+    , val t: Float
 )

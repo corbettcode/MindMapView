@@ -1189,6 +1189,14 @@ private fun ArrowLinkMenu(
             }
             HorizontalDivider()
             DropdownMenuItem(
+                text = { Text("Reset Curve") },
+                enabled = link.startInclination != null || link.endInclination != null,
+                onClick = {
+                    onDismiss()
+                    onChange(link.copy(startInclination = null, endInclination = null))
+                },
+            )
+            DropdownMenuItem(
                 text = { Text("Remove Arrow Link") },
                 onClick = {
                     onDismiss()

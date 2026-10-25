@@ -46,6 +46,21 @@ internal class ArrowLinkCurve(
         return nearest
     }
 
+    /** Where along the curve, from 0 at its start to 1 at its end, the point nearest to [point] is. */
+    fun nearestT(point: Offset): Float {
+        var nearestT = 0f
+        var nearest = Float.MAX_VALUE
+        for (step in 0..CURVE_SEGMENTS) {
+            val t = step / CURVE_SEGMENTS.toFloat()
+            val distance = (pointAt(t) - point).getDistanceSquared()
+            if (distance < nearest) {
+                nearest = distance
+                nearestT = t
+            }
+        }
+        return nearestT
+    }
+
     private fun distanceToSegment(
         point: Offset
         , from: Offset
