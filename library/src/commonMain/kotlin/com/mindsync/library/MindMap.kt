@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkLineStyle
+import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
@@ -385,7 +386,6 @@ private fun DrawScope.drawArrowLinks(
 ) {
     val tree = state.tree
     val path = Path()
-    val strokes = ArrowLinkLineStyle.entries.associateWith { arrowLinkStroke(it) }
 
     tree.arrowLinks.forEach { link ->
         val curve = arrowLinkCurve(tree, link) ?: return@forEach
@@ -394,24 +394,32 @@ private fun DrawScope.drawArrowLinks(
         path.cubicTo(
             curve.startControl.x, curve.startControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y,
         )
-        drawPath(path, link.color, style = strokes.getValue(link.lineStyle))
-        if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, link.color)
-        if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, link.color)
+        drawPath(path, link.color, style = arrowLinkStroke(link.lineStyle, link.thickness))
+        // A head grows with the line, but by less, so a thin line still has a head that is easy to see.
+        val headScale = (link.thickness.width.dpVal + ARROW_LINK_WIDTH.dpVal) / (2 * ARROW_LINK_WIDTH.dpVal)
+        if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, link.color, headScale)
+        if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, link.color, headScale)
     }
 }
 
-// A dot is a dash of almost no length, which the round cap draws as a dot as wide as the line.
+// A dot is a dash of almost no length, which the round cap draws as a dot as wide as the line. The round caps
+// also eat into the gaps, so a thick line spreads its pattern out to keep them open.
 private fun DrawScope.arrowLinkStroke(
     lineStyle: ArrowLinkLineStyle
+    , thickness: ArrowLinkThickness
 ): Stroke {
-    val gap = ARROW_LINK_GAP.toPx(this)
+    val spread = maxOf(1f, thickness.width.dpVal / ARROW_LINK_WIDTH.dpVal)
+    val dash = ARROW_LINK_DASH.toPx(this) * spread
+    val gap = ARROW_LINK_GAP.toPx(this) * spread
+    val dot = 0.01f
     val pathEffect = when (lineStyle) {
         ArrowLinkLineStyle.SOLID -> null
-        ArrowLinkLineStyle.DASHED -> PathEffect.dashPathEffect(floatArrayOf(ARROW_LINK_DASH.toPx(this), gap))
-        ArrowLinkLineStyle.DOTTED -> PathEffect.dashPathEffect(floatArrayOf(0.01f, gap))
+        ArrowLinkLineStyle.DASHED -> PathEffect.dashPathEffect(floatArrayOf(dash, gap))
+        ArrowLinkLineStyle.DOTTED -> PathEffect.dashPathEffect(floatArrayOf(dot, gap))
+        ArrowLinkLineStyle.DASH_DOT -> PathEffect.dashPathEffect(floatArrayOf(dash, gap, dot, gap))
     }
     return Stroke(
-        width = ARROW_LINK_WIDTH.toPx(this)
+        width = thickness.width.toPx(this)
         , cap = StrokeCap.Round
         , pathEffect = pathEffect
     )
@@ -424,13 +432,14 @@ private fun DrawScope.drawArrowHead(
     , control: Offset
     , otherEnd: Offset
     , color: Color
+    , scale: Float
 ) {
     val along = (tip - control).takeIf { it.getDistance() > 0f } ?: (tip - otherEnd)
     val length = along.getDistance()
     if (length == 0f) return
     val direction = along / length
-    val across = Offset(-direction.y, direction.x) * ARROW_HEAD_HALF_WIDTH.toPx(this)
-    val base = tip - direction * ARROW_HEAD_LENGTH.toPx(this)
+    val across = Offset(-direction.y, direction.x) * ARROW_HEAD_HALF_WIDTH.toPx(this) * scale
+    val base = tip - direction * ARROW_HEAD_LENGTH.toPx(this) * scale
     val head = Path().apply {
         moveTo(tip.x, tip.y)
         lineTo(base.x + across.x, base.y + across.y)

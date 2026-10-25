@@ -20,6 +20,7 @@ data class ArrowLink(
     , val startInclination: ArrowLinkInclination? = null
     , val endInclination: ArrowLinkInclination? = null
     , val lineStyle: ArrowLinkLineStyle = ArrowLinkLineStyle.SOLID
+    , val thickness: ArrowLinkThickness = ArrowLinkThickness.NORMAL
 ) {
     companion object {
         val DEFAULT_COLOR = Color(0xFFB0B0B0)
@@ -31,6 +32,16 @@ enum class ArrowLinkLineStyle {
     SOLID
     , DASHED
     , DOTTED
+    , DASH_DOT
+}
+
+/** How wide the curve of an [ArrowLink] is. */
+enum class ArrowLinkThickness(
+    val width: Dp
+) {
+    THIN(Dp(1f))
+    , NORMAL(Dp(2f))
+    , THICK(Dp(4f))
 }
 
 /**

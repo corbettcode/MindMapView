@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.ArrowLinkLineStyle
+import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
@@ -100,6 +101,10 @@ object MindMapViewFile {
                         .entries
                         .firstOrNull { it.name.lowercase() == element.attributes["lineStyle"] }
                         ?: ArrowLinkLineStyle.SOLID
+                    , thickness = ArrowLinkThickness
+                        .entries
+                        .firstOrNull { it.name.lowercase() == element.attributes["thickness"] }
+                        ?: ArrowLinkThickness.NORMAL
                     , startInclination = element.inclination("startInclination")
                     , endInclination = element.inclination("endInclination")
                 )
@@ -149,6 +154,7 @@ object MindMapViewFile {
         attribute("startArrow", link.hasStartArrow.toString())
         attribute("endArrow", link.hasEndArrow.toString())
         attribute("lineStyle", link.lineStyle.name.lowercase())
+        attribute("thickness", link.thickness.name.lowercase())
         link.startInclination?.let { attribute("startInclination", "${it.x.dpVal};${it.y.dpVal}") }
         link.endInclination?.let { attribute("endInclination", "${it.x.dpVal};${it.y.dpVal}") }
         append("/>\n")

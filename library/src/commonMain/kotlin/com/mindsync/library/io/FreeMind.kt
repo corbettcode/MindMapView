@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.em
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.ArrowLinkLineStyle
+import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
@@ -23,6 +24,7 @@ import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -44,6 +46,7 @@ object FreeMind {
     private const val DASHES = "7 7"
     private const val DOTS = "2 7"
     private const val CLOSE_DOTS = "3 3"
+    private const val DASHES_AND_DOTS = "7 7 2 7"
     private const val DEFAULT_FONT_POINTS = 12f
 
     fun write(tree: Tree<*>): String = buildString {
@@ -138,6 +141,9 @@ object FreeMind {
             append(" STARTARROW=\"").append(if (link.hasStartArrow) ARROW else NO_ARROW).append('"')
             append(" ENDARROW=\"").append(if (link.hasEndArrow) ARROW else NO_ARROW).append('"')
             link.lineStyle.toDash()?.let { append(" DASH=\"").append(it).append('"') }
+            if (link.thickness != ArrowLinkThickness.NORMAL) {
+                append(" WIDTH=\"").append(link.thickness.width.dpVal.roundToInt()).append('"')
+            }
             link.startInclination?.let { append(" STARTINCLINATION=\"").append(it.toFreeMind()).append('"') }
             link.endInclination?.let { append(" ENDINCLINATION=\"").append(it.toFreeMind()).append('"') }
             append("/>\n")
@@ -214,6 +220,7 @@ object FreeMind {
                     hasStartArrow = element.attributes["STARTARROW"].equals(ARROW, ignoreCase = true),
                     hasEndArrow = !element.attributes["ENDARROW"].equals(NO_ARROW, ignoreCase = true),
                     lineStyle = lineStyleOfDash(element.attributes["DASH"]),
+                    thickness = thicknessOfWidth(element.attributes["WIDTH"]),
                     startInclination = element.inclination("STARTINCLINATION"),
                     endInclination = element.inclination("ENDINCLINATION"),
                 ),
@@ -226,6 +233,7 @@ object FreeMind {
         ArrowLinkLineStyle.SOLID -> null
         ArrowLinkLineStyle.DASHED -> DASHES
         ArrowLinkLineStyle.DOTTED -> DOTS
+        ArrowLinkLineStyle.DASH_DOT -> DASHES_AND_DOTS
     }
 
     // Freeplane has more kinds of dashes than there are line styles, so dots close together are dots too,
@@ -235,7 +243,16 @@ object FreeMind {
     ): ArrowLinkLineStyle = when (dash?.trim()) {
         null, "" -> ArrowLinkLineStyle.SOLID
         DOTS, CLOSE_DOTS -> ArrowLinkLineStyle.DOTTED
+        DASHES_AND_DOTS -> ArrowLinkLineStyle.DASH_DOT
         else -> ArrowLinkLineStyle.DASHED
+    }
+
+    // Freeplane keeps the width of a line in pixels. A width between two thicknesses is the closest of them.
+    private fun thicknessOfWidth(
+        width: String?
+    ): ArrowLinkThickness {
+        val pixels = width?.trim()?.toFloatOrNull() ?: return ArrowLinkThickness.NORMAL
+        return ArrowLinkThickness.entries.minBy { abs(it.width.dpVal - pixels) }
     }
 
     // FreeMind writes an inclination as "x;y;".

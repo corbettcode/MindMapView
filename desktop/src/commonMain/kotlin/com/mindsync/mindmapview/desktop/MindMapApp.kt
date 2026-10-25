@@ -121,6 +121,14 @@ private val ArrowLinkLineStyle.label: String
         ArrowLinkLineStyle.SOLID -> "\u2500\u2500  Solid"
         ArrowLinkLineStyle.DASHED -> "- -  Dashed"
         ArrowLinkLineStyle.DOTTED -> "\u00B7\u00B7\u00B7  Dotted"
+        ArrowLinkLineStyle.DASH_DOT -> "-\u00B7-  Dash-Dot"
+    }
+
+private val ArrowLinkThickness.label: String
+    get() = when (this) {
+        ArrowLinkThickness.THIN -> "Thin"
+        ArrowLinkThickness.NORMAL -> "Normal"
+        ArrowLinkThickness.THICK -> "Thick"
     }
 
 val NodeShape.label: String
@@ -1129,6 +1137,17 @@ private fun ArrowLinkMenu(
                     onClick = {
                         onDismiss()
                         onChange(link.copy(lineStyle = lineStyle))
+                    },
+                )
+            }
+            HorizontalDivider()
+            ArrowLinkThickness.entries.forEach { thickness ->
+                DropdownMenuItem(
+                    text = { Text(thickness.label) },
+                    trailingIcon = { if (thickness == link.thickness) Text("\u2713") },
+                    onClick = {
+                        onDismiss()
+                        onChange(link.copy(thickness = thickness))
                     },
                 )
             }

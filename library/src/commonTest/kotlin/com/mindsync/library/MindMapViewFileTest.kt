@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.ArrowLinkLineStyle
+import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
@@ -41,7 +42,8 @@ class MindMapViewFileTest {
                 "link2", "c", rootId, Color.Green, hasStartArrow = true, hasEndArrow = false
                 , startInclination = ArrowLinkInclination(Dp(-12.5f), Dp(40f))
                 , endInclination = ArrowLinkInclination(Dp(3f), Dp(-7.25f))
-                , lineStyle = ArrowLinkLineStyle.DASHED
+                , lineStyle = ArrowLinkLineStyle.DASH_DOT
+                , thickness = ArrowLinkThickness.THICK
             )
         )
         return tree
@@ -125,13 +127,32 @@ class MindMapViewFileTest {
     }
 
     @Test
-    fun anArrowLinkWithoutALineStyleIsSolid() {
+    fun aFreeMindMapKeepsTheThicknessesOfItsArrowLinks() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        ArrowLinkThickness.entries.forEach { thickness ->
+            tree.addArrowLink(ArrowLink(thickness.name, rootId, "a", thickness = thickness))
+        }
+
+        val read = FreeMind.read(FreeMind.write(tree))
+
+        assertEquals(ArrowLinkThickness.entries, read.arrowLinks.map { it.thickness })
+    }
+
+    @Test
+    fun anArrowLinkWithoutALineStyleOrThicknessIsSolidAndNormal() {
         val tree = Tree<Any>()
         tree.addNode("a", tree.getRootNode().id, "<p>a</p>")
         tree.addArrowLink(ArrowLink("link", tree.getRootNode().id, "a"))
-        val written = MindMapViewFile.write(tree).replace(" lineStyle=\"solid\"", "")
+        val written = MindMapViewFile
+            .write(tree)
+            .replace(" lineStyle=\"solid\"", "")
+            .replace(" thickness=\"normal\"", "")
 
-        assertEquals(ArrowLinkLineStyle.SOLID, MindMapViewFile.read(written).arrowLinks.single().lineStyle)
+        val link = MindMapViewFile.read(written).arrowLinks.single()
+        assertEquals(ArrowLinkLineStyle.SOLID, link.lineStyle)
+        assertEquals(ArrowLinkThickness.NORMAL, link.thickness)
     }
 
     @Test
