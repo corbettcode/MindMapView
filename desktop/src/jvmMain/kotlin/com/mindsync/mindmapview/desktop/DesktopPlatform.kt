@@ -103,13 +103,14 @@ internal class DesktopPlatform(
         override val paths: List<String>
             get() = recentFiles.paths
 
-        override fun add(document: MapDocument): List<String> = recentFiles.add(document.file)
+        override suspend fun add(document: MapDocument): List<String> = recentFiles.add(document.file)
 
-        override fun remove(document: MapDocument): List<String> = recentFiles.remove(document.file)
+        override suspend fun remove(path: String): List<String> = recentFiles.remove(File(path))
 
         override fun documentAt(path: String): MapDocument = DesktopDocument(File(path))
 
-        override fun isMissing(path: String): Boolean = !File(path).isFile
+        override suspend fun access(path: String): RecentMapAccess =
+            if (File(path).isFile) RecentMapAccess.AVAILABLE else RecentMapAccess.MISSING
     }
 
     override fun encodePng(image: ImageBitmap): ByteArray = try {

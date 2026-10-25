@@ -133,7 +133,8 @@ to main. Pages has to be turned on once, with GitHub Actions as its source (Sett
 
 In the browser the app works as on the desktop, except:
 - In Chrome and Edge, Save writes back to the file that was opened. Other browsers download the map instead.
-- There is no Recent menu: a web page cannot open a file again by its path.
+- In Chrome and Edge, the Recent menu lists the maps opened or saved last, by name: a web page is not told which
+  folder a file is in. The browser asks to allow the file again before it opens. Other browsers have no Recent menu.
 - Pasting text from other programs asks for the browser's permission first.
 - A note's images only show when their site allows other sites to load them.
 - Preferences are kept in the browser's local storage.

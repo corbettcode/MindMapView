@@ -70,6 +70,23 @@ internal fun jsChooseFileToSave(
 
 internal fun jsFileName(file: JsAny): String = js("file.name")
 
+// The recent mind maps are kept by recent-maps.js, which the page loads before the app.
+
+internal fun jsHasRecentMaps(): Boolean = js("window.mindMapViewRecent.isSupported()")
+
+internal fun jsLoadRecentMaps(): Promise<JsAny?> = js("window.mindMapViewRecent.load()")
+
+internal fun jsRecentMapKeys(): String = js("window.mindMapViewRecent.keys()")
+
+internal fun jsAddRecentMap(file: JsAny): Promise<JsString> = js("window.mindMapViewRecent.add(file)")
+
+internal fun jsRemoveRecentMap(key: String): Promise<JsString> = js("window.mindMapViewRecent.remove(key)")
+
+internal fun jsRecentMapFile(key: String): JsAny = js("window.mindMapViewRecent.file(key)")
+
+/** Resolves to "available", "missing" or "denied". */
+internal fun jsRecentMapAccess(key: String): Promise<JsString> = js("window.mindMapViewRecent.access(key)")
+
 internal fun jsHasHandle(file: JsAny): Boolean = js("!!file.handle")
 
 internal fun jsReadFile(file: JsAny): Promise<JsString> =

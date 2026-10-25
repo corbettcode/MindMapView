@@ -5,6 +5,7 @@ package com.mindsync.mindmapview.desktop
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import kotlinx.coroutines.await
+import kotlin.js.Promise
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import kotlin.io.encoding.Base64
@@ -27,6 +28,40 @@ private suspend fun <T> withFileErrors(action: suspend () -> T): T = try {
     action()
 } catch (e: Throwable) {
     throw MapFileException(e.message ?: "the browser did not allow it")
+}
+
+// Keys are joined by a character no file name has.
+private fun recentKeys(joined: String): List<String> = if (joined.isEmpty()) emptyList() else joined.split('\u0000')
+
+/**
+ * The mind maps opened last, kept with their file handles. The browser never says which folder a file is in, so
+ * a mind map is shown by its name alone.
+ */
+private object WebRecentMaps : RecentMaps {
+    override var paths: List<String> = recentKeys(jsRecentMapKeys())
+        private set
+
+    override suspend fun add(document: MapDocument): List<String> = update(jsAddRecentMap(document.js))
+
+    override suspend fun remove(path: String): List<String> = update(jsRemoveRecentMap(path))
+
+    override fun documentAt(path: String): MapDocument = WebDocument(jsRecentMapFile(path))
+
+    override suspend fun access(path: String): RecentMapAccess =
+        when (jsRecentMapAccess(path).await<JsString>().toString()) {
+            "available" -> RecentMapAccess.AVAILABLE
+            "missing" -> RecentMapAccess.MISSING
+            else -> RecentMapAccess.DENIED
+        }
+
+    override fun locationOf(path: String): String = fileNameOf(path)
+
+    override fun folderOf(path: String): String? = null
+
+    private suspend fun update(keys: Promise<JsString>): List<String> {
+        paths = recentKeys(keys.await<JsString>().toString())
+        return paths
+    }
 }
 
 /**
@@ -94,7 +129,8 @@ internal object WebPlatform : AppPlatform {
         )
     }
 
-    override val recentMaps: RecentMaps? = null
+    // Loaded before the app starts, as the app reads the paths once to start with.
+    override val recentMaps: RecentMaps? = if (jsHasRecentMaps()) WebRecentMaps else null
 
     override fun encodePng(image: ImageBitmap): ByteArray =
         Image.makeFromBitmap(image.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)?.bytes

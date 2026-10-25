@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.mindsync.mindmapview.desktop.fileNameOf
-import com.mindsync.mindmapview.desktop.folderOf
 import com.mindsync.mindmapview.desktop.sharedNames
 
 class FileActions(
@@ -36,6 +35,7 @@ fun FileMenu(
     actions: FileActions,
     // Null where mind maps cannot be opened again from where they were, as in a browser.
     recentPaths: List<String>?,
+    recentFolderOf: (path: String) -> String?,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
@@ -72,8 +72,9 @@ fun FileMenu(
                             text = {
                                 Column {
                                     Text(name)
-                                    if (name in sharedNames) {
-                                        Text(folderOf(path), style = MaterialTheme.typography.labelSmall)
+                                    val folder = recentFolderOf(path)
+                                    if (name in sharedNames && folder != null) {
+                                        Text(folder, style = MaterialTheme.typography.labelSmall)
                                     }
                                 }
                             },

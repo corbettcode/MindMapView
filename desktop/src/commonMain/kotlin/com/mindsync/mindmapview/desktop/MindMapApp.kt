@@ -241,8 +241,11 @@ internal class MindMapApp(
         if (state.isModified) afterSaveChoice = action else scope.launch { action() }
     }
 
-    // A mind map that cannot be opened is no recent file any longer.
-    private suspend fun open(chosen: MapDocument) {
+    // A recent mind map that cannot be opened is no recent one any longer.
+    private suspend fun open(
+        chosen: MapDocument
+        , recentPath: String? = null
+    ) {
         try {
             state.setTree(readMap(chosen.name, platform.files.read(chosen)))
             state.animateTreeChange()
@@ -251,10 +254,10 @@ internal class MindMapApp(
             recentPaths = recentMaps?.add(chosen)
         } catch (e: MapFileException) {
             error = "Could not open ${chosen.name}: ${e.message}"
-            recentPaths = recentMaps?.remove(chosen)
+            recentPath?.let { recentPaths = recentMaps?.remove(it) }
         } catch (e: IllegalArgumentException) {
             error = "Could not open ${chosen.name}: ${e.message}"
-            recentPaths = recentMaps?.remove(chosen)
+            recentPath?.let { recentPaths = recentMaps?.remove(it) }
         }
     }
 
@@ -275,20 +278,24 @@ internal class MindMapApp(
         if (state.tree.nodes.size > 1) isImportConfirmOpen = true else scope.launch { importMap() }
     }
 
-    // A missing file is told about before the unsaved changes are asked about, as nothing would be opened.
+    // A file that is missing, or that the browser is not allowed to open, is told about before the unsaved
+    // changes are asked about, as nothing would be opened. A browser asks for its permission at once, while
+    // the click on the menu still counts as the user's.
     private fun openRecent(path: String) {
         val recent = recentMaps ?: return
-        if (recent.isMissing(path)) {
-            missingRecentPath = path
-        } else {
-            afterSavingChanges { open(recent.documentAt(path)) }
+        scope.launch {
+            when (recent.access(path)) {
+                RecentMapAccess.AVAILABLE -> afterSavingChanges { open(recent.documentAt(path), path) }
+                RecentMapAccess.MISSING -> missingRecentPath = path
+                RecentMapAccess.DENIED -> error = "Could not open ${fileNameOf(path)}: it was not allowed"
+            }
         }
     }
 
     private fun onMissingRecentChoice(isRemoved: Boolean) {
         val path = missingRecentPath ?: return
         missingRecentPath = null
-        if (isRemoved) recentMaps?.let { recent -> recentPaths = recent.remove(recent.documentAt(path)) }
+        if (isRemoved) scope.launch { recentPaths = recentMaps?.remove(path) }
     }
 
     private fun onImportChoice(isConfirmed: Boolean) {
@@ -525,6 +532,8 @@ internal class MindMapApp(
             onSuccessMessageDismiss = { successMessage = null },
             fileActions = fileActions,
             recentPaths = recentPaths,
+            recentFolderOf = { path -> recentMaps?.folderOf(path) },
+            recentLocationOf = { path -> recentMaps?.locationOf(path) ?: path },
             fileMenuExpanded = fileMenuExpanded,
             onFileMenuExpandedChange = { fileMenuExpanded = it },
             arrowLinkSourceId = arrowLinkSourceId,
@@ -613,6 +622,8 @@ private fun MindMapScreen(
     onSuccessMessageDismiss: () -> Unit,
     fileActions: FileActions,
     recentPaths: List<String>?,
+    recentFolderOf: (path: String) -> String?,
+    recentLocationOf: (path: String) -> String,
     fileMenuExpanded: Boolean,
     onFileMenuExpandedChange: (Boolean) -> Unit,
     arrowLinkSourceId: String?,
@@ -711,6 +722,7 @@ private fun MindMapScreen(
                     FileMenu(
                         fileActions
                         , recentPaths
+                        , recentFolderOf
                         , fileMenuExpanded
                         , onFileMenuExpandedChange
                     )
@@ -873,7 +885,9 @@ private fun MindMapScreen(
             ImportDialog(onChoice = onImportChoice)
         }
 
-        missingRecentPath?.let { path -> MissingRecentFileDialog(path, onChoice = onMissingRecentChoice) }
+        missingRecentPath?.let { path ->
+            MissingRecentFileDialog(recentLocationOf(path), onChoice = onMissingRecentChoice)
+        }
 
         if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(

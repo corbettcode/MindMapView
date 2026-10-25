@@ -17,10 +17,14 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.window.ComposeViewport
 import com.mindsync.library.rememberMindMapState
 
-@OptIn(ExperimentalComposeUiApi::class)
+// The recent mind maps are loaded first, as the app reads them once to start with.
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalWasmJsInterop::class)
 fun main() {
-    ComposeViewport(viewportContainerId = "app") {
-        WebApp()
+    jsLoadRecentMaps().then {
+        ComposeViewport(viewportContainerId = "app") {
+            WebApp()
+        }
+        null
     }
 }
 

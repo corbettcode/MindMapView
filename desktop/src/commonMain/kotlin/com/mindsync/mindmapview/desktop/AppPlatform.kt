@@ -21,7 +21,10 @@ interface AppPlatform {
     val clipboard: SystemClipboard
     val preferencesStore: UserPreferencesStore
 
-    /** The mind maps opened last, or null where they cannot be opened again, as in a browser. */
+    /**
+     * The mind maps opened last, or null where they cannot be opened again, as in a browser without the File
+     * System Access API.
+     */
     val recentMaps: RecentMaps?
 
     /** Returns [image] as the bytes of a PNG file. */
@@ -60,18 +63,34 @@ interface MapFiles {
     )
 }
 
+/**
+ * The mind maps opened last, each known by a path: on the desktop the path of its file, and in a browser a key
+ * that ends in the file's name, as a page is not told where a file is.
+ */
 interface RecentMaps {
     /** The paths of the mind maps, the most recent first. */
     val paths: List<String>
 
-    fun add(document: MapDocument): List<String>
+    suspend fun add(document: MapDocument): List<String>
 
-    fun remove(document: MapDocument): List<String>
+    suspend fun remove(path: String): List<String>
 
     fun documentAt(path: String): MapDocument
 
-    /** Whether there is no mind map at [path] any longer, as when it was moved or deleted. */
-    fun isMissing(path: String): Boolean
+    /** Whether the mind map at [path] can be opened, which a browser may first ask the user to allow. */
+    suspend fun access(path: String): RecentMapAccess
+
+    /** Where the mind map at [path] is, as the user is shown it. */
+    fun locationOf(path: String): String = path
+
+    /** The folder of the mind map at [path], to tell apart maps of the same name, or null when it is not known. */
+    fun folderOf(path: String): String? = com.mindsync.mindmapview.desktop.folderOf(path)
+}
+
+enum class RecentMapAccess {
+    AVAILABLE
+    , MISSING
+    , DENIED
 }
 
 interface SystemClipboard {
