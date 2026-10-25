@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <node id="root" color="#ffcccccc" textColor="#ff000000" text="&lt;p&gt;🧭 &lt;b&gt;MindMapView Tour&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;&lt;b&gt;Welcome!&lt;/b&gt; Each branch around this root shows one group of features.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Hover a node with a dot on its edge to read its note.&lt;/li&gt;&lt;li&gt;Right-click a node or an arrow link for its menu.&lt;/li&gt;&lt;li&gt;Drag an arrow link to bend it; drag empty space to pan; scroll to zoom.&lt;/li&gt;&lt;/ul&gt;">
+    <node id="shapes" shape="rectangle" side="right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;🔷 &lt;b&gt;Shapes&lt;/b&gt;&lt;/p&gt;">
+      <node id="circle" shape="circle" color="#ff2d5728" textColor="#ffffffff" text="&lt;p&gt;Circle&lt;/p&gt;"/>
+      <node id="rectangle" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Rectangle&lt;/p&gt;"/>
+      <node id="stadium" shape="stadium" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;Stadium&lt;/p&gt;"/>
+      <node id="oval" shape="oval" color="#ff9bc4e2" textColor="#ff000000" text="&lt;p&gt;Oval&lt;/p&gt;"/>
+      <node id="square" shape="square" color="#ffc9b6e4" textColor="#ff000000" text="&lt;p&gt;Square&lt;/p&gt;"/>
+    </node>
+    <node id="colors" shape="stadium" side="upper_right" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;🎨 &lt;b&gt;Colours&lt;/b&gt;&lt;/p&gt;">
+      <node id="navy" shape="rectangle" color="#ff1f3a5f" textColor="#ffffffff" text="&lt;p&gt;Navy with white text&lt;/p&gt;"/>
+      <node id="coral" shape="oval" color="#ffff8a65" textColor="#ff000000" text="&lt;p&gt;Coral&lt;/p&gt;"/>
+      <node id="mint" shape="stadium" color="#ffa8e6cf" textColor="#ff000000" text="&lt;p&gt;Mint&lt;/p&gt;"/>
+      <node id="charcoal" shape="rectangle" color="#ff333333" textColor="#ffffd54f" text="&lt;p&gt;Charcoal with gold text&lt;/p&gt;"/>
+    </node>
+    <node id="richtext" shape="oval" side="upper_left" color="#ff9bc4e2" textColor="#ff000000" text="&lt;p&gt;✍️ &lt;b&gt;Rich Text&lt;/b&gt;&lt;/p&gt;">
+      <node id="styles" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;&lt;b&gt;Bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;u&gt;underlined&lt;/u&gt; and &lt;s&gt;struck&lt;/s&gt;&lt;/p&gt;"/>
+      <node id="spancolor" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Text in &lt;span style=&quot;color: #c62828;&quot;&gt;red&lt;/span&gt; and &lt;span style=&quot;color: #1565c0;&quot;&gt;blue&lt;/span&gt;&lt;/p&gt;"/>
+      <node id="bigsmall" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;Large&lt;/span&gt; and &lt;span style=&quot;font-size: 10px;&quot;&gt;small&lt;/span&gt;&lt;/p&gt;"/>
+      <node id="list" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;ul&gt;&lt;li&gt;A bulleted&lt;/li&gt;&lt;li&gt;list in a node&lt;/li&gt;&lt;/ul&gt;"/>
+      <node id="link" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;A link: &lt;a href=&quot;https://github.com/corbettcode/MindMapView&quot;&gt;MindMapView on GitHub&lt;/a&gt;&lt;/p&gt;"/>
+    </node>
+    <node id="notes" shape="rectangle" side="left" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;📝 &lt;b&gt;Notes &amp;amp; Attributes&lt;/b&gt;&lt;/p&gt;">
+      <node id="withnote" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;This node has a note&lt;/p&gt;" note="&lt;p&gt;Notes hold &lt;b&gt;rich text&lt;/b&gt; too:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;numbered lists&lt;/li&gt;&lt;li&gt;&lt;i&gt;styled&lt;/i&gt; text&lt;/li&gt;&lt;li&gt;links, like &lt;a href=&quot;https://freemind.sourceforge.io&quot;&gt;FreeMind&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;"/>
+      <node id="withattrs" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;📋 Task with attributes&lt;/p&gt;">
+        <attribute name="Status" value="In progress"/>
+        <attribute name="Owner" value="Paul"/>
+        <attribute name="Due" value="2026-11-15"/>
+        <attribute name="Priority" value="High"/>
+      </node>
+      <node id="both" shape="stadium" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;Note &lt;i&gt;and&lt;/i&gt; attributes&lt;/p&gt;" note="&lt;p&gt;Attributes show as a table below the text when &lt;b&gt;View → Show All Attributes&lt;/b&gt; is on.&lt;/p&gt;">
+        <attribute name="Kind" value="Example"/>
+      </node>
+    </node>
+    <node id="folding" shape="circle" side="lower_left" color="#ff2d5728" textColor="#ffffffff" text="&lt;p&gt;📁 &lt;b&gt;Folding&lt;/b&gt;&lt;/p&gt;">
+      <node id="folded" shape="rectangle" folded="true" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Folded: click the ring&lt;/p&gt;">
+        <node id="hidden1" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Hidden child one&lt;/p&gt;"/>
+        <node id="hidden2" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Hidden child two&lt;/p&gt;">
+          <node id="hidden21" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Even deeper&lt;/p&gt;"/>
+        </node>
+      </node>
+      <node id="open" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Unfolded branch&lt;/p&gt;">
+        <node id="level2" shape="oval" color="#ff9bc4e2" textColor="#ff000000" text="&lt;p&gt;Level two&lt;/p&gt;">
+          <node id="level3" shape="stadium" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;Level three&lt;/p&gt;"/>
+        </node>
+      </node>
+    </node>
+    <node id="links" shape="stadium" side="lower_right" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;🔗 &lt;b&gt;Arrow Links&lt;/b&gt;&lt;/p&gt;">
+      <node id="l_solid" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Solid · normal · forward&lt;/p&gt;"/>
+      <node id="l_dashed" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Dashed · thick · both ways&lt;/p&gt;"/>
+      <node id="l_dotted" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Dotted · thin · backward&lt;/p&gt;"/>
+      <node id="l_dashdot" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Dash-dot · no arrowheads&lt;/p&gt;"/>
+      <node id="l_bent" shape="rectangle" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;Bent by dragging&lt;/p&gt;"/>
+    </node>
+  </node>
+  <arrowlink id="a_solid" source="l_solid" target="circle" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="solid" thickness="normal"/>
+  <arrowlink id="a_dashed" source="l_dashed" target="mint" color="#ffb3261e" startArrow="true" endArrow="true" lineStyle="dashed" thickness="thick"/>
+  <arrowlink id="a_dotted" source="l_dotted" target="level3" color="#ff0b5394" startArrow="true" endArrow="false" lineStyle="dotted" thickness="thin"/>
+  <arrowlink id="a_dashdot" source="l_dashdot" target="stadium" color="#ff274e13" startArrow="false" endArrow="false" lineStyle="dash_dot" thickness="normal"/>
+  <arrowlink id="a_bent" source="l_bent" target="square" color="#ff8a5fa3" startArrow="false" endArrow="true" lineStyle="solid" thickness="thick" startInclination="320.0;60.0" endInclination="260.0;-40.0"/>
+</mindmapview>

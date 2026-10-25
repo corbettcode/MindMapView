@@ -9,4 +9,6 @@
     <node id="fbe28dc7-ddee-44d8-9604-7d974f11e0ce" shape="rectangle" side="lower_right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 6&lt;/p&gt;"/>
     <node id="49700fbe-a535-42dc-b638-88c0c452f079" shape="rectangle" side="upper_right" color="#ffffcf96" textColor="#ff000000" text="&lt;p&gt;node 3&lt;/p&gt;"/>
   </node>
+  <arrowlink id="9f7c921e-78bc-4f3b-ad19-ba82dc953647" source="fbe28dc7-ddee-44d8-9604-7d974f11e0ce" target="b2b9eaae-7eb7-4059-8175-d587c1bddf32" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="solid" thickness="thin"/>
+  <arrowlink id="0d54b13b-7e96-428d-89f5-b5151d275fc5" source="b2b9eaae-7eb7-4059-8175-d587c1bddf32" target="49700fbe-a535-42dc-b638-88c0c452f079" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="dash_dot" thickness="normal" startInclination="164.37608;-333.93466" endInclination="125.67362;-174.91815"/>
 </mindmapview>
