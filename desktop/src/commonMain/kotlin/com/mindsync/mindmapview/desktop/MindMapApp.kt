@@ -181,6 +181,8 @@ internal class MindMapApp(
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
     // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
     private var isImportConfirmOpen by mutableStateOf(false)
+    // The recent file that was chosen but is not found, while the user is asked whether to remove it from the list.
+    private var missingRecentPath by mutableStateOf<String?>(null)
 
     private val recentMaps = platform.recentMaps
     private var recentPaths by mutableStateOf(recentMaps?.paths)
@@ -273,6 +275,22 @@ internal class MindMapApp(
         if (state.tree.nodes.size > 1) isImportConfirmOpen = true else scope.launch { importMap() }
     }
 
+    // A missing file is told about before the unsaved changes are asked about, as nothing would be opened.
+    private fun openRecent(path: String) {
+        val recent = recentMaps ?: return
+        if (recent.isMissing(path)) {
+            missingRecentPath = path
+        } else {
+            afterSavingChanges { open(recent.documentAt(path)) }
+        }
+    }
+
+    private fun onMissingRecentChoice(isRemoved: Boolean) {
+        val path = missingRecentPath ?: return
+        missingRecentPath = null
+        if (isRemoved) recentMaps?.let { recent -> recentPaths = recent.remove(recent.documentAt(path)) }
+    }
+
     private fun onImportChoice(isConfirmed: Boolean) {
         isImportConfirmOpen = false
         if (isConfirmed) scope.launch { importMap() }
@@ -304,7 +322,7 @@ internal class MindMapApp(
             }
         },
         open = { afterSavingChanges { platform.files.chooseToOpen(document)?.let { open(it) } } },
-        openRecent = { path -> recentMaps?.let { recent -> afterSavingChanges { open(recent.documentAt(path)) } } },
+        openRecent = ::openRecent,
         import = ::startImport,
         save = { scope.launch { saveMap() } },
         saveAs = { scope.launch { saveAs() } },
@@ -523,6 +541,8 @@ internal class MindMapApp(
             onSaveChoice = ::onSaveChoice,
             isImportConfirmOpen = isImportConfirmOpen,
             onImportChoice = ::onImportChoice,
+            missingRecentPath = missingRecentPath,
+            onMissingRecentChoice = ::onMissingRecentChoice,
             onFind = { showFind() },
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
@@ -609,6 +629,8 @@ private fun MindMapScreen(
     onSaveChoice: (SaveChoice) -> Unit,
     isImportConfirmOpen: Boolean,
     onImportChoice: (isConfirmed: Boolean) -> Unit,
+    missingRecentPath: String?,
+    onMissingRecentChoice: (isRemoved: Boolean) -> Unit,
     onFind: () -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
@@ -635,7 +657,7 @@ private fun MindMapScreen(
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
         operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
-            || isAboutOpen || saveQuestion != null || isImportConfirmOpen
+            || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -850,6 +872,8 @@ private fun MindMapScreen(
         if (isImportConfirmOpen) {
             ImportDialog(onChoice = onImportChoice)
         }
+
+        missingRecentPath?.let { path -> MissingRecentFileDialog(path, onChoice = onMissingRecentChoice) }
 
         if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(

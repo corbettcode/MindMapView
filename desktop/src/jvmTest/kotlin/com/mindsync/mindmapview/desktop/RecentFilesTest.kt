@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
+import com.mindsync.mindmapview.desktop.dialog.missingRecentFileMessage
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,5 +55,13 @@ class RecentFilesTest {
     fun sharedNamesAreTheNamesOfFilesInMoreThanOneFolder() {
         val paths = listOf("/one/a.mm", "/two/a.mm", "/one/b.mm", "/two/c.mm")
         assertEquals(setOf("a.mm"), sharedNames(paths))
+    }
+
+    @Test
+    fun aMissingFileIsToldAboutWithItsPath() {
+        assertEquals(
+            "The mind map could not be found:\n/one/a.mm\n\nRemove it from the recent files?"
+            , missingRecentFileMessage("/one/a.mm")
+        )
     }
 }

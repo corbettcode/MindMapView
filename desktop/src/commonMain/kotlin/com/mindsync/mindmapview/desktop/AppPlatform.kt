@@ -69,6 +69,9 @@ interface RecentMaps {
     fun remove(document: MapDocument): List<String>
 
     fun documentAt(path: String): MapDocument
+
+    /** Whether there is no mind map at [path] any longer, as when it was moved or deleted. */
+    fun isMissing(path: String): Boolean
 }
 
 interface SystemClipboard {

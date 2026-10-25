@@ -108,6 +108,8 @@ internal class DesktopPlatform(
         override fun remove(document: MapDocument): List<String> = recentFiles.remove(document.file)
 
         override fun documentAt(path: String): MapDocument = DesktopDocument(File(path))
+
+        override fun isMissing(path: String): Boolean = !File(path).isFile
     }
 
     override fun encodePng(image: ImageBitmap): ByteArray = try {
