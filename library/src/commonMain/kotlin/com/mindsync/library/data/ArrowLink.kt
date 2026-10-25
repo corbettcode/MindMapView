@@ -19,10 +19,18 @@ data class ArrowLink(
     , val hasEndArrow: Boolean = true
     , val startInclination: ArrowLinkInclination? = null
     , val endInclination: ArrowLinkInclination? = null
+    , val lineStyle: ArrowLinkLineStyle = ArrowLinkLineStyle.SOLID
 ) {
     companion object {
         val DEFAULT_COLOR = Color(0xFFB0B0B0)
     }
+}
+
+/** How the curve of an [ArrowLink] is stroked. */
+enum class ArrowLinkLineStyle {
+    SOLID
+    , DASHED
+    , DOTTED
 }
 
 /**

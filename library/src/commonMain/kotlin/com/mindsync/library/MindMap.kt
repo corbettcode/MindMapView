@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.ArrowLink
+import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
@@ -92,6 +93,8 @@ private val FOLD_MARKER_WIDTH = Dp(2f)
 // How near to an arrow link a click on it has to be.
 internal val ARROW_LINK_REACH = Dp(8f)
 private val ARROW_LINK_WIDTH = Dp(2f)
+private val ARROW_LINK_DASH = Dp(8f)
+private val ARROW_LINK_GAP = Dp(6f)
 private val ARROW_HEAD_LENGTH = Dp(12f)
 private val ARROW_HEAD_HALF_WIDTH = Dp(5f)
 
@@ -377,10 +380,12 @@ private fun DrawScope.drawTree(
     }
 }
 
-private fun DrawScope.drawArrowLinks(state: MindMapState) {
+private fun DrawScope.drawArrowLinks(
+    state: MindMapState
+) {
     val tree = state.tree
     val path = Path()
-    val stroke = Stroke(width = ARROW_LINK_WIDTH.toPx(this), cap = StrokeCap.Round)
+    val strokes = ArrowLinkLineStyle.entries.associateWith { arrowLinkStroke(it) }
 
     tree.arrowLinks.forEach { link ->
         val curve = arrowLinkCurve(tree, link) ?: return@forEach
@@ -389,10 +394,27 @@ private fun DrawScope.drawArrowLinks(state: MindMapState) {
         path.cubicTo(
             curve.startControl.x, curve.startControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y,
         )
-        drawPath(path, link.color, style = stroke)
+        drawPath(path, link.color, style = strokes.getValue(link.lineStyle))
         if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, link.color)
         if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, link.color)
     }
+}
+
+// A dot is a dash of almost no length, which the round cap draws as a dot as wide as the line.
+private fun DrawScope.arrowLinkStroke(
+    lineStyle: ArrowLinkLineStyle
+): Stroke {
+    val gap = ARROW_LINK_GAP.toPx(this)
+    val pathEffect = when (lineStyle) {
+        ArrowLinkLineStyle.SOLID -> null
+        ArrowLinkLineStyle.DASHED -> PathEffect.dashPathEffect(floatArrayOf(ARROW_LINK_DASH.toPx(this), gap))
+        ArrowLinkLineStyle.DOTTED -> PathEffect.dashPathEffect(floatArrayOf(0.01f, gap))
+    }
+    return Stroke(
+        width = ARROW_LINK_WIDTH.toPx(this)
+        , cap = StrokeCap.Round
+        , pathEffect = pathEffect
+    )
 }
 
 // The head points the way the curve arrives at its tip: away from the control point of that end, or from

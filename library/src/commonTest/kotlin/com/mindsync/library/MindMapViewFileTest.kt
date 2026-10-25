@@ -3,6 +3,7 @@ package com.mindsync.library
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
@@ -40,6 +41,7 @@ class MindMapViewFileTest {
                 "link2", "c", rootId, Color.Green, hasStartArrow = true, hasEndArrow = false
                 , startInclination = ArrowLinkInclination(Dp(-12.5f), Dp(40f))
                 , endInclination = ArrowLinkInclination(Dp(3f), Dp(-7.25f))
+                , lineStyle = ArrowLinkLineStyle.DASHED
             )
         )
         return tree
@@ -106,6 +108,30 @@ class MindMapViewFileTest {
         assertEquals(LayoutSide.LEFT, read.sideOf("a"))
         assertEquals(LayoutSide.RIGHT, read.sideOf("b"))
         assertEquals(FreeMind.write(imported), FreeMind.write(read))
+    }
+
+    @Test
+    fun aFreeMindMapKeepsTheLineStylesOfItsArrowLinks() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        ArrowLinkLineStyle.entries.forEach { lineStyle ->
+            tree.addArrowLink(ArrowLink(lineStyle.name, rootId, "a", lineStyle = lineStyle))
+        }
+
+        val read = FreeMind.read(FreeMind.write(tree))
+
+        assertEquals(ArrowLinkLineStyle.entries, read.arrowLinks.map { it.lineStyle })
+    }
+
+    @Test
+    fun anArrowLinkWithoutALineStyleIsSolid() {
+        val tree = Tree<Any>()
+        tree.addNode("a", tree.getRootNode().id, "<p>a</p>")
+        tree.addArrowLink(ArrowLink("link", tree.getRootNode().id, "a"))
+        val written = MindMapViewFile.write(tree).replace(" lineStyle=\"solid\"", "")
+
+        assertEquals(ArrowLinkLineStyle.SOLID, MindMapViewFile.read(written).arrowLinks.single().lineStyle)
     }
 
     @Test

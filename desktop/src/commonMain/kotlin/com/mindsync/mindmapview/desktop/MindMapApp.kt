@@ -116,6 +116,13 @@ private enum class ArrowHeads(
     NONE("\u2014  No Arrowheads", false, false),
 }
 
+private val ArrowLinkLineStyle.label: String
+    get() = when (this) {
+        ArrowLinkLineStyle.SOLID -> "\u2500\u2500  Solid"
+        ArrowLinkLineStyle.DASHED -> "- -  Dashed"
+        ArrowLinkLineStyle.DOTTED -> "\u00B7\u00B7\u00B7  Dotted"
+    }
+
 val NodeShape.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
@@ -1111,6 +1118,17 @@ private fun ArrowLinkMenu(
                     onClick = {
                         onDismiss()
                         onChange(link.copy(hasStartArrow = heads.hasStartArrow, hasEndArrow = heads.hasEndArrow))
+                    },
+                )
+            }
+            HorizontalDivider()
+            ArrowLinkLineStyle.entries.forEach { lineStyle ->
+                DropdownMenuItem(
+                    text = { Text(lineStyle.label) },
+                    trailingIcon = { if (lineStyle == link.lineStyle) Text("\u2713") },
+                    onClick = {
+                        onDismiss()
+                        onChange(link.copy(lineStyle = lineStyle))
                     },
                 )
             }

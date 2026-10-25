@@ -8,6 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
@@ -40,6 +41,9 @@ object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
     private const val ARROW = "Default"
     private const val NO_ARROW = "None"
+    private const val DASHES = "7 7"
+    private const val DOTS = "2 7"
+    private const val CLOSE_DOTS = "3 3"
     private const val DEFAULT_FONT_POINTS = 12f
 
     fun write(tree: Tree<*>): String = buildString {
@@ -133,6 +137,7 @@ object FreeMind {
             append(" COLOR=\"").append(link.color.toHex()).append('"')
             append(" STARTARROW=\"").append(if (link.hasStartArrow) ARROW else NO_ARROW).append('"')
             append(" ENDARROW=\"").append(if (link.hasEndArrow) ARROW else NO_ARROW).append('"')
+            link.lineStyle.toDash()?.let { append(" DASH=\"").append(it).append('"') }
             link.startInclination?.let { append(" STARTINCLINATION=\"").append(it.toFreeMind()).append('"') }
             link.endInclination?.let { append(" ENDINCLINATION=\"").append(it.toFreeMind()).append('"') }
             append("/>\n")
@@ -208,11 +213,29 @@ object FreeMind {
                     color = element.color("COLOR") ?: ArrowLink.DEFAULT_COLOR,
                     hasStartArrow = element.attributes["STARTARROW"].equals(ARROW, ignoreCase = true),
                     hasEndArrow = !element.attributes["ENDARROW"].equals(NO_ARROW, ignoreCase = true),
+                    lineStyle = lineStyleOfDash(element.attributes["DASH"]),
                     startInclination = element.inclination("STARTINCLINATION"),
                     endInclination = element.inclination("ENDINCLINATION"),
                 ),
             )
         }
+    }
+
+    // FreeMind has no dashed arrow links. Freeplane keeps the pattern in DASH, which FreeMind ignores.
+    private fun ArrowLinkLineStyle.toDash(): String? = when (this) {
+        ArrowLinkLineStyle.SOLID -> null
+        ArrowLinkLineStyle.DASHED -> DASHES
+        ArrowLinkLineStyle.DOTTED -> DOTS
+    }
+
+    // Freeplane has more kinds of dashes than there are line styles, so dots close together are dots too,
+    // and any other pattern is dashes.
+    private fun lineStyleOfDash(
+        dash: String?
+    ): ArrowLinkLineStyle = when (dash?.trim()) {
+        null, "" -> ArrowLinkLineStyle.SOLID
+        DOTS, CLOSE_DOTS -> ArrowLinkLineStyle.DOTTED
+        else -> ArrowLinkLineStyle.DASHED
     }
 
     // FreeMind writes an inclination as "x;y;".
