@@ -2,6 +2,8 @@ package com.mindsync.mindmapview.desktop.dialog
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -97,75 +99,77 @@ fun PreferencesDialog(
         , isResizable = false
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-                , modifier = Modifier.fillMaxSize().padding(24.dp)
-            ) {
-                ChoicePicker(
-                    label = "Theme"
-                    , choices = ThemeMode.entries
-                    , choiceLabel = { it.label }
-                    , selectedChoice = edited.themeMode
-                    , onSelect = { edited = edited.copy(themeMode = it) }
-                    , labelWidth = PREFERENCES_LABEL_WIDTH
-                )
-                ChoicePicker(
-                    label = "New node shape"
-                    , choices = NodeShape.entries
-                    , choiceLabel = { it.label }
-                    , selectedChoice = edited.newNodeShape
-                    , onSelect = { edited = edited.copy(newNodeShape = it) }
-                    , labelWidth = PREFERENCES_LABEL_WIDTH
-                )
-                ChoicePicker(
-                    label = "Node font"
-                    , choices = NodeFont.entries
-                    , choiceLabel = { it.label }
-                    , selectedChoice = edited.nodeFont
-                    , onSelect = { edited = edited.copy(nodeFont = it) }
-                    , labelWidth = PREFERENCES_LABEL_WIDTH
-                    , choiceFontFamily = { fontFamilies[it] }
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                    , modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
-                        .padding(end = 12.dp)
+            Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+                // The settings scroll where the window is too small for them, and the buttons stay in view.
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    , modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                 ) {
-                    Checkbox(
-                        checked = edited.isRemoveConfirmed
-                        , onCheckedChange = null
-                        , modifier = Modifier.padding(8.dp)
+                    ChoicePicker(
+                        label = "Theme"
+                        , choices = ThemeMode.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.themeMode
+                        , onSelect = { edited = edited.copy(themeMode = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
-                    Text("Ask before removing a node")
+                    ChoicePicker(
+                        label = "New node shape"
+                        , choices = NodeShape.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.newNodeShape
+                        , onSelect = { edited = edited.copy(newNodeShape = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
+                    ChoicePicker(
+                        label = "Node font"
+                        , choices = NodeFont.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.nodeFont
+                        , onSelect = { edited = edited.copy(nodeFont = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                        , choiceFontFamily = { fontFamilies[it] }
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                        , modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
+                            .padding(end = 12.dp)
+                    ) {
+                        Checkbox(
+                            checked = edited.isRemoveConfirmed
+                            , onCheckedChange = null
+                            , modifier = Modifier.padding(8.dp)
+                        )
+                        Text("Ask before removing a node")
+                    }
+                    ColorListsEditor(
+                        listOf(
+                            EditableColors(
+                                label = "Fill colors"
+                                , colors = edited.nodeColors
+                                , defaults = DEFAULT_NODE_COLORS
+                                , onChange = { edited = edited.copy(nodeColors = it) }
+                            )
+                            , EditableColors(
+                                label = "Text colors"
+                                , colors = edited.textColors
+                                , defaults = DEFAULT_TEXT_COLORS
+                                , onChange = { edited = edited.copy(textColors = it) }
+                            )
+                            , EditableColors(
+                                label = "Arrow link colors"
+                                , colors = edited.arrowLinkColors
+                                , defaults = DEFAULT_ARROW_LINK_COLORS
+                                , onChange = { edited = edited.copy(arrowLinkColors = it) }
+                            )
+                        )
+                    )
                 }
-                ColorListsEditor(
-                    listOf(
-                        EditableColors(
-                            label = "Fill colors"
-                            , colors = edited.nodeColors
-                            , defaults = DEFAULT_NODE_COLORS
-                            , onChange = { edited = edited.copy(nodeColors = it) }
-                        )
-                        , EditableColors(
-                            label = "Text colors"
-                            , colors = edited.textColors
-                            , defaults = DEFAULT_TEXT_COLORS
-                            , onChange = { edited = edited.copy(textColors = it) }
-                        )
-                        , EditableColors(
-                            label = "Arrow link colors"
-                            , colors = edited.arrowLinkColors
-                            , defaults = DEFAULT_ARROW_LINK_COLORS
-                            , onChange = { edited = edited.copy(arrowLinkColors = it) }
-                        )
-                    )
-                )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                    , verticalAlignment = Alignment.Bottom
-                    , modifier = Modifier.fillMaxWidth().weight(1f)
+                    , modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                 ) {
                     Button(onClick = onDismiss) {
                         Text("Cancel")
