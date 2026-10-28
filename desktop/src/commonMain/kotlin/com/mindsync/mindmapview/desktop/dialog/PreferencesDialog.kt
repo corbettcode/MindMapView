@@ -45,6 +45,7 @@ import com.mindsync.mindmapview.desktop.ThemeMode
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.HsvColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
+import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
 import com.mindsync.mindmapview.desktop.parseHexColor
@@ -276,6 +277,7 @@ private fun ColorListsEditor(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = hexText
+                    , visualTransformation = emojiVisualTransformation()
                     , onValueChange = { text ->
                         hexText = text
                         parseHexColor(text)?.let(replaceSelected)

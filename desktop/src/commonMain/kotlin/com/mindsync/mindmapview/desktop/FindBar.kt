@@ -59,6 +59,7 @@ internal fun FindBar(
     ) {
         OutlinedTextField(
             value = value,
+            visualTransformation = emojiVisualTransformation(),
             onValueChange = { changed ->
                 value = changed
                 if (changed.text != text) onTextChange(changed.text)

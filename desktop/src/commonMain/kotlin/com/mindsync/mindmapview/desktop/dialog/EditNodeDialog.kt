@@ -60,6 +60,7 @@ import com.mindsync.mindmapview.desktop.component.EmojiPicker
 import com.mindsync.mindmapview.desktop.component.RichTextToggle
 import com.mindsync.mindmapview.desktop.component.RichTextToolbar
 import com.mindsync.mindmapview.desktop.component.ShapePicker
+import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.noteFromMarkdown
 import com.mindsync.mindmapview.desktop.noteHtml
 import com.mindsync.mindmapview.desktop.noteToMarkdown
@@ -290,6 +291,7 @@ fun EditNodeDialog(
                 else if (markdown != null) {
                     OutlinedTextField(
                         value = markdown,
+                        visualTransformation = emojiVisualTransformation(),
                         onValueChange = { noteMarkdown = it },
                         textStyle = LocalTextStyle
                             .current

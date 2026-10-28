@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.mindmapview.desktop.LINK_DIALOG_FIELD_WIDTH
 import com.mindsync.mindmapview.desktop.LINK_SCHEMES
 import com.mindsync.mindmapview.desktop.completeUrl
+import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.linkScheme
 
 @Composable
@@ -42,6 +43,7 @@ fun LinkDialog(
         text = {
             OutlinedTextField(
                 value = input,
+                visualTransformation = emojiVisualTransformation(),
                 onValueChange = { input = it },
                 label = { Text("Address") },
                 placeholder = { Text("https://") },

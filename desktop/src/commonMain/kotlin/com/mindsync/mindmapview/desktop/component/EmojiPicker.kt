@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.mindsync.library.emoji.Emoji
 import com.mindsync.library.emoji.EmojiCatalog
 import com.mindsync.mindmapview.desktop.LocalEmojiFontFamily
+import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 
 private const val EMOJI_PICKER_COLUMNS = 8
 private const val EMOJI_PICKER_ROWS = 6
@@ -130,6 +131,7 @@ private fun EmojiPickerContent(
     Column(modifier = Modifier.padding(horizontal = 8.dp)) {
         OutlinedTextField(
             value = query
+            , visualTransformation = emojiVisualTransformation()
             , onValueChange = { query = it }
             , placeholder = { Text("Search") }
             , singleLine = true

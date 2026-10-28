@@ -1314,6 +1314,7 @@ private fun AttributesDialog(
                         ) {
                             OutlinedTextField(
                                 value = attribute.name,
+                                visualTransformation = emojiVisualTransformation(),
                                 onValueChange = { rows[index] = attribute.copy(name = it) },
                                 label = { Text("Name") },
                                 singleLine = true,
@@ -1321,6 +1322,7 @@ private fun AttributesDialog(
                             )
                             OutlinedTextField(
                                 value = attribute.value,
+                                visualTransformation = emojiVisualTransformation(),
                                 onValueChange = { rows[index] = attribute.copy(value = it) },
                                 label = { Text("Value") },
                                 singleLine = true,
