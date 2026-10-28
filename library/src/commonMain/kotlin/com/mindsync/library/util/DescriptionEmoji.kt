@@ -1,23 +1,34 @@
 package com.mindsync.library.util
 
+import com.mindsync.library.emoji.EmojiCatalog
+
 /**
  * Keeps an emoji in front of a node's description. The emoji is part of the description, at the start of
- * its first paragraph and followed by a space, so it is drawn, measured and saved with the text.
+ * its first paragraph and followed by a space, so it is drawn, measured, and saved with the text.
  */
 object DescriptionEmoji {
+    /**
+     * A predefined list of commonly used emojis.
+     *
+     * This list contains various emojis representing emotions, gestures, objects, symbols, and more.
+     * It can be used for purposes such as messaging, UI components, or custom reactions.
+     */
+    @Deprecated("Use EmojiCatalog", ReplaceWith("EmojiCatalog.groups"))
     val EMOJIS = listOf(
-        "😀", "😂", "🙂", "😍", "😎", "🤔", "😢", "😡",
-        "👍", "👎", "👏", "🙏", "💪", "👀", "🧠", "💬",
+        "🤩", "🤣", "🙂", "🥰", "🤠", "🤔", "🥺", "🤬",
+        "🤙", "🤞", "👏", "🙏", "💪", "👀", "🧠", "💬",
         "❤️", "⭐", "🔥", "✨", "🎉", "🎯", "🏆", "🎁",
         "✅", "❌", "⚠️", "❓", "❗", "💡", "🔒", "🔑",
         "📌", "📎", "📅", "📈", "📝", "📚", "📞", "📧",
         "💰", "🏠", "🚀", "⏰", "🔧", "💊", "🩺", "🍎",
         "🌟", "🌈", "☀️", "🌙", "🌱", "🌍", "🐶", "🐱",
         "☕", "🍕", "🎵", "🎨", "⚽", "🚗", "✈️", "💻",
+        "🤗", "🥲", "🥱", "🤯", "🥳", "🫣", "🤝", "🤚",
+        "👋", "🙌", "💯", "💔", "💎", "🔔", "🔍", "🔗",
+        "📊", "📉", "📋", "📁", "🗂️", "🛒", "🎓", "🏁",
+        "🌳", "🌸", "🌊", "⚡", "❄️", "🍔", "🏃", "🎮",
     )
 
-    // An emoji that starts with another one has to be looked for first.
-    private val longestFirst = EMOJIS.sortedByDescending { it.length }
     private val paragraphStart = Regex("^\\s*<p(?: [^>]*)?>")
     private const val EMPTY_PARAGRAPH = "<p></p>"
 
@@ -28,7 +39,7 @@ object DescriptionEmoji {
     fun split(description: String): Pair<String?, String> {
         val start = paragraphStart.find(description)?.value.orEmpty()
         val text = description.substring(start.length)
-        val emoji = longestFirst.firstOrNull { text.startsWith(it) } ?: return null to description
+        val emoji = EmojiCatalog.emojiAt(text, 0) ?: return null to description
         val rest = text.substring(emoji.length).removePrefix(" ")
         return emoji to (start + rest).removePrefix(EMPTY_PARAGRAPH)
     }
