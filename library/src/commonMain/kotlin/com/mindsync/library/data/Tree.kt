@@ -47,7 +47,7 @@ class Tree<T> {
             OvalNodeData(
                 id = ROOT_ID
                 , children = listOf()
-                , color = Color.LightGray
+                , color = ROOT_COLOR
                 , description = DescriptionEmoji.prepend(ROOT_EMOJI, "root")
                 , parentId = null
                 , path =
@@ -614,5 +614,8 @@ class Tree<T> {
     companion object {
         private const val ROOT_ID = "root"
         private const val ROOT_EMOJI = "🌱"
+
+        // A light gray 10% darker than Color.LightGray (#CCCCCC).
+        internal val ROOT_COLOR = Color(0xFFB8B8B8)
     }
 }

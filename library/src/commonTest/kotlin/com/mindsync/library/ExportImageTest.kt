@@ -55,7 +55,7 @@ class ExportImageTest {
 
         val pixels = image.pixels()
         assertEquals(Color.White, image.toPixelMap()[0, 0])
-        assertTrue(Color.LightGray in pixels, "the root is drawn")
+        assertTrue(Tree.ROOT_COLOR in pixels, "the root is drawn")
         assertTrue(pixels.count { it != Color.White } > pixels.size / 100, "the nodes and lines are drawn")
     }
 
