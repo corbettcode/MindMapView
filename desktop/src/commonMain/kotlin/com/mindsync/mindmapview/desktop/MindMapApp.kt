@@ -80,12 +80,12 @@ private val URL_SCHEME = Regex("^([A-Za-z][A-Za-z0-9+.-]*):")
 
 // The fill colors offered for a node until the user chooses their own in the preferences.
 val DEFAULT_NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
-    Color(0xFF7AA37D),
-    Color(0xFF4B877B),
-    Color(0xFF336770),
-    Color(0xFF8E7CC3),
-    Color(0xFF6FA8DC),
-)
+    Color(0xFF7AA37D)
+    , Color(0xFF4B877B)
+    , Color(0xFF336770)
+    , Color(0xFFB9884E)
+    , Color(0xFF6FA8DC)
+).distinct()
 
 // The text colors offered for a node until the user chooses their own in the preferences.
 val DEFAULT_TEXT_COLORS = listOf(
