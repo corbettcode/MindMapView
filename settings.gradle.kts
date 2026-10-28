@@ -45,3 +45,6 @@ rootProject.name = "MindMapView"
 include(":app")
 include(":library")
 include(":desktop")
+// The rich text editor, patched; see third_party/richeditor/README.md.
+include(":richeditor")
+project(":richeditor").projectDir = file("third_party/richeditor")
