@@ -24,6 +24,11 @@ val generateEmojiData by tasks.registering {
             .findAll(annotations.readText())
             .associate { match ->
                 match.groupValues[1].replace("\uFE0F", "") to match.groupValues[2]
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&quot;", "\"")
+                    .replace("&apos;", "'")
+                    .replace("&amp;", "&")
                     .split(" | ")
                     .map { it.trim().lowercase() }
                     .filter { it.isNotEmpty() }

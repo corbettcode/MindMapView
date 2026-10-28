@@ -49,4 +49,11 @@ class EmojiCatalogTest {
 
     @Test fun searchIgnoresCaseAndSpacing() =
         assertEquals(EmojiCatalog.search("thumbs up"), EmojiCatalog.search("  Thumbs   UP "))
+
+    @Test fun keywordsAreXmlDecoded() {
+        assertTrue("🫶" in EmojiCatalog.search("<3").map { it.value })
+        assertTrue("🔣" in EmojiCatalog.search("&").map { it.value })
+        val keywords = EmojiCatalog.groups.flatMap { it.emojis }.flatMap { it.keywords }
+        assertTrue(keywords.none { "&lt;" in it || "&amp;" in it })
+    }
 }
