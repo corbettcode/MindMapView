@@ -22,6 +22,18 @@ class EmojiCatalogTest {
     @Test fun twoPersonEmojiOffersOnlySingleTones() =
         assertEquals("🧑🏻‍🤝‍🧑🏻", EmojiCatalog.find("🧑‍🤝‍🧑")!!.tones.first())
 
+    @Test fun aToneBeforeAQualifierIsATone() = assertEquals(5, EmojiCatalog.find("👨‍🦰")!!.tones.size)
+
+    @Test fun aMixedToneEmojiIsMatchedWhole() =
+        assertEquals(listOf(0 until "🧑🏻‍❤️‍💋‍🧑🏼".length), EmojiCatalog.findEmojis("🧑🏻‍❤️‍💋‍🧑🏼"))
+
+    @Test fun aMixedToneEmojiFindsItsBase() = assertEquals("🧑‍🤝‍🧑", EmojiCatalog.find("🧑🏻‍🤝‍🧑🏼")?.value)
+
+    @Test fun mixedTonesAreNotInThePicker() {
+        val shown = EmojiCatalog.groups.flatMap { it.emojis }.flatMap { listOf(it.value) + it.tones }
+        assertTrue("🧑🏻‍🤝‍🧑🏼" !in shown)
+    }
+
     @Test fun facesHaveNoTones() = assertEquals(emptyList(), EmojiCatalog.find("😀")!!.tones)
 
     @Test fun keywordsComeFromCldr() = assertTrue("grin" in EmojiCatalog.find("😀")!!.keywords)

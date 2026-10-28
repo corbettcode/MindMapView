@@ -26,11 +26,19 @@ object EmojiCatalog {
         }
     }
 
+    private val extras: Set<String> by lazy {
+        EMOJI_EXTRAS.joinToString("").lineSequence().filter { it.isNotEmpty() }.toSet()
+    }
+
+    private val skinTones = listOf("🏻", "🏼", "🏽", "🏾", "🏿")
+
+    internal val recognized: Set<String> by lazy { baseByAnyValue.keys + extras }
+
     private val groupByValue: Map<String, EmojiGroup> by lazy {
         groups.flatMap { group -> group.emojis.map { it.value to group } }.toMap()
     }
 
-    private val longestEmoji: Int by lazy { baseByAnyValue.keys.maxOf { it.length } }
+    private val longestEmoji: Int by lazy { recognized.maxOf { it.length } }
 
     private val searchWords: List<Pair<Emoji, List<String>>> by lazy {
         groups.flatMap { it.emojis }.map { emoji ->
@@ -38,7 +46,9 @@ object EmojiCatalog {
         }
     }
 
-    fun find(emoji: String): Emoji? = baseByAnyValue[emoji]
+    fun find(emoji: String): Emoji? = baseByAnyValue[emoji] ?: emoji
+        .takeIf { it in extras }
+        ?.let { extra -> baseByValue[skinTones.fold(extra) { value, tone -> value.replace(tone, "") }] }
 
     fun groupOf(emoji: String): EmojiGroup? = find(emoji)?.let { groupByValue[it.value] }
 
@@ -50,7 +60,7 @@ object EmojiCatalog {
         val longest = minOf(longestEmoji, text.length - index)
         return (longest downTo 1)
             .map { text.substring(index, index + it) }
-            .firstOrNull { it in baseByAnyValue }
+            .firstOrNull { it in recognized }
     }
 
     fun findEmojis(text: String): List<IntRange> {
