@@ -195,6 +195,7 @@ internal class MindMapApp(
 
     // Null until the bundled font is loaded, and emojis are drawn in the text's own font until then.
     private var emojiFontFamily by mutableStateOf<FontFamily?>(null)
+    private var nodeFontFamily by mutableStateOf<FontFamily?>(null)
 
     // The text on the clipboard when a node was copied last. While the clipboard holds it, it is the copied node
     // that is pasted, with all of what the outline of it leaves out.
@@ -547,6 +548,11 @@ internal class MindMapApp(
             }
             emojiFontFamily = family
         }
+        // A newer choice cancels the loading of an older one, and a font that cannot be read leaves the default.
+        LaunchedEffect(preferences.nodeFont) {
+            nodeFontFamily = null
+            nodeFontFamily = loadNodeFontFamily(preferences.nodeFont)
+        }
         CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
             Screen(onMapPress)
         }
@@ -577,6 +583,7 @@ internal class MindMapApp(
             addChildRequest = addChildRequest,
             preferences = preferences,
             onPreferencesChange = { preferences = platform.preferencesStore.update(it) },
+            nodeFontFamily = nodeFontFamily,
             saveQuestion = afterSaveChoice?.let { saveChangesQuestion(document?.name) },
             onSaveChoice = ::onSaveChoice,
             isImportConfirmOpen = isImportConfirmOpen,
@@ -666,6 +673,7 @@ private fun MindMapScreen(
     onDialogOpenChange: (Boolean) -> Unit,
     addChildRequest: Int,
     preferences: UserPreferences,
+    nodeFontFamily: FontFamily?,
     onPreferencesChange: (UserPreferences) -> Unit,
     saveQuestion: String?,
     onSaveChoice: (SaveChoice) -> Unit,
@@ -811,6 +819,7 @@ private fun MindMapScreen(
                     MindMap(
                         state = state
                         , modifier = Modifier.fillMaxSize()
+                        , fontFamily = nodeFontFamily
                         , emojiFontFamily = LocalEmojiFontFamily.current
                         // While an arrow link is being added, the next click chooses the node it leads to, or none.
                         , onNodeClick = { node ->

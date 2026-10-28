@@ -4,6 +4,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -41,6 +44,7 @@ import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.HsvColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.label
+import com.mindsync.mindmapview.desktop.loadNodeFontFamily
 import com.mindsync.mindmapview.desktop.parseHexColor
 import com.mindsync.mindmapview.desktop.toHex
 
@@ -78,6 +82,13 @@ fun PreferencesDialog(
     onDismiss: () -> Unit,
 ) {
     var edited by remember { mutableStateOf(preferences) }
+    // Each font's name is drawn in that font once it has loaded.
+    var fontFamilies by remember { mutableStateOf<Map<NodeFont, FontFamily>>(emptyMap()) }
+    LaunchedEffect(Unit) {
+        NodeFont.entries.forEach { font ->
+            loadNodeFontFamily(font)?.let { fontFamilies = fontFamilies + (font to it) }
+        }
+    }
 
     AppDialog(
         title = "Preferences"
@@ -105,6 +116,15 @@ fun PreferencesDialog(
                     , selectedChoice = edited.newNodeShape
                     , onSelect = { edited = edited.copy(newNodeShape = it) }
                     , labelWidth = PREFERENCES_LABEL_WIDTH
+                )
+                ChoicePicker(
+                    label = "Node font"
+                    , choices = NodeFont.entries
+                    , choiceLabel = { it.label }
+                    , selectedChoice = edited.nodeFont
+                    , onSelect = { edited = edited.copy(nodeFont = it) }
+                    , labelWidth = PREFERENCES_LABEL_WIDTH
+                    , choiceFontFamily = { fontFamilies[it] }
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -172,24 +192,32 @@ fun <T> ChoicePicker(
     selectedChoice: T,
     onSelect: (T) -> Unit,
     labelWidth: Dp = PICKER_LABEL_WIDTH,
+    choiceFontFamily: (T) -> FontFamily? = { null },
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, modifier = Modifier.width(labelWidth))
-        choices.forEach { choice ->
-            val isSelected = choice == selectedChoice
-            val borderColor =
-                if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
-            Text(
-                choiceLabel(choice),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(if (isSelected) 3.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
-                    .clickable { onSelect(choice) }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            )
+        // The choices go on more lines when they do not fit on one.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            choices.forEach { choice ->
+                val isSelected = choice == selectedChoice
+                val borderColor =
+                    if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant
+                Text(
+                    choiceLabel(choice),
+                    fontFamily = choiceFontFamily(choice),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(if (isSelected) 3.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
+                        .clickable { onSelect(choice) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
         }
     }
 }
