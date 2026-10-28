@@ -2,6 +2,7 @@ package com.mohamedrejeb.richeditor.ui
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextRange
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichSpanStyle
@@ -49,6 +50,12 @@ internal fun Modifier.drawRichSpanStyle(
                             )
                         }
                     }
+                }
+            }
+
+            richTextState.displayDecoration?.let { decoration ->
+                richTextState.textLayoutResult?.let { textLayoutResult ->
+                    translate(left = startPadding, top = topPadding) { decoration(textLayoutResult) }
                 }
             }
         }

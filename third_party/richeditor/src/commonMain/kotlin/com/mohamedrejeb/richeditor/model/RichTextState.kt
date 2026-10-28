@@ -17,6 +17,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
@@ -150,6 +151,14 @@ public class RichTextState internal constructor(
             field = value
             showAnnotatedString(annotatedString)
         }
+
+    /**
+     * Draws over the text the editor shows, in the same place as the text, given how it was laid out: for example
+     * something in room left for it by [displayStyle]. It is not part of the text and is not saved.
+     *
+     * (Added to this copy of the library; not in Compose Rich Editor 1.2.1.)
+     */
+    public var displayDecoration: (DrawScope.(TextLayoutResult) -> Unit)? by mutableStateOf(null)
 
     private fun showAnnotatedString(text: AnnotatedString) {
         // Snapshot by value: the lambda runs during measure, where a live

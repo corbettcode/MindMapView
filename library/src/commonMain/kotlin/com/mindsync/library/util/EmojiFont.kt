@@ -13,8 +13,12 @@ import com.mindsync.library.emoji.EmojiCatalog
 // The color emoji font draws an emoji about as tall as the whole line, a little below the baseline, where a
 // capital letter is about 0.7 of the font size. Emojis are drawn smaller and raised, to stand as tall as the
 // letters around them.
-internal const val EMOJI_SCALE = 0.75f
-internal const val EMOJI_RAISE = 0.12f
+
+/** The size an emoji is drawn at, against the size of the text it is in. */
+const val EMOJI_SCALE = 0.75f
+
+/** How far an emoji is raised, against its own size, to stand on the baseline. */
+const val EMOJI_RAISE = 0.12f
 
 /**
  * This text with every emoji in it drawn in [fontFamily], as tall as the letters around it, or this text itself

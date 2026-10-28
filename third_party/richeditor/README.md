@@ -14,6 +14,9 @@ module uses it in place of the published library; the `library` module keeps the
   two-tone emojis first. Styling the text through the state's span styles instead would add undo steps as you type.
   The change is in `src/commonMain/.../model/RichTextState.kt` (`displayStyle` and `showAnnotatedString`), with tests
   in `src/commonTest/.../model/DisplayStyleTest.kt`. Worth offering upstream, so this copy can go.
+- `RichTextState.displayDecoration`: draws over the text the editor shows, in the text's place, given its layout.
+  The app draws a node's emoji in room left for it by `displayStyle` at the start of the first line. The change is
+  `displayDecoration` in `RichTextState.kt` and its drawing in `src/commonMain/.../ui/ModifierExt.kt`.
 
 ## Updating
 

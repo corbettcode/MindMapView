@@ -228,16 +228,21 @@ fun EditNodeDialog(
                     }
                 )
 
-                ShowEmojisInColor(richTextState)
+                val descriptionStyle = LocalTextStyle
+                    .current
+                    .copy(
+                        textAlign = TextAlign.Center
+                    )
+                ShowLeadingEmoji(
+                    state = richTextState
+                    , emoji = selectedEmoji
+                    , textStyle = descriptionStyle
+                )
                 RichTextToolbar(richTextState)
 
                 OutlinedRichTextEditor(
                     state = richTextState
-                    , textStyle = LocalTextStyle
-                        .current
-                        .copy(
-                            textAlign = TextAlign.Center
-                        )
+                    , textStyle = descriptionStyle
                     , modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(
