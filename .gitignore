@@ -235,3 +235,5 @@ fabric.properties
 
 # Mind maps saved while trying the desktop app, named for the day they were saved
 /desktop/[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9]*.mm
+
+.superpowers/
