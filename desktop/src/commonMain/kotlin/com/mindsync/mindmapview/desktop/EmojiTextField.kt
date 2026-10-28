@@ -1,6 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -8,6 +9,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import com.mindsync.library.util.withEmojiFont
+import com.mohamedrejeb.richeditor.model.RichTextState
 
 /**
  * Shows the emojis typed into a text field in [fontFamily]. On the desktop the system's plain fonts have two-tone
@@ -29,4 +31,18 @@ class EmojiVisualTransformation(
 fun emojiVisualTransformation(): VisualTransformation {
     val fontFamily = LocalEmojiFontFamily.current
     return remember(fontFamily) { fontFamily?.let { EmojiVisualTransformation(it) } ?: VisualTransformation.None }
+}
+
+/** Restyles text to show its emojis in [fontFamily], for a rich text editor's [RichTextState.displayStyle]. */
+fun emojiDisplayStyle(
+    fontFamily: FontFamily
+): (AnnotatedString) -> AnnotatedString = { it.withEmojiFont(fontFamily) }
+
+/** Shows the emojis in the editor of [state] in the color emoji font once it has loaded. */
+@Composable
+fun ShowEmojisInColor(state: RichTextState?) {
+    val fontFamily = LocalEmojiFontFamily.current
+    LaunchedEffect(state, fontFamily) {
+        state?.displayStyle = fontFamily?.let { emojiDisplayStyle(it) }
+    }
 }

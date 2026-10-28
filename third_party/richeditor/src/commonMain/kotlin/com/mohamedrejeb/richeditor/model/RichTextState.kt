@@ -137,6 +137,31 @@ public class RichTextState internal constructor(
 
     internal val richParagraphList = mutableStateListOf<RichParagraph>()
     internal var visualTransformation: VisualTransformation by mutableStateOf(VisualTransformation.None)
+
+    /**
+     * Restyles the text the editor shows, without changing it or what is saved: for example to draw some characters
+     * in another font. The returned text must have the same characters as the one it is given; one that does not is
+     * ignored, as the cursor would no longer match the text.
+     *
+     * (Added to this copy of the library; not in Compose Rich Editor 1.2.1.)
+     */
+    public var displayStyle: ((AnnotatedString) -> AnnotatedString)? = null
+        set(value) {
+            field = value
+            showAnnotatedString(annotatedString)
+        }
+
+    private fun showAnnotatedString(text: AnnotatedString) {
+        // Snapshot by value: the lambda runs during measure, where a live
+        // `annotatedString` read would race the textFieldValue captured at composition.
+        val styled = displayStyle?.invoke(text)?.takeIf { it.text == text.text } ?: text
+        visualTransformation = VisualTransformation { _ ->
+            TransformedText(
+                text = styled,
+                offsetMapping = OffsetMapping.Identity
+            )
+        }
+    }
     internal var textFieldValue by mutableStateOf(TextFieldValue())
         private set
 
@@ -2825,15 +2850,7 @@ public class RichTextState internal constructor(
                 newTextFieldValue.selection.end.coerceIn(0, newTextLength),
             ),
         )
-        // Snapshot by value: the lambda runs during measure, where a live
-        // `annotatedString` read would race the textFieldValue captured at composition.
-        val transformed = annotatedString
-        visualTransformation = VisualTransformation { _ ->
-            TransformedText(
-                text = transformed,
-                offsetMapping = OffsetMapping.Identity
-            )
-        }
+        showAnnotatedString(annotatedString)
         styledRichSpanList.addAll(newStyledRichSpanList)
     }
 
@@ -5579,14 +5596,7 @@ public class RichTextState internal constructor(
             selection = selection,
             composition = newComposition?.takeIf { it.min >= 0 && it.max <= textLength },
         )
-        // Snapshot by value: see the matching note in `updateAnnotatedString`.
-        val transformed = annotatedString
-        visualTransformation = VisualTransformation { _ ->
-            TransformedText(
-                text = transformed,
-                offsetMapping = OffsetMapping.Identity
-            )
-        }
+        showAnnotatedString(annotatedString)
         styledRichSpanList.addAll(newStyledRichSpanList)
 
         // Clear un-applied styles

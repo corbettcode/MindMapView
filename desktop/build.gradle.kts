@@ -43,6 +43,14 @@ val generateAppInfo by tasks.registering {
     }
 }
 
+// The app uses the patched rich text editor in third_party/richeditor in place of the published one, also where
+// the library brings that in.
+configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("com.mohamedrejeb.richeditor:richeditor-compose")).using(project(":richeditor"))
+    }
+}
+
 kotlin {
     jvmToolchain(21)
 

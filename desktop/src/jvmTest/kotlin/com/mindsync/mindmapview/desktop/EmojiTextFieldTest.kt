@@ -26,4 +26,14 @@ class EmojiTextFieldTest {
             assertEquals(it, mapping.transformedToOriginal(it))
         }
     }
+
+    @Test
+    fun richTextEditorsShowEmojisInTheEmojiFont() {
+        val shown = emojiDisplayStyle(FontFamily.Monospace)(AnnotatedString("a 👍🏽 b"))
+        assertEquals("a 👍🏽 b", shown.text)
+        assertEquals(
+            listOf(AnnotatedString.Range(SpanStyle(fontFamily = FontFamily.Monospace), 2, 6))
+            , shown.spanStyles
+        )
+    }
 }

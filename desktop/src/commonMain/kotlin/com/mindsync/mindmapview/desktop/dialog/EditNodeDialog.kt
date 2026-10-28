@@ -53,6 +53,7 @@ import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.EDIT_DIALOG_MIN_WIDTH
 import com.mindsync.mindmapview.desktop.EDIT_DIALOG_SIZE
 import com.mindsync.mindmapview.desktop.NOTE_LINES
+import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.ColorPicker
@@ -203,6 +204,7 @@ fun EditNodeDialog(
                     }
                 )
 
+                ShowEmojisInColor(richTextState)
                 RichTextToolbar(richTextState)
 
                 OutlinedRichTextEditor(
@@ -266,6 +268,7 @@ fun EditNodeDialog(
                 }
                 val markdown = noteMarkdown
                 val currentNoteState = noteState
+                ShowEmojisInColor(currentNoteState)
                 val noteModifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
