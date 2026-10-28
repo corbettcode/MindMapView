@@ -45,6 +45,6 @@ suspend fun loadNodeFontFamily(
     .takeIf { it.isNotEmpty() }
     ?.map { face ->
         val bytes = readBundledFile(face.file) ?: return null
-        runCatching { bundledFont(face.file, bytes, face.weight, face.style) }.getOrNull() ?: return null
+        bundledFont(face.file, bytes, face.weight, face.style) ?: return null
     }
     ?.let { FontFamily(it) }

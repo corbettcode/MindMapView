@@ -5,6 +5,8 @@ package com.mindsync.mindmapview.desktop
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import org.jetbrains.skia.Data
+import org.jetbrains.skia.FontMgr
 import kotlinx.coroutines.await
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -22,6 +24,8 @@ actual fun bundledFont(
     , data: ByteArray
     , weight: FontWeight
     , style: FontStyle
-): Font = androidx.compose.ui.text.platform.Font(identity = file, data = data, weight = weight, style = style)
+): Font? = data
+    .takeIf { runCatching { FontMgr.default.makeFromData(Data.makeFromBytes(it)) }.getOrNull() != null }
+    ?.let { androidx.compose.ui.text.platform.Font(identity = file, data = it, weight = weight, style = style) }
 
 internal actual val isEmojiFontFallback: Boolean = true

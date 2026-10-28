@@ -46,6 +46,10 @@ class NodeFontTest {
         }
     }
 
+    // A font is only read once it is drawn with, so bytes that are not a font must be turned down beforehand.
+    @Test
+    fun bytesThatAreNotAFontGiveNull() = assertNull(bundledFont("x.ttf", "not a font".encodeToByteArray()))
+
     @Test
     fun missingFileGivesNull() = runBlocking<Unit> { assertNull(readBundledFile("missing.ttf")) }
 }

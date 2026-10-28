@@ -13,19 +13,23 @@ const val EMOJI_FONT_FILE = "NotoColorEmoji.ttf"
 /** The bytes of a font file that ships with the app, or null when it cannot be read. */
 expect suspend fun readBundledFile(file: String): ByteArray?
 
-/** The font in [data], read from the bundled [file]. */
+/**
+ * The font in [data], read from the bundled [file], or null when [data] is not a font. A font is only read once
+ * text is drawn with it, so bytes that are not one are turned down here rather than failing then.
+ */
 expect fun bundledFont(
     file: String
     , data: ByteArray
     , weight: FontWeight = FontWeight.Normal
     , style: FontStyle = FontStyle.Normal
-): Font
+): Font?
 
 /** The bundled color emoji font, or null when it cannot be read. */
 suspend fun loadEmojiFontFamily(
     file: String = EMOJI_FONT_FILE
 ): FontFamily? = readBundledFile(file)
-    ?.let { bytes -> runCatching { FontFamily(bundledFont(file, bytes)) }.getOrNull() }
+    ?.let { bytes -> bundledFont(file, bytes) }
+    ?.let { FontFamily(it) }
 
 /** The color emoji font once loaded, for text drawn with emojis in it. */
 val LocalEmojiFontFamily = staticCompositionLocalOf<FontFamily?> { null }
