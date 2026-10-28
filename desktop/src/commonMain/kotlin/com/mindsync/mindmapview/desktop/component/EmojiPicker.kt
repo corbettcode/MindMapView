@@ -51,6 +51,18 @@ internal val EMOJI_CELL_FONT_SIZE = 20.sp
 private val EMOJI_GRID_WIDTH = EMOJI_CELL_SIZE * EMOJI_PICKER_COLUMNS
 private val EMOJI_GRID_HEIGHT = EMOJI_CELL_SIZE * EMOJI_PICKER_ROWS
 
+/**
+ * A composable function that provides an emoji picker allowing the user to select emojis
+ * with optional tone variations.
+ *
+ * @param selectedEmoji The currently selected emoji, or `null` if no emoji is selected.
+ * @param mapEmojis A list of emojis attached to the current map for selection.
+ * @param emojiTones A mapping of base emojis to their tone variants.
+ * @param onToneChange A callback function triggered when a tone variant is selected.
+ *                     Receives the base emoji and the selected tone variant as parameters.
+ * @param onSelect A callback function invoked when an emoji is selected or deselected.
+ *                 Receives the selected emoji or `null` if no emoji is selected.
+ */
 @Composable
 fun EmojiPicker(
     selectedEmoji: String?
@@ -90,6 +102,18 @@ fun EmojiPicker(
     }
 }
 
+/**
+ * Displays the content for an emoji picker, allowing users to search, select emojis,
+ * and manage emoji tones.
+ *
+ * @param selectedEmoji The currently selected emoji, or null if no emoji is selected.
+ * @param mapEmojis A list of emojis that are part of a specific map or context.
+ * @param emojiTones A map where keys are base emojis and values are their respective tone variants.
+ * @param onToneChange Callback invoked when the tone of an emoji changes, accepting
+ *                     the base emoji and the selected variant.
+ * @param onSelect Callback invoked when an emoji is selected or deselected,
+ *                 receiving the selected emoji or null.
+ */
 @Composable
 private fun EmojiPickerContent(
     selectedEmoji: String?
