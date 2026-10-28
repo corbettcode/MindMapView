@@ -4,6 +4,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -20,12 +21,14 @@ import com.mindsync.library.util.Dp
 import com.mindsync.library.util.Px
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.toDp
+import com.mindsync.library.util.withEmojiFont
 
 class MeasureTextSize(
     private val textMeasurer: TextMeasurer,
     private val textStyle: TextStyle,
     private val density: Density,
     private val drawInfo: DrawInfo = DrawInfo(),
+    private val emojiFontFamily: FontFamily? = null,
 ) {
     private val richTextCache = mutableMapOf<String, AnnotatedString>()
 
@@ -35,7 +38,9 @@ class MeasureTextSize(
 
     fun measure(description: String): TextLayoutResult {
         if (richTextCache.size >= RICH_TEXT_CACHE_SIZE && description !in richTextCache) richTextCache.clear()
-        val richText = richTextCache.getOrPut(description) { RichText.parse(description) }
+        val richText = richTextCache.getOrPut(description) {
+            RichText.parse(description).withEmojiFont(emojiFontFamily)
+        }
         return textMeasurer.measure(richText, textStyle)
     }
 

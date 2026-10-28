@@ -151,6 +151,7 @@ fun MindMap(
     state: MindMapState
     , modifier: Modifier = Modifier
     , fontFamily: FontFamily? = null
+    , emojiFontFamily: FontFamily? = null
     , onNodeClick: (node: NodeData<*>?) -> Unit = {}
     , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
     , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
@@ -164,13 +165,13 @@ fun MindMap(
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
     val drawInfo = remember { DrawInfo() }
-    val measureTextSize = remember(textMeasurer, density, fontFamily) {
+    val measureTextSize = remember(textMeasurer, density, fontFamily, emojiFontFamily) {
         val textStyle = TextStyle(
             fontSize = with(density) { drawInfo.textSize.dpVal.dp.toSp() },
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,
         )
-        MeasureTextSize(textMeasurer, textStyle, density, drawInfo)
+        MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily)
     }
     val isDarkTheme = isSystemInDarkTheme()
     val lineColor = if (isDarkTheme) drawInfo.darkModeLineColor else drawInfo.lineColor
