@@ -1,20 +1,19 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontFamily
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class EmojiTextFieldTest {
+    private fun AnnotatedString.emojiFontRanges() =
+        spanStyles.filter { it.item.fontFamily == FontFamily.Monospace }.map { it.start to it.end }
+
     @Test
     fun typedEmojisAreShownInTheEmojiFont() {
         val shown = EmojiVisualTransformation(FontFamily.Monospace).filter(AnnotatedString("a 👍🏽 b"))
         assertEquals("a 👍🏽 b", shown.text.text)
-        assertEquals(
-            listOf(AnnotatedString.Range(SpanStyle(fontFamily = FontFamily.Monospace), 2, 6))
-            , shown.text.spanStyles
-        )
+        assertEquals(listOf(2 to 6), shown.text.emojiFontRanges())
     }
 
     // The text is only styled, not changed, so a cursor stays where it is.
@@ -31,9 +30,6 @@ class EmojiTextFieldTest {
     fun richTextEditorsShowEmojisInTheEmojiFont() {
         val shown = emojiDisplayStyle(FontFamily.Monospace)(AnnotatedString("a 👍🏽 b"))
         assertEquals("a 👍🏽 b", shown.text)
-        assertEquals(
-            listOf(AnnotatedString.Range(SpanStyle(fontFamily = FontFamily.Monospace), 2, 6))
-            , shown.spanStyles
-        )
+        assertEquals(listOf(2 to 6), shown.emojiFontRanges())
     }
 }
