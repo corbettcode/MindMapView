@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.github.hegleB"
-version = "0.0.13"
+version = "1.0.0"
 
 kotlin {
     jvmToolchain(21)
