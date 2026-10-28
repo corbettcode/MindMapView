@@ -48,6 +48,18 @@ class UserPreferencesTest {
     }
 
     @Test
+    fun emojiTonesAreKept() {
+        store().update(UserPreferences(emojiTones = mapOf("👍" to "👍🏽", "✋" to "✋🏿")))
+        assertEquals(mapOf("👍" to "👍🏽", "✋" to "✋🏿"), store().preferences.emojiTones)
+    }
+
+    @Test
+    fun unknownEmojiTonesAreIgnored() {
+        stored[UserPreferencesStore.EMOJI_TONES] = "👍=👍🏽,😀=😀🏽,x=y,garbage"
+        assertEquals(mapOf("👍" to "👍🏽"), store().preferences.emojiTones)
+    }
+
+    @Test
     fun hexColorIsReadWithOrWithoutItsHash() {
         assertEquals(Color(0xFF2D5728), parseHexColor("#2d5728"))
         assertEquals(Color(0xFF2D5728), parseHexColor("2D5728"))

@@ -3,6 +3,7 @@ package com.mindsync.mindmapview.desktop
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.emoji.EmojiCatalog
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
 enum class ThemeMode {
@@ -31,6 +32,7 @@ class UserPreferencesStore(
             , nodeColors = read(NODE_COLORS)?.let(::parseColorList) ?: defaults.nodeColors
             , textColors = read(TEXT_COLORS)?.let(::parseColorList) ?: defaults.textColors
             , arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList) ?: defaults.arrowLinkColors
+            , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones) ?: defaults.emojiTones
         )
     }
         private set
@@ -43,6 +45,7 @@ class UserPreferencesStore(
         write(NODE_COLORS, newPreferences.nodeColors.joinToString(",") { it.toHex() })
         write(TEXT_COLORS, newPreferences.textColors.joinToString(",") { it.toHex() })
         write(ARROW_LINK_COLORS, newPreferences.arrowLinkColors.joinToString(",") { it.toHex() })
+        write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
         return preferences
     }
 
@@ -53,6 +56,7 @@ class UserPreferencesStore(
         const val NODE_COLORS = "nodeColors"
         const val TEXT_COLORS = "textColors"
         const val ARROW_LINK_COLORS = "arrowLinkColors"
+        const val EMOJI_TONES = "emojiTones"
     }
 }
 
@@ -66,6 +70,14 @@ fun parseHexColor(
     text: String
 ): Color? = HEX_COLOR.matchEntire(text.trim())
     ?.let { Color(0xFF000000 or it.groupValues[1].toLong(16)) }
+
+// A pair that is not an emoji with that skin tone, as a later version of the app may have kept, is dropped.
+private fun parseEmojiTones(
+    text: String
+): Map<String, String> = text.split(",")
+    .map { it.split("=") }
+    .filter { it.size == 2 && it[1] in EmojiCatalog.find(it[0])?.tones.orEmpty() }
+    .associate { it[0] to it[1] }
 
 // A list with a color that is not known, or with no colors at all, is not one the user chose.
 private fun parseColorList(

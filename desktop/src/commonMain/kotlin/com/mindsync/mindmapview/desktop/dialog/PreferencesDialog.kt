@@ -63,6 +63,8 @@ data class UserPreferences(
     val textColors: List<Color> = DEFAULT_TEXT_COLORS,
     // The colors offered for an arrow link.
     val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS,
+    // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
+    val emojiTones: Map<String, String> = emptyMap(),
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
