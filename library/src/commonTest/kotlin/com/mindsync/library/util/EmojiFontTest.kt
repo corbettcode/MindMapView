@@ -45,6 +45,39 @@ class EmojiFontTest {
         )
     }
 
+    // The emoji picked for a node is put in front of its text, outside the size the text was given.
+    @Test
+    fun leadingEmojiTakesTheSizeOfTheTextAfterIt() {
+        val text = buildAnnotatedString {
+            append("👍 ")
+            pushStyle(SpanStyle(fontSize = 1.4.em))
+            append("big")
+            pop()
+        }
+        val emojiSpan = text.withEmojiFont(FontFamily.Monospace).spanStyles.single { it.item.fontFamily != null }
+        assertEquals(AnnotatedString.Range(emojiStyle((1.4f * EMOJI_SCALE).em), 0, 2), emojiSpan)
+    }
+
+    @Test
+    fun pickedEmojiFollowsTheSizePickedForTheText() {
+        val large = RichText.withStyle("<p>big</p>", RichTextSize.LARGE.spanStyle)
+        val text = RichText.parse(DescriptionEmoji.prepend("👍", large))
+        val emojiSpan = text.withEmojiFont(FontFamily.Monospace).spanStyles.single { it.item.fontFamily != null }
+        assertEquals(emojiStyle((RichTextSize.LARGE.scale * EMOJI_SCALE).em), emojiSpan.item)
+    }
+
+    @Test
+    fun emojiInsideTheTextKeepsItsOwnSize() {
+        val text = buildAnnotatedString {
+            append("a 👍 ")
+            pushStyle(SpanStyle(fontSize = 1.4.em))
+            append("big")
+            pop()
+        }
+        val emojiSpan = text.withEmojiFont(FontFamily.Monospace).spanStyles.single { it.item.fontFamily != null }
+        assertEquals(AnnotatedString.Range(emojiStyle(EMOJI_SCALE.em), 2, 4), emojiSpan)
+    }
+
     @Test
     fun noFontLeavesTextAlone() =
         assertEquals(AnnotatedString("a 👍"), AnnotatedString("a 👍").withEmojiFont(null))

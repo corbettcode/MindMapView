@@ -29,7 +29,7 @@ fun AnnotatedString.withEmojiFont(
         EmojiCatalog.findEmojis(text).forEach { range ->
             val style = SpanStyle(
                 fontFamily = fontFamily
-                , fontSize = fontSizeAt(range.first) * EMOJI_SCALE
+                , fontSize = emojiTextSize(range) * EMOJI_SCALE
                 , baselineShift = BaselineShift(EMOJI_RAISE)
             )
             addStyle(style, range.first, range.last + 1)
@@ -37,12 +37,24 @@ fun AnnotatedString.withEmojiFont(
     }
 }
 
-// A span's font size replaces the one around it rather than scaling it, so an emoji's size is worked out from the
-// size of the text it is in: the last span over it that sets one, or the text's own size.
+// The size of the text an emoji is in. The emoji picked for a node is put in front of its text, outside the size
+// the text was given, so an emoji at the start without a size of its own takes that of the text after it.
+private fun AnnotatedString.emojiTextSize(
+    range: IntRange
+): TextUnit {
+    fontSizeAt(range.first)?.let { return it }
+    if (range.first == 0) {
+        val textStart = (range.last + 1 until text.length).firstOrNull { !text[it].isWhitespace() }
+        textStart?.let { fontSizeAt(it) }?.let { return it }
+    }
+    return 1.em
+}
+
+// A span's font size replaces the one around it rather than scaling it, so a size is that of the last span over
+// [index] that sets one, or null for the text's own size.
 private fun AnnotatedString.fontSizeAt(
     index: Int
-): TextUnit = spanStyles
+): TextUnit? = spanStyles
     .lastOrNull { index in it.start until it.end && it.item.fontSize.isSpecified }
     ?.item
     ?.fontSize
-    ?: 1.em
