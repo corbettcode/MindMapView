@@ -72,23 +72,45 @@ import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.launch
 
+/**
+ * Displays a dialog that allows editing a node element with customization options for its description,
+ * appearance, and additional note content. The dialog is designed to handle various input fields such
+ * as text, colors, shapes, and emojis, along with providing a rich text editor for enhanced formatting.
+ *
+ * @param title The title of the dialog.
+ * @param description The initial description of the node being edited.
+ * @param isDescriptionSelected Whether the description text should be preselected.
+ * @param note The note content associated with the node being edited.
+ * @param shape The predefined shape of the node, if applicable.
+ * @param color The fill color of the node.
+ * @param textColor The text color for the node.
+ * @param nodeColors A list of colors available for selecting the node's fill color.
+ * @param textColors A list of colors available for selecting the node's text color.
+ * @param mapEmojis A list of emoji strings available for selection and customization within the dialog.
+ * @param emojiTones A map that associates emojis to their tonal variations.
+ * @param onToneChange A callback triggered when the tone of an emoji is changed. Receives the base emoji
+ * and its selected tonal variant.
+ * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
+ * note, shape, fill color, and text color of the node.
+ * @param onDismiss A callback triggered when the dialog is dismissed.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNodeDialog(
-    title: String,
-    description: String,
-    isDescriptionSelected: Boolean,
-    note: String,
-    shape: NodeShape?,
-    color: Color,
-    textColor: Color,
-    nodeColors: List<Color>,
-    textColors: List<Color>,
-    mapEmojis: List<String>,
-    emojiTones: Map<String, String>,
-    onToneChange: (base: String, variant: String) -> Unit,
-    onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit,
-    onDismiss: () -> Unit,
+    title: String
+    , description: String
+    , isDescriptionSelected: Boolean
+    , note: String
+    , shape: NodeShape?
+    , color: Color
+    , textColor: Color
+    , nodeColors: List<Color>
+    , textColors: List<Color>
+    , mapEmojis: List<String>
+    , emojiTones: Map<String, String>
+    , onToneChange: (base: String, variant: String) -> Unit
+    , onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit
+    , onDismiss: () -> Unit
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
     val (emoji, text) = remember { DescriptionEmoji.split(description) }
@@ -177,20 +199,22 @@ fun EditNodeDialog(
                 }
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+                , modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
             ) {
                 selectedShape?.let { currentShape ->
                     ShapePicker(
-                        selectedShape = currentShape,
-                        onSelect = { newShape ->
+                        selectedShape = currentShape
+                        , onSelect = { newShape ->
                             // A color that was not chosen is that of the shape, so it goes along with the shape.
                             if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
                             if (selectedTextColor == currentShape.defaultTextColor) {
                                 selectedTextColor = newShape.defaultTextColor
                             }
                             selectedShape = newShape
-                        },
+                        }
                     )
                 }
 
@@ -244,26 +268,25 @@ fun EditNodeDialog(
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    , verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
                     RichTextToggle(
-                        label = "MD",
-                        labelStyle = SpanStyle(fontFamily = FontFamily.Monospace),
-                        checked = noteMarkdown != null,
-                        onToggle = {
+                        label = "MD"
+                        , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)
+                        , checked = noteMarkdown != null
+                        , onToggle = {
                             val markdown = noteMarkdown
                             if (markdown == null) {
                                 noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
-                            }
-                            else {
+                            } else {
                                 scope.launch {
                                     noteState = noteWithImages(noteFromMarkdown(markdown))
                                     noteMarkdown = null
                                 }
                             }
-                        },
+                        }
                     )
                 }
                 val markdown = noteMarkdown
@@ -276,8 +299,7 @@ fun EditNodeDialog(
                     .onFocusChanged { isNoteFocused = it.hasFocus }
                 if (markdown == null && currentNoteState == null) {
                     Box(modifier = noteModifier)
-                }
-                else if (markdown == null && currentNoteState != null) {
+                } else if (markdown == null && currentNoteState != null) {
                     CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                         OutlinedRichTextEditor(
                             state = currentNoteState
@@ -290,31 +312,30 @@ fun EditNodeDialog(
                             , modifier = noteModifier
                         )
                     }
-                }
-                else if (markdown != null) {
+                } else if (markdown != null) {
                     OutlinedTextField(
-                        value = markdown,
-                        visualTransformation = emojiVisualTransformation(),
-                        onValueChange = { noteMarkdown = it },
-                        textStyle = LocalTextStyle
+                        value = markdown
+                        , onValueChange = { noteMarkdown = it }
+                        , visualTransformation = emojiVisualTransformation()
+                        , textStyle = LocalTextStyle
                             .current
                             .copy(
                                 fontFamily = FontFamily.Monospace
                                 , color = selectedTextColor
-                            ),
-                        colors = OutlinedTextFieldDefaults.colors(
+                            )
+                        , colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = selectedTextColor
                             , unfocusedTextColor = selectedTextColor
                             , focusedContainerColor = selectedColor
                             , unfocusedContainerColor = selectedColor
                             , cursorColor = selectedTextColor
-                        ),
-                        modifier = noteModifier,
+                        )
+                        , modifier = noteModifier
                     )
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                    , modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(onClick = onDismiss) {
                         Text("Cancel")

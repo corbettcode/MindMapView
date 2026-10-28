@@ -119,7 +119,10 @@ data class StadiumNodeData(
     , strokeWidth
     , textColor
 ) {
-    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<StadiumNodeData> {
+    override fun adjustPosition(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): NodeData<StadiumNodeData> {
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
@@ -151,7 +154,10 @@ data class OvalNodeData(
     , strokeWidth
     , textColor
 ) {
-    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<OvalNodeData> {
+    override fun adjustPosition(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): NodeData<OvalNodeData> {
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
@@ -184,7 +190,10 @@ data class SquareNodeData(
     , strokeWidth
     , textColor
 ) {
-    override fun adjustPosition(horizontalSpacing: Dp, totalHeight: Dp): NodeData<SquareNodeData> {
+    override fun adjustPosition(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): NodeData<SquareNodeData> {
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
