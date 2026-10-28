@@ -60,6 +60,18 @@ class UserPreferencesTest {
     }
 
     @Test
+    fun nodeFontIsKept() {
+        store().update(UserPreferences(nodeFont = NodeFont.LORA))
+        assertEquals(NodeFont.LORA, store().preferences.nodeFont)
+    }
+
+    @Test
+    fun unknownNodeFontIsDefault() {
+        stored[UserPreferencesStore.NODE_FONT] = "COMIC_SANS"
+        assertEquals(NodeFont.DEFAULT, store().preferences.nodeFont)
+    }
+
+    @Test
     fun hexColorIsReadWithOrWithoutItsHash() {
         assertEquals(Color(0xFF2D5728), parseHexColor("#2d5728"))
         assertEquals(Color(0xFF2D5728), parseHexColor("2D5728"))

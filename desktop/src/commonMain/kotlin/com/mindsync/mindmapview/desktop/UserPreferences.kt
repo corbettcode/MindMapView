@@ -33,6 +33,7 @@ class UserPreferencesStore(
             , textColors = read(TEXT_COLORS)?.let(::parseColorList) ?: defaults.textColors
             , arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList) ?: defaults.arrowLinkColors
             , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones) ?: defaults.emojiTones
+            , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) } ?: defaults.nodeFont
         )
     }
         private set
@@ -46,6 +47,7 @@ class UserPreferencesStore(
         write(TEXT_COLORS, newPreferences.textColors.joinToString(",") { it.toHex() })
         write(ARROW_LINK_COLORS, newPreferences.arrowLinkColors.joinToString(",") { it.toHex() })
         write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
+        write(NODE_FONT, newPreferences.nodeFont.name)
         return preferences
     }
 
@@ -57,6 +59,7 @@ class UserPreferencesStore(
         const val TEXT_COLORS = "textColors"
         const val ARROW_LINK_COLORS = "arrowLinkColors"
         const val EMOJI_TONES = "emojiTones"
+        const val NODE_FONT = "nodeFont"
     }
 }
 

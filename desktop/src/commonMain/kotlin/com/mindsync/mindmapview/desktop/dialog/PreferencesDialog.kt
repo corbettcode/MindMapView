@@ -35,6 +35,7 @@ import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
+import com.mindsync.mindmapview.desktop.NodeFont
 import com.mindsync.mindmapview.desktop.ThemeMode
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.HsvColorPicker
@@ -65,6 +66,8 @@ data class UserPreferences(
     val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS,
     // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
     val emojiTones: Map<String, String> = emptyMap(),
+    // The font node text is drawn in.
+    val nodeFont: NodeFont = NodeFont.DEFAULT,
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
