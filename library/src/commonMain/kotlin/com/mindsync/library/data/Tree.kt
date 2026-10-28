@@ -351,6 +351,33 @@ class Tree<T> {
         rootChildSides.remove(targetId)
     }
 
+    /**
+     * Moves [targetId] among the children of its parent that are on its side, to the place its center at
+     * [centerY] falls in when they are stacked top down. Returns whether the order of the children changed.
+     */
+    internal fun moveAmongSiblings(
+        targetId: String
+        , centerY: Dp
+    ): Boolean {
+        val parent = _nodes[_nodes[targetId]?.parentId] ?: return false
+        val side = sideOf(targetId)
+        val others = parent.children - targetId
+        val sameSide = others.filter { sideOf(it) == side }
+        if (sameSide.isEmpty()) return false
+        val below = sameSide.firstOrNull { getNode(it).path.centerY.dpVal > centerY.dpVal }
+        val index = if (below != null) others.indexOf(below) else others.indexOf(sameSide.last()) + 1
+        val newChildren = others.toMutableList().apply { add(index, targetId) }
+        if (newChildren == parent.children) return false
+        _nodes[parent.id] = when (parent) {
+            is CircleNodeData -> parent.copy(children = newChildren)
+            is RectangleNodeData -> parent.copy(children = newChildren)
+            is SquareNodeData -> parent.copy(children = newChildren)
+            is StadiumNodeData -> parent.copy(children = newChildren)
+            is OvalNodeData -> parent.copy(children = newChildren)
+        }
+        return true
+    }
+
     fun updateNode(
         targetId: String,
         description: String,

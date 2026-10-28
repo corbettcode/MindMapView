@@ -311,11 +311,13 @@ class UndoTest {
     }
 
     @Test
-    fun nodeDroppedOnEmptySpaceIsNotRecorded() = runComposeUiTest {
+    fun nodeDroppedOnEmptySpaceInItsOwnPlaceIsNotRecorded() = runComposeUiTest {
         val state = stateWithNodes()
         val second = state.tree.getNode("second")
 
-        onNodeWithTag(TAG).performTouchInput { swipe(center(second), Offset(700f, 50f), durationMillis = 200) }
+        onNodeWithTag(TAG).performTouchInput {
+            swipe(center(second), Offset(700f, center(second).y), durationMillis = 200)
+        }
         waitForIdle()
 
         assertFalse(state.canUndo)

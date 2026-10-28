@@ -953,6 +953,66 @@ class MindMapTest {
     }
 
     @Test
+    fun draggingANodeBelowItsSiblingMovesItDownAmongThem() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("second")
+        waitForIdle()
+        state.addNode("third")
+        waitForIdle()
+        val (firstId, secondId, thirdId) = state.tree.getRootNode().children
+
+        onNodeWithTag(TAG).performTouchInput {
+            val third = center(state.tree.getNode(thirdId))
+            val belowThird = third + (third - center(state.tree.getNode(secondId)))
+            swipe(center(state.tree.getNode(firstId)), belowThird, durationMillis = 200)
+        }
+        waitForIdle()
+
+        assertEquals(listOf(secondId, thirdId, firstId), state.tree.getRootNode().children)
+        assertTrue(moves.isEmpty())
+        assertTrue(
+            state.tree.getNode(firstId).path.centerY.dpVal > state.tree.getNode(thirdId).path.centerY.dpVal
+        )
+
+        state.undo()
+        waitForIdle()
+        assertEquals(listOf(firstId, secondId, thirdId), state.tree.getRootNode().children)
+    }
+
+    @Test
+    fun draggingANodeKeepsTheChildrenOnOtherSidesOfTheRootWhereTheyAre() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        waitForIdle()
+        state.addNode("left")
+        waitForIdle()
+        state.addNode("second")
+        waitForIdle()
+        val (firstId, leftId, secondId) = state.tree.getRootNode().children
+        clickNode(state.tree.getNode(leftId))
+        state.moveNodeToOtherSide()
+        waitForIdle()
+
+        onNodeWithTag(TAG).performTouchInput {
+            val first = center(state.tree.getNode(firstId))
+            val second = center(state.tree.getNode(secondId))
+            swipe(second, first - (second - first), durationMillis = 200)
+        }
+        waitForIdle()
+
+        assertEquals(listOf(secondId, firstId, leftId), state.tree.getRootNode().children)
+        assertEquals(LayoutSide.LEFT, state.tree.sideOf(leftId))
+    }
+
+    @Test
     fun movingANodeToTheOtherSideMovesItsBranch() = runComposeUiTest {
         val state = MindMapState()
         setMindMap(state)

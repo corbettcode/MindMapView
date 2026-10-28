@@ -4,9 +4,15 @@
   <attribute NAME="shape" VALUE="circle"/>
   <node ID="252637ef-b9cf-4a38-835f-e6261fb3686a" TEXT="features" POSITION="right" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
     <attribute NAME="shape" VALUE="stadium"/>
+    <node ID="1faec741-d1be-49ef-86a9-9ee0e79c8653" TEXT="drag a node among its siblings to reorder it" BACKGROUND_COLOR="#b9bc81" COLOR="#000000">
+      <attribute NAME="shape" VALUE="stadium"/>
+    </node>
   </node>
   <node ID="3816c9f8-d6fd-4ddd-94f2-c5aefa337e58" TEXT="library" POSITION="right" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
     <attribute NAME="shape" VALUE="rectangle"/>
+    <node ID="2de4bb7a-964a-49c3-be12-0afa22090e6b" TEXT="version 1.0.0" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
+      <attribute NAME="shape" VALUE="rectangle"/>
+    </node>
     <node ID="f6b8291b-8065-42d5-be76-ca6771c9ae27" TEXT="KMP" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">
       <attribute NAME="shape" VALUE="rectangle"/>
       <node ID="160d63d3-46fd-4832-b7cb-0c5f2ec7fbb4" TEXT="Android" BACKGROUND_COLOR="#ffcf96" COLOR="#000000">

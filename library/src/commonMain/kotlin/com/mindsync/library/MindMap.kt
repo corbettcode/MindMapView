@@ -133,6 +133,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
  * with whether the nodes are linked now. See [MindMapState.addArrowLink].
  *
+ * Dragging a node and dropping it on no other node moves it up or down among its siblings on the same side
+ * of their parent, to where it was dropped.
+ *
  * Dragging the root moves it and the tree with it, and the mind map pans to the nodes that are then above
  * or to the left of it. A root that is given no position is kept in the center of the mind map until it is
  * dragged.

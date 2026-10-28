@@ -1089,6 +1089,10 @@ class MindMapState(
                 }
                 onNodeMove(tree, selectedNode, attachedNode)
             }
+            // A node dropped on no other node takes the place among its siblings that it was dropped at.
+            else if (selectedNode != null) {
+                recordChange { tree.moveAmongSiblings(selectedNode.id, tree.getNode(selectedNode.id).path.centerY) }
+            }
         }
         // Where the root is is not part of what is compared for a change, so the drag is recorded on its own.
         rootDragStart?.let { start ->
