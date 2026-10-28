@@ -615,7 +615,6 @@ class Tree<T> {
         private const val ROOT_ID = "root"
         private const val ROOT_EMOJI = "🌱"
 
-        // A light gray 10% darker than Color.LightGray (#CCCCCC).
-        internal val ROOT_COLOR = Color(0xFFB8B8B8)
+        internal val ROOT_COLOR = Color(0xFF336770)
     }
 }
