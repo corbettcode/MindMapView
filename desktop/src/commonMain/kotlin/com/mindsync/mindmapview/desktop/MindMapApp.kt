@@ -16,9 +16,11 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -188,6 +190,9 @@ internal class MindMapApp(
     private var recentPaths by mutableStateOf(recentMaps?.paths)
 
     private var preferences by mutableStateOf(platform.preferencesStore.preferences)
+
+    // Null until the bundled font is loaded, and emojis are drawn in the text's own font until then.
+    private var emojiFontFamily by mutableStateOf<FontFamily?>(null)
 
     // The text on the clipboard when a node was copied last. While the clipboard holds it, it is the copied node
     // that is pasted, with all of what the outline of it leaves out.
@@ -523,6 +528,20 @@ internal class MindMapApp(
     /** The app itself. A press on the mind map calls [onMapPress]. */
     @Composable
     fun Content(onMapPress: () -> Unit = {}) {
+        val fontFamilyResolver = LocalFontFamilyResolver.current
+        LaunchedEffect(Unit) {
+            if (emojiFontFamily != null) return@LaunchedEffect
+            val family = loadEmojiFontFamily() ?: return@LaunchedEffect
+            if (isEmojiFontFallback) fontFamilyResolver.preload(family)
+            emojiFontFamily = family
+        }
+        CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
+            Screen(onMapPress)
+        }
+    }
+
+    @Composable
+    private fun Screen(onMapPress: () -> Unit) {
         MindMapScreen(
             state = state,
             error = error,
@@ -780,6 +799,7 @@ private fun MindMapScreen(
                     MindMap(
                         state = state
                         , modifier = Modifier.fillMaxSize()
+                        , emojiFontFamily = LocalEmojiFontFamily.current
                         // While an arrow link is being added, the next click chooses the node it leads to, or none.
                         , onNodeClick = { node ->
                             arrowLinkSourceId?.let { sourceId ->

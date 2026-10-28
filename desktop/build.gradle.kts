@@ -73,6 +73,13 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.richeditor.compose)
         }
+        // The emoji font is on the JVM classpath at /NotoColorEmoji.ttf and served next to index.html on the web.
+        jvmMain {
+            resources.srcDir("fonts")
+        }
+        wasmJsMain {
+            resources.srcDir("fonts")
+        }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.flexmark)
