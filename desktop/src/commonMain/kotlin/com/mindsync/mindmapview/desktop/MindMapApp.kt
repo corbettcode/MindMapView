@@ -44,6 +44,7 @@ import com.mindsync.mindmapview.desktop.menuBar.EditMenu
 import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichTextState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -532,7 +533,17 @@ internal class MindMapApp(
         LaunchedEffect(Unit) {
             if (emojiFontFamily != null) return@LaunchedEffect
             val family = loadEmojiFontFamily() ?: return@LaunchedEffect
-            if (isEmojiFontFallback) fontFamilyResolver.preload(family)
+            // The font is only read once it is used, so a font that cannot be read fails here, and the text keeps
+            // the system fonts.
+            if (isEmojiFontFallback) {
+                try {
+                    fontFamilyResolver.preload(family)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    return@LaunchedEffect
+                }
+            }
             emojiFontFamily = family
         }
         CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
