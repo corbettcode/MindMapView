@@ -82,6 +82,9 @@ fun EditNodeDialog(
     textColor: Color,
     nodeColors: List<Color>,
     textColors: List<Color>,
+    mapEmojis: List<String>,
+    emojiTones: Map<String, String>,
+    onToneChange: (base: String, variant: String) -> Unit,
     onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -191,6 +194,9 @@ fun EditNodeDialog(
 
                 EmojiPicker(
                     selectedEmoji = selectedEmoji
+                    , mapEmojis = mapEmojis
+                    , emojiTones = emojiTones
+                    , onToneChange = onToneChange
                     , onSelect = {
                         selectedEmoji = it
                     }

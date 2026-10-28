@@ -38,6 +38,7 @@ import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.dialog.*
 import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
@@ -988,6 +989,14 @@ private fun MindMapScreen(
                 },
                 nodeColors = preferences.nodeColors,
                 textColors = preferences.textColors,
+                mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
+                emojiTones = preferences.emojiTones,
+                onToneChange = { base, variant ->
+                    val emojiTones =
+                        if (variant == base) preferences.emojiTones - base
+                        else preferences.emojiTones + (base to variant)
+                    onPreferencesChange(preferences.copy(emojiTones = emojiTones))
+                },
                 onSubmit = { description, note, shape, color, textColor ->
                     when (currentOperation) {
                         is Operation.Add -> {
