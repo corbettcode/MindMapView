@@ -49,7 +49,7 @@ import com.mindsync.mindmapview.desktop.parseHexColor
 import com.mindsync.mindmapview.desktop.toHex
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
-private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 760.dp)
+private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 840.dp)
 private val PREFERENCES_LABEL_WIDTH = 128.dp
 private val EDITOR_BUTTON_WIDTH = 140.dp
 
