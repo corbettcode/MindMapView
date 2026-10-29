@@ -24,13 +24,19 @@ actual fun AppDialog(
         , resizable = isResizable
     ) {
         // The size goes both ways: the dialog may change it, and so may the user, by resizing the window.
-        LaunchedEffect(Unit) { snapshotFlow { state.size }.collect { windowState.size = it } }
-        LaunchedEffect(Unit) { snapshotFlow { windowState.size }.collect { state.size = it } }
+        // The minimum size is set before the size, as a window is not made smaller than its minimum size, which a
+        // dialog lowers along with its size when it shrinks.
+        fun applyMinSize() {
+            window.minimumSize = state.minSize?.let { Dimension(it.width.value.toInt(), it.height.value.toInt()) }
+        }
         LaunchedEffect(Unit) {
-            snapshotFlow { state.minSize }.collect { minSize ->
-                window.minimumSize = minSize?.let { Dimension(it.width.value.toInt(), it.height.value.toInt()) }
+            snapshotFlow { state.size }.collect {
+                applyMinSize()
+                windowState.size = it
             }
         }
+        LaunchedEffect(Unit) { snapshotFlow { windowState.size }.collect { state.size = it } }
+        LaunchedEffect(Unit) { snapshotFlow { state.minSize }.collect { applyMinSize() } }
         content()
     }
 }

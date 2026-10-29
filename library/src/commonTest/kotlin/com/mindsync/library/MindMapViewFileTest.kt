@@ -190,7 +190,8 @@ class MindMapViewFileTest {
     @Test
     fun unknownLineValuesAreInherited() {
         val text = "<mindmapview version=\"1\"><node id=\"r\" text=\"r\">" +
-            "<node id=\"a\" text=\"a\" lineStyle=\"zigzag\" lineWidth=\"wide\" lineColor=\"nope\"/></node></mindmapview>"
+            "<node id=\"a\" text=\"a\" lineStyle=\"zigzag\" lineWidth=\"wide\" lineColor=\"nope\"/>" +
+            "</node></mindmapview>"
 
         assertEquals(NodeLine(), MindMapViewFile.read(text).lineOf("a"))
     }

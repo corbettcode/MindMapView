@@ -648,6 +648,29 @@ class MindMapTest {
     }
 
     @Test
+    fun cutNodeIsPastedWithItsLine() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("cut", rootId, "cut")
+        state.tree.addNode("other", rootId, "other")
+        val line = NodeLine(NodeLineStyle.SHARP_LINEAR, Color.Red, NodeLineWidth.TWO)
+        state.tree.setLine("cut", line)
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        clickNode(state.tree.getNode("cut"))
+        state.cutNode()
+        waitForIdle()
+        clickNode(state.tree.getNode("other"))
+        state.pasteNode()
+        waitForIdle()
+
+        assertEquals(line, state.tree.lineOf(state.tree.getNode("other").children.single()))
+    }
+
+    @Test
     fun addEditAndRemoveStadiumNode() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)

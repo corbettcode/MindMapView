@@ -71,6 +71,28 @@ class NodeLineTest {
     }
 
     @Test
+    fun rootStyleAndWidthReachEveryBranch() {
+        val tree = tree()
+        tree.setLine(tree.getRootNode().id, NodeLine(style = NodeLineStyle.LINEAR, width = NodeLineWidth.EIGHT))
+        val lines = resolve(tree)
+        listOf("a", "a1", "b").forEach {
+            assertEquals(NodeLineStyle.LINEAR, lines.getValue(it).style)
+            assertEquals(Dp(8f), lines.getValue(it).width)
+        }
+    }
+
+    @Test
+    fun branchColorWinsOverRootColor() {
+        val tree = tree()
+        tree.setLine(tree.getRootNode().id, NodeLine(color = Color.Blue))
+        tree.setLine("a", NodeLine(color = Color.Red))
+        val lines = resolve(tree)
+        assertEquals(Color.Red, lines.getValue("a").color)
+        assertEquals(Color.Red, lines.getValue("a1").color)
+        assertEquals(Color.Blue, lines.getValue("b").color)
+    }
+
+    @Test
     fun emptyLineMakesTheNodeInheritAgain() {
         val tree = tree()
         tree.setLine("a", NodeLine(NodeLineStyle.LINEAR))

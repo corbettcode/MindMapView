@@ -278,17 +278,20 @@ object FreeMind {
         val edge = children.firstOrNull { it.name == "edge" } ?: return NodeLine()
         return NodeLine(
             NodeLineStyle.entries.firstOrNull { it.freeMindName == edge.attributes["STYLE"] },
-            edge.color("COLOR"),
-            edge.attributes["WIDTH"]?.let { nearestWidth(it) },
+            edge.attributes["COLOR"]?.let { hexColor(it.trim()) },
+            edge.attributes["WIDTH"]?.let { nearestWidth(it.trim()) },
         )
     }
 
-    // Ties go to the wider.
+    // FreeMind writes a thin line as "thin" or 0, and a line as wide as its parent's as a negative width, which is
+    // inherited here. Ties go to the wider.
     private fun nearestWidth(
         value: String,
     ): NodeLineWidth? {
         if (value == NodeLineWidth.THIN.label) return NodeLineWidth.THIN
         val number = value.toIntOrNull() ?: return null
+        if (number < 0) return null
+        if (number == 0) return NodeLineWidth.THIN
         return NodeLineWidth.entries
             .filter { it != NodeLineWidth.THIN }
             .sortedByDescending { it.label.toInt() }
@@ -297,8 +300,10 @@ object FreeMind {
 
     private fun ArrowLinkInclination.toFreeMind(): String = "${x.dpVal.roundToInt()};${y.dpVal.roundToInt()};"
 
-    private fun XmlElement.color(attribute: String): Color? {
-        val hex = attributes[attribute]?.removePrefix("#")?.takeIf { it.length == 6 } ?: return null
+    private fun XmlElement.color(attribute: String): Color? = attributes[attribute]?.let { hexColor(it) }
+
+    private fun hexColor(value: String): Color? {
+        val hex = value.removePrefix("#").takeIf { it.length == 6 } ?: return null
         val rgb = hex.toLongOrNull(16) ?: return null
         return Color(0xFF000000 or rgb)
     }

@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop.dialog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -143,6 +144,8 @@ fun EditNodeDialog(
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
     var selectedLine by remember { mutableStateOf(line) }
+    // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
+    var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
 
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
@@ -153,6 +156,8 @@ fun EditNodeDialog(
     }
     // The height the note is laid out with, which the window grows to keep at [noteMinHeight] at the least.
     var noteHeight by remember { mutableStateOf<Dp?>(null) }
+    // The note's height as the line section is opened or closed, which the window then grows or shrinks to keep.
+    var noteHeightToKeep by remember { mutableStateOf<Dp?>(null) }
     val dialogState = remember { AppDialogState(EDIT_DIALOG_SIZE) }
     var isDescriptionFocused by remember { mutableStateOf(false) }
     var isNoteFocused by remember { mutableStateOf(false) }
@@ -180,15 +185,22 @@ fun EditNodeDialog(
             descriptionFocusRequester.requestFocus()
         }
         // The rest of the dialog is only known once it is laid out, so the window is fitted to it then, and grown
-        // again whenever the rest takes more room, as the node's text may as it gets more lines.
+        // again whenever the rest takes more room, as the node's text may as it gets more lines. Opening or closing
+        // the line section grows or shrinks the window by the section, so it is not left taller than it needs.
         var isFitted by remember { mutableStateOf(false) }
         LaunchedEffect(noteHeight) {
             val height = noteHeight ?: return@LaunchedEffect
-            val minWindowHeight = dialogState.size.height - (height - noteMinHeight)
+            val keptHeight = noteHeightToKeep
+            noteHeightToKeep = null
+            val noteHeightAfter = keptHeight ?: height
+            val windowHeight = dialogState.size.height + (noteHeightAfter - height)
+            val minWindowHeight = windowHeight - (noteHeightAfter - noteMinHeight)
             dialogState.minSize = DpSize(EDIT_DIALOG_MIN_WIDTH, minWindowHeight)
-            if (!isFitted || height < noteMinHeight) {
+            if (!isFitted || noteHeightAfter < noteMinHeight) {
                 dialogState.size = DpSize(dialogState.size.width, minWindowHeight)
                 isFitted = true
+            } else if (keptHeight != null) {
+                dialogState.size = DpSize(dialogState.size.width, windowHeight)
             }
         }
         // Enter clicks OK, wherever the focus is but in the note, whose lines are typed with Enter. A line of the
@@ -281,11 +293,24 @@ fun EditNodeDialog(
                     , onSelect = { selectedTextColor = it }
                 )
 
-                LineSettings(
-                    line = selectedLine
-                    , colors = remember(line) { (DrawInfo().rootLineColors + listOfNotNull(line.color)).distinct() }
-                    , onChange = { selectedLine = it }
+                Text(
+                    if (isLineOpen) "Line ▾" else "Line ▸"
+                    , style = MaterialTheme.typography.titleSmall
+                    , modifier = Modifier.clickable {
+                        noteHeightToKeep = noteHeight
+                        isLineOpen = !isLineOpen
+                    }
                 )
+
+                if (isLineOpen) {
+                    LineSettings(
+                        line = selectedLine
+                        , colors = remember(line, nodeColors, textColors) {
+                            (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(line.color)).distinct()
+                        }
+                        , onChange = { selectedLine = it }
+                    )
+                }
 
                 Text(
                     "Note"

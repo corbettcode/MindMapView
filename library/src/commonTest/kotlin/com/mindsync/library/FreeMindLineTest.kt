@@ -48,6 +48,24 @@ class FreeMindLineTest {
     }
 
     @Test
+    fun freeMindZeroWidthIsThin() {
+        assertEquals(NodeLineWidth.THIN, readLine("""<edge WIDTH="0"/>""").width)
+    }
+
+    @Test
+    fun freeMindNegativeWidthIsInherited() {
+        assertEquals(null, readLine("""<edge WIDTH="-1"/>""").width)
+    }
+
+    @Test
+    fun freeMindEdgeValuesAreTrimmed() {
+        assertEquals(
+            NodeLine(color = Color.Red, width = NodeLineWidth.FOUR)
+            , readLine("""<edge COLOR=" #ff0000 " WIDTH=" 4 "/>""")
+        )
+    }
+
+    @Test
     fun freeMindRootEdgeRoundTrips() {
         val map = """<map version="1.0.1"><node ID="root" TEXT="Rocks"><edge COLOR="#0000ff"/></node></map>"""
         val tree = FreeMind.read(map)
