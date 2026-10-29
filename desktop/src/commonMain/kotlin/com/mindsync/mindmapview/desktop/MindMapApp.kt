@@ -157,11 +157,16 @@ private class SuccessMessage(val text: String)
 internal class MindMapApp(
     private val platform: AppPlatform
     , val state: MindMapState
-    , private val scope: CoroutineScope
+    , parentScope: CoroutineScope
 ) {
     var document by mutableStateOf<MapDocument?>(null)
         private set
     private var error by mutableStateOf<String?>(null)
+    // A task that fails in a way nothing else handles is logged and told about, and the app goes on.
+    private val scope = failureSafeScope(parentScope) {
+        logFailure(it)
+        error = failureMessage(it)
+    }
     private var successMessage by mutableStateOf<SuccessMessage?>(null)
     private var fileMenuExpanded by mutableStateOf(false)
     // The node an arrow link is being added from, while the node it leads to is being chosen.
@@ -214,7 +219,9 @@ internal class MindMapApp(
             document = target
             successMessage = SuccessMessage("Saved ${target.name}")
             return true
-        } catch (e: MapFileException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             error = "Could not save ${target.name}: ${e.message}"
             return false
         }
@@ -236,7 +243,9 @@ internal class MindMapApp(
         val target = platform.files.chooseToExport(document, extension) ?: return
         try {
             platform.files.write(target, content())
-        } catch (e: MapFileException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             error = "Could not export ${target.name}: ${e.message}"
         }
     }
@@ -260,10 +269,9 @@ internal class MindMapApp(
             document = chosen
             createdNodeCount = 0
             recentPaths = recentMaps?.add(chosen)
-        } catch (e: MapFileException) {
-            error = "Could not open ${chosen.name}: ${e.message}"
-            recentPath?.let { recentPaths = recentMaps?.remove(it) }
-        } catch (e: IllegalArgumentException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             error = "Could not open ${chosen.name}: ${e.message}"
             recentPath?.let { recentPaths = recentMaps?.remove(it) }
         }
@@ -274,9 +282,9 @@ internal class MindMapApp(
         val chosen = platform.files.chooseToOpen(document) ?: return
         try {
             state.replaceTree(readMap(chosen.name, platform.files.read(chosen)))
-        } catch (e: MapFileException) {
-            error = "Could not import ${chosen.name}: ${e.message}"
-        } catch (e: IllegalArgumentException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             error = "Could not import ${chosen.name}: ${e.message}"
         }
     }
