@@ -17,9 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
+import java.awt.Rectangle
 
 // A window of its own, so it can be moved away from the mind map and resized.
 // It is as large as the dialog asks for, short of the screen. On a screen smaller than the dialog, its content is
@@ -32,7 +34,8 @@ actual fun AppDialog(
     , isResizable: Boolean
     , content: @Composable () -> Unit
 ) {
-    val screen = remember { usableScreenSize() }
+    val screenBounds = remember { usableScreenBounds() }
+    val screen = DpSize(screenBounds.width.dp, screenBounds.height.dp)
     val windowState = rememberDialogState(size = state.size.fittedTo(screen))
     DialogWindow(
         onCloseRequest = onCloseRequest
@@ -51,7 +54,16 @@ actual fun AppDialog(
         LaunchedEffect(Unit) {
             snapshotFlow { state.size }.collect {
                 applyMinSize()
-                windowState.size = it.fittedTo(screen)
+                val size = it.fittedTo(screen)
+                windowState.size = size
+                // A window grows downward, so one that grows past the bottom of the screen is moved up.
+                val top = keptOnScreenTop(
+                    top = window.y
+                    , height = size.height.value.toInt()
+                    , screenTop = screenBounds.y
+                    , screenBottom = screenBounds.y + screenBounds.height
+                )
+                if (top != window.y) windowState.position = WindowPosition(window.x.dp, top.dp)
             }
         }
         LaunchedEffect(Unit) {
@@ -102,8 +114,18 @@ internal fun isResizedByUser(
     , screen: DpSize
 ): Boolean = windowSize != asked.fittedTo(screen)
 
+/**
+ * Where the top of a window [height] tall goes to keep it on a screen from [screenTop] to [screenBottom]: where it is,
+ * or moved up as far as needed, but not above the top of the screen.
+ */
+internal fun keptOnScreenTop(
+    top: Int
+    , height: Int
+    , screenTop: Int
+    , screenBottom: Int
+): Int = if (top + height > screenBottom) maxOf(screenTop, screenBottom - height) else top
+
 // The room on the main screen, short of task bars and docks.
-private fun usableScreenSize(): DpSize = GraphicsEnvironment
+private fun usableScreenBounds(): Rectangle = GraphicsEnvironment
     .getLocalGraphicsEnvironment()
     .maximumWindowBounds
-    .let { DpSize(it.width.dp, it.height.dp) }

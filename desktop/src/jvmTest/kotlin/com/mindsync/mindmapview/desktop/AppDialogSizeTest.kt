@@ -42,4 +42,15 @@ class AppDialogSizeTest {
     @Test
     fun heightIsNeverBelowTheContentMinimum() =
         assertEquals(810.dp, resizedHeight(current = 500.dp, oldMin = 600.dp, newMin = 810.dp))
+
+    // A window that grows downward past the bottom of the screen is moved up, as far as the top of the screen.
+    @Test
+    fun windowGrownPastTheBottomIsMovedUp() {
+        assertEquals(120, keptOnScreenTop(top = 200, height = 600, screenTop = 0, screenBottom = 720))
+        assertEquals(30, keptOnScreenTop(top = 200, height = 800, screenTop = 30, screenBottom = 720))
+    }
+
+    @Test
+    fun windowOnTheScreenStaysWhereItIs() =
+        assertEquals(50, keptOnScreenTop(top = 50, height = 600, screenTop = 0, screenBottom = 720))
 }
