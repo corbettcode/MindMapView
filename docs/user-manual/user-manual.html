@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MindMapView User Manual</title>
+<style>
+    @page {
+        size: A4;
+        margin: 20mm 18mm 22mm 18mm;
+    }
+    :root {
+        --ink: #1f2328;
+        --muted: #59636e;
+        --accent: #336770;
+        --rule: #d0d7de;
+        --key-bg: #f6f8fa;
+    }
+    body {
+        font-family: "Inter", "Noto Sans", "DejaVu Sans", sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        color: var(--ink);
+        background: #fff;
+        margin: 0;
+    }
+    h1, h2, h3 {
+        color: var(--accent);
+        line-height: 1.25;
+        break-after: avoid;
+    }
+    h2 {
+        font-size: 17pt;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 4px;
+        margin: 30px 0 10px;
+    }
+    .cover, .toc {
+        break-after: page;
+    }
+    .toc h2 {
+        margin-top: 0;
+    }
+    section:not(.toc) > h2:first-child {
+        break-inside: avoid;
+    }
+    h3 {
+        font-size: 12.5pt;
+        break-after: avoid;
+        margin: 18px 0 6px;
+    }
+    p, li {
+        orphans: 3;
+        widows: 3;
+    }
+    ul, ol {
+        padding-left: 20px;
+    }
+    li {
+        margin: 3px 0;
+    }
+    kbd {
+        font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+        font-size: 8.5pt;
+        background: var(--key-bg);
+        border: 1px solid var(--rule);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 0 4px;
+        white-space: nowrap;
+    }
+    .menu {
+        font-weight: 600;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 8px 0 14px;
+        font-size: 9.5pt;
+        break-inside: auto;
+    }
+    tr {
+        break-inside: avoid;
+    }
+    th, td {
+        border: 1px solid var(--rule);
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+    }
+    th {
+        background: var(--key-bg);
+    }
+    td:first-child {
+        white-space: nowrap;
+    }
+    .tip {
+        border-left: 4px solid var(--accent);
+        background: #eef5f6;
+        padding: 6px 12px;
+        margin: 10px 0;
+        break-inside: avoid;
+    }
+    figure {
+        margin: 12px 0;
+        text-align: center;
+        break-inside: avoid;
+    }
+    figure img {
+        max-width: 100%;
+        max-height: 175mm;
+    }
+    figcaption {
+        color: var(--muted);
+        font-size: 9pt;
+        margin-top: 4px;
+    }
+    .cover {
+        height: 240mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+    .cover h1 {
+        font-size: 34pt;
+        margin: 0 0 8px;
+    }
+    .cover .subtitle {
+        font-size: 15pt;
+        color: var(--muted);
+        margin: 0 0 30px;
+    }
+    .cover img {
+        width: 120mm;
+        margin: 0 auto 30px;
+    }
+    .cover .version {
+        color: var(--muted);
+    }
+    .toc ol {
+        columns: 2;
+        column-gap: 30px;
+        padding-left: 22px;
+    }
+    .toc a {
+        color: var(--ink);
+        text-decoration: none;
+    }
+    a {
+        color: var(--accent);
+    }
+</style>
+</head>
+<body>
+
+<section class="cover">
+    <h1>MindMapView</h1>
+    <p class="subtitle">User Manual</p>
+    <img src="../feature_tour.png" alt="A mind map made with MindMapView">
+    <p class="version">Version 1.1.0 &middot; for the desktop app and the web app</p>
+</section>
+
+<section class="toc">
+    <h2>Contents</h2>
+    <ol>
+        <li><a href="#intro">Introduction</a></li>
+        <li><a href="#window">The window</a></li>
+        <li><a href="#nodes">Adding, editing and removing nodes</a></li>
+        <li><a href="#select">Selecting and moving around</a></li>
+        <li><a href="#arrange">Arranging the map</a></li>
+        <li><a href="#text">Formatting text and emojis</a></li>
+        <li><a href="#notes">Notes</a></li>
+        <li><a href="#links">Web links</a></li>
+        <li><a href="#attributes">Attributes</a></li>
+        <li><a href="#folding">Folding</a></li>
+        <li><a href="#arrows">Arrow links</a></li>
+        <li><a href="#clipboard">Cut, copy and paste</a></li>
+        <li><a href="#find">Finding nodes</a></li>
+        <li><a href="#files">Files: open, save, import and export</a></li>
+        <li><a href="#preferences">Preferences</a></li>
+        <li><a href="#web">The web app</a></li>
+        <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+    </ol>
+</section>
+
+<section id="intro">
+    <h2>1. Introduction</h2>
+    <p>
+        MindMapView is a mind map editor. A mind map starts from one central idea, the <b>root</b>, with
+        related ideas branching out from it. Each idea is a <b>node</b>: a shape with text in it. You can give a
+        node a note, attributes, links and an emoji, color it, fold its branch away, and draw arrows between
+        any two nodes.
+    </p>
+    <p>MindMapView runs in two ways that work the same:</p>
+    <ul>
+        <li><b>The desktop app</b>, installed on your computer.</li>
+        <li>
+            <b>The web app</b>, in your browser at
+            <a href="https://corbettcode.github.io/MindMapView/">corbettcode.github.io/MindMapView</a>, with nothing
+            to install. Section <a href="#web">16</a> lists where it differs.
+        </li>
+    </ul>
+    <p>
+        Maps are saved in MindMapView's own <b>.mmv</b> format, which keeps everything about a map. MindMapView
+        also opens and exports <b>FreeMind (.mm)</b> maps.
+    </p>
+    <div class="tip">
+        The map <b>feature_tour.mmv</b>, which comes with the source code, shows each feature of the app. Open it
+        to explore while you read.
+    </div>
+</section>
+
+<section id="window">
+    <h2>2. The window</h2>
+    <p>The window has three parts:</p>
+    <ul>
+        <li>
+            <b>The menu bar</b> along the top, with the <span class="menu">File</span>,
+            <span class="menu">Edit</span>, <span class="menu">View</span> and <span class="menu">Help</span>
+            menus. Each menu item that has a keyboard shortcut shows it on the right.
+        </li>
+        <li><b>The find bar</b> below the menus, shown while you search the map (section <a href="#find">13</a>).</li>
+        <li><b>The map</b>, which takes up the rest of the window.</li>
+    </ul>
+    <p>
+        A new map has only its root node, in the middle. The window's title shows the name of the file, and starts
+        with an asterisk (<b>*</b>) while the map has changes that are not saved.
+    </p>
+    <h3>The Help menu</h3>
+    <ul>
+        <li><span class="menu">User Manual (PDF)</span> opens this manual.</li>
+        <li><span class="menu">README</span> shows the project's README, for developers using MindMapView as a library.</li>
+        <li><span class="menu">About</span> shows the app's version.</li>
+    </ul>
+</section>
+
+<section id="nodes">
+    <h2>3. Adding, editing and removing nodes</h2>
+
+    <h3>Adding a node</h3>
+    <p>A new node is always added as a child of the selected node. There are three ways to add one:</p>
+    <ul>
+        <li>
+            Click the <b>+ button</b> on a node. It appears on the selected node and on the node under the mouse
+            pointer, where the lines to its children start. The root has a + button on each of its six sides.
+        </li>
+        <li>Press <kbd>+</kbd> to add a child to the selected node.</li>
+        <li>
+            Choose <span class="menu">Edit &rsaquo; Add</span> and pick the shape of the new node: Circle,
+            Rectangle, Stadium, Oval or Square.
+        </li>
+    </ul>
+    <p>
+        Each way opens the <b>Add node</b> dialog, where you give the node its text and style. A new node starts
+        with the text <i>node_1</i>, <i>node_2</i> and so on. It takes the shape and colors of the last child of
+        the node it is added to, so siblings look alike. The first child of a node gets the shape set in
+        Preferences (section <a href="#preferences">15</a>).
+    </p>
+
+    <h3>Editing a node</h3>
+    <p>
+        <b>Double-click</b> a node, choose <span class="menu">Edit &rsaquo; Edit</span>, or right-click the node and
+        choose <span class="menu">Edit</span>. The <b>Edit node</b> dialog has these parts, from top to bottom:
+    </p>
+    <table>
+        <tr><th>Part</th><th>What it does</th></tr>
+        <tr><td>Shape</td><td>The node's shape. The root is always an oval.</td></tr>
+        <tr><td>Emoji</td><td>An emoji shown in front of the node's text (section <a href="#text">6</a>).</td></tr>
+        <tr><td>Text</td><td>The node's text, with a toolbar for bold, italic, lists, links and size.</td></tr>
+        <tr><td>Fill</td><td>The node's background color.</td></tr>
+        <tr><td>Text color</td><td>The color of the node's text.</td></tr>
+        <tr><td>Note</td><td>A longer note, shown when the mouse rests on the node (section <a href="#notes">7</a>).</td></tr>
+    </table>
+    <p>
+        Press <kbd>Enter</kbd> or click <b>OK</b> to keep your changes, or click <b>Cancel</b> to drop them. To put a
+        line break in the node's text, press <kbd>Alt+Enter</kbd>. In the note, <kbd>Enter</kbd> starts a new line.
+        The dialog can be resized; the note gets the extra room.
+    </p>
+    <p>
+        If you change the shape while the colors are still that shape's own, they change with it to the new shape's
+        colors. Colors you chose yourself are kept.
+    </p>
+
+    <h3>Removing a node</h3>
+    <p>
+        Select the node and choose <span class="menu">Edit &rsaquo; Remove</span>, or right-click it and choose
+        <span class="menu">Remove</span>. The nodes below it are removed too. MindMapView asks you to confirm
+        first, unless you turned that off in Preferences. The root cannot be removed.
+    </p>
+
+    <h3>Undo and redo</h3>
+    <p>
+        <kbd>Ctrl+Z</kbd> undoes the last change and <kbd>Ctrl+Y</kbd> (or <kbd>Ctrl+Shift+Z</kbd>) redoes it. Adding,
+        editing, removing, moving, pasting, folding and arrow links can all be undone. Selecting nodes, zooming and
+        moving the view are not changes, so they are not undone.
+    </p>
+</section>
+
+<section id="select">
+    <h2>4. Selecting and moving around</h2>
+
+    <h3>Selecting nodes</h3>
+    <table>
+        <tr><th>Action</th><th>Result</th></tr>
+        <tr><td>Click a node</td><td>Selects that node alone.</td></tr>
+        <tr><td><kbd>Shift</kbd> + click</td><td>Selects the range of nodes from the selected node to the one clicked.</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + click</td><td>Adds the node to the selection and centers it, or takes it out of the selection.</td></tr>
+        <tr><td><kbd>Ctrl+A</kbd></td><td>Selects every node that is shown, apart from the root.</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Clears the selection.</td></tr>
+    </table>
+    <p>With several nodes selected, you can cut, copy or remove them together.</p>
+
+    <h3>Moving the selection with the keyboard</h3>
+    <table>
+        <tr><th>Keys</th><th>Selects</th></tr>
+        <tr><td><kbd>Ctrl+Left</kbd></td><td>The parent of the selected node, towards the root.</td></tr>
+        <tr><td><kbd>Ctrl+Right</kbd></td><td>The first child of the selected node.</td></tr>
+        <tr><td><kbd>Ctrl+Down</kbd></td><td>The next child of the same parent.</td></tr>
+        <tr><td><kbd>Ctrl+Up</kbd></td><td>The previous child of the same parent.</td></tr>
+    </table>
+
+    <h3>Panning and zooming</h3>
+    <ul>
+        <li><b>Pan:</b> drag an empty part of the map.</li>
+        <li><b>Zoom:</b> turn the mouse wheel, or pinch on a touchpad.</li>
+        <li><span class="menu">View &rsaquo; Fit</span> zooms so the whole map fits in the window.</li>
+        <li>
+            <span class="menu">View &rsaquo; Center Selected Node</span> (<kbd>Ctrl+Alt+C</kbd>) moves the view so the
+            selected node is in the middle. Right-click a node and choose <span class="menu">Center</span> to do the
+            same for that node.
+        </li>
+    </ul>
+</section>
+
+<section id="arrange">
+    <h2>5. Arranging the map</h2>
+
+    <h3>The six sides of the root</h3>
+    <p>
+        The root's children can sit on six sides, evenly spaced around it: left, right, upper left, upper right,
+        lower left and lower right. Each side has its own + button on the root. The nodes below a child of the root
+        grow outwards to the left or right.
+    </p>
+    <p>
+        Each branch from the root is drawn in its own color, which the lines and + buttons further down that branch
+        share.
+    </p>
+
+    <h3>Moving nodes</h3>
+    <ul>
+        <li>
+            <b>Re-attach a node:</b> drag it onto another node. It becomes a child of that node, and the nodes
+            below it move with it.
+        </li>
+        <li>
+            <b>Change a branch's side:</b> drag a node onto the root. It joins the side of the root nearest to where
+            you drop it.
+        </li>
+        <li>
+            <b>Move a branch around the root:</b> <kbd>Ctrl+M</kbd> moves the branch the selected node is in to
+            the next side clockwise, and <kbd>Ctrl+Shift+M</kbd> counterclockwise. These are also in the
+            <span class="menu">Edit</span> menu and a node's right-click menu.
+        </li>
+        <li>
+            <b>Move the whole map:</b> drag the root. The rest of the map moves with it. A root you have not dragged
+            stays in the middle of the window.
+        </li>
+    </ul>
+</section>
+
+<section id="text">
+    <h2>6. Formatting text and emojis</h2>
+
+    <h3>The text toolbar</h3>
+    <p>
+        The node's text and its note each have a toolbar. Select some text and click a button, or click a button
+        and then type.
+    </p>
+    <table>
+        <tr><th>Button</th><th>Effect</th></tr>
+        <tr><td><b>B</b></td><td>Bold</td></tr>
+        <tr><td><i>I</i></td><td>Italic</td></tr>
+        <tr><td><u>U</u></td><td>Underline</td></tr>
+        <tr><td><s>S</s></td><td>Strikethrough</td></tr>
+        <tr><td>&bull;</td><td>Bulleted list</td></tr>
+        <tr><td>1.</td><td>Numbered list</td></tr>
+        <tr><td>&#x1F517;</td><td>Add, change or remove a web link (section <a href="#links">8</a>)</td></tr>
+        <tr><td>Size &#x25BE;</td><td>Small, Normal or Large text</td></tr>
+    </table>
+    <p>
+        All nodes use the same font, which you choose in Preferences: Default, Inter, Lora, Nunito, Caveat or
+        JetBrains Mono.
+    </p>
+
+    <h3>Emojis</h3>
+    <p>
+        Click <b>Emoji</b> at the top of the edit dialog to open the emoji picker. You can:
+    </p>
+    <ul>
+        <li>Browse by category, such as Smileys &amp; Emotion, Animals &amp; Nature or Flags.</li>
+        <li>Type in <b>Search</b> to find an emoji by name.</li>
+        <li>Pick from <b>In this map</b>, the emojis other nodes already use.</li>
+        <li>Choose a skin tone for emojis that have one. The app remembers your choice.</li>
+        <li>Choose <b>None</b> to take the emoji off the node.</li>
+    </ul>
+    <p>
+        The chosen emoji is shown in front of the node's text, at the same size as its first letters. The dialog
+        previews it in front of the text as you type.
+    </p>
+</section>
+
+<section id="notes">
+    <h2>7. Notes</h2>
+    <p>
+        A note holds more than fits in a node: details, lists, links or pictures. A node with a note shows a small
+        note icon at its corner. Rest the mouse on the node for a second to see the note in a pop-up.
+    </p>
+    <p>
+        Write the note in the <b>Note</b> box of the edit dialog, with the same text toolbar as the node's text.
+    </p>
+    <h3>Writing in Markdown</h3>
+    <p>
+        Click <b>MD</b> above the note to edit it as Markdown text instead, for example <code>**bold**</code>,
+        <code>*italic*</code>, <code>- list item</code> or <code>[text](https://example.com)</code>. Click
+        <b>MD</b> again to go back to formatted text.
+    </p>
+    <h3>Pictures</h3>
+    <p>
+        A note can show a picture from the web with Markdown like <code>![description](https://example.com/picture.png)</code>.
+        The note's pop-up appears once its pictures have loaded.
+    </p>
+</section>
+
+<section id="links">
+    <h2>8. Web links</h2>
+    <p>
+        Text in a node or a note can link to a web page or an email address. Select the text, click the
+        &#x1F517; button in the toolbar, type the <b>Address</b> and click <b>OK</b>. To change or remove a link,
+        put the cursor in it and click &#x1F517; again.
+    </p>
+    <p>
+        Only <b>http</b>, <b>https</b> and <b>mailto</b> addresses can be linked to. Since maps may come from
+        other people, MindMapView never opens other kinds of links.
+    </p>
+    <p>To open a link:</p>
+    <ul>
+        <li>Hold <kbd>Ctrl</kbd> and click it in the node, or</li>
+        <li>Select the node and choose <span class="menu">Edit &rsaquo; Open Link</span>, which lists every link in its text and note.</li>
+    </ul>
+    <p>A plain click on a link only selects the node, so clicking doesn't open web pages by mistake.</p>
+</section>
+
+<section id="attributes">
+    <h2>9. Attributes</h2>
+    <p>
+        Attributes are name-and-value pairs, such as <i>Status: In progress</i> or <i>Due: 2026-11-15</i>. They are
+        drawn as a small table below the node's text.
+    </p>
+    <ul>
+        <li>
+            To edit a node's attributes, select it and press <kbd>Alt+F9</kbd>, choose
+            <span class="menu">Edit &rsaquo; Attributes...</span>, or right-click it and choose
+            <span class="menu">Attributes</span>.
+        </li>
+        <li>
+            In the <b>Attributes</b> dialog, type a <b>Name</b> and <b>Value</b> on each row. Click
+            <b>+ Add attribute</b> for a new row, or &#x2715; to delete one.
+        </li>
+        <li>
+            Buttons such as <b>+ Status</b> add a row named after an attribute that other nodes already have, to
+            keep names the same across the map.
+        </li>
+        <li>
+            <span class="menu">View &rsaquo; Show All Attributes</span> (<kbd>Alt+S</kbd>) and
+            <span class="menu">Show No Attributes</span> (<kbd>Alt+H</kbd>) show or hide the attribute tables
+            across the map.
+        </li>
+    </ul>
+</section>
+
+<section id="folding">
+    <h2>10. Folding</h2>
+    <p>
+        Folding a node hides the nodes below it, so a large map is easier to read. A folded node shows a small ring
+        where its lines would start; click the ring to unfold it. The root cannot be folded.
+    </p>
+    <p>The folding commands are in the <span class="menu">View</span> menu:</p>
+    <table>
+        <tr><th>Command</th><th>Keys</th><th>Effect</th></tr>
+        <tr><td>Toggle Folded</td><td><kbd>Space</kbd></td><td>Folds or unfolds the selected node.</td></tr>
+        <tr><td>Toggle Children Folded</td><td><kbd>Ctrl+Space</kbd></td><td>Folds or unfolds each child of the selected node.</td></tr>
+        <tr><td>Fold One Level</td><td><kbd>Alt+PageUp</kbd></td><td>Hides the deepest level shown below the selected node.</td></tr>
+        <tr><td>Unfold One Level</td><td><kbd>Alt+PageDown</kbd></td><td>Shows one more level below the selected node.</td></tr>
+        <tr><td>Fold All</td><td><kbd>Alt+Home</kbd></td><td>Folds everything below the selected node.</td></tr>
+        <tr><td>Unfold All</td><td><kbd>Alt+End</kbd></td><td>Unfolds everything below the selected node.</td></tr>
+    </table>
+    <p>
+        A node with children also has <span class="menu">Fold</span> or <span class="menu">Unfold</span> in its
+        right-click menu. Folds are saved with the map, including in FreeMind files.
+    </p>
+</section>
+
+<section id="arrows">
+    <h2>11. Arrow links</h2>
+    <p>
+        An arrow link is a curved arrow from one node to any other node, drawn on top of the map. Use it to show a
+        connection that isn't parent and child.
+    </p>
+    <h3>Adding an arrow link</h3>
+    <ul>
+        <li>
+            Select the node the arrow starts from and press <kbd>Ctrl+L</kbd>, choose
+            <span class="menu">Edit &rsaquo; Add Arrow Link</span>, or right-click it and choose
+            <span class="menu">Link</span>. Then click the node the arrow should point to. Press <kbd>Esc</kbd> to
+            cancel.
+        </li>
+        <li>
+            Or hold <kbd>Ctrl</kbd> and drag one node onto another. Doing this again between the same two nodes
+            removes the arrow.
+        </li>
+    </ul>
+    <h3>Changing an arrow link</h3>
+    <p>
+        <b>Drag</b> an arrow to bend its curve. <b>Right-click</b> an arrow for its menu:
+    </p>
+    <table>
+        <tr><th>Item</th><th>Effect</th></tr>
+        <tr><td>Go to: ...</td><td>Selects and shows the node at either end of the arrow.</td></tr>
+        <tr><td>Arrowheads</td><td>Forward, Backward, Both Ways or No Arrowheads.</td></tr>
+        <tr><td>Line style</td><td>Solid, Dashed, Dotted or Dash-Dot.</td></tr>
+        <tr><td>Thickness</td><td>Thin, Normal or Thick.</td></tr>
+        <tr><td>Color</td><td>The arrow's color.</td></tr>
+        <tr><td>Reset Curve</td><td>Undoes any bending, back to the arrow's own curve.</td></tr>
+        <tr><td>Remove Arrow Link</td><td>Removes the arrow.</td></tr>
+    </table>
+</section>
+
+<section id="clipboard">
+    <h2>12. Cut, copy and paste</h2>
+    <ul>
+        <li><kbd>Ctrl+C</kbd> copies the selected nodes, with all the nodes below them.</li>
+        <li><kbd>Ctrl+X</kbd> cuts them. Cut nodes can be pasted back, so they are removed without asking.</li>
+        <li><kbd>Ctrl+V</kbd> pastes them as children of the selected node.</li>
+    </ul>
+    <p>
+        These are also in the <span class="menu">Edit</span> menu and a node's right-click menu. Pasting within
+        MindMapView keeps everything about the nodes: shapes, colors, notes, attributes and folds.
+    </p>
+    <h3>Working with other programs</h3>
+    <p>
+        Copied nodes also go on the clipboard as an indented outline of plain text, one line per node. You can
+        paste that into a text editor, email or document.
+    </p>
+    <p>
+        Going the other way, you can paste text copied from another program. Each line that isn't blank becomes a
+        node. A line indented more than the line above it becomes that line's child. Bullets such as <b>-</b>,
+        <b>*</b> or <b>&bull;</b> at the start of a line are left out. For example:
+    </p>
+    <pre>Holiday
+    Travel
+        Book flights
+        Rent a car
+    Packing</pre>
+    <p>The new nodes look like the last child of the node you paste into.</p>
+</section>
+
+<section id="find">
+    <h2>13. Finding nodes</h2>
+    <p>
+        Press <kbd>Ctrl+F</kbd> or choose <span class="menu">Edit &rsaquo; Find...</span> to open the find bar, then
+        type. MindMapView selects the first node whose text or note contains what you typed, ignoring capital
+        letters. The bar shows which match you are on and how many there are.
+    </p>
+    <ul>
+        <li><b>&#x25BC;</b> or <kbd>F3</kbd> goes to the next match.</li>
+        <li><b>&#x25B2;</b> or <kbd>Shift+F3</kbd> goes to the previous match.</li>
+        <li><b>&#x2715;</b> closes the find bar. <kbd>F3</kbd> still finds the same text again afterwards.</li>
+    </ul>
+    <p>
+        Nodes hidden inside folded nodes are found too: their branch is unfolded to show them. Matches are found
+        from the selected node onwards, so clicking a node and pressing <kbd>F3</kbd> carries on from there.
+    </p>
+</section>
+
+<section id="files">
+    <h2>14. Files: open, save, import and export</h2>
+
+    <h3>The File menu</h3>
+    <table>
+        <tr><th>Item</th><th>Keys</th><th>Effect</th></tr>
+        <tr><td>New</td><td><kbd>Ctrl+N</kbd></td><td>Starts an empty map.</td></tr>
+        <tr><td>Open...</td><td><kbd>Ctrl+O</kbd></td><td>Opens a MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
+        <tr><td>Recent</td><td></td><td>Lists the maps opened or saved most recently.</td></tr>
+        <tr><td>Import...</td><td></td><td>Replaces the nodes of this map with those of another (see below).</td></tr>
+        <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td><td>Saves the map to its file.</td></tr>
+        <tr><td>Save As...</td><td><kbd>Ctrl+Shift+S</kbd></td><td>Saves the map to a new file.</td></tr>
+        <tr><td>Export</td><td></td><td>Writes the map in another format (see below).</td></tr>
+    </table>
+    <p><kbd>Alt+F</kbd> opens the File menu.</p>
+
+    <h3>Saving</h3>
+    <p>
+        Maps are always saved as <b>.mmv</b> files. The first time you save a new map, MindMapView suggests a file
+        name based on the root's text. A FreeMind map you opened is saved as a .mmv file next to the original,
+        leaving the original as it was.
+    </p>
+    <p>
+        If you start a new map, open another, or close the app while the map has unsaved changes, MindMapView
+        asks whether to <b>Save</b>, <b>Don't Save</b> or <b>Cancel</b>.
+    </p>
+
+    <h3>Recent maps</h3>
+    <p>
+        When two recent maps have the same name, their folders are shown to tell them apart. If a recent map has
+        been moved or deleted, MindMapView offers to remove it from the list.
+    </p>
+
+    <h3>Importing</h3>
+    <p>
+        <span class="menu">Import...</span> replaces the nodes of the open map with those of another map, but keeps
+        the open map's file name. The next save writes the imported nodes to that file. MindMapView asks you to
+        confirm first, unless the map has only its root. Import can be undone.
+    </p>
+
+    <h3>Exporting</h3>
+    <table>
+        <tr><th>Format</th><th>What you get</th></tr>
+        <tr><td>As Image (PNG)...</td><td>A picture of the whole map in light colors on white, including parts that are off screen. Folded branches stay hidden.</td></tr>
+        <tr><td>As HTML Outline...</td><td>A web page of nested lists, with notes and attributes. Branches can be folded in the browser, and start folded where they are in the map.</td></tr>
+        <tr><td>As FreeMind Map (.mm)...</td><td>A map for FreeMind and the programs that read its format. FreeMind only has left and right sides, so nodes on the upper and lower sides go to the left or right.</td></tr>
+    </table>
+    <p>Exporting doesn't save the map: unsaved changes stay unsaved.</p>
+</section>
+
+<section id="preferences">
+    <h2>15. Preferences</h2>
+    <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> to change:</p>
+    <table>
+        <tr><th>Setting</th><th>Choices</th></tr>
+        <tr><td>Theme</td><td>System (follow your computer), Light or Dark.</td></tr>
+        <tr><td>New node shape</td><td>The shape of the first child added to a node. Later children copy their last sibling.</td></tr>
+        <tr><td>Node font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of every node.</td></tr>
+        <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
+        <tr><td>Fill colors</td><td>The fill colors offered in the edit dialog.</td></tr>
+        <tr><td>Text colors</td><td>The text colors offered in the edit dialog.</td></tr>
+        <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu.</td></tr>
+    </table>
+    <p>
+        For each list of colors, pick a color with the color picker or type its <b>Hex</b> code, then click
+        <b>Add</b>. Select a color and click <b>Remove</b> to take it off the list, or click <b>Reset</b> to go
+        back to the original colors.
+    </p>
+    <p>
+        Preferences belong to you, not to a map: they apply to every map you open.
+    </p>
+</section>
+
+<section id="web">
+    <h2>16. The web app</h2>
+    <p>
+        The web app at <a href="https://corbettcode.github.io/MindMapView/">corbettcode.github.io/MindMapView</a>
+        is the same app, running in your browser. It needs a recent browser: Chrome or Edge 119, Firefox 120,
+        Safari 18.2 or later. It differs from the desktop app in these ways:
+    </p>
+    <ul>
+        <li>In Chrome and Edge, <span class="menu">Save</span> writes back to the file you opened. Other browsers download the map instead.</li>
+        <li>
+            In Chrome and Edge, the <span class="menu">Recent</span> menu lists maps by name only, as a web page
+            isn't told which folder a file is in. The browser asks you to allow the file again before opening it.
+            Other browsers have no Recent menu.
+        </li>
+        <li>Pasting text from other programs asks for the browser's permission first.</li>
+        <li>Pictures in notes only show when the website they come from allows it.</li>
+        <li>Preferences are kept in the browser, so each browser has its own.</li>
+        <li>
+            Some shortcuts, such as <kbd>Ctrl+N</kbd>, belong to the browser. Use the menus for those.
+        </li>
+        <li>The browser warns you before you leave the page with unsaved changes.</li>
+    </ul>
+</section>
+
+<section id="shortcuts">
+    <h2>17. Keyboard shortcuts</h2>
+    <h3>Files</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Ctrl+N</kbd></td><td>New map</td></tr>
+        <tr><td><kbd>Ctrl+O</kbd></td><td>Open a map</td></tr>
+        <tr><td><kbd>Ctrl+S</kbd></td><td>Save</td></tr>
+        <tr><td><kbd>Ctrl+Shift+S</kbd></td><td>Save As</td></tr>
+        <tr><td><kbd>Alt+F</kbd></td><td>Open the File menu</td></tr>
+    </table>
+    <h3>Editing</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>+</kbd></td><td>Add a child to the selected node</td></tr>
+        <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td></tr>
+        <tr><td><kbd>Ctrl+Y</kbd>, <kbd>Ctrl+Shift+Z</kbd></td><td>Redo</td></tr>
+        <tr><td><kbd>Ctrl+X</kbd></td><td>Cut</td></tr>
+        <tr><td><kbd>Ctrl+C</kbd></td><td>Copy</td></tr>
+        <tr><td><kbd>Ctrl+V</kbd></td><td>Paste</td></tr>
+        <tr><td><kbd>Alt+F9</kbd></td><td>Edit attributes</td></tr>
+        <tr><td><kbd>Ctrl+L</kbd></td><td>Add an arrow link from the selected node</td></tr>
+        <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
+        <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
+    </table>
+    <h3>In the edit dialog</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Enter</kbd></td><td>OK (in the note: a new line)</td></tr>
+        <tr><td><kbd>Alt+Enter</kbd></td><td>A new line in the node's text</td></tr>
+    </table>
+    <h3>Selecting and finding</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Ctrl+A</kbd></td><td>Select all nodes</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Clear the selection, or cancel adding an arrow link</td></tr>
+        <tr><td><kbd>Ctrl+Left</kbd></td><td>Select the parent</td></tr>
+        <tr><td><kbd>Ctrl+Right</kbd></td><td>Select the first child</td></tr>
+        <tr><td><kbd>Ctrl+Down</kbd> / <kbd>Ctrl+Up</kbd></td><td>Select the next / previous sibling</td></tr>
+        <tr><td><kbd>Ctrl+F</kbd></td><td>Find</td></tr>
+        <tr><td><kbd>F3</kbd> / <kbd>Shift+F3</kbd></td><td>Find next / previous</td></tr>
+    </table>
+    <h3>View and folding</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Ctrl+Alt+C</kbd></td><td>Center the selected node</td></tr>
+        <tr><td><kbd>Alt+S</kbd></td><td>Show all attributes</td></tr>
+        <tr><td><kbd>Alt+H</kbd></td><td>Show no attributes</td></tr>
+        <tr><td><kbd>Space</kbd></td><td>Fold or unfold the selected node</td></tr>
+        <tr><td><kbd>Ctrl+Space</kbd></td><td>Fold or unfold its children</td></tr>
+        <tr><td><kbd>Alt+PageUp</kbd> / <kbd>Alt+PageDown</kbd></td><td>Fold / unfold one level</td></tr>
+        <tr><td><kbd>Alt+Home</kbd> / <kbd>Alt+End</kbd></td><td>Fold / unfold all</td></tr>
+    </table>
+    <h3>Mouse</h3>
+    <table>
+        <tr><th>Action</th><th>Result</th></tr>
+        <tr><td>Double-click a node</td><td>Edit it</td></tr>
+        <tr><td>Right-click a node</td><td>Its menu</td></tr>
+        <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>
+        <tr><td>Drag a node onto another</td><td>Re-attach it</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + drag a node onto another</td><td>Add or remove an arrow link</td></tr>
+        <tr><td>Drag an arrow link</td><td>Bend it</td></tr>
+        <tr><td>Drag the root</td><td>Move the whole map</td></tr>
+        <tr><td>Drag empty space</td><td>Pan</td></tr>
+        <tr><td>Mouse wheel / pinch</td><td>Zoom</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + click a link</td><td>Open it</td></tr>
+        <tr><td>Click a fold ring</td><td>Unfold the node</td></tr>
+    </table>
+</section>
+
+</body>
+</html>
