@@ -53,4 +53,29 @@ class AppDialogSizeTest {
     @Test
     fun windowOnTheScreenStaysWhereItIs() =
         assertEquals(50, keptOnScreenTop(top = 50, height = 600, screenTop = 0, screenBottom = 720))
+
+    // A window that keeps its size is fitted to its content when it opens, and after that scrolls what is added.
+    @Test
+    fun windowKeepingItsSizeIsOnlyFittedOnce() {
+        val state = AppDialogState(DpSize(560.dp, 560.dp), minSize = DpSize(480.dp, 0.dp))
+        state.contentMinHeight = 600.dp
+        state.fitToContent(titleBarHeight = 30.dp, keepsSize = true)
+        assertEquals(DpSize(560.dp, 630.dp), state.size)
+        assertEquals(DpSize(480.dp, 630.dp), state.minSize)
+
+        state.contentMinHeight = 810.dp
+        state.fitToContent(titleBarHeight = 30.dp, keepsSize = true)
+        assertEquals(DpSize(560.dp, 630.dp), state.size)
+        assertEquals(DpSize(480.dp, 630.dp), state.minSize)
+    }
+
+    @Test
+    fun dialogNotKeepingItsSizeFollowsItsContent() {
+        val state = AppDialogState(DpSize(560.dp, 560.dp))
+        state.contentMinHeight = 600.dp
+        state.fitToContent(titleBarHeight = 30.dp)
+        state.contentMinHeight = 810.dp
+        state.fitToContent(titleBarHeight = 30.dp)
+        assertEquals(840.dp, state.size.height)
+    }
 }

@@ -24,9 +24,16 @@ class AppDialogState(
 
     private var fittedContentMinHeight: Dp? = null
 
-    /** Fits the dialog to [contentMinHeight] and a title bar of [titleBarHeight]. */
-    internal fun fitToContent(titleBarHeight: Dp) {
+    /**
+     * Fits the dialog to [contentMinHeight] and a title bar of [titleBarHeight]. A dialog that [keepsSize] is only
+     * fitted when it opens, and scrolls what its content gains after that.
+     */
+    internal fun fitToContent(
+        titleBarHeight: Dp
+        , keepsSize: Boolean = false
+    ) {
         val content = contentMinHeight ?: return
+        if (keepsSize && fittedContentMinHeight != null) return
         val minHeight = content + titleBarHeight
         size = DpSize(size.width, resizedHeight(size.height, fittedContentMinHeight?.plus(titleBarHeight), minHeight))
         minSize = DpSize(minSize?.width ?: size.width, minHeight)

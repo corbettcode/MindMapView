@@ -74,7 +74,10 @@ actual fun AppDialog(
         LaunchedEffect(Unit) { snapshotFlow { state.minSize }.collect { applyMinSize() } }
         // The window's title bar is part of the size a dialog asks for, but not of the room its content has.
         val titleBarHeight = window.insets.top.dp
-        LaunchedEffect(Unit) { snapshotFlow { state.contentMinHeight }.collect { state.fitToContent(titleBarHeight) } }
+        // A window keeps the size it opens at, as one that grows as its content does runs off the screen.
+        LaunchedEffect(Unit) {
+            snapshotFlow { state.contentMinHeight }.collect { state.fitToContent(titleBarHeight, keepsSize = true) }
+        }
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val minSize = state.minSize ?: state.size
             val width = max(maxWidth, minSize.width)
