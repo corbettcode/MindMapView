@@ -120,7 +120,6 @@ class Tree<T> {
         if (attributes.isEmpty()) nodeAttributes.remove(id) else nodeAttributes[id] = attributes.toList()
     }
 
-    /** Whether the node is folded: the nodes below it are hidden, as in FreeMind. */
     /** Returns the line settings the node has of its own; [NodeLine] with nothing set when it has none. */
     fun lineOf(id: String): NodeLine = nodeLines[id] ?: NodeLine()
 
@@ -133,6 +132,7 @@ class Tree<T> {
         if (line.isEmpty) nodeLines.remove(id) else nodeLines[id] = line
     }
 
+    /** Whether the node is folded: the nodes below it are hidden, as in FreeMind. */
     fun isFolded(id: String): Boolean = id in foldedIds && id in _nodes
 
     /**
