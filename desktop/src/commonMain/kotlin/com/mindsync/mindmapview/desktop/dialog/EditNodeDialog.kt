@@ -3,12 +3,11 @@ package com.mindsync.mindmapview.desktop.dialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
@@ -37,14 +36,12 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeLine
@@ -60,6 +57,7 @@ import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.DialogLayout
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
 import com.mindsync.mindmapview.desktop.component.LineSettings
 import com.mindsync.mindmapview.desktop.component.RichTextToggle
@@ -75,6 +73,10 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.launch
+
+
+// The room between the dialog's rows.
+private val DIALOG_GAP = 16.dp
 
 /**
  * Displays a dialog that allows editing a node element with customization options for its description,
@@ -154,11 +156,8 @@ fun EditNodeDialog(
         val lines = textMeasurer.measure("\n".repeat(NOTE_LINES - 1), lineStyle).size.height
         with(density) { lines.toDp() } + TEXT_FIELD_VERTICAL_PADDING
     }
-    // The height the note is laid out with, which the window grows to keep at [noteMinHeight] at the least.
-    var noteHeight by remember { mutableStateOf<Dp?>(null) }
-    // The note's height as the line section is opened or closed, which the window then grows or shrinks to keep.
-    var noteHeightToKeep by remember { mutableStateOf<Dp?>(null) }
-    val dialogState = remember { AppDialogState(EDIT_DIALOG_SIZE) }
+    // Its least width; its height is fitted to what its content needs.
+    val dialogState = remember { AppDialogState(EDIT_DIALOG_SIZE, minSize = DpSize(EDIT_DIALOG_MIN_WIDTH, 0.dp)) }
     var isDescriptionFocused by remember { mutableStateOf(false) }
     var isNoteFocused by remember { mutableStateOf(false) }
 
@@ -184,25 +183,6 @@ fun EditNodeDialog(
         LaunchedEffect(Unit) {
             descriptionFocusRequester.requestFocus()
         }
-        // The rest of the dialog is only known once it is laid out, so the window is fitted to it then, and grown
-        // again whenever the rest takes more room, as the node's text may as it gets more lines. Opening or closing
-        // the line section grows or shrinks the window by the section, so it is not left taller than it needs.
-        var isFitted by remember { mutableStateOf(false) }
-        LaunchedEffect(noteHeight) {
-            val height = noteHeight ?: return@LaunchedEffect
-            val keptHeight = noteHeightToKeep
-            noteHeightToKeep = null
-            val noteHeightAfter = keptHeight ?: height
-            val windowHeight = dialogState.size.height + (noteHeightAfter - height)
-            val minWindowHeight = windowHeight - (noteHeightAfter - noteMinHeight)
-            dialogState.minSize = DpSize(EDIT_DIALOG_MIN_WIDTH, minWindowHeight)
-            if (!isFitted || noteHeightAfter < noteMinHeight) {
-                dialogState.size = DpSize(dialogState.size.width, minWindowHeight)
-                isFitted = true
-            } else if (keptHeight != null) {
-                dialogState.size = DpSize(dialogState.size.width, windowHeight)
-            }
-        }
         // Enter clicks OK, wherever the focus is but in the note, whose lines are typed with Enter. A line of the
         // node's text is typed with Alt+Enter instead.
         Surface(
@@ -224,169 +204,166 @@ fun EditNodeDialog(
                     }
                 }
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-                , modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            ) {
-                selectedShape?.let { currentShape ->
-                    ShapePicker(
-                        selectedShape = currentShape
-                        , onSelect = { newShape ->
-                            // A color that was not chosen is that of the shape, so it goes along with the shape.
-                            if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
-                            if (selectedTextColor == currentShape.defaultTextColor) {
-                                selectedTextColor = newShape.defaultTextColor
+            DialogLayout(
+                noteMinHeight = noteMinHeight
+                , gap = DIALOG_GAP
+                , contentPadding = PaddingValues(24.dp)
+                , onContentMinHeightChange = { dialogState.contentMinHeight = it }
+                , settings = {
+                    selectedShape?.let { currentShape ->
+                        ShapePicker(
+                            selectedShape = currentShape
+                            , onSelect = { newShape ->
+                                // A color that was not chosen is that of the shape, so it goes along with the shape.
+                                if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
+                                if (selectedTextColor == currentShape.defaultTextColor) {
+                                    selectedTextColor = newShape.defaultTextColor
+                                }
+                                selectedShape = newShape
                             }
-                            selectedShape = newShape
-                        }
-                    )
-                }
-
-                EmojiPicker(
-                    selectedEmoji = selectedEmoji
-                    , mapEmojis = mapEmojis
-                    , emojiTones = emojiTones
-                    , onToneChange = onToneChange
-                    , onSelect = {
-                        selectedEmoji = it
-                    }
-                )
-
-                val descriptionStyle = LocalTextStyle
-                    .current
-                    .copy(
-                        textAlign = TextAlign.Center
-                    )
-                ShowLeadingEmoji(
-                    state = richTextState
-                    , emoji = selectedEmoji
-                    , textStyle = descriptionStyle
-                )
-                RichTextToolbar(richTextState)
-
-                OutlinedRichTextEditor(
-                    state = richTextState
-                    , textStyle = descriptionStyle
-                    , modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(
-                            min = 120.dp
-                            , max = 200.dp
                         )
-                        .focusRequester(descriptionFocusRequester)
-                        .onFocusChanged { isDescriptionFocused = it.hasFocus }
-                )
-
-                ColorPicker(
-                    label = "Fill"
-                    , colors = remember(color, nodeColors) { (nodeColors + color).distinct() }
-                    , selectedColor = selectedColor
-                    , onSelect = { selectedColor = it }
-                )
-
-                ColorPicker(
-                    label = "Text"
-                    , colors = remember(textColor, textColors) { (textColors + textColor).distinct() }
-                    , selectedColor = selectedTextColor
-                    , onSelect = { selectedTextColor = it }
-                )
-
-                Text(
-                    if (isLineOpen) "Line ▾" else "Line ▸"
-                    , style = MaterialTheme.typography.titleSmall
-                    , modifier = Modifier.clickable {
-                        noteHeightToKeep = noteHeight
-                        isLineOpen = !isLineOpen
                     }
-                )
 
-                if (isLineOpen) {
-                    LineSettings(
-                        line = selectedLine
-                        , colors = remember(line, nodeColors, textColors) {
-                            (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(line.color)).distinct()
+                    EmojiPicker(
+                        selectedEmoji = selectedEmoji
+                        , mapEmojis = mapEmojis
+                        , emojiTones = emojiTones
+                        , onToneChange = onToneChange
+                        , onSelect = {
+                            selectedEmoji = it
                         }
-                        , onChange = { selectedLine = it }
                     )
-                }
 
-                Text(
-                    "Note"
-                    , style = MaterialTheme.typography.titleSmall
-                )
+                    val descriptionStyle = LocalTextStyle
+                        .current
+                        .copy(
+                            textAlign = TextAlign.Center
+                        )
+                    ShowLeadingEmoji(
+                        state = richTextState
+                        , emoji = selectedEmoji
+                        , textStyle = descriptionStyle
+                    )
+                    RichTextToolbar(richTextState)
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    , verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
-                    RichTextToggle(
-                        label = "MD"
-                        , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)
-                        , checked = noteMarkdown != null
-                        , onToggle = {
-                            val markdown = noteMarkdown
-                            if (markdown == null) {
-                                noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
-                            } else {
-                                scope.launch {
-                                    noteState = noteWithImages(noteFromMarkdown(markdown))
-                                    noteMarkdown = null
+                    OutlinedRichTextEditor(
+                        state = richTextState
+                        , textStyle = descriptionStyle
+                        , modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(
+                                min = 120.dp
+                                , max = 200.dp
+                            )
+                            .focusRequester(descriptionFocusRequester)
+                            .onFocusChanged { isDescriptionFocused = it.hasFocus }
+                    )
+
+                    ColorPicker(
+                        label = "Fill"
+                        , colors = remember(color, nodeColors) { (nodeColors + color).distinct() }
+                        , selectedColor = selectedColor
+                        , onSelect = { selectedColor = it }
+                    )
+
+                    ColorPicker(
+                        label = "Text"
+                        , colors = remember(textColor, textColors) { (textColors + textColor).distinct() }
+                        , selectedColor = selectedTextColor
+                        , onSelect = { selectedTextColor = it }
+                    )
+
+                    Text(
+                        if (isLineOpen) "Line ▾" else "Line ▸"
+                        , style = MaterialTheme.typography.titleSmall
+                        , modifier = Modifier.clickable {
+                            isLineOpen = !isLineOpen
+                        }
+                    )
+
+                    if (isLineOpen) {
+                        LineSettings(
+                            line = selectedLine
+                            , colors = remember(line, nodeColors, textColors) {
+                                (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(line.color))
+                                    .distinct()
+                            }
+                            , onChange = { selectedLine = it }
+                        )
+                    }
+
+                    Text(
+                        "Note"
+                        , style = MaterialTheme.typography.titleSmall
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        , verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
+                        RichTextToggle(
+                            label = "MD"
+                            , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)
+                            , checked = noteMarkdown != null
+                            , onToggle = {
+                                val markdown = noteMarkdown
+                                if (markdown == null) {
+                                    noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
+                                } else {
+                                    scope.launch {
+                                        noteState = noteWithImages(noteFromMarkdown(markdown))
+                                        noteMarkdown = null
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
-                val markdown = noteMarkdown
-                val currentNoteState = noteState
-                ShowEmojisInColor(currentNoteState)
-                val noteModifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .onSizeChanged { noteHeight = with(density) { it.height.toDp() } }
-                    .onFocusChanged { isNoteFocused = it.hasFocus }
-                if (markdown == null && currentNoteState == null) {
-                    Box(modifier = noteModifier)
-                } else if (markdown == null && currentNoteState != null) {
-                    CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
-                        OutlinedRichTextEditor(
-                            state = currentNoteState
-                            , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
-                            , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
-                                textColor = selectedTextColor
-                                , containerColor = selectedColor
+                , note = { modifier ->
+                    val markdown = noteMarkdown
+                    val currentNoteState = noteState
+                    ShowEmojisInColor(currentNoteState)
+                    val noteModifier = modifier
+                        .onFocusChanged { isNoteFocused = it.hasFocus }
+                    if (markdown == null && currentNoteState == null) {
+                        Box(modifier = noteModifier)
+                    } else if (markdown == null && currentNoteState != null) {
+                        CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
+                            OutlinedRichTextEditor(
+                                state = currentNoteState
+                                , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
+                                , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
+                                    textColor = selectedTextColor
+                                    , containerColor = selectedColor
+                                    , cursorColor = selectedTextColor
+                                )
+                                , modifier = noteModifier
+                            )
+                        }
+                    } else if (markdown != null) {
+                        OutlinedTextField(
+                            value = markdown
+                            , onValueChange = { noteMarkdown = it }
+                            , visualTransformation = emojiVisualTransformation()
+                            , textStyle = LocalTextStyle
+                                .current
+                                .copy(
+                                    fontFamily = FontFamily.Monospace
+                                    , color = selectedTextColor
+                                )
+                            , colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = selectedTextColor
+                                , unfocusedTextColor = selectedTextColor
+                                , focusedContainerColor = selectedColor
+                                , unfocusedContainerColor = selectedColor
                                 , cursorColor = selectedTextColor
                             )
                             , modifier = noteModifier
                         )
                     }
-                } else if (markdown != null) {
-                    OutlinedTextField(
-                        value = markdown
-                        , onValueChange = { noteMarkdown = it }
-                        , visualTransformation = emojiVisualTransformation()
-                        , textStyle = LocalTextStyle
-                            .current
-                            .copy(
-                                fontFamily = FontFamily.Monospace
-                                , color = selectedTextColor
-                            )
-                        , colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = selectedTextColor
-                            , unfocusedTextColor = selectedTextColor
-                            , focusedContainerColor = selectedColor
-                            , unfocusedContainerColor = selectedColor
-                            , cursorColor = selectedTextColor
-                        )
-                        , modifier = noteModifier
-                    )
                 }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                    , modifier = Modifier.fillMaxWidth()
-                ) {
+                , buttons = {
                     Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
@@ -394,7 +371,7 @@ fun EditNodeDialog(
                         Text("OK")
                     }
                 }
-            }
+            )
         }
     }
 }

@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -36,6 +38,7 @@ actual fun AppDialog(
     , isResizable: Boolean
     , content: @Composable () -> Unit
 ) {
+    LaunchedEffect(state) { snapshotFlow { state.contentMinHeight }.collect { state.fitToContent(TITLE_HEIGHT) } }
     Dialog(
         onDismissRequest = onCloseRequest
         , properties = DialogProperties(
@@ -68,7 +71,9 @@ actual fun AppDialog(
                 BoxWithConstraints(modifier = Modifier.weight(1f)) {
                     val minSize = state.minSize ?: state.size
                     val width = max(maxWidth, minSize.width)
-                    val height = max(maxHeight, minSize.height - TITLE_HEIGHT)
+                    // A dialog that scrolls its content itself is given the room there is.
+                    val height =
+                        if (state.contentMinHeight != null) maxHeight else max(maxHeight, minSize.height - TITLE_HEIGHT)
                     Box(
                         modifier = Modifier
                             .horizontalScroll(rememberScrollState())

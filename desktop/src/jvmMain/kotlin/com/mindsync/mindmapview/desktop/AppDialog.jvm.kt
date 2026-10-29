@@ -62,10 +62,13 @@ actual fun AppDialog(
         LaunchedEffect(Unit) { snapshotFlow { state.minSize }.collect { applyMinSize() } }
         // The window's title bar is part of the size a dialog asks for, but not of the room its content has.
         val titleBarHeight = window.insets.top.dp
+        LaunchedEffect(Unit) { snapshotFlow { state.contentMinHeight }.collect { state.fitToContent(titleBarHeight) } }
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val minSize = state.minSize ?: state.size
             val width = max(maxWidth, minSize.width)
-            val height = max(maxHeight, minSize.height - titleBarHeight)
+            // A dialog that scrolls its content itself is given the room there is.
+            val height =
+                if (state.contentMinHeight != null) maxHeight else max(maxHeight, minSize.height - titleBarHeight)
             Box(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
