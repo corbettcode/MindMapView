@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="🌱 root">
+    <node id="29b3133a-7d4a-4e54-8e6c-1880f831b662" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_1&lt;/p&gt;" lineStyle="linear">
+      <node id="8204e534-4bb7-424b-aa13-463dee0faf78" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_9&lt;/p&gt;"/>
+      <node id="a83638ba-955e-4fbf-9fcd-987aa9915e47" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_10&lt;/p&gt;"/>
+    </node>
+    <node id="a92b88d4-fe02-4b42-a321-bd016dbb0d23" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_2&lt;/p&gt;">
+      <node id="b919ee26-116f-4d9e-bb6b-2a0f237b0311" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_11&lt;/p&gt;"/>
+      <node id="ed45f1a2-c6ba-4b59-889c-5f2fa01bb49b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_12&lt;/p&gt;"/>
+    </node>
+    <node id="ea88cc5a-b02f-4df4-9a1e-b6216d927236" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_3&lt;/p&gt;" lineStyle="sharp_linear">
+      <node id="2d8b1413-fe0f-4e11-86a0-216d21b6663b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_6&lt;/p&gt;"/>
+      <node id="0aa77a88-eecb-4ecb-a057-1e4f5874d8d3" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_7&lt;/p&gt;"/>
+    </node>
+    <node id="d8d5f674-0663-4ca2-87c0-05641f0100d3" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_4&lt;/p&gt;" lineStyle="sharp_bezier">
+      <node id="4039f693-b008-4c7c-bb39-a6484ce1354f" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_5&lt;/p&gt;"/>
+      <node id="b0c64246-8e54-4f73-9509-01afdc8aef07" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;node_8&lt;/p&gt;"/>
+    </node>
+  </node>
+</mindmapview>
