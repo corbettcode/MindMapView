@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,14 +52,19 @@ internal val LINE_WIDTH_LABELS: Map<NodeLineWidth?, String> =
  * @param line The node's own line settings, whose null values are inherited.
  * @param colors The colors offered for the line.
  * @param onChange A callback receiving the line settings as changed.
+ * @param modifier The modifier for the settings, one above the other with a line between each.
  */
 @Composable
 fun LineSettings(
     line: NodeLine
     , colors: List<Color>
     , onChange: (NodeLine) -> Unit
+    , modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+        , modifier = modifier
+    ) {
         ChoicePicker(
             label = "Line"
             , choices = LINE_STYLE_LABELS.keys.toList()
@@ -67,6 +73,7 @@ fun LineSettings(
             , onSelect = { onChange(line.copy(style = it)) }
             , labelWidth = LINE_LABEL_WIDTH
         )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         ChoicePicker(
             label = "Line width"
             , choices = LINE_WIDTH_LABELS.keys.toList()
@@ -75,6 +82,7 @@ fun LineSettings(
             , onSelect = { onChange(line.copy(width = it)) }
             , labelWidth = LINE_LABEL_WIDTH
         )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         LineColorPicker(
             colors = colors
             , selectedColor = line.color
