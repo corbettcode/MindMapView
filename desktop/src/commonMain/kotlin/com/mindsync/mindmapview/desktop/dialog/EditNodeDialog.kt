@@ -46,7 +46,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
@@ -58,6 +60,7 @@ import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
+import com.mindsync.mindmapview.desktop.component.LineSettings
 import com.mindsync.mindmapview.desktop.component.RichTextToggle
 import com.mindsync.mindmapview.desktop.component.RichTextToolbar
 import com.mindsync.mindmapview.desktop.component.ShapePicker
@@ -84,6 +87,7 @@ import kotlinx.coroutines.launch
  * @param shape The predefined shape of the node, if applicable.
  * @param color The fill color of the node.
  * @param textColor The text color for the node.
+ * @param line The node's own line settings, whose null values are inherited from its parent.
  * @param nodeColors A list of colors available for selecting the node's fill color.
  * @param textColors A list of colors available for selecting the node's text color.
  * @param mapEmojis A list of emoji strings available for selection and customization within the dialog.
@@ -91,7 +95,7 @@ import kotlinx.coroutines.launch
  * @param onToneChange A callback triggered when the tone of an emoji is changed. Receives the base emoji
  * and its selected tonal variant.
  * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
- * note, shape, fill color, and text color of the node.
+ * note, shape, fill color, text color, and line settings of the node.
  * @param onDismiss A callback triggered when the dialog is dismissed.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,12 +108,20 @@ fun EditNodeDialog(
     , shape: NodeShape?
     , color: Color
     , textColor: Color
+    , line: NodeLine
     , nodeColors: List<Color>
     , textColors: List<Color>
     , mapEmojis: List<String>
     , emojiTones: Map<String, String>
     , onToneChange: (base: String, variant: String) -> Unit
-    , onSubmit: (description: String, note: String, shape: NodeShape?, color: Color, textColor: Color) -> Unit
+    , onSubmit: (
+        description: String
+        , note: String
+        , shape: NodeShape?
+        , color: Color
+        , textColor: Color
+        , line: NodeLine
+    ) -> Unit
     , onDismiss: () -> Unit
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
@@ -130,6 +142,7 @@ fun EditNodeDialog(
     var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
+    var selectedLine by remember { mutableStateOf(line) }
 
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
@@ -151,6 +164,7 @@ fun EditNodeDialog(
             , selectedShape
             , selectedColor
             , selectedTextColor
+            , selectedLine
         )
         onDismiss()
     }
@@ -265,6 +279,12 @@ fun EditNodeDialog(
                     , colors = remember(textColor, textColors) { (textColors + textColor).distinct() }
                     , selectedColor = selectedTextColor
                     , onSelect = { selectedTextColor = it }
+                )
+
+                LineSettings(
+                    line = selectedLine
+                    , colors = remember(line) { (DrawInfo().rootLineColors + listOfNotNull(line.color)).distinct() }
+                    , onChange = { selectedLine = it }
                 )
 
                 Text(

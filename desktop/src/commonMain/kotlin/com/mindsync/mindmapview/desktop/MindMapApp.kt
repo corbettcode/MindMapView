@@ -1009,6 +1009,10 @@ private fun MindMapScreen(
                     is Operation.Add -> newNodeStyle?.textColor ?: Color.Unspecified
                     Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
                 },
+                line = when (currentOperation) {
+                    is Operation.Add -> NodeLine()
+                    Operation.Update -> selectedNode?.let { state.tree.lineOf(it.id) } ?: NodeLine()
+                },
                 nodeColors = preferences.nodeColors,
                 textColors = preferences.textColors,
                 mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
@@ -1019,7 +1023,7 @@ private fun MindMapScreen(
                         else preferences.emojiTones + (base to variant)
                     onPreferencesChange(preferences.copy(emojiTones = emojiTones))
                 },
-                onSubmit = { description, note, shape, color, textColor ->
+                onSubmit = { description, note, shape, color, textColor, line ->
                     when (currentOperation) {
                         is Operation.Add -> {
                             state.addNode(
@@ -1029,6 +1033,7 @@ private fun MindMapScreen(
                                 textColor,
                                 currentOperation.side ?: state.layoutSide,
                                 note,
+                                line,
                             )
                             onCreatedNodeCountChange(nodeNumber)
                         }
@@ -1038,6 +1043,7 @@ private fun MindMapScreen(
                             state.editNodeNote(note)
                             state.editNodeColor(color)
                             state.editNodeTextColor(textColor)
+                            state.editNodeLine(line)
                         }
                     }
                 },
