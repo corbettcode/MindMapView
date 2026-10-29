@@ -29,9 +29,6 @@ import com.mindsync.mindmapview.desktop.dialog.ChoicePicker
 
 private const val INHERITED = "Inherited"
 
-// Wider than the other pickers' labels, as "Line width" and "Line color" do not fit in theirs.
-private val LINE_LABEL_WIDTH = 80.dp
-
 internal val LINE_STYLE_LABELS: Map<NodeLineStyle?, String> = mapOf(
     null to INHERITED
     , NodeLineStyle.LINEAR to "Linear"
@@ -66,21 +63,19 @@ fun LineSettings(
         , modifier = modifier
     ) {
         ChoicePicker(
-            label = "Line"
+            label = "Type"
             , choices = LINE_STYLE_LABELS.keys.toList()
             , choiceLabel = { LINE_STYLE_LABELS.getValue(it) }
             , selectedChoice = line.style
             , onSelect = { onChange(line.copy(style = it)) }
-            , labelWidth = LINE_LABEL_WIDTH
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         ChoicePicker(
-            label = "Line width"
+            label = "Width"
             , choices = LINE_WIDTH_LABELS.keys.toList()
             , choiceLabel = { LINE_WIDTH_LABELS.getValue(it) }
             , selectedChoice = line.width
             , onSelect = { onChange(line.copy(width = it)) }
-            , labelWidth = LINE_LABEL_WIDTH
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         LineColorPicker(
@@ -102,7 +97,7 @@ private fun LineColorPicker(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
         , verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Line color", modifier = Modifier.width(LINE_LABEL_WIDTH))
+        Text("Color", modifier = Modifier.width(PICKER_LABEL_WIDTH))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
             , verticalArrangement = Arrangement.spacedBy(8.dp)
