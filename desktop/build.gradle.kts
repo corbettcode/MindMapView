@@ -81,12 +81,15 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.richeditor.compose)
         }
-        // The emoji font is on the JVM classpath at /NotoColorEmoji.ttf and served next to index.html on the web.
+        // The emoji font and the user manual are on the JVM classpath, as /NotoColorEmoji.ttf and
+        // /MindMapView-User-Manual.pdf, and served next to index.html on the web.
         jvmMain {
             resources.srcDir("fonts")
+            resources.srcDir("manual")
         }
         wasmJsMain {
             resources.srcDir("fonts")
+            resources.srcDir("manual")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

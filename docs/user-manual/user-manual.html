@@ -149,6 +149,15 @@
     a {
         color: var(--accent);
     }
+    .license {
+        font-size: 8.5pt;
+        color: var(--muted);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        padding: 8px 12px;
+        white-space: pre-wrap;
+        break-inside: avoid;
+    }
 </style>
 </head>
 <body>
@@ -180,6 +189,7 @@
         <li><a href="#preferences">Preferences</a></li>
         <li><a href="#web">The web app</a></li>
         <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+        <li><a href="#licenses">Open source licenses</a></li>
     </ol>
 </section>
 
@@ -747,6 +757,59 @@
         <tr><td><kbd>Ctrl</kbd> + click a link</td><td>Open it</td></tr>
         <tr><td>Click a fold ring</td><td>Unfold the node</td></tr>
     </table>
+</section>
+
+<section id="licenses">
+    <h2>18. Open source licenses</h2>
+    <p>
+        MindMapView is open source software under the MIT License. Its source code is at
+        <a href="https://github.com/corbettcode/MindMapView">github.com/corbettcode/MindMapView</a>.
+    </p>
+    <pre class="license">MIT License
+
+Copyright (c) 2024 hegleB
+Copyright (c) 2026 corbettcode
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+
+    <h3>Software and fonts included in the app</h3>
+    <p>MindMapView is built with these open source projects, each under its own license:</p>
+    <table>
+        <tr><th>Project</th><th>By</th><th>License</th></tr>
+        <tr><td>Kotlin and Kotlin coroutines</td><td>JetBrains</td><td>Apache License 2.0</td></tr>
+        <tr><td>Compose Multiplatform and Skiko</td><td>JetBrains and Google</td><td>Apache License 2.0</td></tr>
+        <tr><td>Compose Rich Editor 1.2.1, patched</td><td>Mohamed Rejeb</td><td>Apache License 2.0</td></tr>
+        <tr><td>flexmark-java (desktop app only)</td><td>Vladimir Schneider</td><td>BSD 2-Clause License</td></tr>
+        <tr><td>Noto Color Emoji font</td><td>Google</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>Inter font</td><td>The Inter Project Authors</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>Lora font</td><td>The Lora Project Authors</td><td>SIL Open Font License 1.1, Reserved Font Name "Lora"</td></tr>
+        <tr><td>Nunito font</td><td>The Nunito Project Authors</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>Caveat font</td><td>The Caveat Project Authors</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>JetBrains Mono font</td><td>The JetBrains Mono Project Authors</td><td>SIL Open Font License 1.1</td></tr>
+    </table>
+    <p>
+        The full text of each license is in the source code: the font licenses in <code>desktop/fonts</code>, and
+        the Compose Rich Editor license in <code>third_party/richeditor</code>. The Apache License 2.0 is at
+        <a href="https://www.apache.org/licenses/LICENSE-2.0">apache.org/licenses/LICENSE-2.0</a>, the SIL Open
+        Font License at <a href="https://openfontlicense.org">openfontlicense.org</a>, and the BSD 2-Clause
+        License at <a href="https://opensource.org/license/bsd-2-clause">opensource.org/license/bsd-2-clause</a>.
+    </p>
 </section>
 
 </body>

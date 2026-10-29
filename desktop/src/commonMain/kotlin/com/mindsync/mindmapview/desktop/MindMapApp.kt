@@ -311,6 +311,16 @@ internal class MindMapApp(
         if (isConfirmed) scope.launch { importMap() }
     }
 
+    private fun openUserManual() {
+        scope.launch {
+            try {
+                platform.openUserManual()
+            } catch (e: MapFileException) {
+                error = "Could not open the user manual: ${e.message}"
+            }
+        }
+    }
+
     /** Closes the app with [exit], once the unsaved changes are saved or let go. */
     fun close(exit: () -> Unit) = afterSavingChanges { exit() }
 
@@ -591,6 +601,7 @@ internal class MindMapApp(
             missingRecentPath = missingRecentPath,
             onMissingRecentChoice = ::onMissingRecentChoice,
             onFind = { showFind() },
+            onUserManual = ::openUserManual,
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
             isPasteEnabled = { state.hasCopiedNode || platform.clipboard.hasText() },
@@ -682,6 +693,7 @@ private fun MindMapScreen(
     missingRecentPath: String?,
     onMissingRecentChoice: (isRemoved: Boolean) -> Unit,
     onFind: () -> Unit,
+    onUserManual: () -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
     isPasteEnabled: () -> Boolean,
@@ -805,7 +817,8 @@ private fun MindMapScreen(
                         onFold = { it.run(state) },
                     )
                     HelpMenu(
-                        onReadme = { isReadmeOpen = true }
+                        onUserManual = onUserManual
+                        , onReadme = { isReadmeOpen = true }
                         , onAbout = { isAboutOpen = true }
                     )
                 }

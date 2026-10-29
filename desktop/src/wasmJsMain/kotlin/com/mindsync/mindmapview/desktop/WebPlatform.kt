@@ -135,4 +135,8 @@ internal object WebPlatform : AppPlatform {
     override fun encodePng(image: ImageBitmap): ByteArray =
         Image.makeFromBitmap(image.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)?.bytes
             ?: throw MapFileException("the image could not be made into a PNG")
+
+    override suspend fun openUserManual() {
+        if (!jsOpenInNewTab(USER_MANUAL_FILE)) throw MapFileException("the browser did not allow a new tab")
+    }
 }

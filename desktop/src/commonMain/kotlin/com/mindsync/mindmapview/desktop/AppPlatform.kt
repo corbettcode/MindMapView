@@ -10,6 +10,9 @@ interface MapDocument {
     val name: String
 }
 
+/** The user manual, which the app is built with: in its resources on the desktop, and next to the page in a browser. */
+internal const val USER_MANUAL_FILE = "MindMapView-User-Manual.pdf"
+
 /** A file that could not be read or written, with a [message] that says why. */
 class MapFileException(
     message: String?
@@ -29,6 +32,14 @@ interface AppPlatform {
 
     /** Returns [image] as the bytes of a PNG file. */
     fun encodePng(image: ImageBitmap): ByteArray
+
+    /**
+     * Shows the user manual, [USER_MANUAL_FILE]: on the desktop in the program that opens PDF files, and in a
+     * browser in a new tab.
+     *
+     * @throws MapFileException when it cannot be shown.
+     */
+    suspend fun openUserManual()
 }
 
 interface MapFiles {

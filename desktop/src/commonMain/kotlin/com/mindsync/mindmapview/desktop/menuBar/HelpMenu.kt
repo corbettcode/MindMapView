@@ -13,7 +13,8 @@ import androidx.compose.runtime.setValue
 
 @Composable
 fun HelpMenu(
-    onReadme: () -> Unit
+    onUserManual: () -> Unit
+    , onReadme: () -> Unit
     , onAbout: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -26,6 +27,13 @@ fun HelpMenu(
             expanded = expanded
             , onDismissRequest = { expanded = false }
         ) {
+            DropdownMenuItem(
+                text = { Text("User Manual (PDF)") }
+                , onClick = {
+                    expanded = false
+                    onUserManual()
+                }
+            )
             DropdownMenuItem(
                 text = { Text("README") }
                 , onClick = {

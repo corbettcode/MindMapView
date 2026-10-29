@@ -1,6 +1,9 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.awt.Desktop
 import java.awt.FileDialog
 import java.awt.Frame
 import java.awt.Toolkit
@@ -9,6 +12,7 @@ import java.awt.datatransfer.StringSelection
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.util.prefs.Preferences
 
 /** A mind map file on disk. */
@@ -119,6 +123,23 @@ internal class DesktopPlatform(
         throw MapFileException(e.message)
     }
 
+    // The PDF viewer needs a file of its own, so the manual is copied out of the app's resources. A folder of the
+    // app's own keeps its name, which the viewer shows, and keeps it apart from other users' copies.
+    private val userManualFile by lazy {
+        File(Files.createTempDirectory("mindmapview").toFile(), USER_MANUAL_FILE).apply { deleteOnExit() }
+    }
+
+    override suspend fun openUserManual() = withContext(Dispatchers.IO) {
+        try {
+            val manual = DesktopPlatform::class.java.getResourceAsStream("/$USER_MANUAL_FILE")
+                ?: throw MapFileException("it is not in the app")
+            manual.use { input -> userManualFile.outputStream().use { input.copyTo(it) } }
+            openFile(userManualFile)
+        } catch (e: IOException) {
+            throw MapFileException(e.message)
+        }
+    }
+
     private fun chooseFile(
         title: String
         , mode: Int
@@ -133,4 +154,18 @@ internal class DesktopPlatform(
         val name = dialog.file ?: return null
         return File(dialog.directory, name)
     }
+}
+
+// Java opens a file with the desktop's own tools, which some Linux desktops do not have, so xdg-open opens it
+// where Java cannot.
+private fun openFile(file: File) {
+    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+        try {
+            Desktop.getDesktop().open(file)
+            return
+        } catch (e: IOException) {
+            // xdg-open is tried next.
+        }
+    }
+    ProcessBuilder("xdg-open", file.path).start()
 }

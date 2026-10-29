@@ -158,6 +158,9 @@ internal fun jsStorageSet(
 
 internal fun jsSetTitle(title: String): Unit = js("document.title = title")
 
+/** Opens [url] in a new tab, returning whether the browser allowed it. */
+internal fun jsOpenInNewTab(url: String): Boolean = js("window.open(url, '_blank') !== null")
+
 /** Has the browser ask before the page is left, as while the mind map has unsaved changes. */
 internal fun jsSetLeaveWarning(isOn: Boolean): Unit = js(
     "window.onbeforeunload = isOn ? (event => { event.preventDefault(); event.returnValue = ''; }) : null"
