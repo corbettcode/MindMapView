@@ -26,6 +26,8 @@ class Tree<T> {
 
     private val nodeAttributes = mutableMapOf<String, List<NodeAttribute>>()
 
+    private val nodeLines = mutableMapOf<String, NodeLine>()
+
     private val foldedIds = mutableSetOf<String>()
 
     private val _arrowLinks = mutableListOf<ArrowLink>()
@@ -119,6 +121,18 @@ class Tree<T> {
     }
 
     /** Whether the node is folded: the nodes below it are hidden, as in FreeMind. */
+    /** Returns the line settings the node has of its own; [NodeLine] with nothing set when it has none. */
+    fun lineOf(id: String): NodeLine = nodeLines[id] ?: NodeLine()
+
+    /** Sets the node's own line settings. An empty line makes the node take them from its parent again. */
+    fun setLine(
+        id: String
+        , line: NodeLine
+    ) {
+        getNode(id)
+        if (line.isEmpty) nodeLines.remove(id) else nodeLines[id] = line
+    }
+
     fun isFolded(id: String): Boolean = id in foldedIds && id in _nodes
 
     /**
@@ -182,6 +196,7 @@ class Tree<T> {
         nodes = _nodes.toMap()
         , rootChildSides = rootChildSides.toMap()
         , nodeAttributes = nodeAttributes.toMap()
+        , nodeLines = nodeLines.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
         , isRootPlaced = isRootPlaced
@@ -195,6 +210,8 @@ class Tree<T> {
         rootChildSides.putAll(snapshot.rootChildSides)
         nodeAttributes.clear()
         nodeAttributes.putAll(snapshot.nodeAttributes)
+        nodeLines.clear()
+        nodeLines.putAll(snapshot.nodeLines)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()
