@@ -27,14 +27,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Build the web site
         run: ./gradlew :desktop:wasmJsBrowserDistribution
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: desktop/build/dist/wasmJs/productionExecutable
 
@@ -46,4 +46,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
