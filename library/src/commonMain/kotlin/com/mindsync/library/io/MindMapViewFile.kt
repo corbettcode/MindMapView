@@ -8,6 +8,9 @@ import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
@@ -73,6 +76,7 @@ object MindMapViewFile {
             )
         )
         tree.setAttributes(root.id, rootElement.nodeAttributes())
+        tree.setLine(root.id, rootElement.line())
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -129,6 +133,10 @@ object MindMapViewFile {
         attribute("textColor", node.textColor.toHex())
         attribute("text", node.description)
         if (node.note.isNotEmpty()) attribute("note", node.note)
+        val line = tree.lineOf(node.id)
+        line.style?.let { attribute("lineStyle", it.freeMindName) }
+        line.color?.let { attribute("lineColor", it.toHex()) }
+        line.width?.let { attribute("lineWidth", it.label) }
         val attributes = tree.attributesOf(node.id)
         if (attributes.isEmpty() && node.children.isEmpty()) {
             append("/>\n")
@@ -193,6 +201,7 @@ object MindMapViewFile {
         )
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
+        tree.setLine(id, element.line())
         tree.setFolded(id, element.attributes["folded"] == "true")
         return id
     }
@@ -203,6 +212,12 @@ object MindMapViewFile {
         children
             .filter { it.name == "attribute" }
             .map { NodeAttribute(it.attributes["name"].orEmpty(), it.attributes["value"].orEmpty()) }
+
+    private fun XmlElement.line() = NodeLine(
+        NodeLineStyle.entries.firstOrNull { it.freeMindName == attributes["lineStyle"] }
+        , color("lineColor")
+        , NodeLineWidth.entries.firstOrNull { it.label == attributes["lineWidth"] }
+    )
 
     private fun XmlElement.inclination(attribute: String): ArrowLinkInclination? {
         val parts = attributes[attribute]?.split(';')?.mapNotNull { it.trim().toFloatOrNull() } ?: return null

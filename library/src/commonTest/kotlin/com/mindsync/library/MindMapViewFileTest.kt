@@ -7,6 +7,9 @@ import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.StadiumNodeData
@@ -160,5 +163,35 @@ class MindMapViewFileTest {
         assertFailsWith<IllegalArgumentException> { MindMapViewFile.read("just some text") }
         assertFailsWith<IllegalArgumentException> { MindMapViewFile.read(FreeMind.write(richTree())) }
         assertFailsWith<IllegalArgumentException> { MindMapViewFile.read("<mindmapview version=\"1\"></mindmapview>") }
+    }
+
+    @Test
+    fun linesRoundTrip() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        val line = NodeLine(NodeLineStyle.SHARP_BEZIER, Color(0x80FF0000), NodeLineWidth.THIN)
+        tree.setLine("a", line)
+        tree.setLine(rootId, NodeLine(color = Color.Blue))
+
+        val read = MindMapViewFile.read(MindMapViewFile.write(tree))
+
+        assertEquals(line, read.lineOf("a"))
+        assertEquals(NodeLine(color = Color.Blue), read.lineOf(read.getRootNode().id))
+    }
+
+    @Test
+    fun fileWithoutLinesHasNone() {
+        val read = MindMapViewFile.read(MindMapViewFile.write(richTree()))
+
+        assertTrue(read.nodes.keys.all { read.lineOf(it).isEmpty })
+    }
+
+    @Test
+    fun unknownLineValuesAreInherited() {
+        val text = "<mindmapview version=\"1\"><node id=\"r\" text=\"r\">" +
+            "<node id=\"a\" text=\"a\" lineStyle=\"zigzag\" lineWidth=\"wide\" lineColor=\"nope\"/></node></mindmapview>"
+
+        assertEquals(NodeLine(), MindMapViewFile.read(text).lineOf("a"))
     }
 }

@@ -13,6 +13,9 @@ import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
@@ -91,6 +94,7 @@ object FreeMind {
             ),
         )
         tree.setAttributes(root.id, rootElement.nodeAttributes())
+        tree.setLine(root.id, rootElement.line())
         leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
         val usedArrowLinkIds = mutableSetOf<String>()
         arrowLinks
@@ -134,6 +138,14 @@ object FreeMind {
             append(indent).append("  <attribute NAME=\"").append(escapeXml(attribute.name)).append("\" VALUE=\"")
             append(escapeXml(attribute.value)).append("\"/>\n")
         }
+        val line = tree.lineOf(node.id)
+        if (!line.isEmpty) {
+            append(indent).append("  <edge")
+            line.style?.let { append(" STYLE=\"").append(it.freeMindName).append('"') }
+            line.color?.let { append(" COLOR=\"").append(it.toHex()).append('"') }
+            line.width?.let { append(" WIDTH=\"").append(it.label).append('"') }
+            append("/>\n")
+        }
         arrowLinks[node.id]?.forEach { link ->
             append(indent).append("  <arrowlink ID=\"").append(escapeXml(link.id)).append('"')
             append(" DESTINATION=\"").append(escapeXml(link.targetId)).append('"')
@@ -172,6 +184,7 @@ object FreeMind {
         val node = unplacedNode(shape, id, parentId, description, children, color, textColor, note)
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
+        tree.setLine(id, element.line())
         tree.setFolded(id, element.attributes["FOLDED"] == "true")
         return id
     }
@@ -259,6 +272,27 @@ object FreeMind {
     private fun XmlElement.inclination(attribute: String): ArrowLinkInclination? {
         val parts = attributes[attribute]?.split(';')?.mapNotNull { it.trim().toFloatOrNull() } ?: return null
         return if (parts.size >= 2) ArrowLinkInclination(Dp(parts[0]), Dp(parts[1])) else null
+    }
+
+    private fun XmlElement.line(): NodeLine {
+        val edge = children.firstOrNull { it.name == "edge" } ?: return NodeLine()
+        return NodeLine(
+            NodeLineStyle.entries.firstOrNull { it.freeMindName == edge.attributes["STYLE"] },
+            edge.color("COLOR"),
+            edge.attributes["WIDTH"]?.let { nearestWidth(it) },
+        )
+    }
+
+    // Ties go to the wider.
+    private fun nearestWidth(
+        value: String,
+    ): NodeLineWidth? {
+        if (value == NodeLineWidth.THIN.label) return NodeLineWidth.THIN
+        val number = value.toIntOrNull() ?: return null
+        return NodeLineWidth.entries
+            .filter { it != NodeLineWidth.THIN }
+            .sortedByDescending { it.label.toInt() }
+            .minByOrNull { abs(it.label.toInt() - number) }
     }
 
     private fun ArrowLinkInclination.toFreeMind(): String = "${x.dpVal.roundToInt()};${y.dpVal.roundToInt()};"
