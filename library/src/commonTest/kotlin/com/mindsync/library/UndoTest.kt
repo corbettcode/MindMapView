@@ -17,6 +17,9 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.Tree
@@ -363,6 +366,44 @@ class UndoTest {
         waitForIdle()
         assertTrue(state.arrowLinks.isEmpty())
         assertFalse(state.canUndo)
+    }
+
+    @Test
+    fun editNodeLineIsUndone() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+
+        state.editNodeLine(NodeLine(style = NodeLineStyle.LINEAR))
+        waitForIdle()
+        assertEquals(NodeLine(style = NodeLineStyle.LINEAR), state.tree.lineOf("first"))
+
+        state.undo()
+        waitForIdle()
+        assertTrue(state.tree.lineOf("first").isEmpty)
+
+        state.redo()
+        waitForIdle()
+        assertEquals(NodeLine(style = NodeLineStyle.LINEAR), state.tree.lineOf("first"))
+    }
+
+    @Test
+    fun undoBringsBackRemovedNodeLine() = runComposeUiTest {
+        val state = stateWithNodes()
+        val line = NodeLine(NodeLineStyle.SHARP_BEZIER, Color.Red, NodeLineWidth.FOUR)
+        state.selectNode("first")
+        state.editNodeLine(line)
+        state.selectNode("belowFirst")
+        state.editNodeLine(NodeLine(width = NodeLineWidth.THIN))
+
+        state.selectNode("first")
+        state.removeNode()
+        waitForIdle()
+        assertFalse("first" in state.tree.getRootNode().children)
+
+        state.undo()
+        waitForIdle()
+        assertEquals(line, state.tree.lineOf("first"))
+        assertEquals(NodeLine(width = NodeLineWidth.THIN), state.tree.lineOf("belowFirst"))
     }
 
     companion object {

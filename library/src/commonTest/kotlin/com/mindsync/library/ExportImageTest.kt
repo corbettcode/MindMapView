@@ -12,6 +12,9 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.Dp
 import kotlin.math.max
@@ -108,5 +111,51 @@ class ExportImageTest {
         val image = assertNotNull(state.exportImage(maxSide = 100))
 
         assertEquals(100, max(image.width, image.height))
+    }
+
+    @Test
+    fun chosenLineColorIsDrawn() = runComposeUiTest {
+        val state = stateWithChildren()
+        val chosen = Color(0xFFFF0000)
+        assertTrue(chosen !in assertNotNull(state.exportImage()).pixels(), "no line is in the chosen color yet")
+
+        NodeLineStyle.entries.forEach { style ->
+            state.tree.setLine("child0", NodeLine(style = style, color = chosen))
+
+            val pixels = assertNotNull(state.exportImage()).pixels()
+
+            assertTrue(chosen in pixels, "a $style line is drawn in the chosen color")
+        }
+    }
+
+    @Test
+    fun sharpLineNarrowsFromItsParentToItsNode() = runComposeUiTest {
+        val state = stateWithChildren(childCount = 1)
+        val chosen = Color(0xFFFF0000)
+        state.tree.addNode("grandchild", "child0", "grandchild")
+        state.animateTreeChange()
+        waitForIdle()
+
+        fun chosenPerColumn(line: NodeLine): List<Int> {
+            state.tree.setLine("grandchild", line.copy(color = chosen, width = NodeLineWidth.EIGHT))
+            val image = assertNotNull(state.exportImage())
+            val pixelMap = image.toPixelMap()
+            val counts = (0 until image.width).map { x ->
+                (0 until image.height).count { y -> pixelMap[x, y] == chosen }
+            }
+            return counts.subList(counts.indexOfFirst { it > 0 }, counts.indexOfLast { it > 0 } + 1)
+        }
+        // The most pixels high the line is near each of its ends, the wider end first.
+        fun List<Int>.ends(): Pair<Int, Int> {
+            val ends = listOf(take(size / 10).max(), takeLast(size / 10).max())
+            return ends.max() to ends.min()
+        }
+
+        val (bezierWide, bezierNarrow) = chosenPerColumn(NodeLine(style = NodeLineStyle.BEZIER)).ends()
+        val (sharpWide, sharpNarrow) = chosenPerColumn(NodeLine(style = NodeLineStyle.SHARP_LINEAR)).ends()
+
+        assertTrue(bezierNarrow * 2 > bezierWide, "a stroke is as wide at both ends: $bezierWide, $bezierNarrow")
+        assertTrue(sharpWide >= 14, "a sharp line is the line's width at one end: $sharpWide")
+        assertTrue(sharpNarrow * 3 < sharpWide, "and narrows to the other: $sharpWide, $sharpNarrow")
     }
 }

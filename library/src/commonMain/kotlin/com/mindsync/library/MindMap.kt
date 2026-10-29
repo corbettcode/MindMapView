@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -48,6 +49,7 @@ import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLineStyle
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.SquareNodeData
@@ -593,43 +595,152 @@ private fun DrawScope.drawLines(
     val tree = state.tree
     val manager = state.mindMapManager
     val path = Path()
-    val stroke = Stroke(width = drawInfo.lineWidth.toPx(this))
 
-    forEachNodeWithLineColor(tree, drawInfo, lineColor) { toNode, color ->
-        val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLineColor
+    forEachNodeWithLine(tree, drawInfo, lineColor) { toNode, line ->
+        val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val isRightSide = !side.isLeft
+            val isSlanted = node.parentId == null && side.isSlanted
             // The lines to the children on a slanted side of the root leave it along that side's line.
             val start =
-                if (node.parentId == null && side.isSlanted) rootEdgePoint(node, side, Dp(0f))
+                if (isSlanted) rootEdgePoint(node, side, Dp(0f))
                 else Offset(getNodeEdgeX(node, isRightEdge = isRightSide), node.path.centerY.toPx(this))
-            val startX = start.x
-            val startY = start.y
-
-            val endX = getNodeEdgeX(toNode, isRightEdge = isRightSide.not())
-            val endY = toNode.path.centerY.toPx(this)
-
+            val end = Offset(getNodeEdgeX(toNode, isRightEdge = isRightSide.not()), toNode.path.centerY.toPx(this))
+            val curve =
+                if (isSlanted) {
+                    // The line turns up or down right by the root, before the children straight out to that side,
+                    // and so runs past them rather than across them.
+                    val bend = Offset(start.x + (if (isRightSide) 1f else -1f) * SLANTED_LINE_BEND.toPx(this), end.y)
+                    LineCurve(start, bend, bend, end)
+                }
+                else {
+                    val midX = (start.x + end.x) / 2
+                    LineCurve(start, Offset(midX, start.y), Offset(midX, end.y), end)
+                }
+            val width = line.width.toPx(this)
             path.reset()
-            path.moveTo(startX, startY)
-            if (node.parentId == null && side.isSlanted) {
-                // The line turns up or down right by the root, before the children straight out to that side,
-                // and so runs past them rather than across them.
-                val bendX = startX + (if (isRightSide) 1f else -1f) * SLANTED_LINE_BEND.toPx(this)
-                path.cubicTo(bendX, endY, bendX, endY, endX, endY)
+            when (line.style) {
+                NodeLineStyle.LINEAR -> path.addPolyline(curve.corners(isSlanted))
+                NodeLineStyle.BEZIER -> path.addCurve(curve)
+                NodeLineStyle.SHARP_LINEAR -> path.addWedge(curve.corners(isSlanted), sharpBase(width))
+                NodeLineStyle.SHARP_BEZIER -> path.addCurvedWedge(curve, sharpBase(width))
             }
-            else {
-                val midX = (startX + endX) / 2
-                path.cubicTo(midX, startY, midX, endY, endX, endY)
-            }
-
+            val isSharp = line.style == NodeLineStyle.SHARP_LINEAR || line.style == NodeLineStyle.SHARP_BEZIER
             drawPath(
                 path = path
-                , color = color
-                , style = stroke
+                , color = line.color
+                , style = if (isSharp) Fill else Stroke(width = width)
             )
         }
     }
+}
+
+// The start, the two control points and the end of the bezier curve of a line from a parent to its child.
+private class LineCurve(
+    val start: Offset
+    , val startControl: Offset
+    , val endControl: Offset
+    , val end: Offset
+) {
+    // A straight line goes through the bend of a line to a slanted side of the root, as the curve does.
+    fun corners(isBent: Boolean): List<Offset> =
+        if (isBent) listOf(start, startControl, end) else listOf(start, end)
+}
+
+// A sharp line thinner than this would barely show at its start, let alone further along.
+private val SHARP_LINE_MIN_BASE = Dp(1.5f)
+
+private fun Density.sharpBase(width: Float): Float = maxOf(width, SHARP_LINE_MIN_BASE.toPx(this))
+
+private fun Path.addPolyline(points: List<Offset>) {
+    moveTo(points.first().x, points.first().y)
+    points.drop(1).forEach { lineTo(it.x, it.y) }
+}
+
+private fun Path.addCurve(curve: LineCurve) {
+    moveTo(curve.start.x, curve.start.y)
+    cubicTo(
+        curve.startControl.x, curve.startControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y
+    )
+}
+
+// The unit vector at a right angle to the line from [from] to [to], or straight down when they are one point.
+private fun normalOf(
+    from: Offset
+    , to: Offset
+): Offset {
+    val direction = to - from
+    val length = direction.getDistance()
+    return if (length == 0f) Offset(0f, 1f) else Offset(-direction.y / length, direction.x / length)
+}
+
+/**
+ * Adds a closed shape along the straight lines through [points]: [base] wide at the first point, at a right angle
+ * to the first line, and narrowing evenly along the lines to nothing at the last point.
+ */
+private fun Path.addWedge(
+    points: List<Offset>
+    , base: Float
+) {
+    val lengths = points.zipWithNext { a, b -> (b - a).getDistance() }
+    val total = lengths.sum()
+    var along = 0f
+    val offsets = points.mapIndexed { index, point ->
+        if (index > 0) along += lengths[index - 1]
+        val halfWidth = if (total == 0f) 0f else base / 2 * (1 - along / total)
+        val normal = when (index) {
+            0 -> normalOf(points[0], points[1])
+            points.lastIndex -> normalOf(points[index - 1], point)
+            else -> {
+                // Where two lines meet, the sides meet at the corner between them, as wide from each line.
+                val before = normalOf(points[index - 1], point)
+                val after = normalOf(point, points[index + 1])
+                val sum = before + after
+                val length = sum.getDistance()
+                if (length == 0f) before else sum / length / maxOf((sum / length).dot(after), MIN_MITER)
+            }
+        }
+        normal * halfWidth
+    }
+    val first = points.first() + offsets.first()
+    moveTo(first.x, first.y)
+    points.indices.drop(1).forEach { index ->
+        val point = points[index] + offsets[index]
+        lineTo(point.x, point.y)
+    }
+    points.indices.reversed().forEach { index ->
+        val point = points[index] - offsets[index]
+        lineTo(point.x, point.y)
+    }
+    close()
+}
+
+// How sharp a corner of a sharp line can be before its sides stop growing further out at it.
+private const val MIN_MITER = 0.25f
+
+private fun Offset.dot(other: Offset): Float = x * other.x + y * other.y
+
+/**
+ * Adds a closed shape along [curve]: [base] wide at its start, at a right angle to the curve there, with sides that
+ * are curves themselves and meet at its end.
+ */
+private fun Path.addCurvedWedge(
+    curve: LineCurve
+    , base: Float
+) {
+    // The start and its control point are moved out alike, so each side leaves the start as the curve does.
+    val offset = normalOf(curve.start, curve.startControl) * (base / 2)
+    val first = curve.start + offset
+    val firstControl = curve.startControl + offset
+    val last = curve.start - offset
+    val lastControl = curve.startControl - offset
+    moveTo(first.x, first.y)
+    cubicTo(
+        firstControl.x, firstControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y
+    )
+    cubicTo(curve.endControl.x, curve.endControl.y, lastControl.x, lastControl.y, last.x, last.y)
+    close()
 }
 
 // Where the straight line from the center of the node towards a point leaves the node.
@@ -691,29 +802,6 @@ private fun DrawScope.drawLinkDrag(state: MindMapState) {
     )
 }
 
-/**
- * Calls [action] for every node that is shown with the color of the lines of its branch: each child of the root starts
- * a branch with its own color, which the nodes below it share. The root is in no branch and gets
- * [lineColor].
- */
-private fun forEachNodeWithLineColor(
-    tree: Tree<*>
-    , drawInfo: DrawInfo
-    , lineColor: Color
-    , action: (node: NodeData<*>, color: Color) -> Unit
-) {
-    fun traverse(
-        node: NodeData<*>
-        , color: Color
-    ) {
-        action(node, color)
-        tree.visibleChildren(node).forEachIndexed { index, childId ->
-            traverse(tree.getNode(childId), if (node.parentId == null) rootLineColor(drawInfo, index) else color)
-        }
-    }
-    traverse(tree.getRootNode(), lineColor)
-}
-
 internal fun rootLineColor(
     drawInfo: DrawInfo
     , childIndex: Int
@@ -732,11 +820,11 @@ private fun DrawScope.drawAddButtons(
     val strokeWidth = radius * ADD_BUTTON_STROKE_RATIO
 
     val shownIds = state.addButtonNodes().map { it.id }.toSet()
-    forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
-        if (node.id !in shownIds) return@forEachNodeWithLineColor
+    forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
+        if (node.id !in shownIds) return@forEachNodeWithLine
         state.addButtonSides(node).forEach { side ->
             val center = addButtonCenter(node, side)
-            drawCircle(color = color, radius = radius, center = center)
+            drawCircle(color = line.color, radius = radius, center = center)
             drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
             drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
         }
@@ -752,9 +840,14 @@ private fun DrawScope.drawFoldMarkers(
     val strokeWidth = FOLD_MARKER_WIDTH.toPx(this)
     val radius = ADD_BUTTON_RADIUS.toPx(this) - strokeWidth / 2
 
-    forEachNodeWithLineColor(state.tree, drawInfo, lineColor) { node, color ->
+    forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
         if (state.tree.isFolded(node.id)) {
-            drawCircle(color = color, radius = radius, center = foldMarkerCenter(state.tree, node), style = Stroke(strokeWidth))
+            drawCircle(
+                color = line.color
+                , radius = radius
+                , center = foldMarkerCenter(state.tree, node)
+                , style = Stroke(strokeWidth)
+            )
         }
     }
 }

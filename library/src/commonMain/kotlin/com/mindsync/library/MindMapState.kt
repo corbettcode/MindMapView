@@ -27,6 +27,7 @@ import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
@@ -293,6 +294,7 @@ class MindMapState(
         textColor: Color = shape.defaultTextColor,
         side: LayoutSide = layoutSide,
         note: String = "",
+        line: NodeLine = NodeLine(),
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
@@ -318,6 +320,7 @@ class MindMapState(
                 val addSide = if (node.parentId == null) side else tree.sideOf(node.id)
                 val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
                 addNodeCommand.execute()
+                tree.setLine(addNode.id, line)
             }
             animateTreeChange()
         }
@@ -455,6 +458,7 @@ class MindMapState(
     private fun copyBranch(node: NodeData<*>): CopiedNode = CopiedNode(
         node = node
         , attributes = tree.attributesOf(node.id)
+        , line = tree.lineOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -476,6 +480,7 @@ class MindMapState(
                 val node = branch.node
                 tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
                 tree.setAttributes(id, branch.attributes)
+                tree.setLine(id, branch.line)
                 pastedIds[node.id] = id
                 branch.children.forEach { paste(it, id) }
             }
@@ -662,6 +667,16 @@ class MindMapState(
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.updateNodeColor(node.id, color)
+                invalidate()
+            }
+        }
+    }
+
+    /** Gives the selected node these line settings of its own; the nodes below it take them unless they set theirs. */
+    fun editNodeLine(line: NodeLine) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setLine(node.id, line)
                 invalidate()
             }
         }
@@ -1312,10 +1327,11 @@ private class CopiedBranch(
     , val arrowLinks: List<ArrowLink>
 )
 
-// A copied node, which is pasted with the nodes below it and the attributes of each of them.
+// A copied node, which is pasted with the nodes below it and the attributes and line settings of each of them.
 private class CopiedNode(
     val node: NodeData<*>
     , val attributes: List<NodeAttribute>
+    , val line: NodeLine
     , val children: List<CopiedNode>
 )
 

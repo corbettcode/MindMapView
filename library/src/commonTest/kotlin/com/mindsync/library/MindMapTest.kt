@@ -34,6 +34,9 @@ import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeLine
+import com.mindsync.library.data.NodeLineStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
@@ -326,6 +329,50 @@ class MindMapTest {
         waitForIdle()
         assertTrue(state.tree.getRootNode().children.isEmpty())
         assertNull(state.selectedNode)
+    }
+
+    @Test
+    fun copiedBranchKeepsItsLines() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        val rootId = state.tree.getRootNode().id
+        val parentLine = NodeLine(NodeLineStyle.LINEAR, Color.Blue)
+        val childLine = NodeLine(width = NodeLineWidth.EIGHT)
+        state.tree.addNode("parent", rootId, "parent")
+        state.tree.addNode("child", "parent", "child")
+        state.tree.addNode("other", rootId, "other")
+        state.tree.setLine("parent", parentLine)
+        state.tree.setLine("child", childLine)
+        state.setTree(state.tree)
+        state.animateTreeChange()
+        waitForIdle()
+
+        state.select(state.tree.getNode("parent"))
+        state.copyNode()
+        state.select(state.tree.getNode("other"))
+        state.pasteNode()
+        state.pasteNode()
+        waitForIdle()
+
+        val pasted = state.tree.getNode("other").children
+        assertEquals(2, pasted.size)
+        pasted.forEach { id ->
+            assertEquals(parentLine, state.tree.lineOf(id))
+            assertEquals(childLine, state.tree.lineOf(state.tree.getNode(id).children.single()))
+        }
+    }
+
+    @Test
+    fun addedNodeGetsItsLine() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        state.select(state.tree.getRootNode())
+
+        state.addNode("added", line = NodeLine(style = NodeLineStyle.SHARP_BEZIER))
+        waitForIdle()
+
+        val addedId = state.tree.getRootNode().children.single()
+        assertEquals(NodeLine(style = NodeLineStyle.SHARP_BEZIER), state.tree.lineOf(addedId))
     }
 
     @Test
