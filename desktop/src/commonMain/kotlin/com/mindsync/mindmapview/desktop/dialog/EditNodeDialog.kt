@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -103,6 +104,8 @@ private val DIALOG_GAP = 16.dp
  * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
  * note, shape, fill color, text color, and line settings of the node.
  * @param onDismiss A callback triggered when the dialog is dismissed.
+ * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
+ * added. Without it, the dialog has no such button.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,6 +132,7 @@ fun EditNodeDialog(
         , line: NodeLine
     ) -> Unit
     , onDismiss: () -> Unit
+    , onAddAnother: (() -> Unit)? = null
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
     val (emoji, text) = remember { DescriptionEmoji.split(description) }
@@ -171,7 +175,7 @@ fun EditNodeDialog(
     var isDescriptionFocused by remember { mutableStateOf(false) }
     var isNoteFocused by remember { mutableStateOf(false) }
 
-    fun submit() {
+    fun save() {
         onSubmit(
             DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml())
             , noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note
@@ -180,6 +184,10 @@ fun EditNodeDialog(
             , selectedTextColor
             , selectedLine
         )
+    }
+
+    fun submit() {
+        save()
         onDismiss()
     }
 
@@ -193,8 +201,8 @@ fun EditNodeDialog(
         LaunchedEffect(Unit) {
             descriptionFocusRequester.requestFocus()
         }
-        // Enter clicks OK, wherever the focus is but in the note, whose lines are typed with Enter. A line of the
-        // node's text is typed with Alt+Enter instead.
+        // Enter clicks Save & Close, wherever the focus is but in the note, whose lines are typed with Enter. A line
+        // of the node's text is typed with Alt+Enter instead.
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -394,8 +402,19 @@ fun EditNodeDialog(
                     Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
+                    Spacer(modifier = Modifier.weight(1f))
+                    onAddAnother?.let { addAnother ->
+                        Button(
+                            onClick = {
+                                save()
+                                addAnother()
+                            }
+                        ) {
+                            Text("Add Another")
+                        }
+                    }
                     Button(onClick = ::submit) {
-                        Text("OK")
+                        Text("Save & Close")
                     }
                 }
             )

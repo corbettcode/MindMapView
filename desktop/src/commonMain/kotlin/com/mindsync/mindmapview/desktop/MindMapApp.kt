@@ -143,7 +143,8 @@ val RichTextSize.label: String
 
 private sealed interface Operation {
     // A shape that is not chosen is that of the last child of the node the new one is added to.
-    data class Add(val shape: NodeShape? = null, val side: LayoutSide? = null) : Operation
+    // Each node added with "Add Another" counts one more, so its dialog starts anew.
+    data class Add(val shape: NodeShape? = null, val side: LayoutSide? = null, val count: Int = 0) : Operation
     data object Update : Operation
 }
 
@@ -996,67 +997,73 @@ private fun MindMapScreen(
                     }
                 }
             }
-            EditNodeDialog(
-                title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
-                description =
-                    if (currentOperation is Operation.Update) selectedNode?.description.orEmpty()
-                    else NEW_NODE_DESCRIPTION + nodeNumber,
-                // The description of a new node is only a start, so typing replaces it.
-                isDescriptionSelected = currentOperation is Operation.Add,
-                note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
-                // The root stays the oval it is, so it is given no shape to choose from.
-                shape = when (currentOperation) {
-                    is Operation.Add -> newNodeStyle?.shape
-                    Operation.Update -> selectedNode?.takeIf { it.parentId != null }?.shape
-                },
-                color = when (currentOperation) {
-                    is Operation.Add -> newNodeStyle?.color ?: Color.Unspecified
-                    Operation.Update -> selectedNode?.color ?: Color.Unspecified
-                },
-                textColor = when (currentOperation) {
-                    is Operation.Add -> newNodeStyle?.textColor ?: Color.Unspecified
-                    Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
-                },
-                line = when (currentOperation) {
-                    is Operation.Add -> NodeLine()
-                    Operation.Update -> selectedNode?.let { state.tree.lineOf(it.id) } ?: NodeLine()
-                },
-                nodeColors = preferences.nodeColors,
-                textColors = preferences.textColors,
-                mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
-                emojiTones = preferences.emojiTones,
-                onToneChange = { base, variant ->
-                    val emojiTones =
-                        if (variant == base) preferences.emojiTones - base
-                        else preferences.emojiTones + (base to variant)
-                    onPreferencesChange(preferences.copy(emojiTones = emojiTones))
-                },
-                onSubmit = { description, note, shape, color, textColor, line ->
-                    when (currentOperation) {
-                        is Operation.Add -> {
-                            state.addNode(
-                                description,
-                                shape ?: preferences.newNodeShape,
-                                color,
-                                textColor,
-                                currentOperation.side ?: state.layoutSide,
-                                note,
-                                line,
-                            )
-                            onCreatedNodeCountChange(nodeNumber)
+            // The dialog's own state is that of one operation, so another starts it anew.
+            key(currentOperation) {
+                EditNodeDialog(
+                    title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
+                    description =
+                        if (currentOperation is Operation.Update) selectedNode?.description.orEmpty()
+                        else NEW_NODE_DESCRIPTION + nodeNumber,
+                    // The description of a new node is only a start, so typing replaces it.
+                    isDescriptionSelected = currentOperation is Operation.Add,
+                    note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
+                    // The root stays the oval it is, so it is given no shape to choose from.
+                    shape = when (currentOperation) {
+                        is Operation.Add -> newNodeStyle?.shape
+                        Operation.Update -> selectedNode?.takeIf { it.parentId != null }?.shape
+                    },
+                    color = when (currentOperation) {
+                        is Operation.Add -> newNodeStyle?.color ?: Color.Unspecified
+                        Operation.Update -> selectedNode?.color ?: Color.Unspecified
+                    },
+                    textColor = when (currentOperation) {
+                        is Operation.Add -> newNodeStyle?.textColor ?: Color.Unspecified
+                        Operation.Update -> selectedNode?.textColor ?: Color.Unspecified
+                    },
+                    line = when (currentOperation) {
+                        is Operation.Add -> NodeLine()
+                        Operation.Update -> selectedNode?.let { state.tree.lineOf(it.id) } ?: NodeLine()
+                    },
+                    nodeColors = preferences.nodeColors,
+                    textColors = preferences.textColors,
+                    mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
+                    emojiTones = preferences.emojiTones,
+                    onToneChange = { base, variant ->
+                        val emojiTones =
+                            if (variant == base) preferences.emojiTones - base
+                            else preferences.emojiTones + (base to variant)
+                        onPreferencesChange(preferences.copy(emojiTones = emojiTones))
+                    },
+                    onSubmit = { description, note, shape, color, textColor, line ->
+                        when (currentOperation) {
+                            is Operation.Add -> {
+                                state.addNode(
+                                    description,
+                                    shape ?: preferences.newNodeShape,
+                                    color,
+                                    textColor,
+                                    currentOperation.side ?: state.layoutSide,
+                                    note,
+                                    line,
+                                )
+                                onCreatedNodeCountChange(nodeNumber)
+                            }
+                            Operation.Update -> state.groupChanges {
+                                shape?.let { state.editNodeShape(it) }
+                                state.editNodeText(description)
+                                state.editNodeNote(note)
+                                state.editNodeColor(color)
+                                state.editNodeTextColor(textColor)
+                                state.editNodeLine(line)
+                            }
                         }
-                        Operation.Update -> state.groupChanges {
-                            shape?.let { state.editNodeShape(it) }
-                            state.editNodeText(description)
-                            state.editNodeNote(note)
-                            state.editNodeColor(color)
-                            state.editNodeTextColor(textColor)
-                            state.editNodeLine(line)
-                        }
-                    }
-                },
-                onDismiss = { operation = null },
-            )
+                    },
+                    onDismiss = { operation = null },
+                    onAddAnother = (currentOperation as? Operation.Add)?.let { add ->
+                        { operation = add.copy(count = add.count + 1) }
+                    },
+                )
+            }
         }
     }
 }
