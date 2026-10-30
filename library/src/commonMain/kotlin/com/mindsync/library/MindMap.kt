@@ -195,6 +195,7 @@ fun MindMap(
 
     var isArrowLinkPressed by remember { mutableStateOf(false) }
     var isNodeDragged by remember { mutableStateOf(false) }
+    var isMapDragged by remember { mutableStateOf(false) }
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -206,9 +207,9 @@ fun MindMap(
             .clipToBounds()
             .onSizeChanged { state.onSizeChanged(it.toSize()) }
             // An arrow link is dragged to bend it and right clicked for its menu, so the pointer shows it can be,
-            // and keeps showing it while the link is held. A node shows it while it is dragged.
+            // and keeps showing it while the link is held. A node and the map show it while they are dragged.
             .pointerHoverIcon(
-                if (state.isArrowLinkHovered || isArrowLinkPressed || isNodeDragged) PointerIcon.Hand
+                if (state.isArrowLinkHovered || isArrowLinkPressed || isNodeDragged || isMapDragged) PointerIcon.Hand
                 else PointerIcon.Default
             )
             .pointerInput(state) {
@@ -277,11 +278,20 @@ fun MindMap(
                             }
                         }
                         else {
-                            do {
-                                val event = awaitPointerEvent()
-                                state.onTransform(event.calculatePan(), event.calculateZoom())
-                                event.changes.forEach { if (it.positionChanged()) it.consume() }
-                            } while (event.changes.any { it.pressed })
+                            try {
+                                do {
+                                    val event = awaitPointerEvent()
+                                    state.onTransform(event.calculatePan(), event.calculateZoom())
+                                    event.changes.forEach { change ->
+                                        if (change.positionChanged()) {
+                                            isMapDragged = true
+                                            change.consume()
+                                        }
+                                    }
+                                } while (event.changes.any { it.pressed })
+                            } finally {
+                                isMapDragged = false
+                            }
                         }
                     }
                     else {
