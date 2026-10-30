@@ -41,6 +41,7 @@ import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.dialog.*
 import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
+import com.mindsync.mindmapview.desktop.menuBar.ToolMenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
 import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
@@ -278,14 +279,29 @@ internal class MindMapApp(
         }
     }
 
-    // The imported map takes the place of the nodes of this one, which keeps its file: saving it saves it there.
+    /**
+     * The imported map takes the place of the nodes of this one, which keeps its file: saving it saves it there.
+     *
+     * Imports a mind map by replacing the current map's nodes with those from the selected file.
+     * The file of the current map remains unchanged, allowing subsequent save operations to overwrite
+     * the original file. Handles map selection, reads the content, and updates the application state
+     * with the imported map's structure.
+     *
+     * If the user cancels the file selection, the operation is aborted. Any exceptions encountered
+     * during the import process are caught, and an error message is displayed to indicate the failure.
+     *
+     * @throws CancellationException if the operation is cancelled during execution.
+     */
+// The imported map takes the place of the nodes of this one, which keeps its file: saving it saves it there.
     private suspend fun importMap() {
         val chosen = platform.files.chooseToOpen(document) ?: return
         try {
             state.replaceTree(readMap(chosen.name, platform.files.read(chosen)))
-        } catch (e: CancellationException) {
+        }
+        catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             error = "Could not import ${chosen.name}: ${e.message}"
         }
     }
@@ -315,8 +331,11 @@ internal class MindMapApp(
         if (isRemoved) scope.launch { recentPaths = recentMaps?.remove(path) }
     }
 
-    private fun onImportChoice(isConfirmed: Boolean) {
+    private fun onImportChoice(
+        isConfirmed: Boolean
+    ) {
         isImportConfirmOpen = false
+
         if (isConfirmed) scope.launch { importMap() }
     }
 
@@ -357,7 +376,6 @@ internal class MindMapApp(
         },
         open = { afterSavingChanges { platform.files.chooseToOpen(document)?.let { open(it) } } },
         openRecent = ::openRecent,
-        import = ::startImport,
         save = { scope.launch { saveMap() } },
         saveAs = { scope.launch { saveAs() } },
         exportImage = {
@@ -611,6 +629,7 @@ internal class MindMapApp(
             onMissingRecentChoice = ::onMissingRecentChoice,
             onFind = { showFind() },
             onUserManual = ::openUserManual,
+            onImport = ::startImport,
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
             isPasteEnabled = { state.hasCopiedNode || platform.clipboard.hasText() },
@@ -703,6 +722,7 @@ private fun MindMapScreen(
     onMissingRecentChoice: (isRemoved: Boolean) -> Unit,
     onFind: () -> Unit,
     onUserManual: () -> Unit,
+    onImport: () -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
     isPasteEnabled: () -> Boolean,
@@ -831,6 +851,7 @@ private fun MindMapScreen(
                         onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
                     )
+                    ToolMenu(onImport = onImport)
                     HelpMenu(
                         onUserManual = onUserManual
                         , onReadme = { isReadmeOpen = true }
