@@ -119,6 +119,13 @@ class MindMapState(
     // buttons it went on to or is pressing.
     private var addButtonHoverNodeId by mutableStateOf<String?>(null)
 
+    /**
+     * Whether the mouse pointer is over an arrow link while no button is pressed. A node over the link is what a
+     * click there goes to, so then it is not.
+     */
+    var isArrowLinkHovered by mutableStateOf(false)
+        private set
+
     /** Where in the bounds of the mind map the mouse pointer last was. */
     var hoverPosition by mutableStateOf(Offset.Zero)
         private set
@@ -959,6 +966,7 @@ class MindMapState(
     internal fun onHover(position: Offset?) {
         if (position != null) hoverPosition = position
         hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
+        isArrowLinkHovered = position != null && hoveredNodeId == null && findArrowLink(position) != null
         if (position != null) {
             val point = toTreePoint(position)
             addButtonHoverNodeId = hoveredNodeId

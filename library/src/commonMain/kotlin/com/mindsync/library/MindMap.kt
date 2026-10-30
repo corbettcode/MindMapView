@@ -12,9 +12,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +34,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
@@ -189,6 +193,8 @@ fun MindMap(
     val currentOnNodeMenu by rememberUpdatedState(onNodeMenu)
     val currentOnNodeLink by rememberUpdatedState(onNodeLink)
 
+    var isArrowLinkPressed by remember { mutableStateOf(false) }
+
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
         onDispose { state.detach() }
@@ -198,6 +204,11 @@ fun MindMap(
         modifier = modifier
             .clipToBounds()
             .onSizeChanged { state.onSizeChanged(it.toSize()) }
+            // An arrow link is dragged to bend it and right clicked for its menu, so the pointer shows it can be,
+            // and keeps showing it while the link is held.
+            .pointerHoverIcon(
+                if (state.isArrowLinkHovered || isArrowLinkPressed) PointerIcon.Hand else PointerIcon.Default
+            )
             .pointerInput(state) {
                 var lastClickedNodeId: String? = null
                 var lastClickTime = 0L
@@ -247,15 +258,20 @@ fun MindMap(
                         val draggedLink = state.findArrowLink(down.position)
                         if (draggedLink != null) {
                             down.consume()
-                            val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                            if (dragStart != null) {
-                                state.onArrowLinkDragStart(draggedLink, down.position)
-                                state.onArrowLinkDrag(dragStart.position)
-                                drag(dragStart.id) { change ->
-                                    state.onArrowLinkDrag(change.position)
-                                    change.consume()
+                            isArrowLinkPressed = true
+                            try {
+                                val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                                if (dragStart != null) {
+                                    state.onArrowLinkDragStart(draggedLink, down.position)
+                                    state.onArrowLinkDrag(dragStart.position)
+                                    drag(dragStart.id) { change ->
+                                        state.onArrowLinkDrag(change.position)
+                                        change.consume()
+                                    }
+                                    state.onArrowLinkDrop()
                                 }
-                                state.onArrowLinkDrop()
+                            } finally {
+                                isArrowLinkPressed = false
                             }
                         }
                         else {

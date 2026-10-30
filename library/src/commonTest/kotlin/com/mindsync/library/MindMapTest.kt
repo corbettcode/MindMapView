@@ -2495,6 +2495,31 @@ class MindMapTest {
     }
 
     @Test
+    fun arrowLinkIsHoveredWhileTheMouseIsOverIt() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("first")
+        state.addNode("second")
+        waitForIdle()
+        val (firstId, secondId) = state.tree.getRootNode().children
+        val link = assertIs<ArrowLink>(state.addArrowLink(firstId, secondId))
+        waitForIdle()
+        val curve = assertIs<ArrowLinkCurve>(with(density) { arrowLinkCurve(state.tree, link) })
+        assertFalse(state.isArrowLinkHovered)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(curve.pointAt(0.5f) * state.scaleFactor + state.currentPoint) }
+        waitForIdle()
+        assertTrue(state.isArrowLinkHovered)
+        assertNull(state.hoveredNode)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(Offset(5f, 5f)) }
+        waitForIdle()
+        assertFalse(state.isArrowLinkHovered)
+    }
+
+    @Test
     fun hoverEndsWhenTheMouseIsPressedOrLeaves() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
