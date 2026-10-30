@@ -42,6 +42,7 @@ import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
@@ -1602,6 +1603,60 @@ class MindMapTest {
     }
 
     @Test
+    fun lineNodeIsAsWideAsARectangleWithTheSameTextButLower() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        state.addNode("the same text", NodeShape.RECTANGLE)
+        waitForIdle()
+        state.addNode("the same text", NodeShape.LINE)
+        waitForIdle()
+
+        val (rectangleId, lineId) = state.tree.getRootNode().children
+        val rectangle = assertIs<RectangleNodeData>(state.tree.getNode(rectangleId))
+        val line = assertIs<LineNodeData>(state.tree.getNode(lineId))
+        assertEquals(NodeShape.LINE, line.shape)
+        assertEquals(NodeShape.LINE.defaultColor, line.color)
+        assertEquals(rectangle.path.width.dpVal, line.path.width.dpVal, 0.01f)
+        assertTrue(line.path.height.dpVal < rectangle.path.height.dpVal)
+
+        clickNode(line)
+        assertEquals(line.id, state.selectedNode?.id)
+        state.editNodeText("a much longer description")
+        waitForIdle()
+        val wider = assertIs<LineNodeData>(state.tree.getNode(line.id))
+        assertTrue(wider.path.width.dpVal > line.path.width.dpVal)
+    }
+
+    @Test
+    fun nodeChangedToALineKeepsItsPlaceInTheTree() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, "first", NodeShape.RECTANGLE)
+        tree.addNode("b", "a", "second", NodeShape.RECTANGLE)
+
+        tree.updateNodeShape("a", NodeShape.LINE)
+
+        val a = assertIs<LineNodeData>(tree.getNode("a"))
+        assertEquals("first", a.description)
+        assertEquals(listOf("b"), a.children)
+    }
+
+    @Test
+    fun freeMindRoundTripKeepsLine() {
+        val tree = Tree<Any>(Dp(150f), Dp(300f))
+        tree.addNode("a", tree.getRootNode().id, "first", NodeShape.LINE)
+
+        val written = FreeMind.write(tree)
+        assertTrue("<attribute NAME=\"shape\" VALUE=\"line\"/>" in written)
+
+        val read = FreeMind.read(written)
+        val a = assertIs<LineNodeData>(read.getNode("a"))
+        assertEquals("first", a.description)
+        assertEquals(written, FreeMind.write(read))
+    }
+
+    @Test
     fun ovalWidthAndHeightEachFollowTheText() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
@@ -2390,6 +2445,10 @@ class MindMapTest {
                     assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
                 }
                 is SquareNodeData -> {
+                    assertEquals(with(density) { node.path.rightX().dpVal.dp.toPx() }, marker.x, 0.01f)
+                    assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
+                }
+                is LineNodeData -> {
                     assertEquals(with(density) { node.path.rightX().dpVal.dp.toPx() }, marker.x, 0.01f)
                     assertEquals(with(density) { node.path.topY().dpVal.dp.toPx() }, marker.y, 0.01f)
                 }

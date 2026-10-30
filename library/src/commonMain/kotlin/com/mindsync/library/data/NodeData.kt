@@ -197,3 +197,42 @@ data class SquareNodeData(
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
+
+/**
+ * A node drawn as a line along the bottom of its box, with its text above the line. The lines to its parent and
+ * its children meet the two ends of the line.
+ */
+data class LineNodeData(
+    override val id: String
+    , override var alpha: Float = 0f
+    , override val children: List<String>
+    , override val color: Color = NodeShape.LINE.defaultColor
+    , override val description: String
+    , override var isAnimating: Boolean = false
+    , override var isDrawingLine: Boolean = false
+    , override val note: String = ""
+    , override val parentId: String?
+    , override val path: RectanglePath = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
+    , override var strokeWidth: Float = 1f
+    , override val textColor: Color = NodeShape.LINE.defaultTextColor
+) : NodeData<LineNodeData>(
+    id
+    , alpha
+    , children
+    , color
+    , description
+    , isAnimating
+    , isDrawingLine
+    , note
+    , parentId
+    , path
+    , strokeWidth
+    , textColor
+) {
+    override fun adjustPosition(
+        horizontalSpacing: Dp
+        , totalHeight: Dp
+    ): NodeData<LineNodeData> {
+        return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
+    }
+}

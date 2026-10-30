@@ -8,6 +8,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.RectanglePath
 import com.mindsync.library.data.StadiumNodeData
@@ -46,6 +47,16 @@ internal fun unplacedNode(
         , note = note
     )
     NodeShape.SQUARE -> SquareNodeData(
+        id = id
+        , parentId = parentId
+        , path = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))
+        , description = description
+        , children = children
+        , color = color
+        , textColor = textColor
+        , note = note
+    )
+    NodeShape.LINE -> LineNodeData(
         id = id
         , parentId = parentId
         , path = RectanglePath(Dp(0f), Dp(0f), Dp(0f), Dp(0f))

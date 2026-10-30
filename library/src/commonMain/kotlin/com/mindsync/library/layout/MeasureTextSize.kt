@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
@@ -141,6 +142,13 @@ class MeasureTextSize(
                 description = nodeData.description,
                 children = nodeData.children,
             )
+        }
+
+        // The line runs the width of the text, below it.
+        is LineNodeData -> {
+            val newWidth = Dp(Px(width).toDp(density)) + drawInfo.padding
+            val newHeight = Dp(Px(height).toDp(density)) + drawInfo.padding / 2
+            nodeData.copy(path = nodeData.path.copy(width = newWidth, height = newHeight))
         }
 
         // A square is as wide and as tall as the longer of the two sides its text needs.

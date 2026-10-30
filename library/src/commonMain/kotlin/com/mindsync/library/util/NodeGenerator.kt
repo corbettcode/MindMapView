@@ -7,6 +7,7 @@ import com.mindsync.library.data.OvalPath
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.RectanglePath
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.StadiumPath
@@ -61,6 +62,15 @@ object NodeGenerator {
             )
             SquareNodeData::class -> nodeClass.cast(
                 SquareNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = RectanglePath(Dp(0f), Dp(0f), Dp(50f), Dp(50f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            LineNodeData::class -> nodeClass.cast(
+                LineNodeData(
                     id = id,
                     parentId = parentId,
                     path = RectanglePath(Dp(0f), Dp(0f), Dp(50f), Dp(50f)),

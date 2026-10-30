@@ -19,6 +19,7 @@ import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -193,6 +194,7 @@ object FreeMind {
         is CircleNodeData -> NodeShape.CIRCLE
         is RectangleNodeData -> NodeShape.RECTANGLE
         is SquareNodeData -> NodeShape.SQUARE
+        is LineNodeData -> NodeShape.LINE
         is StadiumNodeData -> NodeShape.STADIUM
         is OvalNodeData -> NodeShape.OVAL
     }

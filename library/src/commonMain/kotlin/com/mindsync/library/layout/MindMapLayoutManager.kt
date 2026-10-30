@@ -4,6 +4,7 @@ import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -194,6 +195,7 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         return when (node) {
             is RectangleNodeData -> node.path.width / 2
             is SquareNodeData -> node.path.width / 2
+            is LineNodeData -> node.path.width / 2
             is StadiumNodeData -> node.path.width() / 2
             is OvalNodeData -> node.path.width() / 2
             is CircleNodeData -> node.path.radius
@@ -205,6 +207,7 @@ open class MindMapLayoutManager(val side: LayoutSide) {
             is CircleNodeData -> node.path.radius * 2
             is RectangleNodeData -> node.path.height
             is SquareNodeData -> node.path.height
+            is LineNodeData -> node.path.height
             is StadiumNodeData -> node.path.height()
             is OvalNodeData -> node.path.height()
         }
@@ -219,6 +222,7 @@ open class MindMapLayoutManager(val side: LayoutSide) {
             is CircleNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is RectangleNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is SquareNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
+            is LineNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is StadiumNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
             is OvalNodeData -> node.copy(path = node.path.copy(centerX = centerX, centerY = centerY))
         }

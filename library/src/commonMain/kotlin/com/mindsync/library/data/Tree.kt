@@ -283,6 +283,9 @@ class Tree<T> {
                 NodeShape.SQUARE ->
                     NodeGenerator.makeNode(SquareNodeData::class, description = content, parentId = parentId)
                         .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
+                NodeShape.LINE ->
+                    NodeGenerator.makeNode(LineNodeData::class, description = content, parentId = parentId)
+                        .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, description = content, parentId = parentId)
                         .copy(id = targetId, parentId = parentId, color = color, textColor = textColor, note = note)
@@ -300,6 +303,7 @@ class Tree<T> {
             is CircleNodeData -> parentNode.copy(children = newChildren)
             is RectangleNodeData -> parentNode.copy(children = newChildren)
             is SquareNodeData -> parentNode.copy(children = newChildren)
+            is LineNodeData -> parentNode.copy(children = newChildren)
             is StadiumNodeData -> parentNode.copy(children = newChildren)
             is OvalNodeData -> parentNode.copy(children = newChildren)
         }
@@ -323,6 +327,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(parentId = parentId)
                 is RectangleNodeData -> targetNode.copy(parentId = parentId)
                 is SquareNodeData -> targetNode.copy(parentId = parentId)
+                is LineNodeData -> targetNode.copy(parentId = parentId)
                 is StadiumNodeData -> targetNode.copy(parentId = parentId)
                 is OvalNodeData -> targetNode.copy(parentId = parentId)
             }
@@ -334,6 +339,7 @@ class Tree<T> {
                 is CircleNodeData -> parentNode.copy(children = newNodes)
                 is RectangleNodeData -> parentNode.copy(children = newNodes)
                 is SquareNodeData -> parentNode.copy(children = newNodes)
+                is LineNodeData -> parentNode.copy(children = newNodes)
                 is StadiumNodeData -> parentNode.copy(children = newNodes)
                 is OvalNodeData -> parentNode.copy(children = newNodes)
             }
@@ -360,6 +366,7 @@ class Tree<T> {
                     is CircleNodeData -> parentNode.copy(children = newChildren)
                     is RectangleNodeData -> parentNode.copy(children = newChildren)
                     is SquareNodeData -> parentNode.copy(children = newChildren)
+                    is LineNodeData -> parentNode.copy(children = newChildren)
                     is StadiumNodeData -> parentNode.copy(children = newChildren)
                     is OvalNodeData -> parentNode.copy(children = newChildren)
                 }
@@ -389,6 +396,7 @@ class Tree<T> {
             is CircleNodeData -> parent.copy(children = newChildren)
             is RectangleNodeData -> parent.copy(children = newChildren)
             is SquareNodeData -> parent.copy(children = newChildren)
+            is LineNodeData -> parent.copy(children = newChildren)
             is StadiumNodeData -> parent.copy(children = newChildren)
             is OvalNodeData -> parent.copy(children = newChildren)
         }
@@ -437,6 +445,16 @@ class Tree<T> {
                         description = description,
                         children = if (children.isEmpty()) targetNode.children else children,
                     )
+                is LineNodeData ->
+                    targetNode.copy(
+                        path =
+                            targetNode.path.copy(
+                                centerX = dx,
+                                centerY = dy,
+                            ),
+                        description = description,
+                        children = if (children.isEmpty()) targetNode.children else children,
+                    )
                 is StadiumNodeData ->
                     targetNode.copy(
                         path =
@@ -473,6 +491,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(color = color)
                 is RectangleNodeData -> targetNode.copy(color = color)
                 is SquareNodeData -> targetNode.copy(color = color)
+                is LineNodeData -> targetNode.copy(color = color)
                 is StadiumNodeData -> targetNode.copy(color = color)
                 is OvalNodeData -> targetNode.copy(color = color)
             }
@@ -532,6 +551,19 @@ class Tree<T> {
                             textColor = targetNode.textColor,
                         )
                     }
+                NodeShape.LINE ->
+                    NodeGenerator.makeNode(LineNodeData::class, targetNode.description, parentId).let {
+                        it.copy(
+                            id = targetId,
+                            alpha = targetNode.alpha,
+                            children = targetNode.children,
+                            color = targetNode.color,
+                            note = targetNode.note,
+                            path = it.path.copy(centerX = targetNode.path.centerX, centerY = targetNode.path.centerY),
+                            strokeWidth = targetNode.strokeWidth,
+                            textColor = targetNode.textColor,
+                        )
+                    }
                 NodeShape.STADIUM ->
                     NodeGenerator.makeNode(StadiumNodeData::class, targetNode.description, parentId).let {
                         it.copy(
@@ -574,6 +606,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(note = note)
                 is RectangleNodeData -> targetNode.copy(note = note)
                 is SquareNodeData -> targetNode.copy(note = note)
+                is LineNodeData -> targetNode.copy(note = note)
                 is StadiumNodeData -> targetNode.copy(note = note)
                 is OvalNodeData -> targetNode.copy(note = note)
             }
@@ -591,6 +624,7 @@ class Tree<T> {
                 is CircleNodeData -> targetNode.copy(textColor = textColor)
                 is RectangleNodeData -> targetNode.copy(textColor = textColor)
                 is SquareNodeData -> targetNode.copy(textColor = textColor)
+                is LineNodeData -> targetNode.copy(textColor = textColor)
                 is StadiumNodeData -> targetNode.copy(textColor = textColor)
                 is OvalNodeData -> targetNode.copy(textColor = textColor)
             }

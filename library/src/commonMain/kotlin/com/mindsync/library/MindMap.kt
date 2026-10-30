@@ -52,6 +52,7 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLineStyle
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
@@ -387,7 +388,7 @@ internal fun DrawScope.drawMap(
     drawLines(state, drawInfo, lineColor)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor)
-    drawTree(state, drawInfo, measureTextSize)
+    drawTree(state, drawInfo, measureTextSize, lineColor)
     drawArrowLinks(state)
 }
 
@@ -395,9 +396,16 @@ private fun DrawScope.drawTree(
     state: MindMapState,
     drawInfo: DrawInfo,
     measureTextSize: MeasureTextSize,
+    lineColor: Color,
 ) {
+    // A line node is drawn as its own line goes on from the one to its parent, in the same color and width.
+    val lines = mutableMapOf<String, ResolvedLine>()
+    forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
+        if (node is LineNodeData) lines[node.id] = line
+    }
     state.tree.doVisiblePreorderTraversal { node ->
-        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
+        val line = lines[node.id]
+        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width).createNodeDrawer()
         nodeDrawer.drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.showNotes)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
@@ -561,6 +569,10 @@ internal fun Density.noteMarkerCenter(node: NodeData<*>): Offset {
             offsetX = node.path.width / 2
             offsetY = node.path.height / 2
         }
+        is LineNodeData -> {
+            offsetX = node.path.width / 2
+            offsetY = node.path.height / 2
+        }
         is StadiumNodeData -> {
             offsetX = node.path.length / 2 + node.path.radius * TOP_RIGHT_OF_ARC
             offsetY = node.path.radius * TOP_RIGHT_OF_ARC
@@ -581,6 +593,7 @@ private fun DrawScope.drawAttachedNode(
         val height = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.height
             is SquareNodeData -> attachedNode.path.height
+            is LineNodeData -> attachedNode.path.height
             is StadiumNodeData -> attachedNode.path.height()
             is OvalNodeData -> attachedNode.path.height()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
@@ -588,6 +601,7 @@ private fun DrawScope.drawAttachedNode(
         val width = when (attachedNode) {
             is RectangleNodeData -> attachedNode.path.width
             is SquareNodeData -> attachedNode.path.width
+            is LineNodeData -> attachedNode.path.width
             is StadiumNodeData -> attachedNode.path.width()
             is OvalNodeData -> attachedNode.path.width()
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
@@ -622,8 +636,8 @@ private fun DrawScope.drawLines(
             // The lines to the children on a slanted side of the root leave it along that side's line.
             val start =
                 if (isSlanted) rootEdgePoint(node, side, Dp(0f))
-                else Offset(getNodeEdgeX(node, isRightEdge = isRightSide), node.path.centerY.toPx(this))
-            val end = Offset(getNodeEdgeX(toNode, isRightEdge = isRightSide.not()), toNode.path.centerY.toPx(this))
+                else Offset(getNodeEdgeX(node, isRightEdge = isRightSide), lineEndY(node))
+            val end = Offset(getNodeEdgeX(toNode, isRightEdge = isRightSide.not()), lineEndY(toNode))
             val curve =
                 if (isSlanted) {
                     // The line turns up or down right by the root, before the children straight out to that side,
@@ -792,6 +806,11 @@ private fun Density.edgePoint(
             halfHeight = node.path.height / 2
             isRound = false
         }
+        is LineNodeData -> {
+            halfWidth = node.path.width / 2
+            halfHeight = node.path.height / 2
+            isRound = false
+        }
         // The caps of a stadium are left out: the line leaves the box around it.
         is StadiumNodeData -> {
             halfWidth = node.path.width() / 2
@@ -886,7 +905,15 @@ internal fun Density.addButtonCenter(
     val centerX =
         if (side.isLeft) getNodeEdgeX(node, isRightEdge = false) - radius
         else getNodeEdgeX(node, isRightEdge = true) + radius
-    return Offset(centerX, node.path.centerY.toPx(this))
+    return Offset(centerX, lineEndY(node))
+}
+
+// The lines of a node meet it halfway down its sides, but those of a line node meet the ends of its line.
+private fun Density.lineEndY(
+    node: NodeData<*>
+): Float = when (node) {
+    is LineNodeData -> node.path.bottomY().toPx(this)
+    else -> node.path.centerY.toPx(this)
 }
 
 // The point [beyond] out of the edge of the root, which is an oval, where the button and the lines of [side]
@@ -940,6 +967,7 @@ private fun Density.getNodeEdgeX(
             is CircleNodeData -> node.path.radius.toPx(this)
             is RectangleNodeData -> node.path.width.toPx(this) / 2
             is SquareNodeData -> node.path.width.toPx(this) / 2
+            is LineNodeData -> node.path.width.toPx(this) / 2
             is StadiumNodeData -> node.path.width().toPx(this) / 2
             is OvalNodeData -> node.path.width().toPx(this) / 2
         }
