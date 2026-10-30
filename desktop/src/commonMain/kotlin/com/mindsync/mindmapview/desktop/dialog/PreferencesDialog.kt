@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -42,7 +43,9 @@ import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
 import com.mindsync.mindmapview.desktop.ThemeMode
+import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.DropdownPicker
 import com.mindsync.mindmapview.desktop.component.HsvColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.emojiVisualTransformation
@@ -85,6 +88,8 @@ fun PreferencesDialog(
     onDismiss: () -> Unit,
 ) {
     var edited by remember { mutableStateOf(preferences) }
+    // Closed to start with, as arrow link colors are changed less often than those of nodes.
+    var isArrowLinkColorsOpen by remember { mutableStateOf(false) }
     // Each font's name is drawn in that font once it has loaded.
     var fontFamilies by remember { mutableStateOf<Map<NodeFont, FontFamily>>(emptyMap()) }
     LaunchedEffect(Unit) {
@@ -106,7 +111,7 @@ fun PreferencesDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                     , modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                 ) {
-                    ChoicePicker(
+                    DropdownPicker(
                         label = "Theme"
                         , choices = ThemeMode.entries
                         , choiceLabel = { it.label }
@@ -114,7 +119,7 @@ fun PreferencesDialog(
                         , onSelect = { edited = edited.copy(themeMode = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
-                    ChoicePicker(
+                    DropdownPicker(
                         label = "New node shape"
                         , choices = NodeShape.entries
                         , choiceLabel = { it.label }
@@ -122,7 +127,7 @@ fun PreferencesDialog(
                         , onSelect = { edited = edited.copy(newNodeShape = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
-                    ChoicePicker(
+                    DropdownPicker(
                         label = "Node font"
                         , choices = NodeFont.entries
                         , choiceLabel = { it.label }
@@ -159,14 +164,26 @@ fun PreferencesDialog(
                                 , defaults = DEFAULT_TEXT_COLORS
                                 , onChange = { edited = edited.copy(textColors = it) }
                             )
-                            , EditableColors(
-                                label = "Arrow link colors"
-                                , colors = edited.arrowLinkColors
-                                , defaults = DEFAULT_ARROW_LINK_COLORS
-                                , onChange = { edited = edited.copy(arrowLinkColors = it) }
-                            )
                         )
                     )
+                    CollapsibleSection(
+                        title = "Arrow link colors"
+                        , isOpen = isArrowLinkColorsOpen
+                        , onToggle = { isArrowLinkColorsOpen = !isArrowLinkColorsOpen }
+                    ) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            ColorListsEditor(
+                                listOf(
+                                    EditableColors(
+                                        label = "Colors"
+                                        , colors = edited.arrowLinkColors
+                                        , defaults = DEFAULT_ARROW_LINK_COLORS
+                                        , onChange = { edited = edited.copy(arrowLinkColors = it) }
+                                    )
+                                )
+                            )
+                        }
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
