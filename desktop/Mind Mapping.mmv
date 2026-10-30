@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <rootposition x="285.0" y="328.0"/>
+  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🌱 Mind Mapping&lt;/p&gt;">
+    <node id="76d84ea5-3ee1-4a75-81e1-67d65d73bab6" shape="rectangle" side="upper_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Goals&lt;/p&gt;">
+      <node id="f4f5586d-6a62-4cdb-a50a-a82f9c18669b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Research&lt;/p&gt;"/>
+      <node id="cef2526f-8bbc-4cd7-ad99-f96482325463" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Lecture&lt;/p&gt;"/>
+      <node id="5c9c94c9-810f-479e-b3ef-029bb7bdc84e" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Conclusion&lt;/p&gt;"/>
+    </node>
+    <node id="6ccd3932-a75a-4d67-8cd2-14490edcf81e" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Review&lt;/p&gt;">
+      <node id="1ca8bc27-13fb-4bdb-af16-4b90a4c270dd" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Notes&lt;/p&gt;"/>
+      <node id="15b8f253-b93e-4eb3-b45c-a06386d1d299" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Method&lt;/p&gt;"/>
+      <node id="a43839ef-3cdf-4fc5-9631-835f9d2e60d7" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Dicuss&lt;/p&gt;"/>
+    </node>
+    <node id="507d5228-ada7-4327-9ec4-0075d15b534f" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Motivation&lt;/p&gt;">
+      <node id="dfea5e55-12e4-471d-b5fc-a9c09a5e2a8d" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Tips&lt;/p&gt;"/>
+      <node id="56354541-875b-4609-a15c-07789e744991" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Roadmap&lt;/p&gt;"/>
+    </node>
+    <node id="de6d08d6-3663-47e2-9ec8-f86e15e33eca" shape="rectangle" side="upper_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Habits&lt;/p&gt;">
+      <node id="3712154d-f55f-4bd4-bf55-9ec8cb5e69d8" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Plan&lt;/p&gt;"/>
+      <node id="2ffb33fc-31c8-4f18-b2f6-06f8953ec7b1" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Study&lt;/p&gt;"/>
+      <node id="f4f9488d-61ea-466f-930d-347513c93c5c" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;System&lt;/p&gt;"/>
+    </node>
+    <node id="497b9ab5-ca04-4dfb-9724-a6a36ce56ba5" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Organization&lt;/p&gt;">
+      <node id="6e8f1db1-1d74-458d-bddd-3c5e1481f98a" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Breaks&lt;/p&gt;"/>
+    </node>
+    <node id="e95051e2-1874-43dd-836d-cbccbdd95f70" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Learning style&lt;/p&gt;">
+      <node id="257072d0-9744-4f25-a664-ca4e2bd1870b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Read&lt;/p&gt;"/>
+      <node id="54be5e9e-4832-4856-b62a-15c5cc40ff52" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Listen&lt;/p&gt;"/>
+      <node id="68397ad7-fcb5-4d2b-84e6-9cced41e261e" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Summarize&lt;/p&gt;"/>
+    </node>
+  </node>
+</mindmapview>
