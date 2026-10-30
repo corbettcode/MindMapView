@@ -2051,6 +2051,41 @@ class MindMapTest {
     }
 
     @Test
+    fun noteMakesANodeLargerWhileNotesAreShown() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", note = "<p>A note that is long enough to be wrapped onto more than one line.</p>")
+        state.addNode("sibling")
+        waitForIdle()
+        val (childId, siblingId) = state.tree.getRootNode().children
+        fun child() = state.tree.getNode(childId) as RectangleNodeData
+        fun sibling() = state.tree.getNode(siblingId) as RectangleNodeData
+        val plain = child().path
+        assertFalse(state.showNotes)
+        assertEquals(sibling().path.height, plain.height)
+
+        state.showNotes = true
+        waitForIdle()
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+        assertTrue(child().path.width.dpVal > plain.width.dpVal)
+        // A node without a note stays as it was.
+        assertEquals(plain.height, sibling().path.height)
+
+        // A note given while notes are shown makes room for itself.
+        clickNode(sibling())
+        state.editNodeNote("<p>A note given to a node while the notes are shown.</p>")
+        waitForIdle()
+        assertTrue(sibling().path.height.dpVal > plain.height.dpVal + 10f)
+
+        state.showNotes = false
+        waitForIdle()
+        assertEquals(plain.width, child().path.width)
+        assertEquals(plain.height, child().path.height)
+    }
+
+    @Test
     fun linkInANodeWithAttributesIsWhereItsTextIsDrawn() = runComposeUiTest {
         val state = MindMapState()
         setMindMap(state)

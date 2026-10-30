@@ -144,6 +144,21 @@ class MindMapState(
             animateTreeChange()
         }
 
+    private var notesShown by mutableStateOf(false)
+
+    /**
+     * Whether the notes of the nodes are shown, as a paragraph below the text of each node that has one.
+     * Setting it rearranges the tree, as the nodes change size.
+     */
+    var showNotes: Boolean
+        get() = notesShown
+        set(value) {
+            if (value == notesShown) return
+            notesShown = value
+            mindMapManager.showNotes = value
+            animateTreeChange()
+        }
+
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
 
     /**
@@ -717,7 +732,13 @@ class MindMapState(
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.updateNodeNote(node.id, note)
-                invalidate()
+                // A note that is shown is in the node, which is then measured again to fit it.
+                if (showNotes) {
+                    mindMapManager.update(tree)
+                    animateTreeChange()
+                } else {
+                    invalidate()
+                }
             }
         }
     }
@@ -992,7 +1013,7 @@ class MindMapState(
         val point = toTreePoint(position)
         val node = findNode(point) ?: return null
         val content =
-            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes) ?: return null
+            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes, showNotes) ?: return null
         val layout = content.text
         val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
         val textPoint =

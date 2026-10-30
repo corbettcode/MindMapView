@@ -760,9 +760,15 @@ private fun MindMapScreen(
             }
         }
     }
-    LaunchedEffect(hoveredNode?.id, hoveredNode?.note, hoveredNode?.color, hoveredNode?.textColor, isDialogOpen) {
+    LaunchedEffect(preferences.noteDisplay) { state.showNotes = preferences.noteDisplay == NoteDisplay.INLINE }
+    // Only a flyover note is shown in a popup: an inline one is in the node already.
+    val isNotePopupShown = preferences.noteDisplay == NoteDisplay.FLYOVER
+    LaunchedEffect(
+        hoveredNode?.id, hoveredNode?.note, hoveredNode?.color, hoveredNode?.textColor, isDialogOpen, isNotePopupShown
+    ) {
         notePopup = null
-        val node = hoveredNode?.takeIf { it.note.isNotBlank() && !isDialogOpen } ?: return@LaunchedEffect
+        val node = hoveredNode?.takeIf { it.note.isNotBlank() && !isDialogOpen && isNotePopupShown }
+            ?: return@LaunchedEffect
         delay(NOTE_POPUP_DELAY_MILLIS)
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
         UrlImageLoader.preload(node.note)

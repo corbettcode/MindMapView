@@ -72,6 +72,18 @@ class UserPreferencesTest {
     }
 
     @Test
+    fun noteDisplayIsKept() {
+        store().update(UserPreferences(noteDisplay = NoteDisplay.INLINE))
+        assertEquals(NoteDisplay.INLINE, store().preferences.noteDisplay)
+    }
+
+    @Test
+    fun unknownNoteDisplayIsFlyover() {
+        stored[UserPreferencesStore.NOTE_DISPLAY] = "SIDEBAR"
+        assertEquals(NoteDisplay.FLYOVER, store().preferences.noteDisplay)
+    }
+
+    @Test
     fun hexColorIsReadWithOrWithoutItsHash() {
         assertEquals(Color(0xFF2D5728), parseHexColor("#2d5728"))
         assertEquals(Color(0xFF2D5728), parseHexColor("2D5728"))

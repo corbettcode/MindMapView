@@ -15,6 +15,15 @@ enum class ThemeMode {
 val ThemeMode.label: String
     get() = name.lowercase().replaceFirstChar { it.uppercase() }
 
+/** How a node's note is shown: not at all, in a popup while the mouse is over the node, or inside the node. */
+enum class NoteDisplay(
+    val label: String
+) {
+    HIDDEN("Hidden")
+    , FLYOVER("Flyover")
+    , INLINE("Inline")
+}
+
 /**
  * Keeps the [UserPreferences] from one run of the app to the next. They are read with [read], which returns
  * the value kept under a name or null when there is none, and written with [write] on every change.
@@ -34,6 +43,7 @@ class UserPreferencesStore(
             , arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList) ?: defaults.arrowLinkColors
             , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones) ?: defaults.emojiTones
             , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) } ?: defaults.nodeFont
+            , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) } ?: defaults.noteDisplay
         )
     }
         private set
@@ -48,6 +58,7 @@ class UserPreferencesStore(
         write(ARROW_LINK_COLORS, newPreferences.arrowLinkColors.joinToString(",") { it.toHex() })
         write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
         write(NODE_FONT, newPreferences.nodeFont.name)
+        write(NOTE_DISPLAY, newPreferences.noteDisplay.name)
         return preferences
     }
 
@@ -60,6 +71,7 @@ class UserPreferencesStore(
         const val ARROW_LINK_COLORS = "arrowLinkColors"
         const val EMOJI_TONES = "emojiTones"
         const val NODE_FONT = "nodeFont"
+        const val NOTE_DISPLAY = "noteDisplay"
     }
 }
 

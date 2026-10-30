@@ -22,13 +22,20 @@ class MindMapManager {
     var showAttributes = true
         set(value) {
             field = value
-            if (::tree.isInitialized) measureTextSize?.traverseTextHead(tree, value)
+            if (::tree.isInitialized) measureTextSize?.traverseTextHead(tree, value, showNotes)
+        }
+
+    /** Whether the notes of the nodes are shown below their text, which makes the nodes that have one larger. */
+    var showNotes = false
+        set(value) {
+            field = value
+            if (::tree.isInitialized) measureTextSize?.traverseTextHead(tree, showAttributes, value)
         }
 
     fun update(tree: Tree<*>) {
         this.tree = tree
         if (isMoving.not()) {
-            measureTextSize?.traverseTextHead(this.tree, showAttributes)
+            measureTextSize?.traverseTextHead(this.tree, showAttributes, showNotes)
         }
     }
 
@@ -40,7 +47,7 @@ class MindMapManager {
             target.path.centerX,
             target.path.centerY
         )
-        measureTextSize?.traverseTextHead(tree, showAttributes)
+        measureTextSize?.traverseTextHead(tree, showAttributes, showNotes)
     }
 
     fun addNode(
@@ -134,7 +141,7 @@ class MindMapManager {
     fun setMeasureTextSize(measureTextSize: MeasureTextSize?) {
         this.measureTextSize = measureTextSize
         if (::tree.isInitialized) {
-            measureTextSize?.traverseTextHead(tree, showAttributes)
+            measureTextSize?.traverseTextHead(tree, showAttributes, showNotes)
         }
     }
 
@@ -144,7 +151,7 @@ class MindMapManager {
 
     fun setTree(tree: Tree<*>) {
         this.tree = tree
-        measureTextSize?.traverseTextHead(tree, showAttributes)
+        measureTextSize?.traverseTextHead(tree, showAttributes, showNotes)
     }
 
     fun getTree(): Tree<*> {

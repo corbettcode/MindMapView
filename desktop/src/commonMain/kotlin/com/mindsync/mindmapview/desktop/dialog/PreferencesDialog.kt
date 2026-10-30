@@ -43,6 +43,7 @@ import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
+import com.mindsync.mindmapview.desktop.NoteDisplay
 import com.mindsync.mindmapview.desktop.ThemeMode
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorPicker
@@ -79,6 +80,8 @@ data class UserPreferences(
     val emojiTones: Map<String, String> = emptyMap(),
     // The font node text is drawn in.
     val nodeFont: NodeFont = NodeFont.DEFAULT,
+    // How the note of a node is shown.
+    val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER,
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
@@ -136,6 +139,14 @@ fun PreferencesDialog(
                         , onSelect = { edited = edited.copy(nodeFont = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                         , choiceFontFamily = { fontFamilies[it] }
+                    )
+                    DropdownPicker(
+                        label = "Notes"
+                        , choices = NoteDisplay.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.noteDisplay
+                        , onSelect = { edited = edited.copy(noteDisplay = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically

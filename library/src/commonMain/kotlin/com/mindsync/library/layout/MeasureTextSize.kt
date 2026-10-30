@@ -6,6 +6,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.CircleNodeData
@@ -36,28 +37,44 @@ class MeasureTextSize(
     private val attributeTextStyle =
         textStyle.copy(fontSize = textStyle.fontSize * ATTRIBUTE_TEXT_SCALE, textAlign = TextAlign.Start)
 
-    fun measure(description: String): TextLayoutResult {
-        if (richTextCache.size >= RICH_TEXT_CACHE_SIZE && description !in richTextCache) richTextCache.clear()
-        val richText = richTextCache.getOrPut(description) {
-            RichText.parse(description).withEmojiFont(emojiFontFamily)
-        }
-        return textMeasurer.measure(richText, textStyle)
+    // A note is a paragraph, a little smaller than the text of the node and read from the left.
+    private val noteTextStyle =
+        textStyle.copy(fontSize = textStyle.fontSize * NOTE_TEXT_SCALE, textAlign = TextAlign.Start)
+
+    fun measure(description: String): TextLayoutResult = textMeasurer.measure(richText(description), textStyle)
+
+    private fun richText(html: String): AnnotatedString {
+        if (richTextCache.size >= RICH_TEXT_CACHE_SIZE && html !in richTextCache) richTextCache.clear()
+        return richTextCache.getOrPut(html) { RichText.parse(html).withEmojiFont(emojiFontFamily) }
+    }
+
+    // A long note wraps at the width of the text above it, or at a width of its own when the text is narrower.
+    private fun measureNote(
+        note: String
+        , textWidth: Int
+    ): TextLayoutResult {
+        val maxWidth = maxOf(textWidth, with(density) { NOTE_MAX_WIDTH.dp.roundToPx() })
+        return textMeasurer.measure(richText(note), noteTextStyle, constraints = Constraints(maxWidth = maxWidth))
     }
 
     /**
-     * Measures what is drawn in a node: its text and, when [showAttributes] is set and it has any, the
-     * table of its attributes below the text.
+     * Measures what is drawn in a node: its text, below it its note when [showNotes] is set and it has one,
+     * and below those the table of its attributes when [showAttributes] is set and it has any.
      */
     fun measureContent(
         tree: Tree<*>
         , node: NodeData<*>
         , showAttributes: Boolean
+        , showNotes: Boolean = false
     ): NodeContent {
         val attributes = if (showAttributes) tree.attributesOf(node.id) else emptyList()
+        val text = measure(node.description)
         return NodeContent(
-            text = measure(node.description)
+            text = text
+            , note = if (showNotes && node.note.isNotBlank()) measureNote(node.note, text.size.width) else null
             , table = if (attributes.isEmpty()) null else measureAttributes(attributes)
             , gap = with(density) { ATTRIBUTE_TABLE_GAP.dp.toPx() }
+            , noteGap = with(density) { NOTE_GAP.dp.toPx() }
         )
     }
 
@@ -81,10 +98,11 @@ class MeasureTextSize(
     fun traverseTextHead(
         tree: Tree<*>?
         , showAttributes: Boolean = true
+        , showNotes: Boolean = false
     ) {
         tree?.let {
             it.doPreorderTraversal { node ->
-                val content = measureContent(tree, node, showAttributes)
+                val content = measureContent(tree, node, showAttributes, showNotes)
                 val newNode = changeSize(node, content.width, content.height)
                 tree.setNode(node.id, newNode)
             }
@@ -174,23 +192,36 @@ class MeasureTextSize(
         private const val ATTRIBUTE_TABLE_GAP = 6f
         private const val ATTRIBUTE_CELL_PADDING_X = 5f
         private const val ATTRIBUTE_CELL_PADDING_Y = 2f
+        private const val NOTE_TEXT_SCALE = 0.85f
+        private const val NOTE_MAX_WIDTH = 240f
+        // Room for the line between the text and the note, with space on either side of it.
+        private const val NOTE_GAP = 12f
     }
 }
 
 /**
- * What is drawn in a node, in pixels: its [text] and, below it, the [table] of its attributes when it has
- * one. The two are centered on the node together.
+ * What is drawn in a node, in pixels: its [text], below it its [note] when it is shown, and below those the
+ * [table] of its attributes when it has one. They are centered on the node together.
  */
 class NodeContent(
     val text: TextLayoutResult
+    , val note: TextLayoutResult?
     , val table: AttributeTable?
     , gap: Float
+    , noteGap: Float
 ) {
-    val width: Float = maxOf(text.size.width.toFloat(), table?.width ?: 0f)
-    val height: Float = text.size.height + (table?.let { gap + it.height } ?: 0f)
+    val width: Float = maxOf(text.size.width.toFloat(), note?.size?.width?.toFloat() ?: 0f, table?.width ?: 0f)
+    val height: Float =
+        text.size.height + (note?.let { noteGap + it.size.height } ?: 0f) + (table?.let { gap + it.height } ?: 0f)
 
     /** How far above the center of the node the center of the text is. */
     val textRise: Float = (height - text.size.height) / 2
+
+    /** How far below the center of the node the line between the text and the note is. */
+    val noteLineY: Float = -height / 2 + text.size.height + noteGap / 2
+
+    /** How far below the center of the node the top of the note is. */
+    val noteTop: Float = -height / 2 + text.size.height + noteGap
 
     /** How far below the center of the node the top of the table is. */
     val tableTop: Float = height / 2 - (table?.height ?: 0f)

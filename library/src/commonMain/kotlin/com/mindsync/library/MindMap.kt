@@ -129,7 +129,8 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
  * showing a menu there.
  *
- * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set.
+ * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set, and
+ * its note as a paragraph between the two while [MindMapState.showNotes] is set, in place of its note marker.
  *
  * Dragging a node onto another while Ctrl is held down adds an arrow link from the first to the second
  * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
@@ -364,7 +365,9 @@ fun MindMap(
                 .createStrokeNode()
                 .drawNode(this)
                 // The note marker sits on the node's edge, so it is drawn again to stay above the border.
-                if (selectedNode.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(selectedNode), drawInfo)
+                if (selectedNode.note.isNotBlank() && !state.showNotes) {
+                    drawNoteMarker(noteMarkerCenter(selectedNode), drawInfo)
+                }
             }
         }
     }
@@ -396,11 +399,25 @@ private fun DrawScope.drawTree(
     state.tree.doVisiblePreorderTraversal { node ->
         val nodeDrawer = NodeDrawerFactory(node, drawInfo, this).createNodeDrawer()
         nodeDrawer.drawNode(this)
-        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes)
-        // The drawer centers the text on the node, which the attributes below it share with the text.
+        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.showNotes)
+        // The drawer centers the text on the node, which the note and attributes below it share with the text.
         translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        content.note?.let { note ->
+            val centerX = node.path.centerX.toPx(this)
+            val centerY = node.path.centerY.toPx(this)
+            // The line spans the text and the note, so it is as wide as the wider of the two.
+            val lineHalfWidth = maxOf(content.text.size.width, note.size.width) / 2f
+            drawLine(
+                node.textColor.copy(alpha = ATTRIBUTE_LINE_ALPHA)
+                , Offset(centerX - lineHalfWidth, centerY + content.noteLineY)
+                , Offset(centerX + lineHalfWidth, centerY + content.noteLineY)
+                , ATTRIBUTE_LINE_WIDTH.toPx(this)
+            )
+            drawText(note, node.textColor, Offset(centerX - note.size.width / 2f, centerY + content.noteTop))
+        }
         content.table?.let { drawAttributeTable(node, it, content.tableTop) }
-        if (node.note.isNotBlank()) drawNoteMarker(noteMarkerCenter(node), drawInfo)
+        // A note shown in the node needs no marker to tell it is there.
+        if (node.note.isNotBlank() && !state.showNotes) drawNoteMarker(noteMarkerCenter(node), drawInfo)
     }
 }
 
