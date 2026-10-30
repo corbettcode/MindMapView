@@ -194,6 +194,7 @@ fun MindMap(
     val currentOnNodeLink by rememberUpdatedState(onNodeLink)
 
     var isArrowLinkPressed by remember { mutableStateOf(false) }
+    var isNodeDragged by remember { mutableStateOf(false) }
 
     DisposableEffect(state, measureTextSize, density, scope) {
         state.attach(measureTextSize, density, scope)
@@ -205,9 +206,10 @@ fun MindMap(
             .clipToBounds()
             .onSizeChanged { state.onSizeChanged(it.toSize()) }
             // An arrow link is dragged to bend it and right clicked for its menu, so the pointer shows it can be,
-            // and keeps showing it while the link is held.
+            // and keeps showing it while the link is held. A node shows it while it is dragged.
             .pointerHoverIcon(
-                if (state.isArrowLinkHovered || isArrowLinkPressed) PointerIcon.Hand else PointerIcon.Default
+                if (state.isArrowLinkHovered || isArrowLinkPressed || isNodeDragged) PointerIcon.Hand
+                else PointerIcon.Default
             )
             .pointerInput(state) {
                 var lastClickedNodeId: String? = null
@@ -297,10 +299,15 @@ fun MindMap(
                             else state.select(touchedNode)
                         }
                         if (dragStart != null) {
-                            onDrag(dragStart.position)
-                            drag(dragStart.id) { change ->
-                                onDrag(change.position)
-                                change.consume()
+                            isNodeDragged = true
+                            try {
+                                onDrag(dragStart.position)
+                                drag(dragStart.id) { change ->
+                                    onDrag(change.position)
+                                    change.consume()
+                                }
+                            } finally {
+                                isNodeDragged = false
                             }
                         }
                         if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
