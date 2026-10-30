@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mindmapview version="1">
-  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🧭 &lt;b&gt;MindMapView Tour&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;&lt;b&gt;Welcome!&lt;/b&gt; Each branch around this root shows one group of features.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Hover a node with a dot on its edge to read its note.&lt;/li&gt;&lt;li&gt;Right-click a node or an arrow link for its menu.&lt;/li&gt;&lt;li&gt;Drag an arrow link to bend it; drag empty space to pan; scroll to zoom.&lt;/li&gt;&lt;/ul&gt;">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🧭 &lt;b&gt;MindMapView Tour&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;&lt;b&gt;Welcome!&lt;/b&gt; Each branch around this root shows one group of features.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Hover a node with a note marker (a small folded sheet on its corner) to read its note. &lt;b&gt;Preferences → Notes&lt;/b&gt; can show notes inline in the node instead, or hide them.&lt;/li&gt;&lt;li&gt;Right-click a node or an arrow link for its menu.&lt;/li&gt;&lt;li&gt;Drag an arrow link to bend it; drag empty space to pan; scroll to zoom. The pointer turns into a hand while you drag.&lt;/li&gt;&lt;/ul&gt;">
     <node id="shapes" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🔷 &lt;b&gt;Shapes&lt;/b&gt;&lt;/p&gt;">
       <node id="circle" shape="circle" color="#ff2d5728" textColor="#ffffffff" text="&lt;p&gt;Circle&lt;/p&gt;"/>
       <node id="rectangle" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Rectangle&lt;/p&gt;"/>
       <node id="stadium" shape="stadium" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;Stadium&lt;/p&gt;"/>
       <node id="oval" shape="oval" color="#ff9bc4e2" textColor="#ff000000" text="&lt;p&gt;Oval&lt;/p&gt;"/>
       <node id="square" shape="square" color="#ffc9b6e4" textColor="#ff000000" text="&lt;p&gt;Square&lt;/p&gt;"/>
+      <node id="line" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Line&lt;/p&gt;" note="&lt;p&gt;A &lt;b&gt;Line&lt;/b&gt; node is its text on a line, drawn in the colour and width of the line to its parent, so the two read as one line.&lt;/p&gt;">
+        <node id="line2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Lines chain on&lt;/p&gt;"/>
+      </node>
+    </node>
+    <node id="lines" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;〰️ &lt;b&gt;Lines&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;Each node's line to its parent has a &lt;b&gt;type&lt;/b&gt;, &lt;b&gt;width&lt;/b&gt; and &lt;b&gt;colour&lt;/b&gt;, set in the &lt;b&gt;Line&lt;/b&gt; section of the edit dialog. A node's children inherit what it does not leave to its parent.&lt;/p&gt;">
+      <node id="ln_linear" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Linear&lt;/p&gt;" lineStyle="linear"/>
+      <node id="ln_bezier" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Bezier&lt;/p&gt;" lineStyle="bezier"/>
+      <node id="ln_sharp_linear" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Sharp linear&lt;/p&gt;" lineStyle="sharp_linear" lineWidth="4"/>
+      <node id="ln_sharp_bezier" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Sharp bezier&lt;/p&gt;" lineStyle="sharp_bezier" lineWidth="4"/>
+      <node id="ln_thin" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Thin&lt;/p&gt;" lineWidth="thin"/>
+      <node id="ln_wide" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Width 8&lt;/p&gt;" lineWidth="8"/>
+      <node id="ln_red" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Red, passed on&lt;/p&gt;" lineColor="#ffc62828" lineWidth="2">
+        <node id="ln_red_child1" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Inherited&lt;/p&gt;"/>
+        <node id="ln_red_child2" shape="line" color="#ff3d7cc9" textColor="#ffc62828" text="&lt;p&gt;Inherited by a line&lt;/p&gt;"/>
+      </node>
     </node>
     <node id="colors" shape="stadium" side="upper_right" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;🎨 &lt;b&gt;Colours&lt;/b&gt;&lt;/p&gt;">
       <node id="navy" shape="rectangle" color="#ff1f3a5f" textColor="#ffffffff" text="&lt;p&gt;Navy with white text&lt;/p&gt;"/>
@@ -22,7 +37,7 @@
       <node id="link" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;A link: &lt;a href=&quot;https://github.com/corbettcode/MindMapView&quot;&gt;MindMapView on GitHub&lt;/a&gt;&lt;/p&gt;"/>
     </node>
     <node id="notes" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;📝 &lt;b&gt;Notes &amp;amp; Attributes&lt;/b&gt;&lt;/p&gt;">
-      <node id="withnote" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;This node has a note&lt;/p&gt;" note="&lt;p&gt;Notes hold &lt;b&gt;rich text&lt;/b&gt; too:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;numbered lists&lt;/li&gt;&lt;li&gt;&lt;i&gt;styled&lt;/i&gt; text&lt;/li&gt;&lt;li&gt;links, like &lt;a href=&quot;https://freemind.sourceforge.io&quot;&gt;FreeMind&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;"/>
+      <node id="withnote" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;This node has a note&lt;/p&gt;" note="&lt;p&gt;Notes hold &lt;b&gt;rich text&lt;/b&gt; too:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;numbered lists&lt;/li&gt;&lt;li&gt;&lt;i&gt;styled&lt;/i&gt; text&lt;/li&gt;&lt;li&gt;links, like &lt;a href=&quot;https://freemind.sourceforge.io&quot;&gt;FreeMind&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;Set &lt;b&gt;Preferences → Notes&lt;/b&gt; to &lt;i&gt;Flyover&lt;/i&gt; to read a note on hover, &lt;i&gt;Inline&lt;/i&gt; to show it in the node below a line, or &lt;i&gt;Hidden&lt;/i&gt;.&lt;/p&gt;"/>
       <node id="withattrs" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;📋 Task with attributes&lt;/p&gt;">
         <attribute name="Status" value="In progress"/>
         <attribute name="Owner" value="Paul"/>

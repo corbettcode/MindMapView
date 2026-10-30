@@ -8,7 +8,7 @@ You can easily draw mind maps. It allows for node creation, deletion, as well as
 written in [`docs/user-manual/user-manual.html`](docs/user-manual/user-manual.html); run
 `docs/user-manual/make-pdf.sh` after changing it to print the PDF again.
 
-![A tour of the features: node shapes, colours, rich text, notes and attributes, folding, and arrow links in each line style](docs/feature_tour.png)
+![A tour of the features: node shapes including the line shape, colours, rich text, notes shown inline and attributes, folding, the type, width and colour of the lines between nodes, and arrow links in each line style](docs/feature_tour.png)
 
 The map above is [`desktop/feature_tour.mmv`](desktop/feature_tour.mmv): open it in the app to explore each feature.
 

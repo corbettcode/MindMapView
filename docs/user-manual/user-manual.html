@@ -257,7 +257,7 @@
         <li>Press <kbd>+</kbd> to add a child to the selected node.</li>
         <li>
             Choose <span class="menu">Edit &rsaquo; Add</span> and pick the shape of the new node: Circle,
-            Rectangle, Stadium, Oval or Square.
+            Rectangle, Stadium, Oval, Square or Line.
         </li>
     </ul>
     <p>
@@ -265,6 +265,14 @@
         with the text <i>node_1</i>, <i>node_2</i> and so on. It takes the shape and colors of the last child of
         the node it is added to, so siblings look alike. The first child of a node gets the shape set in
         Preferences (section <a href="#preferences">15</a>).
+    </p>
+    <p>
+        Click <b>Save &amp; Close</b> to add the node, or <b>Add Another</b> to add it and open the dialog again
+        for the next child of the same node, so you can add several in a row.
+    </p>
+    <p>
+        A <b>Line</b> node has no box: its text sits on a line, which carries on from the line to its parent in the
+        same color and width. The lines to its children leave from the other end.
     </p>
 
     <h3>Editing a node</h3>
@@ -274,15 +282,16 @@
     </p>
     <table>
         <tr><th>Part</th><th>What it does</th></tr>
-        <tr><td>Shape</td><td>The node's shape. The root is always an oval.</td></tr>
+        <tr><td>Shape</td><td>The node's shape, chosen from a drop-down list. The root is always an oval.</td></tr>
         <tr><td>Emoji</td><td>An emoji shown in front of the node's text (section <a href="#text">6</a>).</td></tr>
         <tr><td>Text</td><td>The node's text, with a toolbar for bold, italic, lists, links and size.</td></tr>
         <tr><td>Fill</td><td>The node's background color.</td></tr>
-        <tr><td>Text color</td><td>The color of the node's text.</td></tr>
-        <tr><td>Note</td><td>A longer note, shown when the mouse rests on the node (section <a href="#notes">7</a>).</td></tr>
+        <tr><td>Text</td><td>The color of the node's text.</td></tr>
+        <tr><td>Line</td><td>The <b>Type</b> (Linear, Bezier, Sharp linear or Sharp bezier), <b>Width</b> and <b>Color</b> of the line from the node's parent. Each can be left as <i>Inherited</i>, to take it from the parent; the node's children inherit it in turn. Click <b>Line</b> to open and close the section.</td></tr>
+        <tr><td>Note</td><td>A longer note (section <a href="#notes">7</a>). Click <b>Note</b> to open and close the section.</td></tr>
     </table>
     <p>
-        Press <kbd>Enter</kbd> or click <b>OK</b> to keep your changes, or click <b>Cancel</b> to drop them. To put a
+        Press <kbd>Enter</kbd> or click <b>Save &amp; Close</b> to keep your changes, or click <b>Cancel</b> to drop them. To put a
         line break in the node's text, press <kbd>Alt+Enter</kbd>. In the note, <kbd>Enter</kbd> starts a new line.
         The dialog can be resized; the note gets the extra room.
     </p>
@@ -422,9 +431,20 @@
 <section id="notes">
     <h2>7. Notes</h2>
     <p>
-        A note holds more than fits in a node: details, lists, links or pictures. A node with a note shows a small
-        note icon at its corner. Rest the mouse on the node for a second to see the note in a pop-up.
+        A note holds more than fits in a node: details, lists, links or pictures. How notes are shown is set by
+        <b>Notes</b> in Preferences (section <a href="#preferences">15</a>):
     </p>
+    <ul>
+        <li>
+            <b>Flyover</b>, the first setting: a node with a note shows a small note icon at its corner. Rest the
+            mouse on the node for a second to see the note in a pop-up.
+        </li>
+        <li>
+            <b>Inline</b>: the note is shown in the node, below a line under the node's text, and the node grows to
+            fit it. Pictures are not shown, and links in it cannot be clicked.
+        </li>
+        <li><b>Hidden</b>: the note is not shown, but the node keeps its note icon.</li>
+    </ul>
     <p>
         Write the note in the <b>Note</b> box of the edit dialog, with the same text toolbar as the node's text.
     </p>
@@ -650,15 +670,20 @@
         <tr><td>Theme</td><td>System (follow your computer), Light or Dark.</td></tr>
         <tr><td>New node shape</td><td>The shape of the first child added to a node. Later children copy their last sibling.</td></tr>
         <tr><td>Node font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of every node.</td></tr>
+        <tr><td>Notes</td><td>Flyover, Inline or Hidden: how a node's note is shown (section <a href="#notes">7</a>).</td></tr>
         <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
         <tr><td>Fill colors</td><td>The fill colors offered in the edit dialog.</td></tr>
         <tr><td>Text colors</td><td>The text colors offered in the edit dialog.</td></tr>
-        <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu.</td></tr>
+        <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu. Click <b>Arrow link colors</b> to open and close its section.</td></tr>
     </table>
     <p>
         For each list of colors, pick a color with the color picker or type its <b>Hex</b> code, then click
         <b>Add</b>. Select a color and click <b>Remove</b> to take it off the list, or click <b>Reset</b> to go
         back to the original colors.
+    </p>
+    <p>
+        Theme, New node shape, Node font and Notes are each chosen from a drop-down list. Click
+        <b>Save &amp; Close</b> to keep your changes, or <b>Cancel</b> to drop them.
     </p>
     <p>
         Preferences belong to you, not to a map: they apply to every map you open.
@@ -717,7 +742,7 @@
     <h3>In the edit dialog</h3>
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
-        <tr><td><kbd>Enter</kbd></td><td>OK (in the note: a new line)</td></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Save &amp; Close (in the note: a new line)</td></tr>
         <tr><td><kbd>Alt+Enter</kbd></td><td>A new line in the node's text</td></tr>
     </table>
     <h3>Selecting and finding</h3>
@@ -757,6 +782,9 @@
         <tr><td><kbd>Ctrl</kbd> + click a link</td><td>Open it</td></tr>
         <tr><td>Click a fold ring</td><td>Unfold the node</td></tr>
     </table>
+    <p>
+        The mouse pointer turns into a hand over an arrow link, and while you drag a node, an arrow link or the map.
+    </p>
 </section>
 
 <section id="licenses">
