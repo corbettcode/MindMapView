@@ -1395,6 +1395,7 @@ private fun AttributesDialog(
                     Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
+                    Spacer(modifier = Modifier.weight(1f))
                     Button(
                         onClick = {
                             // A row that was given no name is no attribute.
@@ -1402,7 +1403,7 @@ private fun AttributesDialog(
                             onDismiss()
                         },
                     ) {
-                        Text("OK")
+                        Text("Save & Close")
                     }
                 }
             }
