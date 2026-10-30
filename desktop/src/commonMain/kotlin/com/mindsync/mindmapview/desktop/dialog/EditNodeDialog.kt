@@ -1,7 +1,5 @@
 package com.mindsync.mindmapview.desktop.dialog
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,10 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -42,6 +37,7 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -63,6 +59,7 @@ import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.DialogLayout
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
 import com.mindsync.mindmapview.desktop.component.LineSettings
@@ -154,14 +151,21 @@ fun EditNodeDialog(
     var selectedLine by remember { mutableStateOf(line) }
     // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
     var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
+    // Open when the node has a note, as the mind map marks it.
+    var isNoteOpen by remember { mutableStateOf(note.isNotBlank()) }
 
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
     val lineStyle = LocalTextStyle.current
-    val noteMinHeight = remember(density, lineStyle) {
+    val noteFieldMinHeight = remember(density, lineStyle) {
         val lines = textMeasurer.measure("\n".repeat(NOTE_LINES - 1), lineStyle).size.height
         with(density) { lines.toDp() } + TEXT_FIELD_VERTICAL_PADDING
     }
+    // The note's section is its field and what frames it: the title, the toolbar and the padding. That does not
+    // change with the field's height, so it is the section's height less the field's.
+    var noteSectionHeight by remember { mutableStateOf(0.dp) }
+    var noteFieldHeight by remember { mutableStateOf(0.dp) }
+    val noteMinHeight = noteFieldMinHeight + (noteSectionHeight - noteFieldHeight).coerceAtLeast(0.dp)
     // Its least width; its height is fitted to what its content needs.
     val dialogState = remember { AppDialogState(EDIT_DIALOG_SIZE, minSize = DpSize(EDIT_DIALOG_MIN_WIDTH, 0.dp)) }
     var isDescriptionFocused by remember { mutableStateOf(false) }
@@ -279,104 +283,111 @@ fun EditNodeDialog(
                         , onSelect = { selectedTextColor = it }
                     )
 
-                    val lineSectionShape = RoundedCornerShape(8.dp)
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, lineSectionShape)
-                            .clip(lineSectionShape)
+                    CollapsibleSection(
+                        title = "Line"
+                        , isOpen = isLineOpen
+                        , onToggle = { isLineOpen = !isLineOpen }
                     ) {
-                        Text(
-                            if (isLineOpen) "Line ▾" else "Line ▸"
-                            , style = MaterialTheme.typography.titleSmall
-                            , modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { isLineOpen = !isLineOpen }
-                                .padding(12.dp)
+                        LineSettings(
+                            line = selectedLine
+                            , colors = remember(line, nodeColors, textColors) {
+                                (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(line.color))
+                                    .distinct()
+                            }
+                            , onChange = { selectedLine = it }
+                            , modifier = Modifier.padding(12.dp)
                         )
-                        if (isLineOpen) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            LineSettings(
-                                line = selectedLine
-                                , colors = remember(line, nodeColors, textColors) {
-                                    (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(line.color))
-                                        .distinct()
-                                }
-                                , onChange = { selectedLine = it }
-                                , modifier = Modifier.padding(12.dp)
-                            )
-                        }
                     }
 
-                    Text(
-                        "Note"
-                        , style = MaterialTheme.typography.titleSmall
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        , verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
-                        RichTextToggle(
-                            label = "MD"
-                            , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)
-                            , checked = noteMarkdown != null
-                            , onToggle = {
-                                val markdown = noteMarkdown
-                                if (markdown == null) {
-                                    noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
-                                } else {
-                                    scope.launch {
-                                        noteState = noteWithImages(noteFromMarkdown(markdown))
-                                        noteMarkdown = null
-                                    }
-                                }
-                            }
-                        )
+                    // A closed note takes no more room than its title, which is the last of the settings then.
+                    if (!isNoteOpen) {
+                        CollapsibleSection(
+                            title = "Note"
+                            , isOpen = false
+                            , onToggle = { isNoteOpen = true }
+                        ) {}
                     }
                 }
-                , note = { modifier ->
-                    val markdown = noteMarkdown
-                    val currentNoteState = noteState
-                    ShowEmojisInColor(currentNoteState)
-                    val noteModifier = modifier
-                        .onFocusChanged { isNoteFocused = it.hasFocus }
-                    if (markdown == null && currentNoteState == null) {
-                        Box(modifier = noteModifier)
-                    } else if (markdown == null && currentNoteState != null) {
-                        CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
-                            OutlinedRichTextEditor(
-                                state = currentNoteState
-                                , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
-                                , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
-                                    textColor = selectedTextColor
-                                    , containerColor = selectedColor
+                , note = if (!isNoteOpen) null else { modifier ->
+                    CollapsibleSection(
+                        title = "Note"
+                        , isOpen = true
+                        , onToggle = {
+                            // The field is gone once closed, and does not tell that it lost the focus.
+                            isNoteFocused = false
+                            isNoteOpen = false
+                        }
+                        , modifier = modifier
+                            .onSizeChanged { noteSectionHeight = with(density) { it.height.toDp() } }
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            , verticalAlignment = Alignment.CenterVertically
+                            , modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp)
+                        ) {
+                            if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
+                            RichTextToggle(
+                                label = "MD"
+                                , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)
+                                , checked = noteMarkdown != null
+                                , onToggle = {
+                                    val markdown = noteMarkdown
+                                    if (markdown == null) {
+                                        noteMarkdown = noteToMarkdown(noteState?.let { noteHtml(it) } ?: note)
+                                    } else {
+                                        scope.launch {
+                                            noteState = noteWithImages(noteFromMarkdown(markdown))
+                                            noteMarkdown = null
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        val markdown = noteMarkdown
+                        val currentNoteState = noteState
+                        ShowEmojisInColor(currentNoteState)
+                        val noteModifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(12.dp)
+                            .onSizeChanged { noteFieldHeight = with(density) { it.height.toDp() } }
+                            .onFocusChanged { isNoteFocused = it.hasFocus }
+                        if (markdown == null && currentNoteState == null) {
+                            Box(modifier = noteModifier)
+                        } else if (markdown == null && currentNoteState != null) {
+                            CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
+                                OutlinedRichTextEditor(
+                                    state = currentNoteState
+                                    , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
+                                    , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
+                                        textColor = selectedTextColor
+                                        , containerColor = selectedColor
+                                        , cursorColor = selectedTextColor
+                                    )
+                                    , modifier = noteModifier
+                                )
+                            }
+                        } else if (markdown != null) {
+                            OutlinedTextField(
+                                value = markdown
+                                , onValueChange = { noteMarkdown = it }
+                                , visualTransformation = emojiVisualTransformation()
+                                , textStyle = LocalTextStyle
+                                    .current
+                                    .copy(
+                                        fontFamily = FontFamily.Monospace
+                                        , color = selectedTextColor
+                                    )
+                                , colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = selectedTextColor
+                                    , unfocusedTextColor = selectedTextColor
+                                    , focusedContainerColor = selectedColor
+                                    , unfocusedContainerColor = selectedColor
                                     , cursorColor = selectedTextColor
                                 )
                                 , modifier = noteModifier
                             )
                         }
-                    } else if (markdown != null) {
-                        OutlinedTextField(
-                            value = markdown
-                            , onValueChange = { noteMarkdown = it }
-                            , visualTransformation = emojiVisualTransformation()
-                            , textStyle = LocalTextStyle
-                                .current
-                                .copy(
-                                    fontFamily = FontFamily.Monospace
-                                    , color = selectedTextColor
-                                )
-                            , colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = selectedTextColor
-                                , unfocusedTextColor = selectedTextColor
-                                , focusedContainerColor = selectedColor
-                                , unfocusedContainerColor = selectedColor
-                                , cursorColor = selectedTextColor
-                            )
-                            , modifier = noteModifier
-                        )
                     }
                 }
                 , buttons = {

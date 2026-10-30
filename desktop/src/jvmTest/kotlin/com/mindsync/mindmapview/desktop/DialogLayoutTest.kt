@@ -33,6 +33,7 @@ class DialogLayoutTest {
         height: Dp
         , settingsHeight: Dp
         , onMinHeight: (Dp) -> Unit = {}
+        , hasNote: Boolean = true
     ): @androidx.compose.runtime.Composable () -> Unit = {
         Box(modifier = Modifier.size(400.dp, height)) {
             DialogLayout(
@@ -41,7 +42,7 @@ class DialogLayoutTest {
                 , contentPadding = PaddingValues(0.dp)
                 , onContentMinHeightChange = onMinHeight
                 , settings = { Spacer(modifier = Modifier.fillMaxWidth().height(settingsHeight)) }
-                , note = { modifier -> Box(modifier = modifier.testTag("note")) }
+                , note = if (hasNote) { modifier -> Box(modifier = modifier.testTag("note")) } else null
                 , buttons = { Text("OK", modifier = Modifier.height(40.dp)) }
             )
         }
@@ -70,5 +71,18 @@ class DialogLayoutTest {
         setContent(dialogContent(height = 300.dp, settingsHeight = 500.dp, onMinHeight = { minHeight = it }))
         waitForIdle()
         assertEquals(500.dp + gap + noteMin + gap + 40.dp, minHeight)
+    }
+
+    // A closed note takes no room, so the dialog needs only the room of the rest.
+    @Test
+    fun contentMinimumWithoutANoteIsTheRest() = runComposeUiTest {
+        var minHeight by mutableStateOf<Dp?>(null)
+        setContent(
+            dialogContent(height = 600.dp, settingsHeight = 300.dp, onMinHeight = { minHeight = it }, hasNote = false)
+        )
+        waitForIdle()
+        assertEquals(300.dp + gap + 40.dp, minHeight)
+        onNodeWithTag("note").assertDoesNotExist()
+        onNodeWithText("OK").assertIsDisplayed()
     }
 }

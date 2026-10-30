@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.max
 /**
  * Lays out a dialog with [settings] above a [note] that takes the room they leave, at least [noteMinHeight], and
  * [buttons] at the bottom. In a dialog too small for that, the note keeps its least height and the settings and note
- * scroll, while the buttons stay in view. The height the content needs at the least is passed to
- * [onContentMinHeightChange], for the dialog to be fitted to it.
+ * scroll, while the buttons stay in view. Without a [note], as one that is closed, the settings take the room. The
+ * height the content needs at the least is passed to [onContentMinHeightChange], for the dialog to be fitted to it.
  */
 @Composable
 fun DialogLayout(
@@ -44,7 +44,7 @@ fun DialogLayout(
     , contentPadding: PaddingValues
     , onContentMinHeightChange: (Dp) -> Unit
     , settings: @Composable ColumnScope.() -> Unit
-    , note: @Composable (Modifier) -> Unit
+    , note: (@Composable (Modifier) -> Unit)?
     , buttons: @Composable RowScope.() -> Unit
     , modifier: Modifier = Modifier
 ) {
@@ -55,11 +55,13 @@ fun DialogLayout(
     var settingsHeight by remember { mutableStateOf<Dp?>(null) }
     var buttonsHeight by remember { mutableStateOf<Dp?>(null) }
 
-    LaunchedEffect(settingsHeight, buttonsHeight) {
+    val hasNote = note != null
+    LaunchedEffect(settingsHeight, buttonsHeight, hasNote, noteMinHeight) {
         val settings = settingsHeight ?: return@LaunchedEffect
         val buttons = buttonsHeight ?: return@LaunchedEffect
+        val noteRoom = if (hasNote) gap + noteMinHeight else 0.dp
         onContentMinHeightChange(
-            contentPadding.calculateTopPadding() + settings + gap + noteMinHeight + gap + buttons
+            contentPadding.calculateTopPadding() + settings + noteRoom + gap + buttons
                 + contentPadding.calculateBottomPadding()
         )
     }
@@ -92,12 +94,14 @@ fun DialogLayout(
                         .onSizeChanged { settingsHeight = with(density) { it.height.toDp() } }
                     , content = settings
                 )
-                Spacer(modifier = Modifier.height(gap))
-                note(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(noteHeight)
-                )
+                if (note != null) {
+                    Spacer(modifier = Modifier.height(gap))
+                    note(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(noteHeight)
+                    )
+                }
             }
         }
         Row(
