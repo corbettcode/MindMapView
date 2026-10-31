@@ -48,6 +48,19 @@
         <attribute name="Kind" value="Example"/>
       </node>
     </node>
+    <node id="import" shape="stadium" side="left" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;📥 &lt;b&gt;Import&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;&lt;b&gt;Tool → Import&lt;/b&gt; replaces the nodes of this map with those read from another file, and keeps this map's file name. Import can be undone.&lt;/p&gt;">
+      <node id="imp_map" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Map...&lt;/p&gt;" note="&lt;p&gt;A MindMapView (.mmv) or FreeMind (.mm) map.&lt;/p&gt;"/>
+      <node id="imp_md" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Markdown (md)...&lt;/p&gt;" note="&lt;p&gt;A Markdown document, as a map of its headings, lists and tables.&lt;/p&gt;">
+        <node id="md_heading" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;&lt;b&gt;#&lt;/b&gt; Heading → node&lt;/p&gt;" note="&lt;p&gt;Lower headings nest under higher ones. A single top heading becomes the root.&lt;/p&gt;"/>
+        <node id="md_list" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;&lt;b&gt;-&lt;/b&gt; List item → node&lt;/p&gt;" note="&lt;p&gt;Items indented under an item become its children. Task boxes show as ☐ and ☑.&lt;/p&gt;"/>
+        <node id="md_text" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Paragraph → note&lt;/p&gt;" note="&lt;p&gt;Text becomes the note of the heading or list item it follows.&lt;/p&gt;"/>
+        <node id="md_bold" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;&lt;b&gt;Bold lead.&lt;/b&gt; → node&lt;/p&gt;" note="&lt;p&gt;A paragraph that starts with bold text becomes a node of its own, with the rest of the paragraph as its note.&lt;/p&gt;"/>
+        <node id="md_table" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Table row → node&lt;/p&gt;" note="&lt;p&gt;A table becomes a branch named after its first column header. Each row is a node named after its first cell, with the other cells as attributes.&lt;/p&gt;">
+          <attribute name="Owner" value="Ann"/>
+          <attribute name="Status" value="Done"/>
+        </node>
+      </node>
+    </node>
     <node id="folding" shape="circle" side="lower_left" color="#ff2d5728" textColor="#ffffffff" text="&lt;p&gt;📁 &lt;b&gt;Folding&lt;/b&gt;&lt;/p&gt;">
       <node id="folded" shape="rectangle" folded="true" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Folded: click the ring&lt;/p&gt;">
         <node id="hidden1" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Hidden child one&lt;/p&gt;"/>
