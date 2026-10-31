@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="Project Context for Claude Code">
+    <node id="4f4a0a6b-8af5-48be-a3fc-836e00a6dc86" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Stack">
+      <node id="c323b46a-ff84-4230-9a0c-e4e800f872d7" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Java/Kotlin (JVM)"/>
+    </node>
+    <node id="8a6d649f-7962-4bb8-a497-0b43f4e6e14f" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Before formatting anything" note="Check for existing config first and defer to it over anything below:">
+      <node id="480d2d6d-60b0-4c62-add6-f32a399bd60b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text=".editorconfig"/>
+      <node id="8e00e58a-8e85-4175-ab6a-44df78b05432" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="IntelliJ code style scheme in .idea/codeStyles/"/>
+      <node id="4098668a-37f6-4db5-b995-9d3a02446c57" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="checkstyle.xml, .ktlint, or spotless config in the build file" note="If one of these exists, follow it exactly and ignore any conflicting rule below. If none exist, use the style guide below."/>
+    </node>
+    <node id="a86c4307-6645-4445-8ecf-4ada81f6c30b" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="General style">
+      <node id="5afd39b6-af9b-48cc-bfb3-bb761f342337" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="4-space indentation, no tabs"/>
+      <node id="52240652-9a2d-4654-9202-733273e7472b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Max line length: 120 characters"/>
+      <node id="9083b76a-7f7c-4f35-9d31-d54ecaa4af2d" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Opening brace on the same line as the statement (K&amp;amp;R style), not on its own line"/>
+      <node id="05dc8294-46eb-443a-91e1-650c898539d8" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="One blank line between methods, no blank line at the start of a class/method body"/>
+    </node>
+    <node id="3be6e37b-af7c-490a-a0d2-14270334f792" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Naming">
+      <node id="60aaae27-d226-46e9-8ddd-3f119d70d728" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Classes/interfaces: PascalCase"/>
+      <node id="ea11d376-262b-4654-8602-13f8a726e50e" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Methods/variables: camelCase"/>
+      <node id="209f7c0e-3374-4fa4-9992-3b4370e01c59" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Constants: UPPER_SNAKE_CASE"/>
+      <node id="7a4fed38-5e97-4977-98ae-bf8ad7a9cc94" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Booleans read as a question: isActive, hasPermission, not active, permission"/>
+    </node>
+    <node id="11e0692f-a8a4-4952-8878-97f48b857671" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Example: preferred style (Java)" note="public Optional&amp;lt;User&amp;gt; findActiveUser(String id) {&lt;br&gt;    return userRepository.findById(id)&lt;br&gt;        .filter(User::isActive);&lt;br&gt;}"/>
+    <node id="e4272104-ce04-4bef-8b0d-1eef3132a3bf" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Avoid this style" note="public Optional&amp;lt;User&amp;gt; findActiveUser(String id)&lt;br&gt;{&lt;br&gt;    Optional&amp;lt;User&amp;gt; user = userRepository.findById(id);&lt;br&gt;    if (user.isPresent() &amp;amp;&amp;amp; user.get().isActive())&lt;br&gt;    {&lt;br&gt;        return user;&lt;br&gt;    }&lt;br&gt;    return Optional.empty();&lt;br&gt;}"/>
+    <node id="d5eab2ba-4a41-4172-bf8f-5ccf135f6ba4" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Example: preferred style (Kotlin)" note="&lt;p&gt;fun findActiveUser(&lt;br&gt;    id: String&lt;br&gt;): User? = userRepository&lt;br&gt;    .findById(id)?.takeIf { it.isActive }&lt;/p&gt;&lt;p&gt;OutlinedRichTextEditor(&lt;br&gt;    state = richTextState&lt;br&gt;    , textStyle = LocalTextStyle&lt;br&gt;        .current&lt;br&gt;        .copy(&lt;br&gt;            textAlign = TextAlign.Center&lt;br&gt;        )&lt;br&gt;    , modifier = Modifier&lt;br&gt;        .fillMaxWidth()&lt;br&gt;        .heightIn(&lt;br&gt;            min = 120.dp&lt;br&gt;            , max = 200.dp&lt;br&gt;        )&lt;br&gt;        .focusRequester(descriptionFocusRequester)&lt;br&gt;)&lt;/p&gt;"/>
+    <node id="18c358b9-b865-4ca7-ae37-313786c1896d" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Avoid this style" note="fun findActiveUser(id: String): User? {&lt;br&gt;    val user = userRepository.findById(id)&lt;br&gt;    if (user != null &amp;amp;&amp;amp; user.isActive) {&lt;br&gt;        return user&lt;br&gt;    }&lt;br&gt;    return null&lt;br&gt;}"/>
+    <node id="69bf3618-85fe-4389-b768-c24b0f012040" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="Comments">
+      <node id="8d23495c-56f3-4a64-8c01-7b5f2d550c28" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Prefer self-explanatory code over comments"/>
+      <node id="2897e1ca-b612-4c94-a181-a04fcd57b626" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Use comments only to explain &lt;i&gt;why&lt;/i&gt;, not &lt;i&gt;what&lt;/i&gt;"/>
+      <node id="bfe15000-9847-40ad-b90e-74e04d07a73a" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="No commented-out code left in commits"/>
+    </node>
+    <node id="de07361b-6964-4e74-abb1-81f9326b47ed" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="After making changes">
+      <node id="2f432f95-42e3-4bb2-9ad8-f091d476d513" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="Run the project's formatter/linter if one is configured (e.g. ./gradlew spotlessApply or ktlintFormat) before considering a task done"/>
+      <node id="e0e2a4db-c28a-47fc-859f-08e1f0de6905" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="If no formatter is configured, match the style rules above by hand"/>
+    </node>
+  </node>
+</mindmapview>
