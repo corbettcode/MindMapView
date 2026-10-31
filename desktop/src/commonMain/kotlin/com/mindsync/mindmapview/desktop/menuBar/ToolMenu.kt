@@ -10,12 +10,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.mindsync.mindmapview.desktop.ImportFormat
 
 @Composable
-fun ToolMenu(
-    onImport: () -> Unit
+internal fun ToolMenu(
+    onImport: (ImportFormat) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var importExpanded by remember { mutableStateOf(false) }
 
     Box {
         TextButton(onClick = { expanded = true }) {
@@ -23,15 +25,36 @@ fun ToolMenu(
         }
         DropdownMenu(
             expanded = expanded
-            , onDismissRequest = { expanded = false }
+            , onDismissRequest = {
+                expanded = false
+                importExpanded = false
+            }
         ) {
-            DropdownMenuItem(
-                text = { Text("Import...") }
-                , onClick = {
-                    expanded = false
-                    onImport()
+            Box {
+                DropdownMenuItem(
+                    text = { Text("Import") }
+                    , trailingIcon = { Text("▸") }
+                    , onClick = { importExpanded = true }
+                )
+                DropdownMenu(
+                    expanded = importExpanded
+                    , onDismissRequest = { importExpanded = false }
+                ) {
+                    listOf(
+                        "Map..." to ImportFormat.MAP
+                        , "Markdown (md)..." to ImportFormat.MARKDOWN
+                    ).forEach { (text, format) ->
+                        DropdownMenuItem(
+                            text = { Text(text) }
+                            , onClick = {
+                                importExpanded = false
+                                expanded = false
+                                onImport(format)
+                            }
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 }

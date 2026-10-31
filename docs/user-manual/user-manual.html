@@ -646,9 +646,32 @@
 
     <h3>Importing</h3>
     <p>
-        <span class="menu">Tool &rsaquo; Import...</span> replaces the nodes of the open map with those of another map, but keeps
-        the open map's file name. The next save writes the imported nodes to that file. MindMapView asks you to
-        confirm first, unless the map has only its root. Import can be undone.
+        <span class="menu">Tool &rsaquo; Import</span> replaces the nodes of the open map with those read from
+        another file, but keeps the open map's file name. The next save writes the imported nodes to that file.
+        MindMapView asks you to confirm first, unless the map has only its root. Import can be undone.
+    </p>
+    <table>
+        <tr><th>Item</th><th>Reads</th></tr>
+        <tr><td>Map...</td><td>A MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
+        <tr><td>Markdown (md)...</td><td>A Markdown document, as a map of its headings and lists (see below).</td></tr>
+    </table>
+    <p>
+        From a Markdown document, each heading and each list item becomes a node. A heading holds the lower
+        headings after it and the lists under it, and a list item holds the items indented under it. Other text
+        becomes the note of the heading or item it follows. When the document has a single top heading, that
+        heading is the root; otherwise the root is named after the file, and any text before the first heading is
+        its note. Bold, italic, struck-through text and links are kept, and task list boxes are shown as
+        &#9744; and &#9745;.
+    </p>
+    <p>
+        A paragraph that starts with bold text, such as <b>Event sourcing.</b> Every record is its own event
+        stream..., becomes a node of its own: the bold text is its text, and the rest of the paragraph its note.
+    </p>
+    <p>
+        A table becomes a branch of the heading or list item above it, named after the header of its first
+        column. Each row becomes a node under that branch, named after its first cell, and the other cells become
+        that node's attributes, named after their column headers (see <a href="#attributes">Attributes</a>). When
+        the first header is empty, the rows go straight under the heading.
     </p>
 
     <h3>Exporting</h3>

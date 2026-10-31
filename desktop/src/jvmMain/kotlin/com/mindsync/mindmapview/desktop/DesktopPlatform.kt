@@ -33,8 +33,10 @@ internal class DesktopPlatform(
     override val files: MapFiles = object : MapFiles {
         override fun isSavedTo(document: MapDocument): Boolean = isSavedTo(document.file)
 
-        override suspend fun chooseToOpen(current: MapDocument?): MapDocument? =
-            chooseFile("Open", FileDialog.LOAD, current?.file, OPENABLE_EXTENSIONS)?.let(::DesktopDocument)
+        override suspend fun chooseToOpen(
+            current: MapDocument?
+            , extensions: List<String>
+        ): MapDocument? = chooseFile("Open", FileDialog.LOAD, current?.file, extensions)?.let(::DesktopDocument)
 
         override suspend fun chooseToSave(
             current: MapDocument?

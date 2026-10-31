@@ -2,6 +2,7 @@ package com.mindsync.mindmapview.desktop
 
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
 import com.mohamedrejeb.richeditor.model.RichTextState
 
@@ -12,6 +13,32 @@ internal const val MIND_MAP_VIEW_EXTENSION = "." + MindMapViewFile.EXTENSION
 internal const val FREE_MIND_EXTENSION = ".mm"
 
 internal val OPENABLE_EXTENSIONS = listOf(MIND_MAP_VIEW_EXTENSION, FREE_MIND_EXTENSION)
+
+/** The extension of Markdown documents, which are imported as a mind map of their headings and lists. */
+internal const val MARKDOWN_EXTENSION = "." + Markdown.EXTENSION
+
+/** What the nodes of a mind map can be imported from, in files with one of the [extensions]. */
+internal enum class ImportFormat(
+    val extensions: List<String>
+) {
+    MAP(OPENABLE_EXTENSIONS)
+    , MARKDOWN(listOf(MARKDOWN_EXTENSION))
+}
+
+/**
+ * Reads the [content] of a file named [fileName] in [format] as a mind map. A Markdown document without a single
+ * top heading gets a root named after the file.
+ *
+ * @throws IllegalArgumentException when [content] is not a mind map in that format.
+ */
+internal fun readImport(
+    format: ImportFormat
+    , fileName: String
+    , content: String
+): Tree<Any> = when (format) {
+    ImportFormat.MAP -> readMap(fileName, content)
+    ImportFormat.MARKDOWN -> Markdown.read(content, title = fileName.substringBeforeLast('.'))
+}
 
 /** The name of a mind map that has no file yet, and whose root node has no text to name it after. */
 internal const val NEW_MAP_NAME = "mindmap"

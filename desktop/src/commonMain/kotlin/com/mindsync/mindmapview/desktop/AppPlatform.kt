@@ -46,8 +46,13 @@ interface MapFiles {
     /** Whether Save writes the mind map back to [document], instead of asking where to save it. */
     fun isSavedTo(document: MapDocument): Boolean
 
-    /** Returns the mind map the user chooses to open, or null when they choose none. */
-    suspend fun chooseToOpen(current: MapDocument?): MapDocument?
+    /**
+     * Returns the file with one of the [extensions] the user chooses to open, or null when they choose none.
+     */
+    suspend fun chooseToOpen(
+        current: MapDocument?
+        , extensions: List<String> = OPENABLE_EXTENSIONS
+    ): MapDocument?
 
     /**
      * Returns where the user chooses to save the mind map in [current] to, in this app's own format. A mind map

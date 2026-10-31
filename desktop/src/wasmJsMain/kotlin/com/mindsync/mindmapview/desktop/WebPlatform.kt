@@ -74,8 +74,11 @@ internal object WebPlatform : AppPlatform {
         override fun isSavedTo(document: MapDocument): Boolean =
             jsHasHandle(document.js) && document.name.endsWith(MIND_MAP_VIEW_EXTENSION, ignoreCase = true)
 
-        override suspend fun chooseToOpen(current: MapDocument?): MapDocument? = withFileErrors {
-            jsChooseFileToOpen(OPENABLE_EXTENSIONS.joinToString(",")).await<JsAny?>()?.let(::WebDocument)
+        override suspend fun chooseToOpen(
+            current: MapDocument?
+            , extensions: List<String>
+        ): MapDocument? = withFileErrors {
+            jsChooseFileToOpen(extensions.joinToString(",")).await<JsAny?>()?.let(::WebDocument)
         }
 
         override suspend fun chooseToSave(

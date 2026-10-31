@@ -191,7 +191,8 @@ internal class MindMapApp(
     // What waits for the unsaved changes to be saved or not, while that is asked.
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
     // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
-    private var isImportConfirmOpen by mutableStateOf(false)
+    // The format of the import that waits for the user to confirm it.
+    private var pendingImport by mutableStateOf<ImportFormat?>(null)
     // The recent file that was chosen but is not found, while the user is asked whether to remove it from the list.
     private var missingRecentPath by mutableStateOf<String?>(null)
 
@@ -293,10 +294,10 @@ internal class MindMapApp(
      * @throws CancellationException if the operation is cancelled during execution.
      */
 // The imported map takes the place of the nodes of this one, which keeps its file: saving it saves it there.
-    private suspend fun importMap() {
-        val chosen = platform.files.chooseToOpen(document) ?: return
+    private suspend fun importMap(format: ImportFormat) {
+        val chosen = platform.files.chooseToOpen(document, format.extensions) ?: return
         try {
-            state.replaceTree(readMap(chosen.name, platform.files.read(chosen)))
+            state.replaceTree(readImport(format, chosen.name, platform.files.read(chosen)))
         }
         catch (e: CancellationException) {
             throw e
@@ -307,8 +308,8 @@ internal class MindMapApp(
     }
 
     // A map with only its root has no nodes to lose, so it is not asked about.
-    private fun startImport() {
-        if (state.tree.nodes.size > 1) isImportConfirmOpen = true else scope.launch { importMap() }
+    private fun startImport(format: ImportFormat) {
+        if (state.tree.nodes.size > 1) pendingImport = format else scope.launch { importMap(format) }
     }
 
     // A file that is missing, or that the browser is not allowed to open, is told about before the unsaved
@@ -334,9 +335,10 @@ internal class MindMapApp(
     private fun onImportChoice(
         isConfirmed: Boolean
     ) {
-        isImportConfirmOpen = false
+        val format = pendingImport ?: return
+        pendingImport = null
 
-        if (isConfirmed) scope.launch { importMap() }
+        if (isConfirmed) scope.launch { importMap(format) }
     }
 
     private fun openUserManual() {
@@ -623,7 +625,7 @@ internal class MindMapApp(
             nodeFontFamily = nodeFontFamily,
             saveQuestion = afterSaveChoice?.let { saveChangesQuestion(document?.name) },
             onSaveChoice = ::onSaveChoice,
-            isImportConfirmOpen = isImportConfirmOpen,
+            isImportConfirmOpen = pendingImport != null,
             onImportChoice = ::onImportChoice,
             missingRecentPath = missingRecentPath,
             onMissingRecentChoice = ::onMissingRecentChoice,
@@ -722,7 +724,7 @@ private fun MindMapScreen(
     onMissingRecentChoice: (isRemoved: Boolean) -> Unit,
     onFind: () -> Unit,
     onUserManual: () -> Unit,
-    onImport: () -> Unit,
+    onImport: (ImportFormat) -> Unit,
     onCut: () -> Unit,
     onCopy: () -> Unit,
     isPasteEnabled: () -> Boolean,
