@@ -86,6 +86,8 @@ private const val ADD_BUTTON_STROKE_RATIO = 0.25f
 
 private const val NOTE_MARKER_FOLD_RATIO = 0.4f
 private const val NOTE_MARKER_STROKE_RATIO = 0.1f
+private const val ATTRIBUTE_MARKER_HEIGHT_RATIO = 0.8f
+private const val ATTRIBUTE_MARKER_ROWS = 3
 
 // cos 45°: how far along each radius the top right of a round edge is.
 private const val TOP_RIGHT_OF_ARC = 0.70710677f
@@ -401,10 +403,8 @@ fun MindMap(
                 )
                 .createStrokeNode()
                 .drawNode(this)
-                // The note marker sits on the node's edge, so it is drawn again to stay above the border.
-                if (selectedNode.note.isNotBlank() && !state.showNotes) {
-                    drawNoteMarker(noteMarkerCenter(selectedNode), drawInfo)
-                }
+                // The markers sit on the node's edge, so they are drawn again to stay above the border.
+                drawMarkers(state, selectedNode, drawInfo)
             }
         }
     }
@@ -464,8 +464,19 @@ private fun DrawScope.drawTree(
             drawText(note, node.textColor, Offset(centerX - note.size.width / 2f, centerY + content.noteTop))
         }
         content.table?.let { drawAttributeTable(node, it, content.tableTop) }
-        // A note shown in the node needs no marker to tell it is there.
-        if (node.note.isNotBlank() && !state.showNotes) drawNoteMarker(noteMarkerCenter(node), drawInfo)
+        drawMarkers(state, node, drawInfo)
+    }
+}
+
+// A note or attributes shown in the node need no marker to tell they are there.
+private fun DrawScope.drawMarkers(
+    state: MindMapState
+    , node: NodeData<*>
+    , drawInfo: DrawInfo
+) {
+    if (node.note.isNotBlank() && !state.showNotes) drawNoteMarker(noteMarkerCenter(node), drawInfo)
+    if (!state.showAttributes && state.tree.attributesOf(node.id).isNotEmpty()) {
+        drawAttributeMarker(attributeMarkerCenter(node), drawInfo)
     }
 }
 
@@ -613,8 +624,43 @@ private fun DrawScope.drawNoteMarker(
     drawPath(foldedCorner, drawInfo.noteMarkerLineColor, style = stroke)
 }
 
+// A small table with a header row, a column of names and one of values, as attributes are shown.
+private fun DrawScope.drawAttributeMarker(
+    center: Offset
+    , drawInfo: DrawInfo
+) {
+    val width = NOTE_MARKER_SIZE.toPx(this)
+    val height = width * ATTRIBUTE_MARKER_HEIGHT_RATIO
+    val stroke = width * NOTE_MARKER_STROKE_RATIO
+    val left = center.x - width / 2
+    val top = center.y - height / 2
+    val rowHeight = height / ATTRIBUTE_MARKER_ROWS
+
+    drawRect(drawInfo.attributeMarkerColor, Offset(left, top), Size(width, height))
+    drawRect(drawInfo.attributeMarkerHeaderColor, Offset(left, top), Size(width, rowHeight))
+    for (row in 1 until ATTRIBUTE_MARKER_ROWS) {
+        val y = top + rowHeight * row
+        drawLine(drawInfo.attributeMarkerLineColor, Offset(left, y), Offset(left + width, y), stroke)
+    }
+    val middle = center.x
+    drawLine(drawInfo.attributeMarkerLineColor, Offset(middle, top + rowHeight), Offset(middle, top + height), stroke)
+    drawRect(drawInfo.attributeMarkerLineColor, Offset(left, top), Size(width, height), style = Stroke(width = stroke))
+}
+
 // The marker is centered on the top right of the node's edge, so it is clear of the node's text.
 internal fun Density.noteMarkerCenter(node: NodeData<*>): Offset {
+    val (offsetX, offsetY) = cornerOffset(node)
+    return Offset((node.path.centerX + offsetX).toPx(this), (node.path.centerY - offsetY).toPx(this))
+}
+
+// The marker is centered on the bottom right of the node's edge, below the note marker.
+internal fun Density.attributeMarkerCenter(node: NodeData<*>): Offset {
+    val (offsetX, offsetY) = cornerOffset(node)
+    return Offset((node.path.centerX + offsetX).toPx(this), (node.path.centerY + offsetY).toPx(this))
+}
+
+// How far right of the node's center, and how far above or below it, its edge has a right corner.
+private fun cornerOffset(node: NodeData<*>): Pair<Dp, Dp> {
     val offsetX: Dp
     val offsetY: Dp
     when (node) {
@@ -643,7 +689,7 @@ internal fun Density.noteMarkerCenter(node: NodeData<*>): Offset {
             offsetY = node.path.radiusY * TOP_RIGHT_OF_ARC
         }
     }
-    return Offset((node.path.centerX + offsetX).toPx(this), (node.path.centerY - offsetY).toPx(this))
+    return offsetX to offsetY
 }
 
 private fun DrawScope.drawAttachedNode(

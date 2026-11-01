@@ -159,7 +159,8 @@ fun EditNodeDialog(
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
     var selectedLine by remember { mutableStateOf(line) }
-    var selectedBorder by remember { mutableStateOf(border) }
+    // A border that is turned on starts in the color of the text, but is not changed along with it after that.
+    var selectedBorder by remember { mutableStateOf(if (border.isNone) border.copy(color = textColor) else border) }
     // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
     var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
     // Closed unless the node has a border, for the same reason.
@@ -298,7 +299,11 @@ fun EditNodeDialog(
                         label = "Text"
                         , colors = remember(textColor, textColors) { (textColors + textColor).distinct() }
                         , selectedColor = selectedTextColor
-                        , onSelect = { selectedTextColor = it }
+                        , onSelect = {
+                            selectedTextColor = it
+                            // A border that is not on yet is to start in the color of the text it is turned on with.
+                            if (selectedBorder.isNone) selectedBorder = selectedBorder.copy(color = it)
+                        }
                     )
 
                     CollapsibleSection(
@@ -308,8 +313,8 @@ fun EditNodeDialog(
                     ) {
                         BorderSettings(
                             border = selectedBorder
-                            , colors = remember(border, nodeColors, textColors) {
-                                (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(border.color))
+                            , colors = remember(nodeColors, textColors, selectedTextColor) {
+                                (DrawInfo().rootLineColors + nodeColors + textColors + border.color + selectedTextColor)
                                     .distinct()
                             }
                             , onChange = { selectedBorder = it }

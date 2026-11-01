@@ -428,6 +428,20 @@ class UndoTest {
     }
 
     @Test
+    fun borderKeepsItsColorWhenTheTextColorChanges() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+        val border = NodeBorder(NodeBorderStyle.LINE, color = Color.Red)
+        state.editNodeBorder(border)
+
+        state.editNodeTextColor(Color.Blue)
+        waitForIdle()
+
+        assertEquals(Color.Blue, state.tree.getNode("first").textColor)
+        assertEquals(border, state.tree.borderOf("first"))
+    }
+
+    @Test
     fun pastedNodeKeepsItsBorder() = runComposeUiTest {
         val state = stateWithNodes()
         state.selectNode("first")

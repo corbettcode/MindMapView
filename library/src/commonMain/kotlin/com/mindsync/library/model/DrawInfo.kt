@@ -26,5 +26,8 @@ class DrawInfo {
     )
     val noteMarkerColor = Color(0xFFFFD54F)
     val noteMarkerLineColor = Color(0xFF5C4A00)
+    val attributeMarkerColor = Color(0xFFFFFFFF)
+    val attributeMarkerHeaderColor = Color(0xFF90CAF9)
+    val attributeMarkerLineColor = Color(0xFF0D3C61)
     val boundaryColor = Color.Black.copy(alpha = 50 / 255f)
 }

@@ -202,6 +202,16 @@ class MindMapViewFileTest {
     }
 
     @Test
+    fun borderSavedWithoutAColorIsInTheColorOfTheText() {
+        val text = "<mindmapview version=\"1\"><node id=\"r\" text=\"r\">" +
+            "<node id=\"a\" text=\"a\" textColor=\"#ff112233\" border=\"line\" borderWidth=\"4\"/></node></mindmapview>"
+
+        val read = MindMapViewFile.read(text)
+
+        assertEquals(NodeBorder(NodeBorderStyle.LINE, NodeLineWidth.FOUR, Color(0xFF112233)), read.borderOf("a"))
+    }
+
+    @Test
     fun fileWithoutLinesHasNone() {
         val read = MindMapViewFile.read(MindMapViewFile.write(richTree()))
 

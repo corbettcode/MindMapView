@@ -9,14 +9,18 @@ enum class NodeBorderStyle {
 }
 
 /**
- * What is drawn around a node: nothing, or a line [width] wide in [color]. A border without a color of its own
- * is drawn in the color of the node's text, so it changes along with it.
+ * What is drawn around a node: nothing, or a line [width] wide in [color]. Its color is its own, apart from that
+ * of the node's text.
  */
 data class NodeBorder(
     val style: NodeBorderStyle = NodeBorderStyle.NONE
     , val width: NodeLineWidth = NodeLineWidth.TWO
-    , val color: Color? = null
+    , val color: Color = DEFAULT_COLOR
 ) {
     val isNone: Boolean
         get() = style == NodeBorderStyle.NONE
+
+    companion object {
+        val DEFAULT_COLOR = Color.Black
+    }
 }

@@ -79,7 +79,7 @@ object MindMapViewFile {
         )
         tree.setAttributes(root.id, rootElement.nodeAttributes())
         tree.setLine(root.id, rootElement.line())
-        tree.setBorder(root.id, rootElement.border())
+        tree.setBorder(root.id, rootElement.border(tree.getRootNode().textColor))
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -143,7 +143,7 @@ object MindMapViewFile {
         tree.borderOf(node.id).takeIf { !it.isNone }?.let { border ->
             attribute("border", border.style.name.lowercase())
             attribute("borderWidth", border.width.label)
-            border.color?.let { attribute("borderColor", it.toHex()) }
+            attribute("borderColor", border.color.toHex())
         }
         val attributes = tree.attributesOf(node.id)
         if (attributes.isEmpty() && node.children.isEmpty()) {
@@ -210,18 +210,19 @@ object MindMapViewFile {
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
         tree.setLine(id, element.line())
-        tree.setBorder(id, element.border())
+        tree.setBorder(id, element.border(node.textColor))
         tree.setFolded(id, element.attributes["folded"] == "true")
         return id
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
 
-    private fun XmlElement.border(): NodeBorder = NodeBorder(
+    // A border saved without a color of its own was drawn in the color of the node's text.
+    private fun XmlElement.border(textColor: Color): NodeBorder = NodeBorder(
         style = NodeBorderStyle.entries.firstOrNull { it.name.equals(attributes["border"], ignoreCase = true) }
             ?: NodeBorderStyle.NONE
         , width = NodeLineWidth.entries.firstOrNull { it.label == attributes["borderWidth"] } ?: NodeBorder().width
-        , color = color("borderColor")
+        , color = color("borderColor") ?: textColor
     )
 
     private fun XmlElement.nodeAttributes(): List<NodeAttribute> =

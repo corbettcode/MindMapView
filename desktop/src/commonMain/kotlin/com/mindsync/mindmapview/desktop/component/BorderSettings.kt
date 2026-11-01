@@ -19,11 +19,10 @@ private val BORDER_STYLE_LABELS = mapOf(
 )
 
 /**
- * Lets the user choose a node's border: its type, its width and its color, which is that of the node's text
- * unless another is chosen.
+ * Lets the user choose a node's border: its type, its width and its color.
  *
  * @param border The node's border.
- * @param colors The colors offered for the border, besides that of the text.
+ * @param colors The colors offered for the border.
  * @param onChange A callback receiving the border as changed.
  * @param modifier The modifier for the settings, one above the other with a line between each.
  */
@@ -54,8 +53,8 @@ fun BorderSettings(
             , onSelect = { onChange(border.copy(width = it)) }
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        OptionalColorPicker(
-            noColorLabel = "Text"
+        ColorPicker(
+            label = "Color"
             , colors = colors
             , selectedColor = border.color
             , onSelect = { onChange(border.copy(color = it)) }

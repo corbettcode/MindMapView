@@ -27,9 +27,8 @@ class NodeDrawerFactory(
     /** The outline that shows the node is selected. */
     fun createStrokeNode(): NodeDrawer = outline(drawInfo.strokeColor, drawInfo.strokeWidth)
 
-    /** The node's [border], in the color of its text unless the border has a color of its own. */
-    fun createBorderDrawer(border: NodeBorder): NodeDrawer =
-        outline(border.color ?: node.textColor, border.width.width)
+    /** The node's [border]. */
+    fun createBorderDrawer(border: NodeBorder): NodeDrawer = outline(border.color, border.width.width)
 
     // A line node is outlined as a box, as an outline of the line alone would be hard to tell apart from it.
     private fun outline(

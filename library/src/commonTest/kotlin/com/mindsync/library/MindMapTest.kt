@@ -2469,6 +2469,28 @@ class MindMapTest {
     }
 
     @Test
+    fun attributeMarkerSitsOnTheBottomRightEdgeOfItsNode() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+
+        clickNode(state.tree.getRootNode())
+        NodeShape.entries.forEach {
+            state.addNode("child", it)
+            waitForIdle()
+        }
+
+        (state.tree.getRootNode().children.map { state.tree.getNode(it) } + state.tree.getRootNode()).forEach { node ->
+            val note = density.noteMarkerCenter(node)
+            val attributes = density.attributeMarkerCenter(node)
+            val center = with(density) { center(node) }
+            // The same corner as the note marker's, mirrored below the center.
+            assertEquals(note.x, attributes.x, 0.01f)
+            assertEquals(center.y - note.y, attributes.y - center.y, 0.01f)
+            assertTrue(attributes.x > center.x && attributes.y > center.y)
+        }
+    }
+
+    @Test
     fun hoveredNodeFollowsTheMouse() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
