@@ -144,7 +144,7 @@ class Tree<T> {
      */
     fun fillOf(id: String): Color {
         val node = getNode(id)
-        if (node.color != defaultFillOf(node)) return node.color
+        if (!isDefaultFill(node)) return node.color
         return levelStyleOf(id).fill ?: node.color
     }
 
@@ -156,7 +156,7 @@ class Tree<T> {
     fun textColorOf(id: String): Color {
         val node = getNode(id)
         if (node.textColor != defaultTextColorOf(node)) return node.textColor
-        if (node !is LineNodeData && node.color != defaultFillOf(node)) return node.textColor
+        if (node !is LineNodeData && !isDefaultFill(node)) return node.textColor
         val themed = if (node is LineNodeData) theme.lineNodeText else levelStyleOf(id).text
         return themed ?: node.textColor
     }
@@ -172,7 +172,7 @@ class Tree<T> {
     }
 
     /** Returns how the theme draws the nodes of the level a node is on: the root, a main topic or a subtopic. */
-    internal fun levelStyleOf(id: String): LevelStyle {
+    fun levelStyleOf(id: String): LevelStyle {
         val parentId = getNode(id).parentId
         return when {
             parentId == null -> theme.root
@@ -180,6 +180,17 @@ class Tree<T> {
             else -> theme.subtopic
         }
     }
+
+    // Maps saved before the colors a node starts with were changed still hold the earlier ones, which were
+    // never chosen.
+    private fun isDefaultFill(node: NodeData<*>): Boolean {
+        val earlier = if (node.parentId == null) EARLIER_ROOT_COLORS else EARLIER_SHAPE_COLORS[node.shape].orEmpty()
+        return node.color == defaultFillOf(node) || node.color in earlier
+    }
+
+    /** Returns how the theme draws a node added to the node with [parentId]. */
+    fun childLevelStyleOf(parentId: String): LevelStyle =
+        if (getNode(parentId).parentId == null) theme.mainTopic else theme.subtopic
 
     /** Returns the fill a node starts with, which follows the theme for as long as it is not changed. */
     fun defaultFillOf(node: NodeData<*>): Color =
@@ -742,5 +753,12 @@ class Tree<T> {
 
         internal val ROOT_COLOR = Color(0xFF336770)
         internal val ROOT_TEXT_COLOR = NodeShape.OVAL.defaultTextColor
+
+        // The colors the root and the shapes started with in earlier versions of the app.
+        private val EARLIER_ROOT_COLORS = setOf(Color(0xFFB8B8B8), Color(0xFFCCCCCC))
+        private val EARLIER_SHAPE_COLORS = mapOf(
+            NodeShape.RECTANGLE to setOf(Color(0xFFFFCF96))
+            , NodeShape.CIRCLE to setOf(Color(0xFFE1719F))
+        )
     }
 }

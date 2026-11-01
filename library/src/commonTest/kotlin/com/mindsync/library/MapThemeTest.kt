@@ -1,9 +1,11 @@
 package com.mindsync.library
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.contrastRatio
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
@@ -69,6 +71,14 @@ class MapThemeTest {
             val text = assertNotNull(theme.lineNodeText, theme.id)
             val ratio = contrastRatio(text, theme.background)
             assertTrue(ratio >= 4.5f, "${theme.id}: $ratio")
+        }
+    }
+
+    @Test
+    fun attachHighlightShowsOnEveryBackground() {
+        MapThemes.all.forEach { theme ->
+            val highlight = attachHighlightColor(theme).compositeOver(theme.background)
+            assertTrue(contrastRatio(highlight, theme.background) >= 1.15f, theme.id)
         }
     }
 

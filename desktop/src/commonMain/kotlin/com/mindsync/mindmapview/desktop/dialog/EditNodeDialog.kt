@@ -53,6 +53,7 @@ import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.DescriptionEmoji
+import com.mindsync.mindmapview.desktop.ThemeSwatch
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.EDIT_DIALOG_MIN_WIDTH
@@ -128,6 +129,11 @@ fun EditNodeDialog(
     // The colors the root starts with, which follow the map's theme; a node with a shape starts with the shape's.
     , rootColor: Color?
     , rootTextColor: Color?
+    // How the map's theme draws a node of this one's level that follows it: null where the theme leaves the
+    // node's own colors, as Classic does. A line node's text is drawn on the background, in [themeLineNodeText].
+    , themeFill: Color?
+    , themeText: Color?
+    , themeLineNodeText: Color?
     , mapEmojis: List<String>
     , emojiTones: Map<String, String>
     , onToneChange: (base: String, variant: String) -> Unit
@@ -161,6 +167,17 @@ fun EditNodeDialog(
     var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
+    // The colors a node starts with follow the map's theme, so they are shown as the theme draws them.
+    val defaultColor = selectedShape?.defaultColor ?: rootColor
+    val defaultTextColor = selectedShape?.defaultTextColor ?: rootTextColor
+    val fillSwatch = defaultColor?.let { ThemeSwatch(it, themeFill) }
+    // A node with a fill of its own keeps its text color, as the theme's is made for the theme's fill.
+    val isFillThemed = selectedColor == defaultColor
+    val textSwatch = defaultTextColor?.let {
+        ThemeSwatch(it, if (selectedShape == NodeShape.LINE) themeLineNodeText else themeText.takeIf { isFillThemed })
+    }
+    val shownColor = fillSwatch?.shown(selectedColor) ?: selectedColor
+    val shownTextColor = textSwatch?.shown(selectedTextColor) ?: selectedTextColor
     var selectedLine by remember { mutableStateOf(line) }
     // A border that is turned on starts in the color of the text, but is not changed along with it after that.
     var selectedBorder by remember { mutableStateOf(if (border.isNone) border.copy(color = textColor) else border) }
@@ -291,26 +308,26 @@ fun EditNodeDialog(
                             .onFocusChanged { isDescriptionFocused = it.hasFocus }
                     )
 
-                    // The colors a node starts with follow the map's theme, so they come first, to go back to.
-                    val themeColor = selectedShape?.defaultColor ?: rootColor
-                    val themeTextColor = selectedShape?.defaultTextColor ?: rootTextColor
+                    // The colors that follow the map's theme come first, to go back to.
                     ColorPicker(
                         label = "Fill"
-                        , colors = remember(color, nodeColors, themeColor) {
-                            (listOfNotNull(themeColor) + nodeColors + color).distinct()
+                        , colors = remember(color, nodeColors, fillSwatch?.default, fillSwatch?.themed) {
+                            (listOfNotNull(fillSwatch?.shown(fillSwatch.default)) + nodeColors
+                                + (fillSwatch?.shown(color) ?: color)).distinct()
                         }
-                        , selectedColor = selectedColor
-                        , onSelect = { selectedColor = it }
+                        , selectedColor = shownColor
+                        , onSelect = { selectedColor = fillSwatch?.stored(it) ?: it }
                     )
 
                     ColorPicker(
                         label = "Text"
-                        , colors = remember(textColor, textColors, themeTextColor) {
-                            (listOfNotNull(themeTextColor) + textColors + textColor).distinct()
+                        , colors = remember(textColor, textColors, textSwatch?.default, textSwatch?.themed) {
+                            (listOfNotNull(textSwatch?.shown(textSwatch.default)) + textColors
+                                + (textSwatch?.shown(textColor) ?: textColor)).distinct()
                         }
-                        , selectedColor = selectedTextColor
+                        , selectedColor = shownTextColor
                         , onSelect = {
-                            selectedTextColor = it
+                            selectedTextColor = textSwatch?.stored(it) ?: it
                             // A border that is not on yet is to start in the color of the text it is turned on with.
                             if (selectedBorder.isNone) selectedBorder = selectedBorder.copy(color = it)
                         }
@@ -412,11 +429,11 @@ fun EditNodeDialog(
                             CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                                 OutlinedRichTextEditor(
                                     state = currentNoteState
-                                    , textStyle = LocalTextStyle.current.copy(color = selectedTextColor)
+                                    , textStyle = LocalTextStyle.current.copy(color = shownTextColor)
                                     , colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
-                                        textColor = selectedTextColor
-                                        , containerColor = selectedColor
-                                        , cursorColor = selectedTextColor
+                                        textColor = shownTextColor
+                                        , containerColor = shownColor
+                                        , cursorColor = shownTextColor
                                     )
                                     , modifier = noteModifier
                                 )
@@ -430,14 +447,14 @@ fun EditNodeDialog(
                                     .current
                                     .copy(
                                         fontFamily = FontFamily.Monospace
-                                        , color = selectedTextColor
+                                        , color = shownTextColor
                                     )
                                 , colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = selectedTextColor
-                                    , unfocusedTextColor = selectedTextColor
-                                    , focusedContainerColor = selectedColor
-                                    , unfocusedContainerColor = selectedColor
-                                    , cursorColor = selectedTextColor
+                                    focusedTextColor = shownTextColor
+                                    , unfocusedTextColor = shownTextColor
+                                    , focusedContainerColor = shownColor
+                                    , unfocusedContainerColor = shownColor
+                                    , cursorColor = shownTextColor
                                 )
                                 , modifier = noteModifier
                             )

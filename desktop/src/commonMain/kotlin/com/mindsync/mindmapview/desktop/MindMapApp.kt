@@ -1063,6 +1063,11 @@ private fun MindMapScreen(
             }
             // The dialog's own state is that of one operation, so another starts it anew.
             key(currentOperation) {
+                // How the theme draws the node, or the node to be added, where it follows the theme.
+                val themeLevel = selectedNode?.let { node ->
+                    if (currentOperation is Operation.Update) state.tree.levelStyleOf(node.id)
+                    else state.tree.childLevelStyleOf(node.id)
+                }
                 EditNodeDialog(
                     title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
                     description =
@@ -1100,6 +1105,9 @@ private fun MindMapScreen(
                     rootTextColor = selectedNode
                         ?.takeIf { it.parentId == null }
                         ?.let { state.tree.defaultTextColorOf(it) },
+                    themeFill = themeLevel?.fill,
+                    themeText = themeLevel?.text,
+                    themeLineNodeText = state.theme.lineNodeText,
                     mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
                     emojiTones = preferences.emojiTones,
                     onToneChange = { base, variant ->

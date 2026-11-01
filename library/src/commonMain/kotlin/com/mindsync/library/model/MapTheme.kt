@@ -149,3 +149,10 @@ internal fun contrastRatio(
     val darker = minOf(first.luminance(), second.luminance())
     return (lighter + 0.05f) / (darker + 0.05f)
 }
+
+/**
+ * The color of the halo around the node a dragged node would be attached to: a shade on a light background, and a
+ * light one on a dark background, where a shade would not show.
+ */
+internal fun attachHighlightColor(theme: MapTheme): Color =
+    if (theme.isDark) Color.White.copy(alpha = 60 / 255f) else Color.Black.copy(alpha = 50 / 255f)

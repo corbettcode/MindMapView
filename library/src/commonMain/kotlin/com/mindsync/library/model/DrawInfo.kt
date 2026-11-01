@@ -28,5 +28,4 @@ class DrawInfo {
     val attributeMarkerColor = Color(0xFFFFFFFF)
     val attributeMarkerHeaderColor = Color(0xFF90CAF9)
     val attributeMarkerLineColor = Color(0xFF0D3C61)
-    val boundaryColor = Color.Black.copy(alpha = 50 / 255f)
 }

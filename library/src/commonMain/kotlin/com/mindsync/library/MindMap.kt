@@ -67,6 +67,7 @@ import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp
@@ -731,7 +732,7 @@ private fun DrawScope.drawAttachedNode(
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         drawCircle(
-            color = drawInfo.boundaryColor,
+            color = attachHighlightColor(state.tree.theme),
             radius = maxOf(height.toPx(this), width.toPx(this)),
             center = Offset(attachedNode.path.centerX.toPx(this), attachedNode.path.centerY.toPx(this)),
         )
