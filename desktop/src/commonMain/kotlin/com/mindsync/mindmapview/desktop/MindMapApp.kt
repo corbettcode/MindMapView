@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -1359,6 +1361,48 @@ private fun AttributesDialog(
         mutableStateListOf<NodeAttribute>().apply { addAll(attributes.ifEmpty { listOf(NodeAttribute("", "")) }) }
     }
     val unusedNames = knownNames.filter { name -> rows.none { it.name == name } }
+    // The fields by row and column, the name being column 0 and the value column 1.
+    val focusRequesters = remember { mutableMapOf<Pair<Int, Int>, FocusRequester>() }
+    fun focusRequester(
+        row: Int
+        , column: Int
+    ): FocusRequester = focusRequesters.getOrPut(row to column) { FocusRequester() }
+    // The field to focus once it is there, as a row that was just added is not yet.
+    var pendingFocus by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    LaunchedEffect(pendingFocus) {
+        pendingFocus?.let { (row, column) -> focusRequester(row, column).requestFocus() }
+        pendingFocus = null
+    }
+
+    // Enter goes on to the next field: from a name to its value, and from a value to the name on the next row,
+    // which is added after the last row.
+    fun onEnter(
+        row: Int
+        , column: Int
+    ) {
+        when {
+            column == 0 -> pendingFocus = row to 1
+            row < rows.lastIndex -> pendingFocus = row + 1 to 0
+            else -> {
+                rows.add(NodeAttribute("", ""))
+                pendingFocus = rows.lastIndex to 0
+            }
+        }
+    }
+
+    fun Modifier.goesOnWithEnter(
+        row: Int
+        , column: Int
+    ): Modifier = focusRequester(focusRequester(row, column)).onPreviewKeyEvent { event ->
+        when {
+            event.key != Key.Enter && event.key != Key.NumPadEnter -> false
+            event.type == KeyEventType.KeyDown -> {
+                onEnter(row, column)
+                true
+            }
+            else -> true
+        }
+    }
 
     val dialogState = remember { AppDialogState(ATTRIBUTES_DIALOG_SIZE, ATTRIBUTES_DIALOG_MIN_SIZE) }
 
@@ -1387,7 +1431,7 @@ private fun AttributesDialog(
                                 onValueChange = { rows[index] = attribute.copy(name = it) },
                                 label = { Text("Name") },
                                 singleLine = true,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).goesOnWithEnter(index, 0),
                             )
                             OutlinedTextField(
                                 value = attribute.value,
@@ -1395,7 +1439,7 @@ private fun AttributesDialog(
                                 onValueChange = { rows[index] = attribute.copy(value = it) },
                                 label = { Text("Value") },
                                 singleLine = true,
-                                modifier = Modifier.weight(1.4f),
+                                modifier = Modifier.weight(1.4f).goesOnWithEnter(index, 1),
                             )
                             TextButton(onClick = { rows.removeAt(index) }) {
                                 Text("\u2715")
