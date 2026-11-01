@@ -92,6 +92,7 @@ fun MindMapScreen() {
 - `state.isModified` tells whether the map is another one than when `state.markSaved()` was called last, or `setTree` when that was later, to save its changes before they are lost. Only what a FreeMind file holds counts, not where the nodes are, so undoing the changes since leaves it unmodified again.
 - `state.findNodes(text)` returns the nodes whose description or note holds the text, ignoring case, in the order of the tree. The text a node shows is searched, not its markup, and nodes hidden in a folded node are found too: `state.goToNode(id)` unfolds the nodes above one to show it.
 - `state.exportImage()` returns the whole mind map as an `ImageBitmap`, whatever part of it is in view: the nodes that are shown, their lines and their arrow links, in light colors on white, at 2 pixels a dp unless `pixelsPerDp` says otherwise. An image whose largest side would be more than `maxSide` pixels is made smaller. It is null until the mind map is shown.
+- `state.exportSvg()` returns the whole mind map as an SVG document, drawn as `exportImage` draws it, at one pixel a dp. Its text is text, in the fonts it is drawn in, so it can be searched and selected. It is null until the mind map is shown, and on Android, where Compose does not draw with Skia.
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
 ### MindMapView files
@@ -104,7 +105,7 @@ state.setTree(MindMapViewFile.read(content))
 state.animateTreeChange() // only a dragged root's position is stored, so arrange the tree
 ```
 
-The desktop app saves to `.mmv` files. It also opens FreeMind `.mm` files, which are saved as a `.mmv` file next to them, and can export a map to one.
+The desktop app saves to `.mmv` files. It also opens FreeMind `.mm` files, which are saved as a `.mmv` file next to them, and can export a map to one. It exports a map as a PNG image, an SVG drawing, a PDF document, an HTML outline, an OPML outline, Markdown or a FreeMind map. The PDF is made from the SVG drawing by Apache FOP, with the fonts of the app and of the computer embedded; color emoji are left blank in it, as a PDF font cannot hold their pictures.
 
 ### FreeMind files
 `FreeMind` converts a tree to and from the text of a FreeMind `.mm` file. Reading and writing the file itself is up to the app. FreeMind only has a left and a right side, so a child of the root above or below it is written as on the left or right.
@@ -119,6 +120,14 @@ state.animateTreeChange() // positions are not stored in the file, so arrange th
 FreeMind's own `<font>` of a node is read as the style of all of its text: bold, italic, and the nearest size text can have, of which FreeMind's 12 points are the normal one. The name of its font is not kept. The style is saved as the rich text of the node, as a style chosen in an editor is.
 
 `HtmlOutline.write(tree)` writes a tree as a web page of nested lists, with the notes and attributes of the nodes. A node with children folds in a browser, and starts out folded as it is in the tree.
+
+`Opml.write(tree)` writes a tree as an OPML 2.0 outline, which outliners such as Workflowy, OmniOutliner and Logseq read. The text of each node is written without its formatting, its note as plain text in `_note`, and its attributes as attributes of its outline, with names made valid in XML.
+
+`Markdown.write(tree)` writes a tree as a Markdown document that `Markdown.read` reads back as the same tree: the root and the two levels below it as headings, the nodes below those as nested list items, and notes as paragraphs, with bold, italic, struck-through text and links. Markdown cannot hold all of a mind map, so:
+- Children with attributes and no children of their own are written as rows of a table, which come back first among their siblings and without their notes.
+- The attributes of a node with children are left out.
+- A line break or list in the text of a node is written on one line, and a backtick as an apostrophe.
+- Shapes, colors, borders, lines, arrow links, folds and the sides of the root are left out.
 
 ## Sample apps
 - Android: `./gradlew :app:installDebug`
@@ -143,6 +152,7 @@ In the browser the app works as on the desktop, except:
 - A note's images only show when their site allows other sites to load them.
 - Preferences are kept in the browser's local storage.
 - Some shortcuts, such as Ctrl+N, belong to the browser; use the menus for those.
+- There is no PDF export. Open the exported SVG drawing in the browser and print it to a PDF instead.
 
 ## Android View
 `MindMapView` is still available on Android as a View that hosts the composable.
