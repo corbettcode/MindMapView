@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -202,7 +203,7 @@ fun EditNodeDialog(
             descriptionFocusRequester.requestFocus()
         }
         // Enter clicks Save & Close, wherever the focus is but in the note, whose lines are typed with Enter. A line
-        // of the node's text is typed with Alt+Enter instead.
+        // of the node's text is typed with Shift+Enter or Alt+Enter instead.
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -211,7 +212,7 @@ fun EditNodeDialog(
                         event.key != Key.Enter && event.key != Key.NumPadEnter -> false
                         isNoteFocused -> false
                         event.type != KeyEventType.KeyDown -> true
-                        event.isAltPressed -> {
+                        event.isShiftPressed || event.isAltPressed -> {
                             if (isDescriptionFocused) richTextState.replaceSelectedText("\n")
                             true
                         }
