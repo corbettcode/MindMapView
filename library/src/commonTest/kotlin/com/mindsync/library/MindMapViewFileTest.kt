@@ -7,6 +7,8 @@ import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeLineStyle
 import com.mindsync.library.data.NodeLineWidth
@@ -178,6 +180,25 @@ class MindMapViewFileTest {
 
         assertEquals(line, read.lineOf("a"))
         assertEquals(NodeLine(color = Color.Blue), read.lineOf(read.getRootNode().id))
+    }
+
+    @Test
+    fun bordersRoundTrip() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        tree.addNode("b", rootId, "<p>b</p>")
+        val border = NodeBorder(NodeBorderStyle.LINE, NodeLineWidth.FOUR, Color(0x80FF0000))
+        tree.setBorder("a", border)
+        tree.setBorder(rootId, NodeBorder(NodeBorderStyle.LINE))
+
+        val written = MindMapViewFile.write(tree)
+        val read = MindMapViewFile.read(written)
+
+        assertEquals(border, read.borderOf("a"))
+        assertEquals(NodeBorder(), read.borderOf("b"))
+        assertEquals(NodeBorder(NodeBorderStyle.LINE), read.borderOf(read.getRootNode().id))
+        assertEquals(2, Regex(" border=").findAll(written).count())
     }
 
     @Test

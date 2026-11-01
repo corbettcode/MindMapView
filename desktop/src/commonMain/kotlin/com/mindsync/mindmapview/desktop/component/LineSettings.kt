@@ -78,18 +78,23 @@ fun LineSettings(
             , onSelect = { onChange(line.copy(width = it)) }
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        LineColorPicker(
-            colors = colors
+        OptionalColorPicker(
+            noColorLabel = INHERITED
+            , colors = colors
             , selectedColor = line.color
             , onSelect = { onChange(line.copy(color = it)) }
         )
     }
 }
 
-// Like [ColorPicker], with an inherited choice first, which is why the color may be null.
+/**
+ * Like [ColorPicker], with a choice of no color of its own first, named [noColorLabel], which is why the color may
+ * be null.
+ */
 @Composable
-private fun LineColorPicker(
-    colors: List<Color>
+internal fun OptionalColorPicker(
+    noColorLabel: String
+    , colors: List<Color>
     , selectedColor: Color?
     , onSelect: (Color?) -> Unit
 ) {
@@ -105,7 +110,7 @@ private fun LineColorPicker(
             val chipShape = RoundedCornerShape(8.dp)
             val isInherited = selectedColor == null
             Text(
-                INHERITED
+                noColorLabel
                 , modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .clip(chipShape)

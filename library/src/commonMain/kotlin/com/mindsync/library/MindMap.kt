@@ -442,8 +442,11 @@ private fun DrawScope.drawTree(
     }
     state.tree.doVisiblePreorderTraversal { node ->
         val line = lines[node.id]
-        val nodeDrawer = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width).createNodeDrawer()
+        val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
+        val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
         nodeDrawer.drawNode(this)
+        val border = state.tree.borderOf(node.id)
+        if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.showNotes)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
         translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }

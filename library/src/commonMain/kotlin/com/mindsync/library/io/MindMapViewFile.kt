@@ -7,6 +7,8 @@ import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeLineStyle
@@ -77,6 +79,7 @@ object MindMapViewFile {
         )
         tree.setAttributes(root.id, rootElement.nodeAttributes())
         tree.setLine(root.id, rootElement.line())
+        tree.setBorder(root.id, rootElement.border())
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -137,6 +140,11 @@ object MindMapViewFile {
         line.style?.let { attribute("lineStyle", it.freeMindName) }
         line.color?.let { attribute("lineColor", it.toHex()) }
         line.width?.let { attribute("lineWidth", it.label) }
+        tree.borderOf(node.id).takeIf { !it.isNone }?.let { border ->
+            attribute("border", border.style.name.lowercase())
+            attribute("borderWidth", border.width.label)
+            border.color?.let { attribute("borderColor", it.toHex()) }
+        }
         val attributes = tree.attributesOf(node.id)
         if (attributes.isEmpty() && node.children.isEmpty()) {
             append("/>\n")
@@ -202,11 +210,19 @@ object MindMapViewFile {
         tree.setNode(id, node)
         tree.setAttributes(id, element.nodeAttributes())
         tree.setLine(id, element.line())
+        tree.setBorder(id, element.border())
         tree.setFolded(id, element.attributes["folded"] == "true")
         return id
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    private fun XmlElement.border(): NodeBorder = NodeBorder(
+        style = NodeBorderStyle.entries.firstOrNull { it.name.equals(attributes["border"], ignoreCase = true) }
+            ?: NodeBorderStyle.NONE
+        , width = NodeLineWidth.entries.firstOrNull { it.label == attributes["borderWidth"] } ?: NodeBorder().width
+        , color = color("borderColor")
+    )
 
     private fun XmlElement.nodeAttributes(): List<NodeAttribute> =
         children

@@ -27,6 +27,7 @@ class Tree<T> {
     private val nodeAttributes = mutableMapOf<String, List<NodeAttribute>>()
 
     private val nodeLines = mutableMapOf<String, NodeLine>()
+    private val nodeBorders = mutableMapOf<String, NodeBorder>()
 
     private val foldedIds = mutableSetOf<String>()
 
@@ -120,6 +121,17 @@ class Tree<T> {
         if (attributes.isEmpty()) nodeAttributes.remove(id) else nodeAttributes[id] = attributes.toList()
     }
 
+    /** Returns what is drawn around a node: no border unless it was given one. */
+    fun borderOf(id: String): NodeBorder = nodeBorders[id] ?: NodeBorder()
+
+    fun setBorder(
+        id: String
+        , border: NodeBorder
+    ) {
+        getNode(id)
+        if (border.isNone) nodeBorders.remove(id) else nodeBorders[id] = border
+    }
+
     /** Returns the line settings the node has of its own; [NodeLine] with nothing set when it has none. */
     fun lineOf(id: String): NodeLine = nodeLines[id] ?: NodeLine()
 
@@ -197,6 +209,7 @@ class Tree<T> {
         , rootChildSides = rootChildSides.toMap()
         , nodeAttributes = nodeAttributes.toMap()
         , nodeLines = nodeLines.toMap()
+        , nodeBorders = nodeBorders.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
         , isRootPlaced = isRootPlaced
@@ -212,6 +225,8 @@ class Tree<T> {
         nodeAttributes.putAll(snapshot.nodeAttributes)
         nodeLines.clear()
         nodeLines.putAll(snapshot.nodeLines)
+        nodeBorders.clear()
+        nodeBorders.putAll(snapshot.nodeBorders)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()

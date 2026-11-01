@@ -26,6 +26,7 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
@@ -318,6 +319,7 @@ class MindMapState(
         side: LayoutSide = layoutSide,
         note: String = "",
         line: NodeLine = NodeLine(),
+        border: NodeBorder = NodeBorder(),
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
@@ -347,6 +349,7 @@ class MindMapState(
                 val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
                 addNodeCommand.execute()
                 tree.setLine(addNode.id, line)
+                tree.setBorder(addNode.id, border)
             }
             animateTreeChange()
         }
@@ -485,6 +488,7 @@ class MindMapState(
         node = node
         , attributes = tree.attributesOf(node.id)
         , line = tree.lineOf(node.id)
+        , border = tree.borderOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -507,6 +511,7 @@ class MindMapState(
                 tree.addNode(id, parentId, node.description, node.shape, node.color, node.textColor, side, node.note)
                 tree.setAttributes(id, branch.attributes)
                 tree.setLine(id, branch.line)
+                tree.setBorder(id, branch.border)
                 pastedIds[node.id] = id
                 branch.children.forEach { paste(it, id) }
             }
@@ -703,6 +708,16 @@ class MindMapState(
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.setLine(node.id, line)
+                invalidate()
+            }
+        }
+    }
+
+    /** Gives the selected node [border], or takes its border away with one whose style is none. */
+    fun editNodeBorder(border: NodeBorder) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setBorder(node.id, border)
                 invalidate()
             }
         }
@@ -1368,6 +1383,7 @@ private class CopiedNode(
     val node: NodeData<*>
     , val attributes: List<NodeAttribute>
     , val line: NodeLine
+    , val border: NodeBorder
     , val children: List<CopiedNode>
 )
 

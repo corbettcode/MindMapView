@@ -48,6 +48,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.DrawInfo
@@ -61,6 +62,7 @@ import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.BorderSettings
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.DialogLayout
 import com.mindsync.mindmapview.desktop.component.EmojiPicker
@@ -96,6 +98,7 @@ private val DIALOG_GAP = 16.dp
  * @param color The fill color of the node.
  * @param textColor The text color for the node.
  * @param line The node's own line settings, whose null values are inherited from its parent.
+ * @param border What is drawn around the node: nothing, or a line of a width and color.
  * @param nodeColors A list of colors available for selecting the node's fill color.
  * @param textColors A list of colors available for selecting the node's text color.
  * @param mapEmojis A list of emoji strings available for selection and customization within the dialog.
@@ -103,7 +106,7 @@ private val DIALOG_GAP = 16.dp
  * @param onToneChange A callback triggered when the tone of an emoji is changed. Receives the base emoji
  * and its selected tonal variant.
  * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
- * note, shape, fill color, text color, and line settings of the node.
+ * note, shape, fill color, text color, line settings, and border of the node.
  * @param onDismiss A callback triggered when the dialog is dismissed.
  * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
  * added. Without it, the dialog has no such button.
@@ -119,6 +122,7 @@ fun EditNodeDialog(
     , color: Color
     , textColor: Color
     , line: NodeLine
+    , border: NodeBorder
     , nodeColors: List<Color>
     , textColors: List<Color>
     , mapEmojis: List<String>
@@ -131,6 +135,7 @@ fun EditNodeDialog(
         , color: Color
         , textColor: Color
         , line: NodeLine
+        , border: NodeBorder
     ) -> Unit
     , onDismiss: () -> Unit
     , onAddAnother: (() -> Unit)? = null
@@ -154,8 +159,11 @@ fun EditNodeDialog(
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
     var selectedLine by remember { mutableStateOf(line) }
+    var selectedBorder by remember { mutableStateOf(border) }
     // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
     var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
+    // Closed unless the node has a border, for the same reason.
+    var isBorderOpen by remember { mutableStateOf(!border.isNone) }
     // Open when the node has a note, as the mind map marks it.
     var isNoteOpen by remember { mutableStateOf(note.isNotBlank()) }
 
@@ -184,6 +192,7 @@ fun EditNodeDialog(
             , selectedColor
             , selectedTextColor
             , selectedLine
+            , selectedBorder
         )
     }
 
@@ -291,6 +300,22 @@ fun EditNodeDialog(
                         , selectedColor = selectedTextColor
                         , onSelect = { selectedTextColor = it }
                     )
+
+                    CollapsibleSection(
+                        title = "Border"
+                        , isOpen = isBorderOpen
+                        , onToggle = { isBorderOpen = !isBorderOpen }
+                    ) {
+                        BorderSettings(
+                            border = selectedBorder
+                            , colors = remember(border, nodeColors, textColors) {
+                                (DrawInfo().rootLineColors + nodeColors + textColors + listOfNotNull(border.color))
+                                    .distinct()
+                            }
+                            , onChange = { selectedBorder = it }
+                            , modifier = Modifier.padding(12.dp)
+                        )
+                    }
 
                     CollapsibleSection(
                         title = "Line"

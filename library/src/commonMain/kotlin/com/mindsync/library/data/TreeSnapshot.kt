@@ -15,6 +15,7 @@ import com.mindsync.library.model.LayoutSide
  * @property nodeAttributes The map of node IDs to their attributes, organizing metadata associated
  * with individual nodes.
  * @property nodeLines The map of node IDs to the line settings they have of their own.
+ * @property nodeBorders The map of node IDs to the borders they have; a node without one has none.
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
  * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
  * annotations or relationships.
@@ -27,6 +28,7 @@ internal class TreeSnapshot(
     , val rootChildSides: Map<String, LayoutSide>
     , val nodeAttributes: Map<String, List<NodeAttribute>>
     , val nodeLines: Map<String, NodeLine>
+    , val nodeBorders: Map<String, NodeBorder>
     , val foldedIds: Set<String>
     , val arrowLinks: List<ArrowLink>
     , val isRootPlaced: Boolean
@@ -42,6 +44,7 @@ internal class TreeSnapshot(
             && rootChildSides == other.rootChildSides
             && nodeAttributes == other.nodeAttributes
             && nodeLines == other.nodeLines
+            && nodeBorders == other.nodeBorders
             && foldedIds == other.foldedIds
             && arrowLinks == other.arrowLinks
 

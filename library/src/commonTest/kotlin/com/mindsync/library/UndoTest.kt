@@ -17,6 +17,8 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeLineStyle
 import com.mindsync.library.data.NodeLineWidth
@@ -404,6 +406,41 @@ class UndoTest {
         waitForIdle()
         assertEquals(line, state.tree.lineOf("first"))
         assertEquals(NodeLine(width = NodeLineWidth.THIN), state.tree.lineOf("belowFirst"))
+    }
+
+    @Test
+    fun editNodeBorderIsUndone() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+
+        val border = NodeBorder(NodeBorderStyle.LINE, NodeLineWidth.EIGHT, Color.Red)
+        state.editNodeBorder(border)
+        waitForIdle()
+        assertEquals(border, state.tree.borderOf("first"))
+
+        state.undo()
+        waitForIdle()
+        assertEquals(NodeBorder(), state.tree.borderOf("first"))
+
+        state.redo()
+        waitForIdle()
+        assertEquals(border, state.tree.borderOf("first"))
+    }
+
+    @Test
+    fun pastedNodeKeepsItsBorder() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+        val border = NodeBorder(NodeBorderStyle.LINE, color = Color.Blue)
+        state.editNodeBorder(border)
+        state.copyNode()
+        state.selectNode("second")
+
+        state.pasteNode()
+        waitForIdle()
+
+        val pastedId = state.tree.getNode("second").children.last()
+        assertEquals(border, state.tree.borderOf(pastedId))
     }
 
     companion object {
