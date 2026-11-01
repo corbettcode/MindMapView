@@ -236,3 +236,16 @@ data class LineNodeData(
         return this.copy(path = path.adjustPath(horizontalSpacing, totalHeight))
     }
 }
+
+/** Returns the node in other colors, as it is drawn in a theme. */
+internal fun NodeData<*>.withColors(
+    color: Color
+    , textColor: Color
+): NodeData<*> = when (this) {
+    is CircleNodeData -> copy(color = color, textColor = textColor)
+    is RectangleNodeData -> copy(color = color, textColor = textColor)
+    is SquareNodeData -> copy(color = color, textColor = textColor)
+    is LineNodeData -> copy(color = color, textColor = textColor)
+    is StadiumNodeData -> copy(color = color, textColor = textColor)
+    is OvalNodeData -> copy(color = color, textColor = textColor)
+}

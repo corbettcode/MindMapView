@@ -1179,7 +1179,6 @@ class MindMapTest {
 
         assertEquals(colors.size, colors.toSet().size)
         assertFalse(drawInfo.lineColor in colors)
-        assertFalse(drawInfo.darkModeLineColor in colors)
         // With more children than colors, the colors start over.
         assertEquals(colors.first(), rootLineColor(drawInfo, colors.size))
     }

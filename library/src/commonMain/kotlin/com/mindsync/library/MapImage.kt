@@ -43,7 +43,7 @@ internal fun mapImage(
     val image = ImageBitmap(width, height)
     CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(width.toFloat(), height.toFloat())) {
         // The image is rounded to whole pixels, so it can be a little larger than the map.
-        drawRect(Color.White)
+        drawRect(state.tree.theme.background)
         scale(scale, Offset.Zero) {
             drawExportedMap(state, bounds, measureTextSize)
         }
@@ -52,7 +52,7 @@ internal fun mapImage(
 }
 
 /**
- * Draws the mind map as it is exported, on white in the colors of a light theme, with the top left corner of
+ * Draws the mind map as it is exported, in the colors of its theme, on its background, with the top left corner of
  * [bounds], in the pixels of the tree, at the origin. Whatever is drawn on is cleared to white first.
  */
 internal fun DrawScope.drawExportedMap(
@@ -61,9 +61,9 @@ internal fun DrawScope.drawExportedMap(
     , measureTextSize: MeasureTextSize
 ) {
     val drawInfo = DrawInfo()
-    drawRect(Color.White, topLeft = Offset.Zero, size = bounds.size)
+    drawRect(state.tree.theme.background, topLeft = Offset.Zero, size = bounds.size)
     translate(-bounds.left, -bounds.top) {
-        drawMap(state, drawInfo, measureTextSize, drawInfo.lineColor)
+        drawMap(state, drawInfo, measureTextSize, state.tree.theme.lineColor)
     }
 }
 

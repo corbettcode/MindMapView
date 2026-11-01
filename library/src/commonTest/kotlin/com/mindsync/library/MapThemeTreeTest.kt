@@ -82,6 +82,26 @@ class MapThemeTreeTest {
     }
 
     @Test
+    fun handColoredFillKeepsItsTextColor() {
+        val tree = tree().apply {
+            updateNodeColor("sub", coral)
+            theme = night
+        }
+
+        assertEquals(tree.getNode("sub").textColor, tree.textColorOf("sub"))
+    }
+
+    @Test
+    fun lineNodesTakeNoThemeBorder() {
+        val tree = tree().apply {
+            addNode("line", "main", "Line", NodeShape.LINE)
+            theme = paper
+        }
+
+        assertTrue(tree.drawnBorderOf("line").isNone)
+    }
+
+    @Test
     fun handColorsSurviveThemeChanges() {
         val tree = tree().apply { updateNodeColor("sub", coral) }
         val state = stateOf(tree)

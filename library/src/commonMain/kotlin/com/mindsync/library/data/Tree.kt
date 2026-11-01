@@ -150,17 +150,26 @@ class Tree<T> {
 
     /**
      * Returns the color a node's text is drawn in: its own color, or the theme's when it is still the one its shape
-     * starts with. A line node has no fill, so its text takes the theme's color for text on the background.
+     * starts with. A node given a fill of its own keeps its text color too, as the theme's is made to read on the
+     * theme's fill. A line node has no fill, so its text takes the theme's color for text on the background.
      */
     fun textColorOf(id: String): Color {
         val node = getNode(id)
         if (node.textColor != defaultTextColorOf(node)) return node.textColor
+        if (node !is LineNodeData && node.color != defaultFillOf(node)) return node.textColor
         val themed = if (node is LineNodeData) theme.lineNodeText else levelStyleOf(id).text
         return themed ?: node.textColor
     }
 
-    /** Returns the border a node is drawn with: its own, or the theme's for its level when it has none. */
-    fun drawnBorderOf(id: String): NodeBorder = borderOf(id).takeUnless { it.isNone } ?: levelStyleOf(id).border
+    /**
+     * Returns the border a node is drawn with: its own, or the theme's for its level when it has none. A line node
+     * has no fill for a border to go around, so it only has one of its own.
+     */
+    fun drawnBorderOf(id: String): NodeBorder {
+        val own = borderOf(id)
+        if (!own.isNone || getNode(id) is LineNodeData) return own
+        return levelStyleOf(id).border
+    }
 
     /** Returns how the theme draws the nodes of the level a node is on: the root, a main topic or a subtopic. */
     internal fun levelStyleOf(id: String): LevelStyle {

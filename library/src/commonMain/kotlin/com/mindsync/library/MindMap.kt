@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -64,6 +63,7 @@ import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
@@ -187,9 +187,6 @@ fun MindMap(
         )
         MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily)
     }
-    val isDarkTheme = isSystemInDarkTheme()
-    val lineColor = if (isDarkTheme) drawInfo.darkModeLineColor else drawInfo.lineColor
-    val addIconColor = if (isDarkTheme) Color.Black else Color.White
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
@@ -385,7 +382,12 @@ fun MindMap(
             },
     ) {
         state.drawTick
+        val theme = state.tree.theme
+        drawRect(theme.background)
         val measure = state.mindMapManager.getMeasureTextSize() ?: return@Canvas
+        val lineColor = theme.lineColor
+        // The icon is drawn on a line, so it takes the background's side of light and dark.
+        val addIconColor = if (theme.isDark) Color.Black else Color.White
         withTransform({
             translate(state.currentPoint.x, state.currentPoint.y)
             scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
@@ -441,12 +443,14 @@ private fun DrawScope.drawTree(
     forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
         if (node is LineNodeData) lines[node.id] = line
     }
-    state.tree.doVisiblePreorderTraversal { node ->
+    state.tree.doVisiblePreorderTraversal { storedNode ->
+        // The node in the colors the theme gives it, unless it has colors of its own.
+        val node = storedNode.withColors(state.tree.fillOf(storedNode.id), state.tree.textColorOf(storedNode.id))
         val line = lines[node.id]
         val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
         val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
         nodeDrawer.drawNode(this)
-        val border = state.tree.borderOf(node.id)
+        val border = state.tree.drawnBorderOf(node.id)
         if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.showNotes)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
@@ -961,9 +965,13 @@ private fun DrawScope.drawLinkDrag(state: MindMapState) {
 internal fun rootLineColor(
     drawInfo: DrawInfo
     , childIndex: Int
-): Color {
-    return drawInfo.rootLineColors[childIndex % drawInfo.rootLineColors.size]
-}
+): Color = rootLineColor(drawInfo.rootLineColors, childIndex)
+
+/** The color of the line to the child of the root at [childIndex]: the next of [colors], starting over. */
+internal fun rootLineColor(
+    colors: List<Color>
+    , childIndex: Int
+): Color = colors[childIndex % colors.size]
 
 private fun DrawScope.drawAddButtons(
     state: MindMapState

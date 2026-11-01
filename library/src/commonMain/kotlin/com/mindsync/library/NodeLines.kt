@@ -27,7 +27,7 @@ internal fun forEachNodeWithLine(
         action(node, line)
         tree.visibleChildren(node).forEachIndexed { index, childId ->
             val own = tree.lineOf(childId)
-            val inheritedColor = if (node.parentId == null) rootLineColor(drawInfo, index) else line.color
+            val inheritedColor = if (node.parentId == null) rootLineColor(tree.theme.branchColors, index) else line.color
             val childColor = if (node.parentId == null) tree.lineOf(node.id).color ?: inheritedColor else inheritedColor
             traverse(
                 tree.getNode(childId)
@@ -46,7 +46,7 @@ internal fun forEachNodeWithLine(
         , ResolvedLine(
             style = own.style ?: NodeLineStyle.BEZIER
             , color = own.color ?: rootColor
-            , width = own.width?.width ?: drawInfo.lineWidth
+            , width = own.width?.width ?: tree.theme.lineWidth
         )
     )
 }

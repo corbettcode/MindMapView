@@ -9,7 +9,6 @@ class DrawInfo {
     val strokeWidth = Dp(5f)
     val padding = Dp(20f)
     val lineColor = Color.Black
-    val darkModeLineColor = Color.Gray
     val lineWidth = Dp(5f)
 
     // The lines from the root each take the next of these colors, starting over when they run out.
