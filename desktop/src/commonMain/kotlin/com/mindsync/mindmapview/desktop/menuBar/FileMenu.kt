@@ -25,6 +25,11 @@ class FileActions(
     val exportImage: () -> Unit,
     val exportHtml: () -> Unit,
     val exportFreeMind: () -> Unit,
+    val exportSvg: () -> Unit,
+    // Null where a PDF cannot be made, as in a browser.
+    val exportPdf: (() -> Unit)?,
+    val exportOpml: () -> Unit,
+    val exportMarkdown: () -> Unit,
 )
 
 // Drawn by Compose instead of the window's native menu bar, whose drop down closes as soon as the mouse
@@ -97,10 +102,14 @@ fun FileMenu(
                     onClick = { exportExpanded = true },
                 )
                 DropdownMenu(expanded = exportExpanded, onDismissRequest = { exportExpanded = false }) {
-                    listOf(
+                    listOfNotNull(
                         "As Image (PNG)..." to actions.exportImage,
                         "As HTML Outline..." to actions.exportHtml,
                         "As FreeMind Map (.mm)..." to actions.exportFreeMind,
+                        "As SVG Drawing..." to actions.exportSvg,
+                        actions.exportPdf?.let { "As PDF Document..." to it },
+                        "As OPML Outline..." to actions.exportOpml,
+                        "As Markdown..." to actions.exportMarkdown,
                     ).forEach { (text, export) ->
                         DropdownMenuItem(
                             text = { Text(text) },

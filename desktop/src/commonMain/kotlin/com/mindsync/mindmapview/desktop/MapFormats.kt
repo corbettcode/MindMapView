@@ -4,6 +4,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.io.Opml
 import com.mindsync.library.io.XMind
 import com.mohamedrejeb.richeditor.model.RichTextState
 
@@ -70,6 +71,8 @@ private fun Char.isEmojiPart(): Boolean =
 
 internal const val PNG_EXTENSION = ".png"
 internal const val HTML_EXTENSION = ".html"
+internal const val SVG_EXTENSION = ".svg"
+internal const val OPML_EXTENSION = "." + Opml.EXTENSION
 
 /**
  * Reads the mind map [content] of a file named [fileName]: a FreeMind map when its extension is FreeMind's,

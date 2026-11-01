@@ -34,7 +34,9 @@ import com.mindsync.library.MindMapState
 import com.mindsync.library.data.*
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.HtmlOutline
+import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.io.Opml
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
@@ -392,6 +394,18 @@ internal class MindMapApp(
         exportHtml = { scope.launch { export(HTML_EXTENSION) { HtmlOutline.write(state.tree).encodeToByteArray() } } },
         exportFreeMind = {
             scope.launch { export(FREE_MIND_EXTENSION) { FreeMind.write(state.tree).encodeToByteArray() } }
+        },
+        exportSvg = {
+            scope.launch {
+                val svg = state.exportSvg()
+                if (svg == null) error = "Could not export the drawing: the mind map is not shown yet"
+                else export(SVG_EXTENSION) { svg.encodeToByteArray() }
+            }
+        },
+        exportPdf = null,
+        exportOpml = { scope.launch { export(OPML_EXTENSION) { Opml.write(state.tree).encodeToByteArray() } } },
+        exportMarkdown = {
+            scope.launch { export(MARKDOWN_EXTENSION) { Markdown.write(state.tree).encodeToByteArray() } }
         },
     )
 
