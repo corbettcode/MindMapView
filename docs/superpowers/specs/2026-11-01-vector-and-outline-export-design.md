@@ -100,11 +100,13 @@ The writer mirrors `library/.../io/Markdown.kt`, whose doc comment is the spec o
   - A **node with children** loses its attributes in Markdown. The `.mmv`, FreeMind and OPML exports keep them,
     and the user manual says so.
   - The round-trip goal holds for everything else: tree shape, text, notes of nodes outside tables, and leaf
-    attributes. Rows keep their order among their siblings only if the table sits where they were; the builder
-    checks the importer keeps that order, or writes the table so it does.
+    attributes. The importer adds a table's rows to the last heading or list item read, so the table has to come
+    right after the parent, and leaf children with attributes move to the front of their siblings. *(Found while
+    planning; my call.)*
 - **Rich text:** bold, italic, strikethrough and links are written as Markdown (`**`, `*`, `~~`, `[text](url)`). A
-  line break inside a description (Shift+Enter) is a hard break. Characters Markdown would read as markup are
-  escaped.
+  line break inside a description (Shift+Enter) becomes a space, because a heading or list item is one line to the
+  importer. The importer has no backslash escapes, so characters Markdown would read as markup are wrapped in
+  backticks, which it reads back as plain text; a backtick itself becomes `'`. *(Found while planning; my call.)*
 - **Dropped:** shapes, colors, fonts, borders, line styles, emoji placement beyond the text itself, arrow links,
   folds and the side of the root a branch is on. Markdown cannot hold them, and the importer would not read them.
 - **Notes are HTML** in the tree. The desktop's `noteToMarkdown` uses flexmark, which is JVM only, so the library
