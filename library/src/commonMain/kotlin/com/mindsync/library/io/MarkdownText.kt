@@ -104,12 +104,15 @@ internal object MarkdownText {
         while (index < segments.size) {
             val url = segments[index].url
             val group = mutableListOf(segments[index++])
-            while (index < segments.size && url != null && segments[index].url == url) group.add(segments[index++])
+            while (index < segments.size && segments[index].url == url) group.add(segments[index++])
+            val next = segments.getOrNull(index)?.text?.firstOrNull()
             if (url == null) {
-                append(styled(group, isLineStart = isEmpty(), isLinkLabel = false))
+                append(
+                    styled(group, isLineStart = isEmpty(), isLinkLabel = false, previous = lastOrNull(), next = next)
+                )
             } else {
                 append("[")
-                append(styled(group, isLineStart = false, isLinkLabel = true))
+                append(styled(group, isLineStart = false, isLinkLabel = true, previous = '[', next = ']'))
                 append("](${url(url)})")
             }
         }
@@ -119,6 +122,8 @@ internal object MarkdownText {
         segments: List<Segment>
         , isLineStart: Boolean
         , isLinkLabel: Boolean
+        , previous: Char?
+        , next: Char?
     ): String = buildString {
         var open = Style()
         var italicMark = "_"
@@ -143,10 +148,13 @@ internal object MarkdownText {
                 return@forEachIndexed
             }
             if (style != open) {
+                val isClosing = !open.isPlain
                 close()
+                // Marks that touch would run together into other markup; an empty code span reads as nothing.
+                if (isClosing && lead.isEmpty() && !style.isPlain) append("``")
                 append(lead)
-                val before = lastOrNull()
-                val after = segments.getOrNull(index + 1)?.text?.firstOrNull()
+                val before = lastOrNull() ?: previous
+                val after = segments.getOrNull(index + 1)?.text?.firstOrNull() ?: next
                 // The importer only reads _italic_ when it is not inside a word.
                 italicMark = if (before?.isLetterOrDigit() == true || after?.isLetterOrDigit() == true) "*" else "_"
                 if (style.isBold) append("**")

@@ -232,7 +232,8 @@ object Markdown {
         , node: NodeData<*>
         , depth: Int
     ) {
-        val text = MarkdownText.inline(node.description)
+        // An empty item could be read as the underline of a heading, so it holds an empty code span instead.
+        val text = MarkdownText.inline(node.description).ifEmpty { "``" }
         if (depth <= HEADING_DEPTH) {
             append("\n${"#".repeat(depth + 1)} $text\n")
             writeNote(node.note, indent = null)

@@ -160,6 +160,19 @@ class MarkdownWriteTest {
     }
 
     @Test
+    fun emptyNodeAfterAHeadingsNoteRoundTrips() {
+        val tree = tree().apply {
+            addNode("h", getRootNode().id, "H")
+            addNode("h2", "h", "H2")
+            updateNodeNote("h2", "a note")
+            addNode("empty", "h2", "")
+            addNode("f", "h2", "F")
+        }
+
+        assertEquals(markdownOutline(tree), markdownOutline(roundTrip(tree)))
+    }
+
+    @Test
     fun emptyTextRoundTrips() {
         val tree = tree().apply {
             addNode("a", getRootNode().id, "")

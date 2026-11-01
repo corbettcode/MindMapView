@@ -42,6 +42,13 @@ class MarkdownTextTest {
     }
 
     @Test
+    fun italicTouchingLettersRoundTrips() {
+        listOf("un<i>believ</i>able", "<i>Title</i>s", "a<i>b</i><b>c</b>d", "<b>a</b><i>b</i>").forEach { html ->
+            assertEquals(html, roundTrip(html), "for $html")
+        }
+    }
+
+    @Test
     fun styledSpansFromTheEditorAreRead() {
         assertEquals("<b>a</b>", roundTrip("<span style=\"font-weight: bold\">a</span>"))
     }
