@@ -1367,12 +1367,9 @@ private fun AttributesDialog(
         row: Int
         , column: Int
     ): FocusRequester = focusRequesters.getOrPut(row to column) { FocusRequester() }
-    // The field to focus once it is there, as a row that was just added is not yet.
-    var pendingFocus by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    LaunchedEffect(pendingFocus) {
-        pendingFocus?.let { (row, column) -> focusRequester(row, column).requestFocus() }
-        pendingFocus = null
-    }
+    // The field to focus once it is there, as a row that was just added is not yet. A node without attributes
+    // starts in the name of its empty row, to type one in at once.
+    var pendingFocus by remember { mutableStateOf(if (attributes.isEmpty()) 0 to 0 else null) }
 
     // Enter goes on to the next field: from a name to its value, and from a value to the name on the next row,
     // which is added after the last row.
@@ -1411,6 +1408,11 @@ private fun AttributesDialog(
         , state = dialogState
         , onCloseRequest = onDismiss
     ) {
+        // In the dialog's own content, which on the desktop is a window of its own, so its fields are there.
+        LaunchedEffect(pendingFocus) {
+            pendingFocus?.let { (row, column) -> focusRequester(row, column).requestFocus() }
+            pendingFocus = null
+        }
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
