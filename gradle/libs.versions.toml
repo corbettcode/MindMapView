@@ -14,6 +14,8 @@ richEditor = "1.2.1"
 flexmark = "0.64.8"
 ksoup = "0.6.0"
 jetbrainsMarkdown = "0.7.9"
+fop = "2.10"
+pdfbox = "3.0.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +38,8 @@ jetbrains-markdown = { group = "org.jetbrains", name = "markdown", version.ref =
 flexmark = { group = "com.vladsch.flexmark", name = "flexmark", version.ref = "flexmark" }
 flexmark-ext-gfm-strikethrough = { group = "com.vladsch.flexmark", name = "flexmark-ext-gfm-strikethrough", version.ref = "flexmark" }
 flexmark-html2md-converter = { group = "com.vladsch.flexmark", name = "flexmark-html2md-converter", version.ref = "flexmark" }
+fop-transcoder = { group = "org.apache.xmlgraphics", name = "fop-transcoder-allinone", version.ref = "fop" }
+pdfbox = { group = "org.apache.pdfbox", name = "pdfbox", version.ref = "pdfbox" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 
 [plugins]

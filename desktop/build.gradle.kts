@@ -96,10 +96,13 @@ kotlin {
             implementation(libs.flexmark)
             implementation(libs.flexmark.ext.gfm.strikethrough)
             implementation(libs.flexmark.html2md.converter)
+            // Turns the SVG drawing of a mind map into a PDF document, with its fonts embedded.
+            implementation(libs.fop.transcoder)
         }
         jvmTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.compose.ui.test)
+            implementation(libs.pdfbox)
         }
     }
 }

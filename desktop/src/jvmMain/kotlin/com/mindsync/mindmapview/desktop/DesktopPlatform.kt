@@ -137,6 +137,17 @@ internal class DesktopPlatform(
         File(Files.createTempDirectory("mindmapview").toFile(), USER_MANUAL_FILE).apply { deleteOnExit() }
     }
 
+    // Looking through the fonts of the computer the first time takes a few seconds.
+    override val pdfFromSvg: suspend (String) -> ByteArray = { svg ->
+        withContext(Dispatchers.IO) {
+            try {
+                pdfFromSvg(svg)
+            } catch (e: IOException) {
+                throw MapFileException(e.message)
+            }
+        }
+    }
+
     override suspend fun openUserManual() = withContext(Dispatchers.IO) {
         try {
             val manual = DesktopPlatform::class.java.getResourceAsStream("/$USER_MANUAL_FILE")

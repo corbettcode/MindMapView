@@ -72,6 +72,7 @@ private fun Char.isEmojiPart(): Boolean =
 internal const val PNG_EXTENSION = ".png"
 internal const val HTML_EXTENSION = ".html"
 internal const val SVG_EXTENSION = ".svg"
+internal const val PDF_EXTENSION = ".pdf"
 internal const val OPML_EXTENSION = "." + Opml.EXTENSION
 
 /**

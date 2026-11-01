@@ -139,6 +139,8 @@ internal object WebPlatform : AppPlatform {
     // Loaded before the app starts, as the app reads the paths once to start with.
     override val recentMaps: RecentMaps? = if (jsHasRecentMaps()) WebRecentMaps else null
 
+    override val pdfFromSvg: (suspend (String) -> ByteArray)? = null
+
     override fun encodePng(image: ImageBitmap): ByteArray =
         Image.makeFromBitmap(image.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)?.bytes
             ?: throw MapFileException("the image could not be made into a PNG")

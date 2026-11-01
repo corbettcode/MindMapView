@@ -245,7 +245,7 @@ internal class MindMapApp(
     // An export is no save of the mind map, so the changes it has are as unsaved as they were.
     private suspend fun export(
         extension: String
-        , content: () -> ByteArray
+        , content: suspend () -> ByteArray
     ) {
         val target = platform.files.chooseToExport(document, extension) ?: return
         try {
@@ -402,7 +402,15 @@ internal class MindMapApp(
                 else export(SVG_EXTENSION) { svg.encodeToByteArray() }
             }
         },
-        exportPdf = null,
+        exportPdf = platform.pdfFromSvg?.let { pdfFromSvg ->
+            {
+                scope.launch {
+                    val svg = state.exportSvg()
+                    if (svg == null) error = "Could not export the document: the mind map is not shown yet"
+                    else export(PDF_EXTENSION) { pdfFromSvg(svg) }
+                }
+            }
+        },
         exportOpml = { scope.launch { export(OPML_EXTENSION) { Opml.write(state.tree).encodeToByteArray() } } },
         exportMarkdown = {
             scope.launch { export(MARKDOWN_EXTENSION) { Markdown.write(state.tree).encodeToByteArray() } }

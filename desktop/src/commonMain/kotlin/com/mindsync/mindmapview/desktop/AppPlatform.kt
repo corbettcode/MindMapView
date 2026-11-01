@@ -34,6 +34,12 @@ interface AppPlatform {
     fun encodePng(image: ImageBitmap): ByteArray
 
     /**
+     * Makes the SVG drawing of a mind map into the bytes of a PDF file, or is null where that cannot be done, as in
+     * a browser. It throws [MapFileException] when the PDF cannot be made.
+     */
+    val pdfFromSvg: (suspend (svg: String) -> ByteArray)?
+
+    /**
      * Shows the user manual, [USER_MANUAL_FILE]: on the desktop in the program that opens PDF files, and in a
      * browser in a new tab.
      *
