@@ -56,11 +56,12 @@ from each shape's default fill and text color in `NodeShape`.
   `lineWidth`) and the default border.
 - **Node colors are always stored** today: every node carries `color` and `textColor`, starting as its shape's
   default (`NodeShape.defaultColor` / `defaultTextColor`), and `.mmv` writes them all. So:
-  - From now on a node's fill and text color are each **optional**: unset means "follow the theme".
-  - **Reading existing maps** *(my call)*: a stored color equal to the node's shape default reads as unset. The rare
-    color a user picked that happens to equal the default will follow the theme. New files write only colors that
-    are set.
-  - New nodes start with no colors, so they follow the theme. The existing behavior where a new node takes its last
+  - A node's fill or text color that **equals its shape's default** (`Tree.ROOT_COLOR` for the root) follows the
+    theme; any other color is the user's and wins. This is the rule for existing maps, used for all maps, so the
+    `.mmv` node format, undo and copy/paste need no change. *(Decided while planning; my call.)* The rare color a
+    user picks that equals the default follows the theme; the edit dialog labels that swatch "Theme" so this is
+    visible.
+  - New nodes start with their shape's default colors, so they follow the theme. The existing behavior where a new node takes its last
     sibling's look (commit `177f8b6`) copies only what that sibling has set by hand. *(My call.)*
   - The edit dialog's color pickers show the theme's color for an unset color, and offer a way back to "theme"
     once set. *(My call; the builder picks the control.)*
