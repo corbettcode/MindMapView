@@ -1,6 +1,7 @@
 package com.mindsync.library.io
 
 import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.IdGenerator
@@ -26,6 +27,9 @@ object Markdown {
     const val EXTENSION = "md"
 
     private const val TAB_WIDTH = 4
+
+    // The depth of the lowest nodes that are written as headings: the root is at depth 0.
+    private const val HEADING_DEPTH = 2
 
     private val HEADING = Regex("""^ {0,3}(#{1,6})(?:\s+(.*?))?(?:\s+#+)?\s*$""")
     private val SETEXT_UNDERLINE = Regex("""^ {0,3}(=+|-+)\s*$""")
@@ -191,6 +195,98 @@ object Markdown {
         val isTitledByHeading = document.children.size == 1 && document.paragraphs.isEmpty()
         val root = if (isTitledByHeading) document.children.single() else document
         return toTree(root)
+    }
+
+    /**
+     * Writes [tree] as a Markdown document that [read] reads back as the same tree. The root is the one top
+     * heading, the nodes of the two levels below it are headings too, and the nodes below those are nested list
+     * items. A note is written as paragraphs after its node. Bold, italic, struck-through text and links are kept;
+     * shapes, colors, borders, lines, arrow links, folds and the sides of the root are not.
+     *
+     * Markdown can only give attributes to the rows of a table, which have no children and no notes. So the
+     * children of a node that have attributes and no children of their own are written as a table right after it,
+     * and come back first among its children, without their notes. The attributes of a node with children are
+     * left out. A line break in the text of a node is written as a space, as a heading or list item is one line.
+     */
+    fun write(tree: Tree<*>): String = buildString {
+        val root = tree.getRootNode()
+        append("# ${MarkdownText.inline(root.description)}\n")
+        writeNote(root.note, indent = null)
+        writeChildren(tree, root, depth = 0)
+    }
+
+    private fun StringBuilder.writeChildren(
+        tree: Tree<*>
+        , node: NodeData<*>
+        , depth: Int
+    ) {
+        val children = node.children.map { tree.getNode(it) }
+        val (rows, others) = children.partition { isTableRow(tree, it) }
+        // The importer gives a table's rows to the heading or list item read last, so the table has to come first.
+        writeTable(tree, rows)
+        others.forEach { writeNode(tree, it, depth + 1) }
+    }
+
+    private fun StringBuilder.writeNode(
+        tree: Tree<*>
+        , node: NodeData<*>
+        , depth: Int
+    ) {
+        val text = MarkdownText.inline(node.description)
+        if (depth <= HEADING_DEPTH) {
+            append("\n${"#".repeat(depth + 1)} $text\n")
+            writeNote(node.note, indent = null)
+        } else {
+            val indent = " ".repeat(TAB_WIDTH * (depth - HEADING_DEPTH - 1))
+            append("$indent- $text\n")
+            writeNote(node.note, indent = "$indent${" ".repeat(TAB_WIDTH)}")
+        }
+        writeChildren(tree, node, depth)
+    }
+
+    // A note under a list item is indented to belong to it; under a heading, it belongs to the heading anyway.
+    private fun StringBuilder.writeNote(
+        note: String
+        , indent: String?
+    ) {
+        MarkdownText.paragraphs(note).forEach { paragraph ->
+            append("\n${indent.orEmpty()}$paragraph\n")
+        }
+        if (indent != null && note.isNotEmpty()) append("\n")
+    }
+
+    private fun isTableRow(
+        tree: Tree<*>
+        , node: NodeData<*>
+    ): Boolean = node.children.isEmpty() && tree.attributesOf(node.id).any { it.value.isNotBlank() }
+
+    // A table whose first header is empty puts its rows straight under the node before it, each named after its
+    // first cell. An attribute name used more than once in a row has a column for each time.
+    private fun StringBuilder.writeTable(
+        tree: Tree<*>
+        , rows: List<NodeData<*>>
+    ) {
+        if (rows.isEmpty()) return
+        val rowAttributes = rows.map { row -> tree.attributesOf(row.id).filter { it.value.isNotBlank() } }
+        val columns = mutableListOf<Pair<String, Int>>()
+        rowAttributes.forEach { attributes ->
+            val counts = mutableMapOf<String, Int>()
+            attributes.forEach { attribute ->
+                val occurrence = counts.getOrElse(attribute.name) { 0 }
+                counts[attribute.name] = occurrence + 1
+                if (attribute.name to occurrence !in columns) columns.add(attribute.name to occurrence)
+            }
+        }
+        append("\n|  | ${columns.joinToString(" | ") { MarkdownText.cell(it.first) }} |\n")
+        append("| --- |${" --- |".repeat(columns.size)}\n")
+        rows.zip(rowAttributes).forEach { (row, attributes) ->
+            val values = columns.map { (name, occurrence) ->
+                attributes.filter { it.name == name }.getOrNull(occurrence)?.value.orEmpty()
+            }
+            val name = MarkdownText.inline(row.description).replace("|", "\\|")
+            append("| $name | ${values.joinToString(" | ") { MarkdownText.cell(it) }} |\n")
+        }
+        append("\n")
     }
 
     private fun toTree(rootSection: Section): Tree<Any> {
