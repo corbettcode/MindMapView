@@ -93,9 +93,8 @@ The writer mirrors `library/.../io/Markdown.kt`, whose doc comment is the spec o
   child's attributes, and a table whose first header is empty puts its rows straight under the heading or item.
   So:
   - A **leaf node with attributes** is written as a row of such a table under its parent (empty first header,
-    attribute names as the other headers). Siblings next to each other that are leaves with attributes share one
-    table, with the union of their attribute names as columns and empty cells where a node has none. A leaf
-    sibling without attributes between them ends the table. *(Grouping is my call.)* Its note cannot go in a
+    attribute names as the other headers). All of a node's leaf children with attributes share one table, with
+    the union of their attribute names as columns and empty cells where a node has none. *(Grouping is my call.)* Its note cannot go in a
     table row and is dropped, unless the builder finds a form the importer reads back onto that row's node.
   - A **node with children** loses its attributes in Markdown. The `.mmv`, FreeMind and OPML exports keep them,
     and the user manual says so.
