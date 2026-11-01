@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Density
@@ -35,26 +36,40 @@ internal fun mapImage(
     , pixelsPerDp: Float
     , maxSide: Int
 ): ImageBitmap {
-    val bounds = density.mapBounds(state.tree)
+    val bounds = density.exportBounds(state.tree)
     val scale = min(pixelsPerDp / density.density, maxSide / max(bounds.width, bounds.height))
     val width = (bounds.width * scale).roundToInt().coerceAtLeast(1)
     val height = (bounds.height * scale).roundToInt().coerceAtLeast(1)
     val image = ImageBitmap(width, height)
-    val drawInfo = DrawInfo()
     CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(width.toFloat(), height.toFloat())) {
+        // The image is rounded to whole pixels, so it can be a little larger than the map.
         drawRect(Color.White)
         scale(scale, Offset.Zero) {
-            translate(-bounds.left, -bounds.top) {
-                drawMap(state, drawInfo, measureTextSize, drawInfo.lineColor)
-            }
+            drawExportedMap(state, bounds, measureTextSize)
         }
     }
     return image
 }
 
-// What the nodes that are shown and their arrow links take up, in the pixels of the tree. A curve stays within
-// its control points, so they are what an arrow link takes up at most.
-private fun Density.mapBounds(tree: Tree<*>): Rect {
+/**
+ * Draws the mind map as it is exported, on white in the colors of a light theme, with the top left corner of
+ * [bounds], in the pixels of the tree, at the origin. Whatever is drawn on is cleared to white first.
+ */
+internal fun DrawScope.drawExportedMap(
+    state: MindMapState
+    , bounds: Rect
+    , measureTextSize: MeasureTextSize
+) {
+    val drawInfo = DrawInfo()
+    drawRect(Color.White, topLeft = Offset.Zero, size = bounds.size)
+    translate(-bounds.left, -bounds.top) {
+        drawMap(state, drawInfo, measureTextSize, drawInfo.lineColor)
+    }
+}
+
+// What the nodes that are shown and their arrow links take up, in the pixels of the tree, with room around them.
+// A curve stays within its control points, so they are what an arrow link takes up at most.
+internal fun Density.exportBounds(tree: Tree<*>): Rect {
     var bounds = Rect.Zero
     var isEmpty = true
     fun add(rect: Rect) {
@@ -75,3 +90,13 @@ private fun Density.mapBounds(tree: Tree<*>): Rect {
 
 private fun Rect.union(other: Rect): Rect =
     Rect(min(left, other.left), min(top, other.top), max(right, other.right), max(bottom, other.bottom))
+
+/**
+ * Returns the mind map drawn as an SVG document, whatever part of it is in view, at one pixel a dp, as
+ * [mapImage] draws it. Returns null where Compose does not draw with Skia, as on Android.
+ */
+internal expect fun mapSvg(
+    state: MindMapState
+    , density: Density
+    , measureTextSize: MeasureTextSize
+): String?

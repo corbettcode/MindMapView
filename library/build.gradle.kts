@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -163,6 +164,19 @@ kotlin {
     iosSimulatorArm64()
     wasmJs {
         browser()
+    }
+
+    // The targets Compose draws with Skia share skikoMain, which can draw a mind map as SVG.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("skiko") {
+                withJvm()
+                withWasmJs()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+        }
     }
 
     sourceSets {

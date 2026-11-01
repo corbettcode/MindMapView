@@ -820,6 +820,18 @@ class MindMapState(
     }
 
     /**
+     * Returns the whole mind map as an SVG document, whatever part of it is in view, drawn as [exportImage] draws
+     * it: the nodes that are shown, their lines and their arrow links, in the colors of a light theme on white, at
+     * one pixel a dp. Returns null until the mind map is shown, and on Android, where Compose does not draw with
+     * Skia.
+     */
+    fun exportSvg(): String? {
+        val measureTextSize = mindMapManager.getMeasureTextSize() ?: return null
+        if (!tree.isRootPlaced) return null
+        return mapSvg(this, density, measureTextSize)
+    }
+
+    /**
      * Returns the nodes whose description or note holds [text], ignoring case, in the order of the tree: each
      * node before the nodes below it. The text they show is searched, not their markup. Nodes hidden in a
      * folded node are found too, and [goToNode] shows them. Blank text finds none.

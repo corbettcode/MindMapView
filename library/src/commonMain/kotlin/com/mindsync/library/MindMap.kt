@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -497,9 +498,21 @@ private fun DrawScope.drawArrowLinks(
             )
         }
     }
-    if (lineNodeBoxes.isEmpty) drawArrowLinkCurves(state)
-    else clipPath(lineNodeBoxes, ClipOp.Difference) { drawArrowLinkCurves(state) }
+    if (lineNodeBoxes.isEmpty) {
+        drawArrowLinkCurves(state)
+        return
+    }
+    // The boxes are cut out of a rectangle larger than any map by the even-odd rule, rather than clipped away,
+    // as an SVG clip can only keep what is inside its path.
+    val outsideBoxes = Path().apply {
+        fillType = PathFillType.EvenOdd
+        addRect(Rect(-CLIP_EXTENT, -CLIP_EXTENT, CLIP_EXTENT, CLIP_EXTENT))
+        addPath(lineNodeBoxes)
+    }
+    clipPath(outsideBoxes, ClipOp.Intersect) { drawArrowLinkCurves(state) }
 }
+
+private const val CLIP_EXTENT = 1_000_000f
 
 private fun DrawScope.drawArrowLinkCurves(
     state: MindMapState
