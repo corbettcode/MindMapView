@@ -44,6 +44,7 @@ class UserPreferencesStore(
             , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones) ?: defaults.emojiTones
             , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) } ?: defaults.nodeFont
             , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) } ?: defaults.noteDisplay
+            , mapThemeId = read(MAP_THEME) ?: defaults.mapThemeId
         )
     }
         private set
@@ -59,6 +60,7 @@ class UserPreferencesStore(
         write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
         write(NODE_FONT, newPreferences.nodeFont.name)
         write(NOTE_DISPLAY, newPreferences.noteDisplay.name)
+        write(MAP_THEME, newPreferences.mapThemeId)
         return preferences
     }
 
@@ -72,6 +74,7 @@ class UserPreferencesStore(
         const val EMOJI_TONES = "emojiTones"
         const val NODE_FONT = "nodeFont"
         const val NOTE_DISPLAY = "noteDisplay"
+        const val MAP_THEME = "mapTheme"
     }
 }
 

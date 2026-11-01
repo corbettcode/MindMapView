@@ -205,6 +205,11 @@ internal class MindMapApp(
 
     private var preferences by mutableStateOf(platform.preferencesStore.preferences)
 
+    // The app starts with an empty map, in the theme new maps start in.
+    init {
+        state.setTree(newMapTree(preferences))
+    }
+
     // Null until the bundled font is loaded, and emojis are drawn in the text's own font until then.
     private var emojiFontFamily by mutableStateOf<FontFamily?>(null)
     private var nodeFontFamily by mutableStateOf<FontFamily?>(null)
@@ -375,7 +380,7 @@ internal class MindMapApp(
     private val fileActions = FileActions(
         new = {
             afterSavingChanges {
-                state.setTree(Tree<Any>())
+                state.setTree(newMapTree(preferences))
                 document = null
                 createdNodeCount = 0
             }
@@ -766,7 +771,6 @@ private fun MindMapScreen(
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
     var isPreferencesOpen by remember { mutableStateOf(false) }
-    var isThemeOpen by remember { mutableStateOf(false) }
     var isReadmeOpen by remember { mutableStateOf(false) }
     var isAboutOpen by remember { mutableStateOf(false) }
     // A node that is removed without being confirmed is removed at once.
@@ -776,8 +780,8 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
-        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isThemeOpen
-            || isReadmeOpen || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
+        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
+            || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -880,7 +884,7 @@ private fun MindMapScreen(
                         onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
                     )
-                    ToolMenu(onTheme = { isThemeOpen = true }, onImport = onImport)
+                    ToolMenu(onImport = onImport)
                     HelpMenu(
                         onUserManual = onUserManual
                         , onReadme = { isReadmeOpen = true }
@@ -1029,18 +1033,12 @@ private fun MindMapScreen(
         }
 
         if (isPreferencesOpen) {
+            // The map theme shown is that of the open map, which choosing another changes.
+            val opened = remember { preferences.copy(mapThemeId = state.theme.id) }
             PreferencesDialog(
-                preferences = preferences
-                , onSubmit = onPreferencesChange
+                preferences = opened
+                , onSubmit = { onPreferencesChange(submitPreferences(state, opened, it, preferences)) }
                 , onDismiss = { isPreferencesOpen = false }
-            )
-        }
-
-        if (isThemeOpen) {
-            ThemeDialog(
-                current = state.theme
-                , onSelect = { state.setTheme(it) }
-                , onDismiss = { isThemeOpen = false }
             )
         }
 

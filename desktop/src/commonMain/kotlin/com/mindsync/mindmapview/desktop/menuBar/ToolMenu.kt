@@ -14,8 +14,7 @@ import com.mindsync.mindmapview.desktop.ImportFormat
 
 @Composable
 internal fun ToolMenu(
-    onTheme: () -> Unit
-    , onImport: (ImportFormat) -> Unit
+    onImport: (ImportFormat) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var importExpanded by remember { mutableStateOf(false) }
@@ -31,13 +30,6 @@ internal fun ToolMenu(
                 importExpanded = false
             }
         ) {
-            DropdownMenuItem(
-                text = { Text("Map Theme...") }
-                , onClick = {
-                    expanded = false
-                    onTheme()
-                }
-            )
             Box {
                 DropdownMenuItem(
                     text = { Text("Import") }

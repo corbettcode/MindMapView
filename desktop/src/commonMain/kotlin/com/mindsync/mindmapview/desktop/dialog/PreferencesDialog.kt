@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.model.MapThemes
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
@@ -82,6 +83,8 @@ data class UserPreferences(
     val nodeFont: NodeFont = NodeFont.DEFAULT,
     // How the note of a node is shown.
     val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER,
+    // The id of the theme new maps start in, which is also the one last chosen for an open map.
+    val mapThemeId: String = MapThemes.CLASSIC.id,
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
@@ -116,11 +119,19 @@ fun PreferencesDialog(
                     , modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                 ) {
                     DropdownPicker(
-                        label = "Theme"
+                        label = "Window theme"
                         , choices = ThemeMode.entries
                         , choiceLabel = { it.label }
                         , selectedChoice = edited.themeMode
                         , onSelect = { edited = edited.copy(themeMode = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
+                    DropdownPicker(
+                        label = "Map theme"
+                        , choices = MapThemes.all
+                        , choiceLabel = { it.name }
+                        , selectedChoice = MapThemes.byId(edited.mapThemeId)
+                        , onSelect = { edited = edited.copy(mapThemeId = it.id) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     DropdownPicker(
