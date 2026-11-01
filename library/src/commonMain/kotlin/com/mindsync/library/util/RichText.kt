@@ -65,6 +65,26 @@ object RichText {
         return state.toHtml()
     }
 
+    /**
+     * Returns the lines of [html] as text to draw, one for each paragraph, line break or list item, leaving out
+     * those that are blank. [parse] puts a space between them instead, which cannot be told from one in the text.
+     */
+    fun lines(html: String): List<AnnotatedString> {
+        if (html.isBlank()) return emptyList()
+        // The editor's own HTML closes the styles at each line break, so each piece of it is whole on its own.
+        return RichTextState()
+            .setHtml(html)
+            .toHtml()
+            .split(LINE_BOUNDARY)
+            .map { it.replace(LIST_TAG, "") }
+            .filter { it.isNotBlank() }
+            .map { parse(it) }
+            .filter { it.text.isNotBlank() }
+    }
+
+    private val LINE_BOUNDARY = Regex("""<br\s*/?>|</?(?:p|li|div|h[1-6])(?:\s[^>]*)?>""")
+    private val LIST_TAG = Regex("""</?(?:ul|ol)(?:\s[^>]*)?>""")
+
     /** Returns [text] as rich text that shows it as it is, its line breaks included. */
     fun fromPlainText(text: String): String {
         return text
