@@ -108,6 +108,10 @@ internal object WebPlatform : AppPlatform {
             jsReadFile(document.js).await<JsString>().toString()
         }
 
+        override suspend fun readBytes(document: MapDocument): ByteArray = withFileErrors {
+            Base64.decode(jsReadFileBase64(document.js).await<JsString>().toString())
+        }
+
         override suspend fun write(
             document: MapDocument
             , content: ByteArray

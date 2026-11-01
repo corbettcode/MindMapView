@@ -62,6 +62,12 @@ internal class DesktopPlatform(
             throw MapFileException(e.message)
         }
 
+        override suspend fun readBytes(document: MapDocument): ByteArray = try {
+            document.file.readBytes()
+        } catch (e: IOException) {
+            throw MapFileException(e.message)
+        }
+
         override suspend fun write(
             document: MapDocument
             , content: ByteArray

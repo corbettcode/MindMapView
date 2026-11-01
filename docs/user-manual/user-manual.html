@@ -654,6 +654,7 @@
         <tr><th>Item</th><th>Reads</th></tr>
         <tr><td>Map...</td><td>A MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
         <tr><td>Markdown (md)...</td><td>A Markdown document, as a map of its headings and lists (see below).</td></tr>
+        <tr><td>XMind (xmind)...</td><td>An XMind map, from XMind 8 or a later XMind (see below).</td></tr>
     </table>
     <p>
         From a Markdown document, each heading and each list item becomes a node. A heading holds the lower
@@ -672,6 +673,16 @@
         column. Each row becomes a node under that branch, named after its first cell, and the other cells become
         that node's attributes, named after their column headers (see <a href="#attributes">Attributes</a>). When
         the first header is empty, the rows go straight under the heading.
+    </p>
+    <p>
+        From an XMind map, each topic becomes a node, and its notes become the node's note. A topic's own
+        subtopics come first among its children, followed by its floating topics, summaries and callouts. When
+        the map has one sheet, its central topic is the root; when it has several, the root is named after the
+        file, and each sheet's central topic is a branch of it. Markers become emojis in front of the text, such
+        as 1&#xFE0F;&#x20E3; for priority 1 and &#9989; for a finished task. Labels become a Labels attribute,
+        a web link makes the topic's text a link, and relationships become arrow links. Fill and text colors,
+        bold and italic text, the shapes MindMapView has, and folded branches are kept; images, boundaries and
+        the map's theme are not. A password-protected map cannot be imported.
     </p>
 
     <h3>Exporting</h3>

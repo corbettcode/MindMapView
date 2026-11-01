@@ -297,7 +297,7 @@ internal class MindMapApp(
     private suspend fun importMap(format: ImportFormat) {
         val chosen = platform.files.chooseToOpen(document, format.extensions) ?: return
         try {
-            state.replaceTree(readImport(format, chosen.name, platform.files.read(chosen)))
+            state.replaceTree(readImport(format, chosen, platform.files))
         }
         catch (e: CancellationException) {
             throw e

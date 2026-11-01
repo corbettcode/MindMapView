@@ -72,6 +72,13 @@ interface MapFiles {
     /** @throws MapFileException when [document] cannot be read. */
     suspend fun read(document: MapDocument): String
 
+    /**
+     * Returns the bytes of [document], for a file that is not text.
+     *
+     * @throws MapFileException when [document] cannot be read.
+     */
+    suspend fun readBytes(document: MapDocument): ByteArray
+
     /** @throws MapFileException when [document] cannot be written. */
     suspend fun write(
         document: MapDocument

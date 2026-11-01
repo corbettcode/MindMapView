@@ -43,6 +43,7 @@ internal fun ToolMenu(
                     listOf(
                         "Map..." to ImportFormat.MAP
                         , "Markdown (md)..." to ImportFormat.MARKDOWN
+                        , "XMind (xmind)..." to ImportFormat.XMIND
                     ).forEach { (text, format) ->
                         DropdownMenuItem(
                             text = { Text(text) }

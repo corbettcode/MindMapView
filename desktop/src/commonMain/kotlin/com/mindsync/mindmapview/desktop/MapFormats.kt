@@ -4,6 +4,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.io.XMind
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 /** The extension of the files mind maps are saved in, which keep all there is of a mind map. */
@@ -17,27 +18,36 @@ internal val OPENABLE_EXTENSIONS = listOf(MIND_MAP_VIEW_EXTENSION, FREE_MIND_EXT
 /** The extension of Markdown documents, which are imported as a mind map of their headings and lists. */
 internal const val MARKDOWN_EXTENSION = "." + Markdown.EXTENSION
 
+/** The extension of XMind maps, which are imported. */
+internal const val XMIND_EXTENSION = "." + XMind.EXTENSION
+
 /** What the nodes of a mind map can be imported from, in files with one of the [extensions]. */
 internal enum class ImportFormat(
     val extensions: List<String>
 ) {
     MAP(OPENABLE_EXTENSIONS)
     , MARKDOWN(listOf(MARKDOWN_EXTENSION))
+    , XMIND(listOf(XMIND_EXTENSION))
 }
 
 /**
- * Reads the [content] of a file named [fileName] in [format] as a mind map. A Markdown document without a single
- * top heading gets a root named after the file.
+ * Reads [document] from [files] as a mind map in [format]. A Markdown document without a single top heading,
+ * and an XMind map of several sheets, get a root named after the file.
  *
- * @throws IllegalArgumentException when [content] is not a mind map in that format.
+ * @throws IllegalArgumentException when [document] is not a mind map in that format.
+ * @throws MapFileException when [document] cannot be read.
  */
-internal fun readImport(
+internal suspend fun readImport(
     format: ImportFormat
-    , fileName: String
-    , content: String
-): Tree<Any> = when (format) {
-    ImportFormat.MAP -> readMap(fileName, content)
-    ImportFormat.MARKDOWN -> Markdown.read(content, title = fileName.substringBeforeLast('.'))
+    , document: MapDocument
+    , files: MapFiles
+): Tree<Any> {
+    val title = document.name.substringBeforeLast('.')
+    return when (format) {
+        ImportFormat.MAP -> readMap(document.name, files.read(document))
+        ImportFormat.MARKDOWN -> Markdown.read(files.read(document), title)
+        ImportFormat.XMIND -> XMind.read(files.readBytes(document), title)
+    }
 }
 
 /** The name of a mind map that has no file yet, and whose root node has no text to name it after. */

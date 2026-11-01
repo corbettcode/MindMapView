@@ -92,6 +92,20 @@ internal fun jsHasHandle(file: JsAny): Boolean = js("!!file.handle")
 internal fun jsReadFile(file: JsAny): Promise<JsString> =
     js("(file.handle ? file.handle.getFile() : Promise.resolve(file.file)).then(f => f.text())")
 
+/** Resolves to the bytes of [file] in base64, as bytes are not handed to the app as they are. */
+internal fun jsReadFileBase64(file: JsAny): Promise<JsString> = js(
+    """(file.handle ? file.handle.getFile() : Promise.resolve(file.file))
+        .then(f => f.arrayBuffer())
+        .then(buffer => {
+            const bytes = new Uint8Array(buffer);
+            let text = '';
+            for (let i = 0; i < bytes.length; i += 0x8000) {
+                text += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            }
+            return btoa(text);
+        })"""
+)
+
 /** Writes the bytes in [base64] to [file], or downloads them under its name when it has no handle. */
 internal fun jsWriteFile(
     file: JsAny

@@ -5,6 +5,8 @@ internal class XmlElement(
     val attributes: Map<String, String>,
     val children: List<XmlElement>,
     val rawContent: String?,
+    // The text of the element itself, without that of its children.
+    val text: String = "",
 )
 
 private val ENTITY = Regex("&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);")
@@ -39,24 +41,32 @@ private fun codePointToString(codePoint: Int): String? {
 }
 
 /**
- * Just enough of an XML parser for mind map files: elements and attributes, with text content ignored. The
- * content of a FreeMind <richcontent> element is HTML, so it is kept as it is written instead of being parsed.
+ * Just enough of an XML parser for mind map files: elements, their attributes and their text. The content of a
+ * FreeMind <richcontent> element is HTML, so it is kept as it is written instead of being parsed.
  */
 internal class XmlParser(private val source: String) {
     private var position = 0
 
     fun parse(): List<XmlElement> = parseElements()
 
-    private fun parseElements(): List<XmlElement> {
+    private fun parseElements(text: StringBuilder? = null): List<XmlElement> {
         val elements = mutableListOf<XmlElement>()
         while (true) {
-            position = source.indexOf('<', position)
-            if (position == -1) {
+            val next = source.indexOf('<', position)
+            text?.append(decodeEntities(source.substring(position, if (next == -1) source.length else next)))
+            if (next == -1) {
                 position = source.length
                 return elements
             }
+            position = next
             when {
                 source.startsWith("<!--", position) -> skipPast("-->")
+                source.startsWith(CDATA_START, position) -> {
+                    val end = source.indexOf(CDATA_END, position)
+                    if (end == -1) throw malformed()
+                    text?.append(source, position + CDATA_START.length, end)
+                    position = end + CDATA_END.length
+                }
                 source.startsWith("<?", position) -> skipPast("?>")
                 source.startsWith("<!", position) -> skipPast(">")
                 source.startsWith("</", position) -> {
@@ -106,7 +116,9 @@ internal class XmlParser(private val source: String) {
             position = end + "</richcontent>".length
             return XmlElement(name, attributes, emptyList(), rawContent)
         }
-        return XmlElement(name, attributes, parseElements(), null)
+        val text = StringBuilder()
+        val children = parseElements(text)
+        return XmlElement(name, attributes, children, null, text.toString())
     }
 
     private fun peek(): Char = if (position < source.length) source[position] else throw malformed()
@@ -129,4 +141,9 @@ internal class XmlParser(private val source: String) {
     }
 
     private fun malformed() = IllegalArgumentException("Malformed XML near character $position")
+
+    private companion object {
+        const val CDATA_START = "<![CDATA["
+        const val CDATA_END = "]]>"
+    }
 }
