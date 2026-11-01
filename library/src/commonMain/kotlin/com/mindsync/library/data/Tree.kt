@@ -2,6 +2,9 @@ package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.LevelStyle
+import com.mindsync.library.model.MapTheme
+import com.mindsync.library.model.MapThemes
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
@@ -30,6 +33,9 @@ class Tree<T> {
     private val nodeBorders = mutableMapOf<String, NodeBorder>()
 
     private val foldedIds = mutableSetOf<String>()
+
+    /** The look of the map, which the nodes follow where they have no colors or border of their own. */
+    var theme: MapTheme = MapThemes.CLASSIC
 
     private val _arrowLinks = mutableListOf<ArrowLink>()
 
@@ -132,6 +138,46 @@ class Tree<T> {
         if (border.isNone) nodeBorders.remove(id) else nodeBorders[id] = border
     }
 
+    /**
+     * Returns the fill a node is drawn in: its own color, or the theme's for its level when its color is still the
+     * one its shape starts with.
+     */
+    fun fillOf(id: String): Color {
+        val node = getNode(id)
+        if (node.color != defaultFillOf(node)) return node.color
+        return levelStyleOf(id).fill ?: node.color
+    }
+
+    /**
+     * Returns the color a node's text is drawn in: its own color, or the theme's when it is still the one its shape
+     * starts with. A line node has no fill, so its text takes the theme's color for text on the background.
+     */
+    fun textColorOf(id: String): Color {
+        val node = getNode(id)
+        if (node.textColor != defaultTextColorOf(node)) return node.textColor
+        val themed = if (node is LineNodeData) theme.lineNodeText else levelStyleOf(id).text
+        return themed ?: node.textColor
+    }
+
+    /** Returns the border a node is drawn with: its own, or the theme's for its level when it has none. */
+    fun drawnBorderOf(id: String): NodeBorder = borderOf(id).takeUnless { it.isNone } ?: levelStyleOf(id).border
+
+    /** Returns how the theme draws the nodes of the level a node is on: the root, a main topic or a subtopic. */
+    internal fun levelStyleOf(id: String): LevelStyle {
+        val parentId = getNode(id).parentId
+        return when {
+            parentId == null -> theme.root
+            getNode(parentId).parentId == null -> theme.mainTopic
+            else -> theme.subtopic
+        }
+    }
+
+    private fun defaultFillOf(node: NodeData<*>): Color =
+        if (node.parentId == null) ROOT_COLOR else node.shape.defaultColor
+
+    private fun defaultTextColorOf(node: NodeData<*>): Color =
+        if (node.parentId == null) ROOT_TEXT_COLOR else node.shape.defaultTextColor
+
     /** Returns the line settings the node has of its own; [NodeLine] with nothing set when it has none. */
     fun lineOf(id: String): NodeLine = nodeLines[id] ?: NodeLine()
 
@@ -212,6 +258,7 @@ class Tree<T> {
         , nodeBorders = nodeBorders.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
+        , theme = theme
         , isRootPlaced = isRootPlaced
         , isRootCentered = isRootCentered
         , isRootDragged = isRootDragged
@@ -231,6 +278,7 @@ class Tree<T> {
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()
         _arrowLinks.addAll(snapshot.arrowLinks)
+        theme = snapshot.theme
         isRootPlaced = snapshot.isRootPlaced
         isRootCentered = snapshot.isRootCentered
         isRootDragged = snapshot.isRootDragged
@@ -682,5 +730,6 @@ class Tree<T> {
         private const val ROOT_EMOJI = "🌱"
 
         internal val ROOT_COLOR = Color(0xFF336770)
+        internal val ROOT_TEXT_COLOR = NodeShape.OVAL.defaultTextColor
     }
 }

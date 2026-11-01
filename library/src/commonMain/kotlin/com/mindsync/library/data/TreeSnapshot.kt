@@ -1,6 +1,7 @@
 package com.mindsync.library.data
 
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapTheme
 
 /**
  * All there is of a [Tree] at one time, to put it back as it was.
@@ -19,6 +20,7 @@ import com.mindsync.library.model.LayoutSide
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
  * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
  * annotations or relationships.
+ * @property theme The look of the map.
  * @property isRootPlaced Flag indicating whether the root node has been placed within the layout.
  * @property isRootCentered Flag indicating whether the root node is vertically and horizontally centered in the layout.
  * @property isRootDragged Flag indicating whether the root node is currently being dragged.
@@ -31,6 +33,7 @@ internal class TreeSnapshot(
     , val nodeBorders: Map<String, NodeBorder>
     , val foldedIds: Set<String>
     , val arrowLinks: List<ArrowLink>
+    , val theme: MapTheme
     , val isRootPlaced: Boolean
     , val isRootCentered: Boolean
     , val isRootDragged: Boolean
@@ -47,6 +50,7 @@ internal class TreeSnapshot(
             && nodeBorders == other.nodeBorders
             && foldedIds == other.foldedIds
             && arrowLinks == other.arrowLinks
+            && theme == other.theme
 
     private fun NodeData<*>.content(): List<Any?> =
         listOf(this::class, id, parentId, children, description, note, color, textColor)

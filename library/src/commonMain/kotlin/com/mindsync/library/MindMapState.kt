@@ -41,6 +41,7 @@ import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapTheme
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.NodeGenerator
@@ -300,7 +301,10 @@ class MindMapState(
     fun replaceTree(tree: Tree<*>) {
         recordChange {
             treeChangeJob?.cancel()
+            // The nodes are replaced, not the look of the map.
+            val theme = this.tree.theme
             this.tree.restore(tree.snapshot())
+            this.tree.theme = theme
             val selectedIds = selectedNodes.map { it.id }.filter { it in this.tree.nodes }
             otherSelectedIds = selectedIds.dropLast(1)
             mindMapManager.setSelectedNode(selectedIds.lastOrNull()?.let { this.tree.getNode(it) })
@@ -723,6 +727,15 @@ class MindMapState(
                 tree.setBorder(node.id, border)
                 invalidate()
             }
+        }
+    }
+
+    /** Gives the map another look, as one change. The colors and borders nodes were given by hand stay. */
+    fun setTheme(theme: MapTheme) {
+        if (theme == tree.theme) return
+        recordChange {
+            tree.theme = theme
+            invalidate()
         }
     }
 
