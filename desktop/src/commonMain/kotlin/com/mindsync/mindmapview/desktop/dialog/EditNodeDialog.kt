@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
@@ -62,7 +64,10 @@ import com.mindsync.mindmapview.desktop.NOTE_LINES
 import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
+import com.mindsync.mindmapview.desktop.component.AttributesEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.attributeRowsOf
+import com.mindsync.mindmapview.desktop.component.attributesToKeep
 import com.mindsync.mindmapview.desktop.component.BorderSettings
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.DialogLayout
@@ -134,6 +139,11 @@ fun EditNodeDialog(
     , themeFill: Color?
     , themeText: Color?
     , themeLineNodeText: Color?
+    , attributes: List<NodeAttribute>
+    // The names other nodes have attributes of, to add one of at a click.
+    , knownAttributeNames: List<String>
+    // Whether the attributes are open to start with, as when they are what the dialog was opened for.
+    , isAttributesOpenOnStart: Boolean
     , mapEmojis: List<String>
     , emojiTones: Map<String, String>
     , onToneChange: (base: String, variant: String) -> Unit
@@ -145,6 +155,7 @@ fun EditNodeDialog(
         , textColor: Color
         , line: NodeLine
         , border: NodeBorder
+        , attributes: List<NodeAttribute>
     ) -> Unit
     , onDismiss: () -> Unit
     , onAddAnother: (() -> Unit)? = null
@@ -187,6 +198,12 @@ fun EditNodeDialog(
     var isBorderOpen by remember { mutableStateOf(!border.isNone) }
     // Open when the node has a note, as the mind map marks it.
     var isNoteOpen by remember { mutableStateOf(note.isNotBlank()) }
+    // Open when the node has attributes, as the mind map marks them, or when they are what the dialog is for.
+    var isAttributesOpen by remember { mutableStateOf(isAttributesOpenOnStart || attributes.isNotEmpty()) }
+    val attributeRows = remember { mutableStateListOf(*attributeRowsOf(attributes).toTypedArray()) }
+    var isAttributesFocused by remember { mutableStateOf(false) }
+    // Opened for its attributes, a node without any starts in the name of its empty row, to type one in at once.
+    val startsInAttributes = isAttributesOpenOnStart && attributes.isEmpty()
 
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
@@ -214,6 +231,7 @@ fun EditNodeDialog(
             , selectedTextColor
             , selectedLine
             , selectedBorder
+            , attributesToKeep(attributeRows)
         )
     }
 
@@ -230,7 +248,7 @@ fun EditNodeDialog(
         , onCloseRequest = onDismiss
     ) {
         LaunchedEffect(Unit) {
-            descriptionFocusRequester.requestFocus()
+            if (!startsInAttributes) descriptionFocusRequester.requestFocus()
         }
         // Enter clicks Save & Close, wherever the focus is but in the note, whose lines are typed with Enter. A line
         // of the node's text is typed with Shift+Enter or Alt+Enter instead.
@@ -240,7 +258,7 @@ fun EditNodeDialog(
                 .onPreviewKeyEvent { event ->
                     when {
                         event.key != Key.Enter && event.key != Key.NumPadEnter -> false
-                        isNoteFocused -> false
+                        isNoteFocused || isAttributesFocused -> false
                         event.type != KeyEventType.KeyDown -> true
                         event.isShiftPressed || event.isAltPressed -> {
                             if (isDescriptionFocused) richTextState.replaceSelectedText("\n")
@@ -459,6 +477,26 @@ fun EditNodeDialog(
                                 , modifier = noteModifier
                             )
                         }
+                    }
+                }
+                , belowNote = {
+                    CollapsibleSection(
+                        title = "Attributes"
+                        , isOpen = isAttributesOpen
+                        , onToggle = {
+                            // The fields are gone once closed, and do not tell that they lost the focus.
+                            if (isAttributesOpen) isAttributesFocused = false
+                            isAttributesOpen = !isAttributesOpen
+                        }
+                    ) {
+                        AttributesEditor(
+                            rows = attributeRows
+                            , knownNames = knownAttributeNames
+                            , isFocusedOnStart = startsInAttributes
+                            , modifier = Modifier
+                                .padding(12.dp)
+                                .onFocusChanged { isAttributesFocused = it.hasFocus }
+                        )
                     }
                 }
                 , buttons = {

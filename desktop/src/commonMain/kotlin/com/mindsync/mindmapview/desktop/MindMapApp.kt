@@ -10,8 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -66,8 +64,6 @@ val EDIT_DIALOG_MIN_WIDTH = 480.dp
 const val NOTE_LINES = 3
 // The room an outlined text field leaves above and below its text.
 val TEXT_FIELD_VERTICAL_PADDING = 32.dp
-private val ATTRIBUTES_DIALOG_SIZE = DpSize(560.dp, 480.dp)
-private val ATTRIBUTES_DIALOG_MIN_SIZE = DpSize(420.dp, 320.dp)
 private val NOTE_POPUP_MAX_SIZE = DpSize(360.dp, 320.dp)
 private val NOTE_POPUP_GAP = 16.dp
 val LINK_MENU_MAX_WIDTH = 480.dp
@@ -177,7 +173,7 @@ internal class MindMapApp(
     private var fileMenuExpanded by mutableStateOf(false)
     // The node an arrow link is being added from, while the node it leads to is being chosen.
     private var arrowLinkSourceId by mutableStateOf<String?>(null)
-    private var attributesDialogOpen by mutableStateOf(false)
+    private var isAttributesEditRequested by mutableStateOf(false)
     // Space is typed in a dialog and chooses the item of a menu, so it folds no node while one is open.
     var isDialogOpen by mutableStateOf(false)
         private set
@@ -486,7 +482,7 @@ internal class MindMapApp(
                 true
             }
             event.isAltPressed && event.key == Key.F9 -> {
-                attributesDialogOpen = state.selectedNode != null
+                isAttributesEditRequested = state.selectedNode != null
                 true
             }
             event.key == Key.Escape && arrowLinkSourceId != null -> {
@@ -647,8 +643,8 @@ internal class MindMapApp(
             onArrowLinkSourceIdChange = { arrowLinkSourceId = it },
             createdNodeCount = createdNodeCount,
             onCreatedNodeCountChange = { createdNodeCount = it },
-            attributesDialogOpen = attributesDialogOpen,
-            onAttributesDialogOpenChange = { attributesDialogOpen = it },
+            isAttributesEditRequested = isAttributesEditRequested,
+            onAttributesEditRequestedChange = { isAttributesEditRequested = it },
             onDialogOpenChange = { isDialogOpen = it },
             addChildRequest = addChildRequest,
             preferences = preferences,
@@ -740,8 +736,8 @@ private fun MindMapScreen(
     onArrowLinkSourceIdChange: (String?) -> Unit,
     createdNodeCount: Int,
     onCreatedNodeCountChange: (Int) -> Unit,
-    attributesDialogOpen: Boolean,
-    onAttributesDialogOpenChange: (Boolean) -> Unit,
+    isAttributesEditRequested: Boolean,
+    onAttributesEditRequestedChange: (Boolean) -> Unit,
     onDialogOpenChange: (Boolean) -> Unit,
     addChildRequest: Int,
     preferences: UserPreferences,
@@ -765,6 +761,8 @@ private fun MindMapScreen(
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
+    // Whether the edit dialog was opened for the node's attributes, to start with them open.
+    var isEditForAttributes by remember { mutableStateOf(false) }
     // The arrow link its menu is open for, and where in the mind map it was asked for.
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     // The node its menu is open for, and where in the mind map it was asked for.
@@ -780,7 +778,7 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
-        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
+        operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
             || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
@@ -872,7 +870,7 @@ private fun MindMapScreen(
                         },
                         onOpenLink = openLink,
                         onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
-                        onEditAttributes = { onAttributesDialogOpenChange(true) },
+                        onEditAttributes = { onAttributesEditRequestedChange(true) },
                         onPreferences = { isPreferencesOpen = true },
                         onFind = onFind,
                     )
@@ -951,7 +949,6 @@ private fun MindMapScreen(
                                 // The root is on neither side of itself, so it is not moved.
                                 side = if (node.parentId == null) null else state.tree.sideOf(nodeId),
                                 onEdit = { operation = Operation.Update },
-                                onEditAttributes = { onAttributesDialogOpenChange(true) },
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
@@ -1023,13 +1020,13 @@ private fun MindMapScreen(
             )
         }
 
-        if (attributesDialogOpen && selectedNode != null) {
-            AttributesDialog(
-                attributes = remember(selectedNode.id) { state.tree.attributesOf(selectedNode.id) },
-                knownNames = remember(selectedNode.id) { attributeNames(state.tree) },
-                onSubmit = { state.editNodeAttributes(it) },
-                onDismiss = { onAttributesDialogOpenChange(false) },
-            )
+        // The attributes are edited in the node's edit dialog, opened with them in view.
+        LaunchedEffect(isAttributesEditRequested) {
+            if (!isAttributesEditRequested) return@LaunchedEffect
+            onAttributesEditRequestedChange(false)
+            if (state.selectedNode == null) return@LaunchedEffect
+            isEditForAttributes = true
+            operation = Operation.Update
         }
 
         if (isPreferencesOpen) {
@@ -1114,9 +1111,16 @@ private fun MindMapScreen(
                             else preferences.emojiTones + (base to variant)
                         onPreferencesChange(preferences.copy(emojiTones = emojiTones))
                     },
-                    onSubmit = { description, note, shape, color, textColor, line, border ->
+                    attributes = if (currentOperation is Operation.Update) {
+                        selectedNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
+                    } else {
+                        emptyList()
+                    },
+                    knownAttributeNames = remember(currentOperation) { attributeNames(state.tree) },
+                    isAttributesOpenOnStart = isEditForAttributes,
+                    onSubmit = { description, note, shape, color, textColor, line, border, attributes ->
                         when (currentOperation) {
-                            is Operation.Add -> {
+                            is Operation.Add -> state.groupChanges {
                                 state.addNode(
                                     description,
                                     shape ?: preferences.newNodeShape,
@@ -1127,6 +1131,7 @@ private fun MindMapScreen(
                                     line,
                                     border,
                                 )
+                                state.getAddNode()?.let { state.tree.setAttributes(it.id, attributes) }
                                 onCreatedNodeCountChange(nodeNumber)
                             }
                             Operation.Update -> state.groupChanges {
@@ -1137,10 +1142,14 @@ private fun MindMapScreen(
                                 state.editNodeTextColor(textColor)
                                 state.editNodeLine(line)
                                 state.editNodeBorder(border)
+                                state.editNodeAttributes(attributes)
                             }
                         }
                     },
-                    onDismiss = { operation = null },
+                    onDismiss = {
+                        operation = null
+                        isEditForAttributes = false
+                    },
                     onAddAnother = (currentOperation as? Operation.Add)?.let { add ->
                         { operation = add.copy(count = add.count + 1) }
                     },
@@ -1183,7 +1192,6 @@ private fun NodeMenu(
     position: Offset,
     side: LayoutSide?,
     onEdit: () -> Unit,
-    onEditAttributes: () -> Unit,
     onLink: () -> Unit,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
@@ -1204,13 +1212,6 @@ private fun NodeMenu(
                 onClick = {
                     onDismiss()
                     onEdit()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Attributes") },
-                onClick = {
-                    onDismiss()
-                    onEditAttributes()
                 },
             )
             DropdownMenuItem(
@@ -1392,143 +1393,6 @@ private fun attributeNames(tree: Tree<*>): List<String> {
     val names = mutableSetOf<String>()
     tree.doPreorderTraversal { node -> tree.attributesOf(node.id).forEach { names.add(it.name) } }
     return names.sorted()
-}
-
-@Composable
-private fun AttributesDialog(
-    attributes: List<NodeAttribute>,
-    knownNames: List<String>,
-    onSubmit: (List<NodeAttribute>) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    // A node without attributes starts with an empty row to fill in.
-    val rows = remember {
-        mutableStateListOf<NodeAttribute>().apply { addAll(attributes.ifEmpty { listOf(NodeAttribute("", "")) }) }
-    }
-    val unusedNames = knownNames.filter { name -> rows.none { it.name == name } }
-    // The fields by row and column, the name being column 0 and the value column 1.
-    val focusRequesters = remember { mutableMapOf<Pair<Int, Int>, FocusRequester>() }
-    fun focusRequester(
-        row: Int
-        , column: Int
-    ): FocusRequester = focusRequesters.getOrPut(row to column) { FocusRequester() }
-    // The field to focus once it is there, as a row that was just added is not yet. A node without attributes
-    // starts in the name of its empty row, to type one in at once.
-    var pendingFocus by remember { mutableStateOf(if (attributes.isEmpty()) 0 to 0 else null) }
-
-    // Enter goes on to the next field: from a name to its value, and from a value to the name on the next row,
-    // which is added after the last row.
-    fun onEnter(
-        row: Int
-        , column: Int
-    ) {
-        when {
-            column == 0 -> pendingFocus = row to 1
-            row < rows.lastIndex -> pendingFocus = row + 1 to 0
-            else -> {
-                rows.add(NodeAttribute("", ""))
-                pendingFocus = rows.lastIndex to 0
-            }
-        }
-    }
-
-    fun Modifier.goesOnWithEnter(
-        row: Int
-        , column: Int
-    ): Modifier = focusRequester(focusRequester(row, column)).onPreviewKeyEvent { event ->
-        when {
-            event.key != Key.Enter && event.key != Key.NumPadEnter -> false
-            event.type == KeyEventType.KeyDown -> {
-                onEnter(row, column)
-                true
-            }
-            else -> true
-        }
-    }
-
-    val dialogState = remember { AppDialogState(ATTRIBUTES_DIALOG_SIZE, ATTRIBUTES_DIALOG_MIN_SIZE) }
-
-    AppDialog(
-        title = "Attributes"
-        , state = dialogState
-        , onCloseRequest = onDismiss
-    ) {
-        // In the dialog's own content, which on the desktop is a window of its own, so its fields are there.
-        LaunchedEffect(pendingFocus) {
-            pendingFocus?.let { (row, column) -> focusRequester(row, column).requestFocus() }
-            pendingFocus = null
-        }
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
-                ) {
-                    rows.forEachIndexed { index, attribute ->
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            OutlinedTextField(
-                                value = attribute.name,
-                                visualTransformation = emojiVisualTransformation(),
-                                onValueChange = { rows[index] = attribute.copy(name = it) },
-                                label = { Text("Name") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f).goesOnWithEnter(index, 0),
-                            )
-                            OutlinedTextField(
-                                value = attribute.value,
-                                visualTransformation = emojiVisualTransformation(),
-                                onValueChange = { rows[index] = attribute.copy(value = it) },
-                                label = { Text("Value") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1.4f).goesOnWithEnter(index, 1),
-                            )
-                            TextButton(onClick = { rows.removeAt(index) }) {
-                                Text("\u2715")
-                            }
-                        }
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TextButton(onClick = { rows.add(NodeAttribute("", "")) }) {
-                            Text("+ Add attribute")
-                        }
-                        // The names other nodes have attributes of, each of which adds a row of that name.
-                        unusedNames.forEach { name ->
-                            TextButton(onClick = { rows.add(NodeAttribute(name, "")) }) {
-                                Text("+ $name")
-                            }
-                        }
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Button(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
-                    Button(
-                        onClick = {
-                            // A row that was given no name is no attribute.
-                            onSubmit(rows.map { it.copy(name = it.name.trim()) }.filter { it.name.isNotEmpty() })
-                            onDismiss()
-                        },
-                    ) {
-                        Text("Save & Close")
-                    }
-                }
-            }
-        }
-    }
 }
 
 // A note as its popup shows it: in the colors of its node, by where the pointer was.

@@ -32,10 +32,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 
 /**
- * Lays out a dialog with [settings] above a [note] that takes the room they leave, at least [noteMinHeight], and
- * [buttons] at the bottom. In a dialog too small for that, the note keeps its least height and the settings and note
- * scroll, while the buttons stay in view. Without a [note], as one that is closed, the settings take the room. The
- * height the content needs at the least is passed to [onContentMinHeightChange], for the dialog to be fitted to it.
+ * Lays out a dialog with [settings] above a [note] that takes the room they leave, at least [noteMinHeight],
+ * [belowNote] at its own height under the note, and [buttons] at the bottom. In a dialog too small for that, the
+ * note keeps its least height and the rest scrolls, while the buttons stay in view. Without a [note], as one that is
+ * closed, the settings take the room. The height the content needs at the least is passed to
+ * [onContentMinHeightChange], for the dialog to be fitted to it.
  */
 @Composable
 fun DialogLayout(
@@ -47,6 +48,7 @@ fun DialogLayout(
     , note: (@Composable (Modifier) -> Unit)?
     , buttons: @Composable RowScope.() -> Unit
     , modifier: Modifier = Modifier
+    , belowNote: (@Composable ColumnScope.() -> Unit)? = null
 ) {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
@@ -54,14 +56,17 @@ fun DialogLayout(
     // follows from them in one pass.
     var settingsHeight by remember { mutableStateOf<Dp?>(null) }
     var buttonsHeight by remember { mutableStateOf<Dp?>(null) }
+    var belowNoteHeight by remember { mutableStateOf(0.dp) }
+    // What is below the note takes a gap above it as well.
+    val belowNoteRoom = if (belowNote != null) gap + belowNoteHeight else 0.dp
 
     val hasNote = note != null
-    LaunchedEffect(settingsHeight, buttonsHeight, hasNote, noteMinHeight) {
+    LaunchedEffect(settingsHeight, buttonsHeight, hasNote, noteMinHeight, belowNoteRoom) {
         val settings = settingsHeight ?: return@LaunchedEffect
         val buttons = buttonsHeight ?: return@LaunchedEffect
         val noteRoom = if (hasNote) gap + noteMinHeight else 0.dp
         onContentMinHeightChange(
-            contentPadding.calculateTopPadding() + settings + noteRoom + gap + buttons
+            contentPadding.calculateTopPadding() + settings + noteRoom + belowNoteRoom + gap + buttons
                 + contentPadding.calculateBottomPadding()
         )
     }
@@ -81,7 +86,7 @@ fun DialogLayout(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            val noteHeight = noteHeight(maxHeight, settingsHeight ?: 0.dp, noteMinHeight, gap)
+            val noteHeight = noteHeight(maxHeight, (settingsHeight ?: 0.dp) + belowNoteRoom, noteMinHeight, gap)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -100,6 +105,16 @@ fun DialogLayout(
                         Modifier
                             .fillMaxWidth()
                             .height(noteHeight)
+                    )
+                }
+                if (belowNote != null) {
+                    Spacer(modifier = Modifier.height(gap))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(gap)
+                        , modifier = Modifier
+                            .fillMaxWidth()
+                            .onSizeChanged { belowNoteHeight = with(density) { it.height.toDp() } }
+                        , content = belowNote
                     )
                 }
             }

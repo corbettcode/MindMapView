@@ -34,6 +34,7 @@ class DialogLayoutTest {
         , settingsHeight: Dp
         , onMinHeight: (Dp) -> Unit = {}
         , hasNote: Boolean = true
+        , belowNoteHeight: Dp? = null
     ): @androidx.compose.runtime.Composable () -> Unit = {
         Box(modifier = Modifier.size(400.dp, height)) {
             DialogLayout(
@@ -44,6 +45,9 @@ class DialogLayoutTest {
                 , settings = { Spacer(modifier = Modifier.fillMaxWidth().height(settingsHeight)) }
                 , note = if (hasNote) { modifier -> Box(modifier = modifier.testTag("note")) } else null
                 , buttons = { Text("OK", modifier = Modifier.height(40.dp)) }
+                , belowNote = belowNoteHeight?.let { height ->
+                    { Box(modifier = Modifier.fillMaxWidth().height(height).testTag("below")) }
+                }
             )
         }
     }
@@ -84,5 +88,47 @@ class DialogLayoutTest {
         assertEquals(300.dp + gap + 40.dp, minHeight)
         onNodeWithTag("note").assertDoesNotExist()
         onNodeWithText("OK").assertIsDisplayed()
+    }
+
+    // What is below the note keeps its own height, and the note takes the room that leaves.
+    @Test
+    fun noteLeavesRoomForWhatIsBelowIt() = runComposeUiTest {
+        setContent(dialogContent(height = 600.dp, settingsHeight = 300.dp, belowNoteHeight = 60.dp))
+        onNodeWithTag("note").assertHeightIsEqualTo(600.dp - 300.dp - gap - gap - 60.dp - gap - 40.dp)
+        onNodeWithTag("below").assertHeightIsEqualTo(60.dp)
+        onNodeWithText("OK").assertIsDisplayed()
+    }
+
+    @Test
+    fun contentMinimumCountsWhatIsBelowTheNote() = runComposeUiTest {
+        var minHeight by mutableStateOf<Dp?>(null)
+        setContent(
+            dialogContent(
+                height = 300.dp
+                , settingsHeight = 500.dp
+                , onMinHeight = { minHeight = it }
+                , belowNoteHeight = 60.dp
+            )
+        )
+        waitForIdle()
+        assertEquals(500.dp + gap + noteMin + gap + 60.dp + gap + 40.dp, minHeight)
+    }
+
+    // Without a note, what would be below it follows the settings.
+    @Test
+    fun contentMinimumWithoutANoteCountsWhatIsBelowIt() = runComposeUiTest {
+        var minHeight by mutableStateOf<Dp?>(null)
+        setContent(
+            dialogContent(
+                height = 600.dp
+                , settingsHeight = 300.dp
+                , onMinHeight = { minHeight = it }
+                , hasNote = false
+                , belowNoteHeight = 60.dp
+            )
+        )
+        waitForIdle()
+        assertEquals(300.dp + gap + 60.dp + gap + 40.dp, minHeight)
+        onNodeWithTag("below").assertIsDisplayed()
     }
 }

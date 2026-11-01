@@ -265,7 +265,7 @@
         Each way opens the <b>Add node</b> dialog, where you give the node its text and style. A new node starts
         with the text <i>node_1</i>, <i>node_2</i> and so on. It takes the shape, colors and border of the last
         child of the node it is added to, so siblings look alike. The first child of a node gets the shape set in
-        Preferences (section <a href="#preferences">15</a>).
+        Preferences (section <a href="#preferences">16</a>).
     </p>
     <p>
         Click <b>Save &amp; Close</b> to add the node, or <b>Add Another</b> to add it and open the dialog again
@@ -291,6 +291,7 @@
         <tr><td>Border</td><td>What is drawn around the node, in a section that opens when the node has a border. Type is None or Line, Width is how thick the line is, and Color is its color. A border starts in the color of the node's text, but is its own color after that: changing the text color does not change it. New nodes have none.</td></tr>
         <tr><td>Line</td><td>The <b>Type</b> (Linear, Bezier, Sharp linear or Sharp bezier), <b>Width</b> and <b>Color</b> of the line from the node's parent. Each can be left as <i>Inherited</i>, to take it from the parent; the node's children inherit it in turn. Click <b>Line</b> to open and close the section.</td></tr>
         <tr><td>Note</td><td>A longer note (section <a href="#notes">7</a>). Click <b>Note</b> to open and close the section.</td></tr>
+        <tr><td>Attributes</td><td>Names and values (section <a href="#attributes">9</a>), below the note. Click <b>Attributes</b> to open and close the section.</td></tr>
     </table>
     <p>
         Press <kbd>Enter</kbd> or click <b>Save &amp; Close</b> to keep your changes, or click <b>Cancel</b> to drop them. To put a
@@ -434,7 +435,7 @@
     <h2>7. Notes</h2>
     <p>
         A note holds more than fits in a node: details, lists, links or pictures. How notes are shown is set by
-        <b>Notes</b> in Preferences (section <a href="#preferences">15</a>):
+        <b>Notes</b> in Preferences (section <a href="#preferences">16</a>):
     </p>
     <ul>
         <li>
@@ -490,15 +491,16 @@
     </p>
     <ul>
         <li>
-            To edit a node's attributes, select it and press <kbd>Alt+F9</kbd>, choose
-            <span class="menu">Edit &rsaquo; Attributes...</span>, or right-click it and choose
-            <span class="menu">Attributes</span>.
+            A node's attributes are edited in its edit dialog, in the <b>Attributes</b> section below the note.
+            Click <b>Attributes</b> to open and close the section; it starts open when the node has attributes.
+            Select a node and press <kbd>Alt+F9</kbd> or choose <span class="menu">Edit &rsaquo; Attributes...</span>
+            to open its edit dialog with the section open. Attributes can also be given to a node as it is added.
         </li>
         <li>
-            In the <b>Attributes</b> dialog, type a <b>Name</b> and <b>Value</b> on each row. Click
+            In the <b>Attributes</b> section, type a <b>Name</b> and <b>Value</b> on each row. Click
             <b>+ Add attribute</b> for a new row, or &#x2715; to delete one.
             <kbd>Enter</kbd> moves from a name to its value, and from a value to the name on the next row; on the
-            last row it adds a new one.
+            last row it adds a new one. Elsewhere in the dialog, <kbd>Enter</kbd> saves and closes it.
         </li>
         <li>
             Buttons such as <b>+ Status</b> add a row named after an attribute that other nodes already have, to
