@@ -181,10 +181,12 @@ class Tree<T> {
         }
     }
 
-    private fun defaultFillOf(node: NodeData<*>): Color =
+    /** Returns the fill a node starts with, which follows the theme for as long as it is not changed. */
+    fun defaultFillOf(node: NodeData<*>): Color =
         if (node.parentId == null) ROOT_COLOR else node.shape.defaultColor
 
-    private fun defaultTextColorOf(node: NodeData<*>): Color =
+    /** Returns the text color a node starts with, which follows the theme for as long as it is not changed. */
+    fun defaultTextColorOf(node: NodeData<*>): Color =
         if (node.parentId == null) ROOT_TEXT_COLOR else node.shape.defaultTextColor
 
     /** Returns the line settings the node has of its own; [NodeLine] with nothing set when it has none. */

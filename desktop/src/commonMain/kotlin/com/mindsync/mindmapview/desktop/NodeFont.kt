@@ -3,6 +3,7 @@ package com.mindsync.mindmapview.desktop
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.mindsync.library.model.MapTheme
 
 /** A bundled font [file] with the [weight] and [style] it draws. */
 data class NodeFontFile(
@@ -48,3 +49,12 @@ suspend fun loadNodeFontFamily(
         bundledFont(face.file, bytes, face.weight, face.style) ?: return null
     }
     ?.let { FontFamily(it) }
+
+/**
+ * Returns the font node text is drawn in for a map in [theme]: the theme's own, or the font the app is set to,
+ * [preference], for a theme without one, as Classic is.
+ */
+internal fun nodeFontFor(
+    theme: MapTheme
+    , preference: NodeFont
+): NodeFont = theme.fontName?.let { name -> NodeFont.entries.firstOrNull { it.label == name } } ?: preference

@@ -125,6 +125,9 @@ fun EditNodeDialog(
     , border: NodeBorder
     , nodeColors: List<Color>
     , textColors: List<Color>
+    // The colors the root starts with, which follow the map's theme; a node with a shape starts with the shape's.
+    , rootColor: Color?
+    , rootTextColor: Color?
     , mapEmojis: List<String>
     , emojiTones: Map<String, String>
     , onToneChange: (base: String, variant: String) -> Unit
@@ -288,22 +291,34 @@ fun EditNodeDialog(
                             .onFocusChanged { isDescriptionFocused = it.hasFocus }
                     )
 
+                    // The colors a node starts with follow the map's theme, so they come first, to go back to.
+                    val themeColor = selectedShape?.defaultColor ?: rootColor
+                    val themeTextColor = selectedShape?.defaultTextColor ?: rootTextColor
                     ColorPicker(
                         label = "Fill"
-                        , colors = remember(color, nodeColors) { (nodeColors + color).distinct() }
+                        , colors = remember(color, nodeColors, themeColor) {
+                            (listOfNotNull(themeColor) + nodeColors + color).distinct()
+                        }
                         , selectedColor = selectedColor
                         , onSelect = { selectedColor = it }
                     )
 
                     ColorPicker(
                         label = "Text"
-                        , colors = remember(textColor, textColors) { (textColors + textColor).distinct() }
+                        , colors = remember(textColor, textColors, themeTextColor) {
+                            (listOfNotNull(themeTextColor) + textColors + textColor).distinct()
+                        }
                         , selectedColor = selectedTextColor
                         , onSelect = {
                             selectedTextColor = it
                             // A border that is not on yet is to start in the color of the text it is turned on with.
                             if (selectedBorder.isNone) selectedBorder = selectedBorder.copy(color = it)
                         }
+                    )
+
+                    Text(
+                        "The first color of each row follows the map's theme."
+                        , style = MaterialTheme.typography.labelSmall
                     )
 
                     CollapsibleSection(

@@ -730,6 +730,13 @@ class MindMapState(
         }
     }
 
+    /** The look of the map, read as state, so what shows it is redrawn when it changes or is undone. */
+    val theme: MapTheme
+        get() {
+            drawTick
+            return tree.theme
+        }
+
     /** Gives the map another look, as one change. The colors and borders nodes were given by hand stay. */
     fun setTheme(theme: MapTheme) {
         if (theme == tree.theme) return

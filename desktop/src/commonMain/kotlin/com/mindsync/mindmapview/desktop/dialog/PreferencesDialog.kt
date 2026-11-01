@@ -132,7 +132,7 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     DropdownPicker(
-                        label = "Node font"
+                        label = "Classic font"
                         , choices = NodeFont.entries
                         , choiceLabel = { it.label }
                         , selectedChoice = edited.nodeFont

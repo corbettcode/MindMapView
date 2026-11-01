@@ -612,9 +612,11 @@ internal class MindMapApp(
             emojiFontFamily = family
         }
         // A newer choice cancels the loading of an older one, and a font that cannot be read leaves the default.
-        LaunchedEffect(preferences.nodeFont) {
+        // A theme's own font wins over the one the app is set to.
+        val nodeFont = nodeFontFor(state.theme, preferences.nodeFont)
+        LaunchedEffect(nodeFont) {
             nodeFontFamily = null
-            nodeFontFamily = loadNodeFontFamily(preferences.nodeFont)
+            nodeFontFamily = loadNodeFontFamily(nodeFont)
         }
         CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
             Screen(onMapPress)
@@ -764,6 +766,7 @@ private fun MindMapScreen(
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
     var isPreferencesOpen by remember { mutableStateOf(false) }
+    var isThemeOpen by remember { mutableStateOf(false) }
     var isReadmeOpen by remember { mutableStateOf(false) }
     var isAboutOpen by remember { mutableStateOf(false) }
     // A node that is removed without being confirmed is removed at once.
@@ -773,8 +776,8 @@ private fun MindMapScreen(
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
-        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
-            || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
+        operation != null || attributesDialogOpen || isRemoveConfirmOpen || isPreferencesOpen || isThemeOpen
+            || isReadmeOpen || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
@@ -877,7 +880,7 @@ private fun MindMapScreen(
                         onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
                     )
-                    ToolMenu(onImport = onImport)
+                    ToolMenu(onTheme = { isThemeOpen = true }, onImport = onImport)
                     HelpMenu(
                         onUserManual = onUserManual
                         , onReadme = { isReadmeOpen = true }
@@ -1033,6 +1036,14 @@ private fun MindMapScreen(
             )
         }
 
+        if (isThemeOpen) {
+            ThemeDialog(
+                current = state.theme
+                , onSelect = { state.setTheme(it) }
+                , onDismiss = { isThemeOpen = false }
+            )
+        }
+
         if (isReadmeOpen) {
             ReadmeDialog(onDismiss = { isReadmeOpen = false })
         }
@@ -1083,6 +1094,12 @@ private fun MindMapScreen(
                     },
                     nodeColors = preferences.nodeColors,
                     textColors = preferences.textColors,
+                    rootColor = selectedNode
+                        ?.takeIf { it.parentId == null }
+                        ?.let { state.tree.defaultFillOf(it) },
+                    rootTextColor = selectedNode
+                        ?.takeIf { it.parentId == null }
+                        ?.let { state.tree.defaultTextColorOf(it) },
                     mapEmojis = remember(currentOperation) { emojisInMap(state.tree) },
                     emojiTones = preferences.emojiTones,
                     onToneChange = { base, variant ->
