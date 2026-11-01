@@ -121,8 +121,9 @@ object FreeMind {
         if (plainText != null) append(" TEXT=\"").append(escapeXml(plainText)).append('"')
         if (depth == 1) append(" POSITION=\"").append(tree.sideOf(node.id).horizontal.name.lowercase()).append('"')
         if (tree.isFolded(node.id)) append(" FOLDED=\"true\"")
-        append(" BACKGROUND_COLOR=\"").append(node.color.toHex()).append('"')
-        append(" COLOR=\"").append(node.textColor.toHex()).append("\">\n")
+        // FreeMind has no themes, so a node is written in the colors it is drawn in.
+        append(" BACKGROUND_COLOR=\"").append(tree.fillOf(node.id).toHex()).append('"')
+        append(" COLOR=\"").append(tree.textColorOf(node.id).toHex()).append("\">\n")
         if (plainText == null) {
             append(indent).append("  <richcontent TYPE=\"NODE\"><html><head></head><body>")
             append(toXhtml(node.description))

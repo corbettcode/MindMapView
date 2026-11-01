@@ -17,6 +17,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapThemes
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 
@@ -37,7 +38,10 @@ object MindMapViewFile {
 
     fun write(tree: Tree<*>): String = buildString {
         append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-        append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append("\">\n")
+        append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append('"')
+        // A map in the Classic theme looks as one saved before there were themes, so it is written as one.
+        if (tree.theme != MapThemes.CLASSIC) append(" theme=\"").append(escapeAttribute(tree.theme.id)).append('"')
+        append(">\n")
         val root = tree.getRootNode()
         if (tree.isRootDragged) {
             append("  <rootposition x=\"").append(root.path.centerX.dpVal)
@@ -63,6 +67,7 @@ object MindMapViewFile {
             ?: throw IllegalArgumentException("Not a MindMapView map: no root <node> element")
 
         val tree = Tree<Any>()
+        tree.theme = MapThemes.byId(map.attributes["theme"])
         val root = tree.getRootNode()
         val usedIds = mutableSetOf(root.id)
         // The root is given this library's own id, whatever id it has in the file.
