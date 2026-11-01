@@ -430,7 +430,7 @@ internal class MindMapApp(
                 return@launch
             }
             val style = newNodeStyle(state.tree, parent, state.layoutSide, defaultShape = preferences.newNodeShape)
-            state.addNodes(nodes, style.shape, style.color, style.textColor)
+            state.addNodes(nodes, style.shape, style.color, style.textColor, border = style.border)
         }
     }
 
@@ -1054,7 +1054,7 @@ private fun MindMapScreen(
                         Operation.Update -> selectedNode?.let { state.tree.lineOf(it.id) } ?: NodeLine()
                     },
                     border = when (currentOperation) {
-                        is Operation.Add -> NodeBorder()
+                        is Operation.Add -> newNodeStyle?.border ?: NodeBorder()
                         Operation.Update -> selectedNode?.let { state.tree.borderOf(it.id) } ?: NodeBorder()
                     },
                     nodeColors = preferences.nodeColors,

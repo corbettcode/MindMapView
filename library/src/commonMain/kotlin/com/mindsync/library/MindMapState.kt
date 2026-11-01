@@ -531,7 +531,8 @@ class MindMapState(
 
     /**
      * Adds the [nodes] and the nodes below them as the last children of the selected node, on [side] of the
-     * root when that is the selected node. Each of them is a [shape] in [color] with text in [textColor].
+     * root when that is the selected node. Each of them is a [shape] in [color] with text in [textColor], and
+     * has [border].
      */
     fun addNodes(
         nodes: List<OutlineNode>
@@ -539,6 +540,7 @@ class MindMapState(
         , color: Color = shape.defaultColor
         , textColor: Color = shape.defaultTextColor
         , side: LayoutSide = layoutSide
+        , border: NodeBorder = NodeBorder()
     ) {
         recordChange {
             val parent = mindMapManager.getSelectedNode() ?: return
@@ -550,6 +552,7 @@ class MindMapState(
             ) {
                 val id = IdGenerator.makeRandomNodeId()
                 tree.addNode(id, parentId, node.description, shape, color, textColor, side)
+                tree.setBorder(id, border)
                 addedIds.add(id)
                 node.children.forEach { add(it, id) }
             }

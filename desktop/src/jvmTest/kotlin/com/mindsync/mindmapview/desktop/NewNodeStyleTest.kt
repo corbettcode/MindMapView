@@ -1,6 +1,9 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
@@ -42,6 +45,22 @@ class NewNodeStyleTest {
         tree.addNode("last", "parent", "last", NodeShape.OVAL, Color.Blue, Color.Yellow, note = "<p>a note</p>")
 
         assertEquals(NewNodeStyle(NodeShape.OVAL, Color.Blue, Color.Yellow), style("parent"))
+    }
+
+    @Test
+    fun nodeTakesTheBorderOfTheLastChildWhateverShapeIsChosen() {
+        val border = NodeBorder(NodeBorderStyle.LINE, NodeLineWidth.FOUR, Color.Green)
+        tree.addNode("first", rootId, "first")
+        tree.addNode("last", rootId, "last", NodeShape.OVAL)
+        tree.setBorder("last", border)
+
+        assertEquals(border, style(rootId).border)
+        assertEquals(border, style(rootId, shape = NodeShape.CIRCLE).border)
+    }
+
+    @Test
+    fun nodeOfAParentWithoutChildrenHasNoBorder() {
+        assertEquals(NodeBorder(), style(rootId).border)
     }
 
     @Test

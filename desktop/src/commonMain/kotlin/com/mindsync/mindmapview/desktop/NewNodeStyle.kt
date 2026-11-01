@@ -1,6 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
@@ -14,6 +15,7 @@ internal data class NewNodeStyle(
     val shape: NodeShape,
     val color: Color,
     val textColor: Color,
+    val border: NodeBorder = NodeBorder(),
 )
 
 /**
@@ -21,7 +23,8 @@ internal data class NewNodeStyle(
  * of a parent to look alike, or a [defaultShape] in its own colors when there is none. The root has a set of
  * children for each side, so it is the last one on [side] that counts for it.
  *
- * A [shape] that was chosen is kept, and only takes the colors of a last child of that shape.
+ * A [shape] that was chosen is kept, and only takes the colors of a last child of that shape. The border of the
+ * last child is taken whatever its shape, as a border looks alike around any shape.
  */
 internal fun newNodeStyle(
     tree: Tree<*>,
@@ -34,8 +37,9 @@ internal fun newNodeStyle(
         .lastOrNull { parent.parentId != null || tree.sideOf(it) == side }
         ?.let { tree.getNode(it) }
     val newShape = shape ?: lastChild?.shape ?: defaultShape
+    val border = lastChild?.let { tree.borderOf(it.id) } ?: NodeBorder()
     return lastChild
         ?.takeIf { it.shape == newShape }
-        ?.let { NewNodeStyle(newShape, it.color, it.textColor) }
-        ?: NewNodeStyle(newShape, newShape.defaultColor, newShape.defaultTextColor)
+        ?.let { NewNodeStyle(newShape, it.color, it.textColor, border) }
+        ?: NewNodeStyle(newShape, newShape.defaultColor, newShape.defaultTextColor, border)
 }

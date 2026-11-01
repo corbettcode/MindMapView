@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🌱 Mind Map&lt;/p&gt;&lt;p&gt;Guidelines&lt;/p&gt;">
+    <node id="117e9001-f73d-4c6a-b547-c16558225aa7" shape="rectangle" side="upper_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Center&lt;/p&gt;">
+      <node id="ec606f96-0470-4fd4-9f4c-a02a53f7af23" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Start&lt;/p&gt;"/>
+      <node id="4fbbba3f-52f3-45e3-aba3-9b64f4cf7205" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;image of topic&lt;/p&gt;"/>
+      <node id="44c82f5a-3592-49d6-95ec-09b7850850c6" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;colors&lt;/p&gt;&lt;p&gt;at least 3&lt;/p&gt;"/>
+    </node>
+    <node id="dcba7e08-e773-4389-861c-14313ff14abe" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Style&lt;/p&gt;">
+      <node id="98325d4a-4f55-429c-8053-5f02968da4bf" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;personal&lt;/p&gt;"/>
+      <node id="50401097-3bd8-4c8f-9d4c-978854a81c79" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;develop&lt;/p&gt;"/>
+    </node>
+    <node id="1d355f40-5948-48da-933e-6b608b3a0b5c" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Keywords&lt;/p&gt;">
+      <node id="c062a0db-7356-49be-a84b-b1f84abd3834" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;print&lt;/p&gt;"/>
+      <node id="fcbf4c8e-798e-437c-9cd5-7e33a8c9613f" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;case letters&lt;/p&gt;">
+        <node id="fd8479a3-87cc-46bb-8a54-ca6cb5260416" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;upper&lt;/p&gt;"/>
+        <node id="9e2299da-cdbd-47d3-8ec2-8e882f79d90b" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;lower&lt;/p&gt;"/>
+      </node>
+      <node id="1dc1094c-27dd-4670-b3b5-a40e84575253" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;lines&lt;/p&gt;"/>
+    </node>
+    <node id="ff90d808-0deb-4df4-9c2c-df9971001dfc" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Use&lt;/p&gt;"/>
+    <node id="af06a2db-b7ff-4df7-9f16-a5b769f4a7ce" shape="rectangle" side="upper_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Clarity&lt;/p&gt;"/>
+  </node>
+</mindmapview>
