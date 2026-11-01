@@ -186,6 +186,7 @@
         <li><a href="#clipboard">Cut, copy and paste</a></li>
         <li><a href="#find">Finding nodes</a></li>
         <li><a href="#files">Files: open, save, import and export</a></li>
+        <li><a href="#themes">Map themes</a></li>
         <li><a href="#preferences">Preferences</a></li>
         <li><a href="#web">The web app</a></li>
         <li><a href="#shortcuts">Keyboard shortcuts</a></li>
@@ -692,7 +693,7 @@
     <h3>Exporting</h3>
     <table>
         <tr><th>Format</th><th>What you get</th></tr>
-        <tr><td>As Image (PNG)...</td><td>A picture of the whole map in light colors on white, including parts that are off screen. Folded branches stay hidden.</td></tr>
+        <tr><td>As Image (PNG)...</td><td>A picture of the whole map in its theme, including parts that are off screen. Folded branches stay hidden.</td></tr>
         <tr><td>As HTML Outline...</td><td>A web page of nested lists, with notes and attributes. Branches can be folded in the browser, and start folded where they are in the map.</td></tr>
         <tr><td>As FreeMind Map (.mm)...</td><td>A map for FreeMind and the programs that read its format. FreeMind only has left and right sides, so nodes on the upper and lower sides go to the left or right.</td></tr>
         <tr><td>As SVG Drawing...</td><td>The same picture as the PNG, as a drawing that stays sharp at any size. Its text can be searched and selected. Browsers and drawing programs open it; on a computer without the map's fonts, they show the text in a font of their own.</td></tr>
@@ -703,14 +704,37 @@
     <p>Exporting doesn't save the map: unsaved changes stay unsaved.</p>
 </section>
 
+<section id="themes">
+    <h2>15. Map themes</h2>
+    <p>
+        A theme gives the whole map a look in one step: its background, the colors of the root, the main topics
+        (the nodes next to the root) and the nodes below them, the colors and width of the lines, borders, and the
+        font. Choose <span class="menu">Tool &rsaquo; Map Theme...</span> and click a theme: the map takes it at once.
+        Try as many as you like; each one can be undone with Undo. The theme is saved in the map's file, so the map
+        looks the same to anyone who opens it.
+    </p>
+    <p>
+        The themes are Classic (the look maps have always had), Ocean, Night, Paper, Meadow and High Contrast.
+    </p>
+    <p>
+        A theme only changes what you haven't changed yourself. A node whose fill, text color, border or line you
+        chose keeps it in every theme. In the edit dialog, the first color of the Fill and Text rows is the one that
+        follows the theme: choose it to give a node back to the theme.
+    </p>
+    <p>
+        The map keeps its theme's colors when Preferences &rsaquo; Theme makes the window dark; choose the Night or
+        High Contrast theme for a dark map. Exported images, SVG drawings and PDFs are drawn in the map's theme too.
+    </p>
+</section>
+
 <section id="preferences">
-    <h2>15. Preferences</h2>
+    <h2>16. Preferences</h2>
     <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> to change:</p>
     <table>
         <tr><th>Setting</th><th>Choices</th></tr>
-        <tr><td>Theme</td><td>System (follow your computer), Light or Dark.</td></tr>
+        <tr><td>Theme</td><td>System (follow your computer), Light or Dark, for the window. The map keeps its own theme (see <a href="#themes">Map themes</a>).</td></tr>
         <tr><td>New node shape</td><td>The shape of the first child added to a node. Later children copy their last sibling.</td></tr>
-        <tr><td>Node font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of every node.</td></tr>
+        <tr><td>Classic font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of maps in the Classic theme. Other themes have their own font.</td></tr>
         <tr><td>Notes</td><td>Flyover, Inline or Hidden: how a node's note is shown (section <a href="#notes">7</a>).</td></tr>
         <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
         <tr><td>Fill colors</td><td>The fill colors offered in the edit dialog.</td></tr>
@@ -723,7 +747,7 @@
         back to the original colors.
     </p>
     <p>
-        Theme, New node shape, Node font and Notes are each chosen from a drop-down list. Click
+        Theme, New node shape, Classic font and Notes are each chosen from a drop-down list. Click
         <b>Save &amp; Close</b> to keep your changes, or <b>Cancel</b> to drop them.
     </p>
     <p>
@@ -732,7 +756,7 @@
 </section>
 
 <section id="web">
-    <h2>16. The web app</h2>
+    <h2>17. The web app</h2>
     <p>
         The web app at <a href="https://corbettcode.github.io/MindMapView/">corbettcode.github.io/MindMapView</a>
         is the same app, running in your browser. It needs a recent browser: Chrome or Edge 119, Firefox 120,
@@ -756,7 +780,7 @@
 </section>
 
 <section id="shortcuts">
-    <h2>17. Keyboard shortcuts</h2>
+    <h2>18. Keyboard shortcuts</h2>
     <h3>Files</h3>
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
@@ -829,7 +853,7 @@
 </section>
 
 <section id="licenses">
-    <h2>18. Open source licenses</h2>
+    <h2>19. Open source licenses</h2>
     <p>
         MindMapView is open source software under the MIT License. Its source code is at
         <a href="https://github.com/corbettcode/MindMapView">github.com/corbettcode/MindMapView</a>.
