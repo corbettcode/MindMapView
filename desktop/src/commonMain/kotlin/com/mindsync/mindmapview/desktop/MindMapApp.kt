@@ -192,6 +192,7 @@ internal class MindMapApp(
     private var findFocusRequest by mutableStateOf(0)
     // Each change of it adds a child to the selected node, as its '+' button does.
     private var addChildRequest by mutableStateOf(0)
+    private var editNodeRequest by mutableStateOf(0)
     // What waits for the unsaved changes to be saved or not, while that is asked.
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
     // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
@@ -505,6 +506,12 @@ internal class MindMapApp(
                 addChildRequest++
                 true
             }
+            !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null && !event.isCtrlPressed &&
+                !event.isAltPressed && !event.isShiftPressed && state.selectedNode != null &&
+                (event.key == Key.Enter || event.key == Key.NumPadEnter) -> {
+                editNodeRequest++
+                true
+            }
             // The File menu goes through its items with the arrow keys while it is open.
             !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null && !event.isCtrlPressed &&
                 !event.isAltPressed && !event.isShiftPressed && event.arrowDirection() != null -> {
@@ -649,6 +656,7 @@ internal class MindMapApp(
             onAttributesEditRequestedChange = { isAttributesEditRequested = it },
             onDialogOpenChange = { isDialogOpen = it },
             addChildRequest = addChildRequest,
+            editNodeRequest = editNodeRequest,
             preferences = preferences,
             onPreferencesChange = { preferences = platform.preferencesStore.update(it) },
             nodeFontFamily = nodeFontFamily,
@@ -742,6 +750,7 @@ private fun MindMapScreen(
     onAttributesEditRequestedChange: (Boolean) -> Unit,
     onDialogOpenChange: (Boolean) -> Unit,
     addChildRequest: Int,
+    editNodeRequest: Int,
     preferences: UserPreferences,
     nodeFontFamily: FontFamily?,
     onPreferencesChange: (UserPreferences) -> Unit,
@@ -794,6 +803,8 @@ private fun MindMapScreen(
         operation = Operation.Add(side = side)
     }
     LaunchedEffect(addChildRequest) { if (addChildRequest > 0) addChild(side = null) }
+    // As a double click on the node does.
+    LaunchedEffect(editNodeRequest) { if (editNodeRequest > 0) operation = Operation.Update }
 
     LaunchedEffect(successMessage) {
         if (successMessage == null) return@LaunchedEffect
