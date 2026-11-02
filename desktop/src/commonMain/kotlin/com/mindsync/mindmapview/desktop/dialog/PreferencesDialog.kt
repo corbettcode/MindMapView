@@ -2,16 +2,14 @@ package com.mindsync.mindmapview.desktop.dialog
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +46,7 @@ import com.mindsync.mindmapview.desktop.NodeFont
 import com.mindsync.mindmapview.desktop.NoteDisplay
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.DialogLayout
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
 import com.mindsync.mindmapview.desktop.component.HsvColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
@@ -119,19 +118,21 @@ fun PreferencesDialog(
         }
     }
 
+    val dialogState = remember { AppDialogState(PREFERENCES_DIALOG_SIZE) }
     AppDialog(
         title = "Preferences"
-        , state = remember { AppDialogState(PREFERENCES_DIALOG_SIZE) }
+        , state = dialogState
         , onCloseRequest = onDismiss
         , isResizable = false
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-                // The settings scroll where the window is too small for them, and the buttons stay in view.
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                    , modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
-                ) {
+            // The settings scroll where the window is too small for them, and the buttons stay at the bottom.
+            DialogLayout(
+                noteMinHeight = 0.dp
+                , gap = 16.dp
+                , contentPadding = PaddingValues(24.dp)
+                , onContentMinHeightChange = { dialogState.contentMinHeight = it }
+                , settings = {
                     DropdownPicker(
                         label = "Map theme"
                         , choices = MapThemes.all
@@ -222,10 +223,8 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                 }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                    , modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-                ) {
+                , note = null
+                , buttons = {
                     Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
@@ -239,7 +238,7 @@ fun PreferencesDialog(
                         Text("Save & Close")
                     }
                 }
-            }
+            )
         }
     }
 }
