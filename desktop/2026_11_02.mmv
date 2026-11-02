@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1" theme="contrast">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🌱 root&lt;/p&gt;" note="&lt;p&gt;The main description.&lt;/p&gt;" noteDisplay="inline">
+    <node id="59272d87-d4b4-4bd5-b544-21655d7443fc" shape="line" side="left" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_3&lt;/p&gt;">
+      <node id="16f70657-504c-45f9-b714-3ed3c2b99baa" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_4&lt;/p&gt;"/>
+      <node id="23efa4d6-bcb1-4b22-a503-01bb6cdaf6e5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_8&lt;/p&gt;"/>
+    </node>
+    <node id="5b4b7bf1-b79f-4b37-baa0-c1dce88bfa68" shape="line" side="left" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_7&lt;/p&gt;"/>
+    <node id="9a6f0d2c-f536-4812-a94b-5d53e8acc467" shape="line" side="upper_left" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_9&lt;/p&gt;">
+      <node id="f22eb9f5-66d9-4155-a74f-f16fe26175e2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_11&lt;/p&gt;"/>
+      <node id="27ec8435-ee0d-4ebb-9320-d3200811b712" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_12&lt;/p&gt;"/>
+    </node>
+    <node id="7f9feb7b-a781-4e90-9091-b75384974ead" shape="line" side="upper_right" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;subject&lt;/p&gt;">
+      <node id="18c78350-cf3c-42d9-a5f0-febe5a17c87c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;node_13&lt;/p&gt;"/>
+    </node>
+    <node id="9ebbe82a-cde0-4310-a2f9-7c0e923968b7" shape="line" side="right" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;actions&lt;/p&gt;" note="&lt;p&gt;This is the action branch.&lt;/p&gt;">
+      <attribute name="name" value="value"/>
+      <node id="40c7158e-ddbd-4493-a525-22cb9bdff468" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;action 1&lt;/p&gt;">
+        <node id="821de986-e8b3-49a8-907a-16412b8de558" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;task 1.1&lt;/p&gt;"/>
+      </node>
+      <node id="a3e079c7-31c8-452e-b39f-85e813184ff9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;action 2&lt;/p&gt;"/>
+      <node id="ea211624-6bee-494c-8a66-750bd66c048f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;action 3&lt;/p&gt;"/>
+    </node>
+  </node>
+</mindmapview>
