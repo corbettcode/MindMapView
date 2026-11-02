@@ -841,12 +841,8 @@ private fun MindMapScreen(
         )
     }
 
-    val isDarkTheme = when (preferences.themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
-    MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()) {
+    // The window is dark around a map on a dark background, and light around one on a light background.
+    MaterialTheme(colorScheme = if (state.theme.isDark) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {

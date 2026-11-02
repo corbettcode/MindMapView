@@ -46,7 +46,6 @@ import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
 import com.mindsync.mindmapview.desktop.NoteDisplay
-import com.mindsync.mindmapview.desktop.ThemeMode
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
@@ -79,7 +78,6 @@ private val EDITOR_BUTTON_WIDTH = 140.dp
  * @property nodeColors The colors available for filling nodes during creation or editing.
  * @property noteDisplay The mode of displaying notes associated with nodes in the mind map.
  * @property textColors The colors available for text within nodes during creation or editing.
- * @property themeMode The preferred theme mode, such as system default, light, or dark.
  */
 data class UserPreferences(
     // The colors offered for an arrow link.
@@ -101,7 +99,6 @@ data class UserPreferences(
     , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     // The text colors offered when a node is added or edited.
     , val textColors: List<Color> = DEFAULT_TEXT_COLORS
-    , val themeMode: ThemeMode = ThemeMode.SYSTEM
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
@@ -135,14 +132,6 @@ fun PreferencesDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                     , modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                 ) {
-                    DropdownPicker(
-                        label = "Window theme"
-                        , choices = ThemeMode.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.themeMode
-                        , onSelect = { edited = edited.copy(themeMode = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
                     DropdownPicker(
                         label = "Map theme"
                         , choices = MapThemes.all

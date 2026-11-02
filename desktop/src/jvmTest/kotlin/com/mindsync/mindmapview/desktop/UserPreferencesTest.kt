@@ -27,7 +27,6 @@ class UserPreferencesTest {
             , newNodeShape = NodeShape.entries.last()
             , nodeColors = listOf(Color(0xFF123456), Color.White)
             , textColors = listOf(Color(0xFFABCDEF))
-            , themeMode = ThemeMode.DARK
         )
         assertEquals(changed, store().update(changed))
         assertEquals(changed, store().preferences)
@@ -35,7 +34,6 @@ class UserPreferencesTest {
 
     @Test
     fun valueThatIsNotKnownIsTheDefault() {
-        stored[UserPreferencesStore.THEME_MODE] = "SEPIA"
         stored[UserPreferencesStore.NEW_NODE_SHAPE] = "STAR"
         stored[UserPreferencesStore.IS_REMOVE_CONFIRMED] = "maybe"
         stored[UserPreferencesStore.NODE_COLORS] = "#123456,teal"

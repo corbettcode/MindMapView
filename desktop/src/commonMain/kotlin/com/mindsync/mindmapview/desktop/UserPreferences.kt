@@ -8,15 +8,6 @@ import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapTheme
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
-enum class ThemeMode {
-    SYSTEM,
-    LIGHT,
-    DARK,
-}
-
-val ThemeMode.label: String
-    get() = name.lowercase().replaceFirstChar { it.uppercase() }
-
 /** How a node's note is shown: not at all, in a popup while the mouse is over the node, or inside the node. */
 enum class NoteDisplay(
     val label: String
@@ -66,15 +57,12 @@ class UserPreferencesStore(
                 ?: defaults.noteDisplay
             , textColors = read(TEXT_COLORS)?.let(::parseColorList)
                 ?: defaults.textColors
-            , themeMode = ThemeMode.entries.firstOrNull { it.name == read(THEME_MODE) }
-                ?: defaults.themeMode
         )
     }
         private set
 
     fun update(newPreferences: UserPreferences): UserPreferences {
         preferences = newPreferences
-        write(THEME_MODE, newPreferences.themeMode.name)
         write(NEW_NODE_SHAPE, newPreferences.newNodeShape.name)
         write(IS_REMOVE_CONFIRMED, newPreferences.isRemoveConfirmed.toString())
         write(NODE_COLORS, newPreferences.nodeColors.joinToString(",") { it.toHex() })
@@ -89,7 +77,6 @@ class UserPreferencesStore(
     }
 
     companion object {
-        const val THEME_MODE = "themeMode"
         const val NEW_NODE_SHAPE = "newNodeShape"
         const val IS_REMOVE_CONFIRMED = "isRemoveConfirmed"
         const val NODE_COLORS = "nodeColors"
