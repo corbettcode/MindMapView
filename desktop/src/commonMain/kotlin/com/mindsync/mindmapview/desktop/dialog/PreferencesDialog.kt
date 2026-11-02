@@ -153,7 +153,7 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     DropdownPicker(
-                        label = "New node shape"
+                        label = "Node shape"
                         , choices = NodeShape.entries
                         , choiceLabel = { it.label }
                         , selectedChoice = edited.newNodeShape
@@ -161,7 +161,7 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     DropdownPicker(
-                        label = "Classic font"
+                        label = "Text font"
                         , choices = NodeFont.entries
                         , choiceLabel = { it.label }
                         , selectedChoice = edited.nodeFont
