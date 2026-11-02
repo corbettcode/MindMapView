@@ -157,22 +157,6 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                         , choiceFontFamily = { fontFamilies[it] }
                     )
-                    DropdownPicker(
-                        label = "Notes"
-                        , choices = NoteDisplay.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.noteDisplay
-                        , onSelect = { edited = edited.copy(noteDisplay = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
-                    DropdownPicker(
-                        label = "Attributes"
-                        , choices = AttributeDisplay.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.attributeDisplay
-                        , onSelect = { edited = edited.copy(attributeDisplay = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                         , modifier = Modifier
@@ -221,6 +205,22 @@ fun PreferencesDialog(
                             )
                         }
                     }
+                    DropdownPicker(
+                        label = "Notes"
+                        , choices = NoteDisplay.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.noteDisplay
+                        , onSelect = { edited = edited.copy(noteDisplay = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
+                    DropdownPicker(
+                        label = "Attributes"
+                        , choices = AttributeDisplay.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.attributeDisplay
+                        , onSelect = { edited = edited.copy(attributeDisplay = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
