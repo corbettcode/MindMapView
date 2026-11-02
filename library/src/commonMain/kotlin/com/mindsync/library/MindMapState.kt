@@ -43,6 +43,7 @@ import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapTheme
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.NodeGenerator
@@ -165,20 +166,28 @@ class MindMapState(
             animateTreeChange()
         }
 
-    private var notesShown by mutableStateOf(false)
+    private var mapNoteDisplay by mutableStateOf(NoteDisplay.FLYOVER)
 
     /**
-     * Whether the notes of the nodes are shown, as a paragraph below the text of each node that has one.
-     * Setting it rearranges the tree, as the nodes change size.
+     * How the notes of the nodes are shown where a node has no way of its own, set with [editNodeNoteDisplay].
+     * Inline, a note is a paragraph below the text of its node. Setting it rearranges the tree, as the nodes
+     * change size.
      */
-    var showNotes: Boolean
-        get() = notesShown
+    var noteDisplay: NoteDisplay
+        get() = mapNoteDisplay
         set(value) {
-            if (value == notesShown) return
-            notesShown = value
-            mindMapManager.showNotes = value
+            if (value == mapNoteDisplay) return
+            mapNoteDisplay = value
+            mindMapManager.noteDisplay = value
             animateTreeChange()
         }
+
+    /** Returns how the note of the node is shown: its own way, or [noteDisplay] when it has none. */
+    fun noteDisplayOf(id: String): NoteDisplay {
+        // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+        drawTick
+        return tree.noteDisplayOf(id) ?: noteDisplay
+    }
 
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
 
@@ -335,6 +344,7 @@ class MindMapState(
         note: String = "",
         line: NodeLine = NodeLine(),
         border: NodeBorder = NodeBorder(),
+        noteDisplay: NoteDisplay? = null,
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
@@ -365,6 +375,11 @@ class MindMapState(
                 addNodeCommand.execute()
                 tree.setLine(addNode.id, line)
                 tree.setBorder(addNode.id, border)
+                if (noteDisplay != null) {
+                    tree.setNoteDisplay(addNode.id, noteDisplay)
+                    // A note shown in the node makes it larger, which it was not measured with.
+                    mindMapManager.update(tree)
+                }
             }
             animateTreeChange()
         }
@@ -504,6 +519,7 @@ class MindMapState(
         , attributes = tree.attributesOf(node.id)
         , line = tree.lineOf(node.id)
         , border = tree.borderOf(node.id)
+        , noteDisplay = tree.noteDisplayOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -527,6 +543,7 @@ class MindMapState(
                 tree.setAttributes(id, branch.attributes)
                 tree.setLine(id, branch.line)
                 tree.setBorder(id, branch.border)
+                tree.setNoteDisplay(id, branch.noteDisplay)
                 pastedIds[node.id] = id
                 branch.children.forEach { paste(it, id) }
             }
@@ -741,6 +758,20 @@ class MindMapState(
         }
     }
 
+    /**
+     * Gives the selected node its own way of showing its note, or with null makes it follow [noteDisplay]
+     * again. The node is measured again, as a note shown inline is in it.
+     */
+    fun editNodeNoteDisplay(noteDisplay: NoteDisplay?) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setNoteDisplay(node.id, noteDisplay)
+                mindMapManager.update(tree)
+                animateTreeChange()
+            }
+        }
+    }
+
     /** The look of the map, read as state, so what shows it is redrawn when it changes or is undone. */
     val theme: MapTheme
         get() {
@@ -793,7 +824,7 @@ class MindMapState(
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.updateNodeNote(node.id, note)
                 // A note that is shown is in the node, which is then measured again to fit it.
-                if (showNotes) {
+                if (noteDisplayOf(node.id) == NoteDisplay.INLINE) {
                     mindMapManager.update(tree)
                     animateTreeChange()
                 } else {
@@ -1150,7 +1181,7 @@ class MindMapState(
         val point = toTreePoint(position)
         val node = findNode(point) ?: return null
         val content =
-            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes, showNotes) ?: return null
+            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes, noteDisplay) ?: return null
         val layout = content.text
         val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
         val textPoint =
@@ -1494,6 +1525,7 @@ private class CopiedNode(
     , val attributes: List<NodeAttribute>
     , val line: NodeLine
     , val border: NodeBorder
+    , val noteDisplay: NoteDisplay?
     , val children: List<CopiedNode>
 )
 

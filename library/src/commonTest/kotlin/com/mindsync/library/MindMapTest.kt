@@ -52,6 +52,7 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.layout.MindMapLeftLayoutManager
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.RichText
@@ -2117,10 +2118,10 @@ class MindMapTest {
         fun child() = state.tree.getNode(childId) as RectangleNodeData
         fun sibling() = state.tree.getNode(siblingId) as RectangleNodeData
         val plain = child().path
-        assertFalse(state.showNotes)
+        assertEquals(NoteDisplay.FLYOVER, state.noteDisplay)
         assertEquals(sibling().path.height, plain.height)
 
-        state.showNotes = true
+        state.noteDisplay = NoteDisplay.INLINE
         waitForIdle()
         assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
         assertTrue(child().path.width.dpVal > plain.width.dpVal)
@@ -2133,10 +2134,51 @@ class MindMapTest {
         waitForIdle()
         assertTrue(sibling().path.height.dpVal > plain.height.dpVal + 10f)
 
-        state.showNotes = false
+        state.noteDisplay = NoteDisplay.FLYOVER
         waitForIdle()
         assertEquals(plain.width, child().path.width)
         assertEquals(plain.height, child().path.height)
+    }
+
+    @Test
+    fun aNodeShowsItsNoteItsOwnWay() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("child", note = "<p>A note that is long enough to be wrapped onto more than one line.</p>")
+        state.addNode("sibling", note = "<p>Another note that is long enough to be wrapped onto two lines.</p>")
+        waitForIdle()
+        val (childId, siblingId) = state.tree.getRootNode().children
+        fun child() = state.tree.getNode(childId) as RectangleNodeData
+        fun sibling() = state.tree.getNode(siblingId) as RectangleNodeData
+        val plain = child().path
+
+        // Inline in one node, while the map shows the notes in a popup.
+        clickNode(child())
+        state.editNodeNoteDisplay(NoteDisplay.INLINE)
+        waitForIdle()
+        assertEquals(NoteDisplay.INLINE, state.noteDisplayOf(childId))
+        assertEquals(NoteDisplay.FLYOVER, state.noteDisplayOf(siblingId))
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+        assertEquals(plain.height, sibling().path.height)
+
+        // A node of its own way is not changed by the map's; the others follow it.
+        clickNode(sibling())
+        state.editNodeNoteDisplay(NoteDisplay.HIDDEN)
+        state.noteDisplay = NoteDisplay.INLINE
+        waitForIdle()
+        assertEquals(NoteDisplay.HIDDEN, state.noteDisplayOf(siblingId))
+        assertEquals(plain.height, sibling().path.height)
+
+        // Following the map again, and undone back to its own way.
+        state.editNodeNoteDisplay(null)
+        waitForIdle()
+        assertEquals(NoteDisplay.INLINE, state.noteDisplayOf(siblingId))
+        assertTrue(sibling().path.height.dpVal > plain.height.dpVal + 20f)
+        state.undo()
+        waitForIdle()
+        assertEquals(NoteDisplay.HIDDEN, state.noteDisplayOf(siblingId))
     }
 
     @Test

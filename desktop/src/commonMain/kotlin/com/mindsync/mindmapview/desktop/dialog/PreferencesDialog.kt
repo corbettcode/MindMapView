@@ -37,13 +37,13 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
-import com.mindsync.mindmapview.desktop.NoteDisplay
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.DialogLayout

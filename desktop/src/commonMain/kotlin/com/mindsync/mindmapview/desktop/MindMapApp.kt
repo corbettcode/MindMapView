@@ -38,6 +38,7 @@ import com.mindsync.library.io.Opml
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
@@ -826,9 +827,9 @@ private fun MindMapScreen(
             }
         }
     }
-    LaunchedEffect(preferences.noteDisplay) { state.showNotes = preferences.noteDisplay == NoteDisplay.INLINE }
+    LaunchedEffect(preferences.noteDisplay) { state.noteDisplay = preferences.noteDisplay }
     // Only a flyover note is shown in a popup: an inline one is in the node already.
-    val isNotePopupShown = preferences.noteDisplay == NoteDisplay.FLYOVER
+    val isNotePopupShown = hoveredNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
     LaunchedEffect(
         hoveredNode?.id, hoveredNode?.note, hoveredNode?.color, hoveredNode?.textColor, isDialogOpen, isNotePopupShown
     ) {
@@ -1120,6 +1121,11 @@ private fun MindMapScreen(
                         is Operation.Add -> newNodeStyle?.border ?: NodeBorder()
                         Operation.Update -> selectedNode?.let { state.tree.borderOf(it.id) } ?: NodeBorder()
                     },
+                    noteDisplay = when (currentOperation) {
+                        is Operation.Add -> null
+                        Operation.Update -> selectedNode?.let { state.tree.noteDisplayOf(it.id) }
+                    },
+                    defaultNoteDisplay = preferences.noteDisplay,
                     nodeColors = preferences.nodeColors,
                     textColors = preferences.textColors,
                     rootColor = selectedNode
@@ -1146,7 +1152,7 @@ private fun MindMapScreen(
                     },
                     knownAttributeNames = remember(currentOperation) { attributeNames(state.tree) },
                     isAttributesOpenOnStart = isEditForAttributes,
-                    onSubmit = { description, note, shape, color, textColor, line, border, attributes ->
+                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay ->
                         when (currentOperation) {
                             is Operation.Add -> state.groupChanges {
                                 state.addNode(
@@ -1158,6 +1164,7 @@ private fun MindMapScreen(
                                     note,
                                     line,
                                     border,
+                                    noteDisplay,
                                 )
                                 state.getAddNode()?.let { state.tree.setAttributes(it.id, attributes) }
                                 onCreatedNodeCountChange(nodeNumber)
@@ -1170,6 +1177,7 @@ private fun MindMapScreen(
                                 state.editNodeTextColor(textColor)
                                 state.editNodeLine(line)
                                 state.editNodeBorder(border)
+                                state.editNodeNoteDisplay(noteDisplay)
                                 state.editNodeAttributes(attributes)
                             }
                         }

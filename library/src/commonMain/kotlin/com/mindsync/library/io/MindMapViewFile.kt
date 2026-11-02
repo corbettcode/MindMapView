@@ -18,12 +18,13 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 
 /**
  * Reads and writes mind maps in this library's own `.mmv` format, which keeps all there is of a [Tree]:
- * each node's shape, colors, rich text, note, attributes and whether it is folded, the side of the root each
+ * each node's shape, colors, rich text, note and how it is shown, attributes and whether it is folded, the side of the root each
  * of its children is on, the arrow links, and where the root is when the user dragged it there.
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
@@ -85,6 +86,7 @@ object MindMapViewFile {
         tree.setAttributes(root.id, rootElement.nodeAttributes())
         tree.setLine(root.id, rootElement.line())
         tree.setBorder(root.id, rootElement.border(tree.getRootNode().textColor))
+        tree.setNoteDisplay(root.id, rootElement.noteDisplay())
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -141,6 +143,7 @@ object MindMapViewFile {
         attribute("textColor", node.textColor.toHex())
         attribute("text", node.description)
         if (node.note.isNotEmpty()) attribute("note", node.note)
+        tree.noteDisplayOf(node.id)?.let { attribute("noteDisplay", it.name.lowercase()) }
         val line = tree.lineOf(node.id)
         line.style?.let { attribute("lineStyle", it.freeMindName) }
         line.color?.let { attribute("lineColor", it.toHex()) }
@@ -216,11 +219,15 @@ object MindMapViewFile {
         tree.setAttributes(id, element.nodeAttributes())
         tree.setLine(id, element.line())
         tree.setBorder(id, element.border(node.textColor))
+        tree.setNoteDisplay(id, element.noteDisplay())
         tree.setFolded(id, element.attributes["folded"] == "true")
         return id
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    private fun XmlElement.noteDisplay(): NoteDisplay? =
+        NoteDisplay.entries.firstOrNull { it.name.equals(attributes["noteDisplay"], ignoreCase = true) }
 
     // A border saved without a color of its own was drawn in the color of the node's text.
     private fun XmlElement.border(textColor: Color): NodeBorder = NodeBorder(

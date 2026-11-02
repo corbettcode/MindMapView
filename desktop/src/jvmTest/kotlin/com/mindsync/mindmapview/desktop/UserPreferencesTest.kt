@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals

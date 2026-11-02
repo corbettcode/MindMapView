@@ -5,6 +5,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
@@ -31,6 +32,7 @@ class Tree<T> {
 
     private val nodeLines = mutableMapOf<String, NodeLine>()
     private val nodeBorders = mutableMapOf<String, NodeBorder>()
+    private val nodeNoteDisplays = mutableMapOf<String, NoteDisplay>()
 
     private val foldedIds = mutableSetOf<String>()
 
@@ -136,6 +138,18 @@ class Tree<T> {
     ) {
         getNode(id)
         if (border.isNone) nodeBorders.remove(id) else nodeBorders[id] = border
+    }
+
+    /** Returns how the node's note is shown when it was given a way of its own, or null when it follows the map. */
+    fun noteDisplayOf(id: String): NoteDisplay? = nodeNoteDisplays[id]
+
+    /** Gives the node its own way of showing its note, or with null makes it follow the map again. */
+    fun setNoteDisplay(
+        id: String
+        , noteDisplay: NoteDisplay?
+    ) {
+        getNode(id)
+        if (noteDisplay == null) nodeNoteDisplays.remove(id) else nodeNoteDisplays[id] = noteDisplay
     }
 
     /**
@@ -278,6 +292,7 @@ class Tree<T> {
         , nodeAttributes = nodeAttributes.toMap()
         , nodeLines = nodeLines.toMap()
         , nodeBorders = nodeBorders.toMap()
+        , nodeNoteDisplays = nodeNoteDisplays.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
         , theme = theme
@@ -296,6 +311,8 @@ class Tree<T> {
         nodeLines.putAll(snapshot.nodeLines)
         nodeBorders.clear()
         nodeBorders.putAll(snapshot.nodeBorders)
+        nodeNoteDisplays.clear()
+        nodeNoteDisplays.putAll(snapshot.nodeNoteDisplays)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()

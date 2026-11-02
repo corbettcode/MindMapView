@@ -69,6 +69,7 @@ import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
@@ -142,7 +143,8 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * showing a menu there.
  *
  * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set, and
- * its note as a paragraph between the two while [MindMapState.showNotes] is set, in place of its note marker.
+ * its note as a paragraph between the two when it is shown inline, by [MindMapState.noteDisplayOf], in place of
+ * its note marker.
  *
  * Dragging a node onto another while Ctrl is held down adds an arrow link from the first to the second
  * instead of moving it, or removes that arrow link when there is one already. [onNodeLink] is then called
@@ -456,7 +458,7 @@ private fun DrawScope.drawTree(
         nodeDrawer.drawNode(this)
         val border = state.tree.drawnBorderOf(node.id)
         if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
-        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.showNotes)
+        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.noteDisplay)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
         translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
         content.note?.let { note ->
@@ -483,7 +485,7 @@ private fun DrawScope.drawMarkers(
     , node: NodeData<*>
     , drawInfo: DrawInfo
 ) {
-    if (node.note.isNotBlank() && !state.showNotes) drawNoteMarker(noteMarkerCenter(node), drawInfo)
+    if (node.note.isNotBlank() && state.noteDisplayOf(node.id) != NoteDisplay.INLINE) drawNoteMarker(noteMarkerCenter(node), drawInfo)
     if (!state.showAttributes && state.tree.attributesOf(node.id).isNotEmpty()) {
         drawAttributeMarker(attributeMarkerCenter(node), drawInfo)
     }

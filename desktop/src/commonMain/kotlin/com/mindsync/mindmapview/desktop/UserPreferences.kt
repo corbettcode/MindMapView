@@ -6,16 +6,8 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.emoji.EmojiCatalog
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapTheme
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
-
-/** How a node's note is shown: not at all, in a popup while the mouse is over the node, or inside the node. */
-enum class NoteDisplay(
-    val label: String
-) {
-    HIDDEN("Hidden")
-    , FLYOVER("Flyover")
-    , INLINE("Inline")
-}
 
 /**
  * Returns how attributes are shown on a map in [theme]: the theme's own way, or the way the app is set to,

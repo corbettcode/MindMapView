@@ -19,12 +19,14 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MindMapViewFileTest {
@@ -180,6 +182,23 @@ class MindMapViewFileTest {
 
         assertEquals(line, read.lineOf("a"))
         assertEquals(NodeLine(color = Color.Blue), read.lineOf(read.getRootNode().id))
+    }
+
+    @Test
+    fun noteDisplaysRoundTrip() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        tree.addNode("b", rootId, "<p>b</p>")
+        tree.setNoteDisplay("a", NoteDisplay.INLINE)
+        tree.setNoteDisplay(rootId, NoteDisplay.HIDDEN)
+
+        val written = MindMapViewFile.write(tree)
+        val read = MindMapViewFile.read(written)
+
+        assertEquals(NoteDisplay.INLINE, read.noteDisplayOf("a"))
+        assertNull(read.noteDisplayOf("b"))
+        assertEquals(NoteDisplay.HIDDEN, read.noteDisplayOf(read.getRootNode().id))
     }
 
     @Test

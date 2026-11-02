@@ -19,6 +19,7 @@ import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.Px
 import com.mindsync.library.util.RichText
@@ -59,20 +60,22 @@ class MeasureTextSize(
     }
 
     /**
-     * Measures what is drawn in a node: its text, below it its note when [showNotes] is set and it has one,
-     * and below those the table of its attributes when [showAttributes] is set and it has any.
+     * Measures what is drawn in a node: its text, below it its note when it has one shown inline, by its own
+     * way of showing it or else by [noteDisplay], and below those the table of its attributes when
+     * [showAttributes] is set and it has any.
      */
     fun measureContent(
         tree: Tree<*>
         , node: NodeData<*>
         , showAttributes: Boolean
-        , showNotes: Boolean = false
+        , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ): NodeContent {
         val attributes = if (showAttributes) tree.attributesOf(node.id) else emptyList()
         val text = measure(node.description)
+        val isNoteShown = node.note.isNotBlank() && (tree.noteDisplayOf(node.id) ?: noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
             text = text
-            , note = if (showNotes && node.note.isNotBlank()) measureNote(node.note, text.size.width) else null
+            , note = if (isNoteShown) measureNote(node.note, text.size.width) else null
             , table = if (attributes.isEmpty()) null else measureAttributes(attributes)
             , gap = with(density) { ATTRIBUTE_TABLE_GAP.dp.toPx() }
             , noteGap = with(density) { NOTE_GAP.dp.toPx() }
@@ -99,11 +102,11 @@ class MeasureTextSize(
     fun traverseTextHead(
         tree: Tree<*>?
         , showAttributes: Boolean = true
-        , showNotes: Boolean = false
+        , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ) {
         tree?.let {
             it.doPreorderTraversal { node ->
-                val content = measureContent(tree, node, showAttributes, showNotes)
+                val content = measureContent(tree, node, showAttributes, noteDisplay)
                 val newNode = changeSize(node, content.width, content.height)
                 tree.setNode(node.id, newNode)
             }

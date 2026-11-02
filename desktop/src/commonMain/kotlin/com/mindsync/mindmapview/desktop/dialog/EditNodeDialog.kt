@@ -54,6 +54,7 @@ import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.mindmapview.desktop.ThemeSwatch
 import com.mindsync.mindmapview.desktop.AppDialog
@@ -66,6 +67,7 @@ import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.AttributesEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.DropdownPicker
 import com.mindsync.mindmapview.desktop.component.attributeRowsOf
 import com.mindsync.mindmapview.desktop.component.attributesToKeep
 import com.mindsync.mindmapview.desktop.component.BorderSettings
@@ -105,6 +107,8 @@ private val DIALOG_GAP = 16.dp
  * @param textColor The text color for the node.
  * @param line The node's own line settings, whose null values are inherited from its parent.
  * @param border What is drawn around the node: nothing, or a line of a width and color.
+ * @param noteDisplay How the node's note is shown when it has a way of its own; null when it follows
+ * [defaultNoteDisplay], the way of the Preferences.
  * @param nodeColors A list of colors available for selecting the node's fill color.
  * @param textColors A list of colors available for selecting the node's text color.
  * @param mapEmojis A list of emoji strings available for selection and customization within the dialog.
@@ -112,7 +116,7 @@ private val DIALOG_GAP = 16.dp
  * @param onToneChange A callback triggered when the tone of an emoji is changed. Receives the base emoji
  * and its selected tonal variant.
  * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
- * note, shape, fill color, text color, line settings, and border of the node.
+ * note, shape, fill color, text color, line settings, border, attributes and note display of the node.
  * @param onDismiss A callback triggered when the dialog is dismissed.
  * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
  * added. Without it, the dialog has no such button.
@@ -129,6 +133,8 @@ fun EditNodeDialog(
     , textColor: Color
     , line: NodeLine
     , border: NodeBorder
+    , noteDisplay: NoteDisplay?
+    , defaultNoteDisplay: NoteDisplay
     , nodeColors: List<Color>
     , textColors: List<Color>
     // The colors the root starts with, which follow the map's theme; a node with a shape starts with the shape's.
@@ -156,6 +162,7 @@ fun EditNodeDialog(
         , line: NodeLine
         , border: NodeBorder
         , attributes: List<NodeAttribute>
+        , noteDisplay: NoteDisplay?
     ) -> Unit
     , onDismiss: () -> Unit
     , onAddAnother: (() -> Unit)? = null
@@ -192,6 +199,7 @@ fun EditNodeDialog(
     var selectedLine by remember { mutableStateOf(line) }
     // A border that is turned on starts in the color of the text, but is not changed along with it after that.
     var selectedBorder by remember { mutableStateOf(if (border.isNone) border.copy(color = textColor) else border) }
+    var selectedNoteDisplay by remember { mutableStateOf(noteDisplay) }
     // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
     var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
     // Closed unless the node has a border, for the same reason.
@@ -232,6 +240,7 @@ fun EditNodeDialog(
             , selectedLine
             , selectedBorder
             , attributesToKeep(attributeRows)
+            , selectedNoteDisplay
         )
     }
 
@@ -409,6 +418,15 @@ fun EditNodeDialog(
                         , modifier = modifier
                             .onSizeChanged { noteSectionHeight = with(density) { it.height.toDp() } }
                     ) {
+                        Box(modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp)) {
+                            DropdownPicker(
+                                label = "Display"
+                                , choices = listOf(null) + NoteDisplay.entries
+                                , choiceLabel = { it?.label ?: "Default (${defaultNoteDisplay.label})" }
+                                , selectedChoice = selectedNoteDisplay
+                                , onSelect = { selectedNoteDisplay = it }
+                            )
+                        }
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                             , verticalAlignment = Alignment.CenterVertically
