@@ -50,6 +50,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.layout.MindMapLeftLayoutManager
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
@@ -2074,7 +2075,7 @@ class MindMapTest {
         fun child() = state.tree.getNode(childId) as RectangleNodeData
         val plain = child().path
         val apart = state.tree.getNode(siblingId).path.centerY.dpVal - plain.centerY.dpVal
-        assertTrue(state.showAttributes)
+        assertEquals(AttributeDisplay.INLINE, state.attributeDisplay)
         assertEquals(emptyList(), state.tree.attributesOf(childId))
 
         val attributes = listOf(NodeAttribute("priority", "high"), NodeAttribute("owner", "someone with a long name"))
@@ -2088,14 +2089,14 @@ class MindMapTest {
         // The sibling makes room for the taller node.
         assertTrue(state.tree.getNode(siblingId).path.centerY.dpVal - child().path.centerY.dpVal > apart)
 
-        state.showAttributes = false
+        state.attributeDisplay = AttributeDisplay.FLYOVER
         waitForIdle()
         assertEquals(attributes, state.tree.attributesOf(childId))
         assertEquals(plain.width, child().path.width)
         assertEquals(plain.height, child().path.height)
         assertEquals(apart, state.tree.getNode(siblingId).path.centerY.dpVal - child().path.centerY.dpVal, 0.01f)
 
-        state.showAttributes = true
+        state.attributeDisplay = AttributeDisplay.INLINE
         waitForIdle()
         assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
 
@@ -2138,6 +2139,51 @@ class MindMapTest {
         waitForIdle()
         assertEquals(plain.width, child().path.width)
         assertEquals(plain.height, child().path.height)
+    }
+
+    @Test
+    fun aNodeShowsItsAttributesItsOwnWay() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        state.addNode("sibling")
+        waitForIdle()
+        val (childId, siblingId) = state.tree.getRootNode().children
+        fun child() = state.tree.getNode(childId) as RectangleNodeData
+        fun sibling() = state.tree.getNode(siblingId) as RectangleNodeData
+        val plain = child().path
+        val attributes = listOf(NodeAttribute("priority", "high"), NodeAttribute("owner", "someone"))
+        state.goToNode(childId)
+        state.editNodeAttributes(attributes)
+        state.goToNode(siblingId)
+        state.editNodeAttributes(attributes)
+        waitForIdle()
+
+        // Flyover in one node, while the map shows the attributes inline.
+        state.editNodeAttributeDisplay(AttributeDisplay.FLYOVER)
+        waitForIdle()
+        assertEquals(AttributeDisplay.FLYOVER, state.attributeDisplayOf(siblingId))
+        assertEquals(AttributeDisplay.INLINE, state.attributeDisplayOf(childId))
+        assertEquals(plain.height, sibling().path.height)
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+
+        // A node of its own way is not changed by the map's; the others follow it.
+        state.goToNode(childId)
+        state.editNodeAttributeDisplay(AttributeDisplay.INLINE)
+        state.attributeDisplay = AttributeDisplay.HIDDEN
+        waitForIdle()
+        assertTrue(child().path.height.dpVal > plain.height.dpVal + 20f)
+        assertEquals(AttributeDisplay.FLYOVER, state.attributeDisplayOf(siblingId))
+
+        // Following the map again, and undone back to its own way.
+        state.editNodeAttributeDisplay(null)
+        waitForIdle()
+        assertEquals(plain.height, child().path.height)
+        state.undo()
+        waitForIdle()
+        assertEquals(AttributeDisplay.INLINE, state.attributeDisplayOf(childId))
     }
 
     @Test
@@ -2561,7 +2607,7 @@ class MindMapTest {
     fun attributeMarkerNodeIsTheOneWhoseIconIsUnderTheMouse() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)
-        state.showAttributes = false
+        state.attributeDisplay = AttributeDisplay.FLYOVER
         clickNode(state.tree.getRootNode())
         state.addNode("child")
         waitForIdle()
@@ -2586,7 +2632,7 @@ class MindMapTest {
         assertNull(state.attributeMarkerNode)
 
         // The icon is not drawn while the attributes are shown in the node.
-        state.showAttributes = true
+        state.attributeDisplay = AttributeDisplay.INLINE
         waitForIdle()
         val shownMarker = density.attributeMarkerCenter(state.tree.getNode(child.id)) * state.scaleFactor +
             state.currentPoint

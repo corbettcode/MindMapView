@@ -13,6 +13,7 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -140,7 +141,7 @@ class ModifiedTest {
         state.selectNode("first")
         state.selectAll()
         state.copyNode()
-        state.showAttributes = false
+        state.attributeDisplay = AttributeDisplay.FLYOVER
         state.fitScreen()
         onNodeWithTag(TAG).performTouchInput {
             swipe(center(root), center(root) + Offset(200f, 100f), durationMillis = 200)

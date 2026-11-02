@@ -18,6 +18,7 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
@@ -61,16 +62,17 @@ class MeasureTextSize(
 
     /**
      * Measures what is drawn in a node: its text, below it its note when it has one shown inline, by its own
-     * way of showing it or else by [noteDisplay], and below those the table of its attributes when
-     * [showAttributes] is set and it has any.
+     * way of showing it or else by [noteDisplay], and below those the table of its attributes when it has any
+     * shown inline, by its own way of showing them or else by [attributeDisplay].
      */
     fun measureContent(
         tree: Tree<*>
         , node: NodeData<*>
-        , showAttributes: Boolean
+        , attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
         , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ): NodeContent {
-        val attributes = if (showAttributes) tree.attributesOf(node.id) else emptyList()
+        val isTableShown = (tree.attributeDisplayOf(node.id) ?: attributeDisplay) == AttributeDisplay.INLINE
+        val attributes = if (isTableShown) tree.attributesOf(node.id) else emptyList()
         val text = measure(node.description)
         val isNoteShown = node.note.isNotBlank() && (tree.noteDisplayOf(node.id) ?: noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
@@ -101,12 +103,12 @@ class MeasureTextSize(
 
     fun traverseTextHead(
         tree: Tree<*>?
-        , showAttributes: Boolean = true
+        , attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
         , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ) {
         tree?.let {
             it.doPreorderTraversal { node ->
-                val content = measureContent(tree, node, showAttributes, noteDisplay)
+                val content = measureContent(tree, node, attributeDisplay, noteDisplay)
                 val newNode = changeSize(node, content.width, content.height)
                 tree.setNode(node.id, newNode)
             }

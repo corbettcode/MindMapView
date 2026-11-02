@@ -40,6 +40,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapTheme
@@ -124,7 +125,7 @@ class MindMapState(
 
     /**
      * The node whose attribute icon the mouse pointer is over while no button is pressed, or null when it is over
-     * none, for showing its attributes. The icon is only drawn while [showAttributes] is not set.
+     * none, for showing its attributes. The icon is only drawn where the attributes are not shown inline.
      */
     val attributeMarkerNode: NodeData<*>? get() = attributeMarkerNodeId?.let { tree.nodes[it] }
 
@@ -151,20 +152,29 @@ class MindMapState(
             return tree.arrowLinks
         }
 
-    private var attributesShown by mutableStateOf(true)
+    private var mapAttributeDisplay by mutableStateOf(AttributeDisplay.INLINE)
 
     /**
-     * Whether the attributes of the nodes are shown, as a table below the text of each node that has any.
-     * Setting it rearranges the tree, as the nodes change size.
+     * How the attributes of the nodes are shown where a node has no way of its own, set with
+     * [editNodeAttributeDisplay]. Inline, they are a table below the text of their node. Setting it rearranges the
+     * tree, as the nodes change size.
      */
-    var showAttributes: Boolean
-        get() = attributesShown
+    var attributeDisplay: AttributeDisplay
+        get() = mapAttributeDisplay
         set(value) {
-            attributesShown = value
-            mindMapManager.showAttributes = value
-            if (value) attributeMarkerNodeId = null
+            if (value == mapAttributeDisplay) return
+            mapAttributeDisplay = value
+            mindMapManager.attributeDisplay = value
+            attributeMarkerNodeId = null
             animateTreeChange()
         }
+
+    /** Returns how the attributes of the node are shown: its own way, or [attributeDisplay] when it has none. */
+    fun attributeDisplayOf(id: String): AttributeDisplay {
+        // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+        drawTick
+        return tree.attributeDisplayOf(id) ?: attributeDisplay
+    }
 
     private var mapNoteDisplay by mutableStateOf(NoteDisplay.FLYOVER)
 
@@ -345,6 +355,7 @@ class MindMapState(
         line: NodeLine = NodeLine(),
         border: NodeBorder = NodeBorder(),
         noteDisplay: NoteDisplay? = null,
+        attributeDisplay: AttributeDisplay? = null,
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
@@ -375,9 +386,10 @@ class MindMapState(
                 addNodeCommand.execute()
                 tree.setLine(addNode.id, line)
                 tree.setBorder(addNode.id, border)
-                if (noteDisplay != null) {
+                if (noteDisplay != null || attributeDisplay != null) {
                     tree.setNoteDisplay(addNode.id, noteDisplay)
-                    // A note shown in the node makes it larger, which it was not measured with.
+                    tree.setAttributeDisplay(addNode.id, attributeDisplay)
+                    // A note or attributes shown in the node make it larger, which it was not measured with.
                     mindMapManager.update(tree)
                 }
             }
@@ -520,6 +532,7 @@ class MindMapState(
         , line = tree.lineOf(node.id)
         , border = tree.borderOf(node.id)
         , noteDisplay = tree.noteDisplayOf(node.id)
+        , attributeDisplay = tree.attributeDisplayOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -544,6 +557,7 @@ class MindMapState(
                 tree.setLine(id, branch.line)
                 tree.setBorder(id, branch.border)
                 tree.setNoteDisplay(id, branch.noteDisplay)
+                tree.setAttributeDisplay(id, branch.attributeDisplay)
                 pastedIds[node.id] = id
                 branch.children.forEach { paste(it, id) }
             }
@@ -766,6 +780,20 @@ class MindMapState(
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.setNoteDisplay(node.id, noteDisplay)
+                mindMapManager.update(tree)
+                animateTreeChange()
+            }
+        }
+    }
+
+    /**
+     * Gives the selected node its own way of showing its attributes, or with null makes it follow
+     * [attributeDisplay] again. The node is measured again, as attributes shown inline are in it.
+     */
+    fun editNodeAttributeDisplay(attributeDisplay: AttributeDisplay?) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setAttributeDisplay(node.id, attributeDisplay)
                 mindMapManager.update(tree)
                 animateTreeChange()
             }
@@ -1145,13 +1173,14 @@ class MindMapState(
     private fun findAttributeMarker(
         point: Offset
     ): NodeData<*>? {
-        if (showAttributes) return null
         val reach = NOTE_MARKER_SIZE.toPx(density) / 2
         var foundNode: NodeData<*>? = null
         tree.doVisiblePreorderTraversal { node ->
             val distance = point - density.attributeMarkerCenter(node)
             val isOnMarker = abs(distance.x) <= reach && abs(distance.y) <= reach
-            if (isOnMarker && tree.attributesOf(node.id).isNotEmpty()) foundNode = node
+            val hasMarker = tree.attributesOf(node.id).isNotEmpty()
+                && (tree.attributeDisplayOf(node.id) ?: attributeDisplay) != AttributeDisplay.INLINE
+            if (isOnMarker && hasMarker) foundNode = node
         }
         return foundNode
     }
@@ -1181,7 +1210,7 @@ class MindMapState(
         val point = toTreePoint(position)
         val node = findNode(point) ?: return null
         val content =
-            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, showAttributes, noteDisplay) ?: return null
+            mindMapManager.getMeasureTextSize()?.measureContent(tree, node, attributeDisplay, noteDisplay) ?: return null
         val layout = content.text
         val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
         val textPoint =
@@ -1526,6 +1555,7 @@ private class CopiedNode(
     , val line: NodeLine
     , val border: NodeBorder
     , val noteDisplay: NoteDisplay?
+    , val attributeDisplay: AttributeDisplay?
     , val children: List<CopiedNode>
 )
 

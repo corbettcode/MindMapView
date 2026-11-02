@@ -1,6 +1,7 @@
 package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
@@ -33,6 +34,7 @@ class Tree<T> {
     private val nodeLines = mutableMapOf<String, NodeLine>()
     private val nodeBorders = mutableMapOf<String, NodeBorder>()
     private val nodeNoteDisplays = mutableMapOf<String, NoteDisplay>()
+    private val nodeAttributeDisplays = mutableMapOf<String, AttributeDisplay>()
 
     private val foldedIds = mutableSetOf<String>()
 
@@ -150,6 +152,21 @@ class Tree<T> {
     ) {
         getNode(id)
         if (noteDisplay == null) nodeNoteDisplays.remove(id) else nodeNoteDisplays[id] = noteDisplay
+    }
+
+    /**
+     * Returns how the node's attributes are shown when it was given a way of its own, or null when it follows
+     * the map.
+     */
+    fun attributeDisplayOf(id: String): AttributeDisplay? = nodeAttributeDisplays[id]
+
+    /** Gives the node its own way of showing its attributes, or with null makes it follow the map again. */
+    fun setAttributeDisplay(
+        id: String
+        , attributeDisplay: AttributeDisplay?
+    ) {
+        getNode(id)
+        if (attributeDisplay == null) nodeAttributeDisplays.remove(id) else nodeAttributeDisplays[id] = attributeDisplay
     }
 
     /**
@@ -293,6 +310,7 @@ class Tree<T> {
         , nodeLines = nodeLines.toMap()
         , nodeBorders = nodeBorders.toMap()
         , nodeNoteDisplays = nodeNoteDisplays.toMap()
+        , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
         , theme = theme
@@ -313,6 +331,8 @@ class Tree<T> {
         nodeBorders.putAll(snapshot.nodeBorders)
         nodeNoteDisplays.clear()
         nodeNoteDisplays.putAll(snapshot.nodeNoteDisplays)
+        nodeAttributeDisplays.clear()
+        nodeAttributeDisplays.putAll(snapshot.nodeAttributeDisplays)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()

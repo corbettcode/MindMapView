@@ -68,6 +68,7 @@ import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.attachHighlightColor
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.node.NodeDrawerFactory
@@ -142,7 +143,8 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
  * showing a menu there.
  *
- * The attributes of a node are drawn as a table below its text while [MindMapState.showAttributes] is set, and
+ * The attributes of a node are drawn as a table below its text when they are shown inline, by
+ * [MindMapState.attributeDisplayOf], and
  * its note as a paragraph between the two when it is shown inline, by [MindMapState.noteDisplayOf], in place of
  * its note marker.
  *
@@ -458,7 +460,7 @@ private fun DrawScope.drawTree(
         nodeDrawer.drawNode(this)
         val border = state.tree.drawnBorderOf(node.id)
         if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
-        val content = measureTextSize.measureContent(state.tree, node, state.showAttributes, state.noteDisplay)
+        val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
         translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
         content.note?.let { note ->
@@ -486,7 +488,8 @@ private fun DrawScope.drawMarkers(
     , drawInfo: DrawInfo
 ) {
     if (node.note.isNotBlank() && state.noteDisplayOf(node.id) != NoteDisplay.INLINE) drawNoteMarker(noteMarkerCenter(node), drawInfo)
-    if (!state.showAttributes && state.tree.attributesOf(node.id).isNotEmpty()) {
+    val isAttributeMarked = state.attributeDisplayOf(node.id) != AttributeDisplay.INLINE
+    if (isAttributeMarked && state.tree.attributesOf(node.id).isNotEmpty()) {
         drawAttributeMarker(attributeMarkerCenter(node), drawInfo)
     }
 }

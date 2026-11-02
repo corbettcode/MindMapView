@@ -843,13 +843,15 @@ private fun MindMapScreen(
     }
 
     val attributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay)
-    LaunchedEffect(attributeDisplay) { state.showAttributes = attributeDisplay == AttributeDisplay.INLINE }
+    LaunchedEffect(attributeDisplay) { state.attributeDisplay = attributeDisplay }
     val attributeMarkerNode = state.attributeMarkerNode
     val attributes = attributeMarkerNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
     LaunchedEffect(attributeMarkerNode?.id, attributes, isDialogOpen, attributeDisplay) {
         attributePopup = null
         val node = attributeMarkerNode
-            ?.takeIf { attributes.isNotEmpty() && !isDialogOpen && attributeDisplay == AttributeDisplay.FLYOVER }
+            ?.takeIf {
+                attributes.isNotEmpty() && !isDialogOpen && state.attributeDisplayOf(it.id) == AttributeDisplay.FLYOVER
+            }
             ?: return@LaunchedEffect
         delay(ATTRIBUTE_POPUP_DELAY_MILLIS)
         attributePopup = AttributePopupContent(
@@ -1126,6 +1128,11 @@ private fun MindMapScreen(
                         Operation.Update -> selectedNode?.let { state.tree.noteDisplayOf(it.id) }
                     },
                     defaultNoteDisplay = preferences.noteDisplay,
+                    attributeDisplay = when (currentOperation) {
+                        is Operation.Add -> null
+                        Operation.Update -> selectedNode?.let { state.tree.attributeDisplayOf(it.id) }
+                    },
+                    defaultAttributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay),
                     nodeColors = preferences.nodeColors,
                     textColors = preferences.textColors,
                     rootColor = selectedNode
@@ -1152,7 +1159,7 @@ private fun MindMapScreen(
                     },
                     knownAttributeNames = remember(currentOperation) { attributeNames(state.tree) },
                     isAttributesOpenOnStart = isEditForAttributes,
-                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay ->
+                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay, attributeDisplay ->
                         when (currentOperation) {
                             is Operation.Add -> state.groupChanges {
                                 state.addNode(
@@ -1165,6 +1172,7 @@ private fun MindMapScreen(
                                     line,
                                     border,
                                     noteDisplay,
+                                    attributeDisplay,
                                 )
                                 state.getAddNode()?.let { state.tree.setAttributes(it.id, attributes) }
                                 onCreatedNodeCountChange(nodeNumber)
@@ -1178,6 +1186,7 @@ private fun MindMapScreen(
                                 state.editNodeLine(line)
                                 state.editNodeBorder(border)
                                 state.editNodeNoteDisplay(noteDisplay)
+                                state.editNodeAttributeDisplay(attributeDisplay)
                                 state.editNodeAttributes(attributes)
                             }
                         }

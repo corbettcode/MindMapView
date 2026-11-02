@@ -26,6 +26,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
@@ -186,7 +187,7 @@ class UndoTest {
         state.selectNode("first")
         state.copyNode()
         state.selectAll()
-        state.showAttributes = false
+        state.attributeDisplay = AttributeDisplay.FLYOVER
         state.fitScreen()
         state.goToNode("belowFirst")
         waitForIdle()

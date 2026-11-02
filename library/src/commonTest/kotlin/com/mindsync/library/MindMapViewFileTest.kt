@@ -18,6 +18,7 @@ import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
@@ -199,6 +200,22 @@ class MindMapViewFileTest {
         assertEquals(NoteDisplay.INLINE, read.noteDisplayOf("a"))
         assertNull(read.noteDisplayOf("b"))
         assertEquals(NoteDisplay.HIDDEN, read.noteDisplayOf(read.getRootNode().id))
+    }
+
+    @Test
+    fun attributeDisplaysRoundTrip() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        tree.addNode("b", rootId, "<p>b</p>")
+        tree.setAttributeDisplay("a", AttributeDisplay.FLYOVER)
+        tree.setAttributeDisplay(rootId, AttributeDisplay.HIDDEN)
+
+        val read = MindMapViewFile.read(MindMapViewFile.write(tree))
+
+        assertEquals(AttributeDisplay.FLYOVER, read.attributeDisplayOf("a"))
+        assertNull(read.attributeDisplayOf("b"))
+        assertEquals(AttributeDisplay.HIDDEN, read.attributeDisplayOf(read.getRootNode().id))
     }
 
     @Test

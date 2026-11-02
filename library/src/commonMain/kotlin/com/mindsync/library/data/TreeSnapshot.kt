@@ -1,5 +1,6 @@
 package com.mindsync.library.data
 
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.NoteDisplay
@@ -19,6 +20,7 @@ import com.mindsync.library.model.NoteDisplay
  * @property nodeLines The map of node IDs to the line settings they have of their own.
  * @property nodeBorders The map of node IDs to the borders they have; a node without one has none.
  * @property nodeNoteDisplays The map of node IDs to the way of showing their note they have of their own.
+ * @property nodeAttributeDisplays The map of node IDs to the way of showing their attributes they have of their own.
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
  * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
  * annotations or relationships.
@@ -34,6 +36,7 @@ internal class TreeSnapshot(
     , val nodeLines: Map<String, NodeLine>
     , val nodeBorders: Map<String, NodeBorder>
     , val nodeNoteDisplays: Map<String, NoteDisplay>
+    , val nodeAttributeDisplays: Map<String, AttributeDisplay>
     , val foldedIds: Set<String>
     , val arrowLinks: List<ArrowLink>
     , val theme: MapTheme
@@ -52,6 +55,7 @@ internal class TreeSnapshot(
             && nodeLines == other.nodeLines
             && nodeBorders == other.nodeBorders
             && nodeNoteDisplays == other.nodeNoteDisplays
+            && nodeAttributeDisplays == other.nodeAttributeDisplays
             && foldedIds == other.foldedIds
             && arrowLinks == other.arrowLinks
             && theme == other.theme
