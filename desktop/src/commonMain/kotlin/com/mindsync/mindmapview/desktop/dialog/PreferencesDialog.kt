@@ -54,6 +54,8 @@ import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
 import com.mindsync.mindmapview.desktop.parseHexColor
+import com.mindsync.mindmapview.desktop.themeFillColors
+import com.mindsync.mindmapview.desktop.themeTextColors
 import com.mindsync.mindmapview.desktop.toHex
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
@@ -138,7 +140,16 @@ fun PreferencesDialog(
                         , choices = MapThemes.all
                         , choiceLabel = { it.name }
                         , selectedChoice = MapThemes.byId(edited.mapThemeId)
-                        , onSelect = { edited = edited.copy(mapThemeId = it.id) }
+                        // The colors offered for nodes go with the theme, in place of those of the last one.
+                        , onSelect = { theme ->
+                            if (theme.id != edited.mapThemeId) {
+                                edited = edited.copy(
+                                    mapThemeId = theme.id
+                                    , nodeColors = themeFillColors(theme)
+                                    , textColors = themeTextColors(theme)
+                                )
+                            }
+                        }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     DropdownPicker(
@@ -177,13 +188,13 @@ fun PreferencesDialog(
                             EditableColors(
                                 label = "Fill colors"
                                 , colors = edited.nodeColors
-                                , defaults = DEFAULT_NODE_COLORS
+                                , defaults = themeFillColors(MapThemes.byId(edited.mapThemeId))
                                 , onChange = { edited = edited.copy(nodeColors = it) }
                             )
                             , EditableColors(
                                 label = "Text colors"
                                 , colors = edited.textColors
-                                , defaults = DEFAULT_TEXT_COLORS
+                                , defaults = themeTextColors(MapThemes.byId(edited.mapThemeId))
                                 , onChange = { edited = edited.copy(textColors = it) }
                             )
                         )
