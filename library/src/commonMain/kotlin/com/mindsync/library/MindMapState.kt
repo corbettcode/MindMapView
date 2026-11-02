@@ -40,6 +40,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.util.Dp
@@ -912,6 +913,54 @@ class MindMapState(
     }
 
     /**
+     * Selects the nearest shown node that lies in [direction] from the selected node on the screen, as the arrow
+     * keys do. A node counts when its center is past the edge of the selected node on that side; of those, one
+     * level with the selected node is preferred over a nearer one off to the side. Nothing changes when there is
+     * none, nor when no node is selected.
+     */
+    fun selectNodeInDirection(direction: Direction) {
+        val selected = selectedNode ?: return
+        val target = tree.nodes.values
+            .filter { it.id != selected.id && tree.isVisible(it.id) }
+            .mapNotNull { node -> directionScore(selected, node, direction)?.let { node to it } }
+            .minByOrNull { it.second }
+            ?.first
+            ?: return
+        goToNode(target.id)
+    }
+
+    /**
+     * How far [node] is from [from] going in [direction], with distance off to the side counting
+     * [SIDEWAYS_WEIGHT] times as much, or null when it is not that way.
+     */
+    private fun directionScore(
+        from: NodeData<*>
+        , node: NodeData<*>
+        , direction: Direction
+    ): Float? {
+        val isHorizontal = direction.x != 0f
+        val sign = if (isHorizontal) direction.x else direction.y
+        val along = sign * if (isHorizontal) {
+            (node.path.centerX - from.path.centerX).dpVal
+        } else {
+            (node.path.centerY - from.path.centerY).dpVal
+        }
+        val fromHalfAlong = (if (isHorizontal) halfWidth(from) else halfHeight(from)).dpVal
+        if (along <= fromHalfAlong) return null
+        val acrossCenters = abs(
+            if (isHorizontal) (node.path.centerY - from.path.centerY).dpVal
+            else (node.path.centerX - from.path.centerX).dpVal
+        )
+        val halfAcross = if (isHorizontal) {
+            (halfHeight(node) + halfHeight(from)).dpVal
+        } else {
+            (halfWidth(node) + halfWidth(from)).dpVal
+        }
+        val sideways = (acrossCenters - halfAcross).coerceAtLeast(0f)
+        return along + SIDEWAYS_WEIGHT * sideways
+    }
+
+    /**
      * Selects a node and, when it is out of view, moves the mind map to bring it to the center. A node that
      * is hidden in a folded node is shown first, by unfolding the nodes above it.
      */
@@ -1447,6 +1496,9 @@ private class CopiedNode(
     , val border: NodeBorder
     , val children: List<CopiedNode>
 )
+
+// A node off to the side of an arrow key's way counts this many times as far as one straight ahead.
+private const val SIDEWAYS_WEIGHT = 3f
 
 // Near an end of the curve the control points barely move it, so a grab there is taken as a little further in.
 private const val MIN_GRAB_T = 0.15f

@@ -36,6 +36,7 @@ import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.io.Opml
 import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
@@ -502,6 +503,12 @@ internal class MindMapApp(
             !isDialogOpen && !isFindFocused && error == null && !event.isCtrlPressed && !event.isAltPressed &&
                 state.selectedNode != null && event.isPlus() -> {
                 addChildRequest++
+                true
+            }
+            // The File menu goes through its items with the arrow keys while it is open.
+            !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null && !event.isCtrlPressed &&
+                !event.isAltPressed && !event.isShiftPressed && event.arrowDirection() != null -> {
+                event.arrowDirection()?.let { state.selectNodeInDirection(it) }
                 true
             }
             !event.isCtrlPressed -> false
@@ -1552,4 +1559,12 @@ private fun Modifier.onPress(onPress: () -> Unit): Modifier = pointerInput(onPre
             if (event.type == PointerEventType.Press) onPress()
         }
     }
+}
+
+private fun KeyEvent.arrowDirection(): Direction? = when (key) {
+    Key.DirectionLeft -> Direction.LEFT
+    Key.DirectionRight -> Direction.RIGHT
+    Key.DirectionUp -> Direction.UP
+    Key.DirectionDown -> Direction.DOWN
+    else -> null
 }

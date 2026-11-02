@@ -6,6 +6,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.Direction
+import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -102,5 +104,44 @@ class BranchNavigationTest {
         state.toggleFold()
         state.selectFirstChild()
         assertEquals("a1", state.selectedNode?.id)
+    }
+
+    @Test
+    fun arrowsSelectTheNodeThatWayOnTheScreen() = runComposeUiTest {
+        val tree = tree()
+        val rootId = tree.getRootNode().id
+        tree.addNode("left", rootId, "left", side = LayoutSide.LEFT)
+        // The tree is shown as it is given, so it is put in place first, as a map that is opened is.
+        MindMapManager().apply {
+            update(tree)
+            arrangeTree()
+        }
+        val state = MindMapState(tree)
+        setContent { MindMap(state = state, modifier = Modifier.size(800.dp, 600.dp)) }
+        waitForIdle()
+
+        // Down a list of children and back up it.
+        state.goToNode("a1")
+        state.selectNodeInDirection(Direction.DOWN)
+        assertEquals("a2", state.selectedNode?.id)
+        state.selectNodeInDirection(Direction.UP)
+        assertEquals("a1", state.selectedNode?.id)
+
+        // Right goes down a branch on the right of the root and left back up it, past the root to the other side.
+        state.selectNodeInDirection(Direction.RIGHT)
+        assertEquals("a1x", state.selectedNode?.id)
+        state.selectNodeInDirection(Direction.LEFT)
+        assertEquals("a1", state.selectedNode?.id)
+        state.selectNodeInDirection(Direction.LEFT)
+        assertEquals("a", state.selectedNode?.id)
+        state.goToNode(rootId)
+        state.selectNodeInDirection(Direction.LEFT)
+        assertEquals("left", state.selectedNode?.id)
+
+        // Nothing is further left, so the selection stays.
+        state.selectNodeInDirection(Direction.LEFT)
+        assertEquals("left", state.selectedNode?.id)
+        state.selectNodeInDirection(Direction.RIGHT)
+        assertEquals(rootId, state.selectedNode?.id)
     }
 }
