@@ -160,6 +160,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  *
  * A node with a note has a marker on its top right edge. The note itself is not drawn:
  * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
+ *
+ * While the attributes are not shown, a node with attributes has a marker on its bottom right edge instead, and
+ * [MindMapState.attributeMarkerNode] is the node whose marker is under the mouse pointer, for showing them.
  */
 @Composable
 fun MindMap(

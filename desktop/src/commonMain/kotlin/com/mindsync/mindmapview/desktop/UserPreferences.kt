@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.emoji.EmojiCatalog
+import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.MapTheme
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
 enum class ThemeMode {
@@ -25,6 +27,15 @@ enum class NoteDisplay(
 }
 
 /**
+ * Returns how attributes are shown on a map in [theme]: the theme's own way, or the way the app is set to,
+ * [preference], for a theme without one.
+ */
+internal fun attributeDisplayFor(
+    theme: MapTheme
+    , preference: AttributeDisplay
+): AttributeDisplay = theme.attributeDisplay ?: preference
+
+/**
  * Keeps the [UserPreferences] from one run of the app to the next. They are read with [read], which returns
  * the value kept under a name or null when there is none, and written with [write] on every change.
  */
@@ -35,16 +46,28 @@ class UserPreferencesStore(
     // A value that is no longer known, as one of a later version of the app may be, is the default.
     var preferences: UserPreferences = UserPreferences().let { defaults ->
         UserPreferences(
-            themeMode = ThemeMode.entries.firstOrNull { it.name == read(THEME_MODE) } ?: defaults.themeMode
-            , newNodeShape = NodeShape.entries.firstOrNull { it.name == read(NEW_NODE_SHAPE) } ?: defaults.newNodeShape
-            , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull() ?: defaults.isRemoveConfirmed
-            , nodeColors = read(NODE_COLORS)?.let(::parseColorList) ?: defaults.nodeColors
-            , textColors = read(TEXT_COLORS)?.let(::parseColorList) ?: defaults.textColors
-            , arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList) ?: defaults.arrowLinkColors
-            , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones) ?: defaults.emojiTones
-            , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) } ?: defaults.nodeFont
-            , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) } ?: defaults.noteDisplay
-            , mapThemeId = read(MAP_THEME) ?: defaults.mapThemeId
+            arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
+                ?: defaults.arrowLinkColors
+            , attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == read(ATTRIBUTE_DISPLAY) }
+                ?: defaults.attributeDisplay
+            , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones)
+                ?: defaults.emojiTones
+            , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull()
+                ?: defaults.isRemoveConfirmed
+            , mapThemeId = read(MAP_THEME)
+                ?: defaults.mapThemeId
+            , newNodeShape = NodeShape.entries.firstOrNull { it.name == read(NEW_NODE_SHAPE) }
+                ?: defaults.newNodeShape
+            , nodeColors = read(NODE_COLORS)?.let(::parseColorList)
+                ?: defaults.nodeColors
+            , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) }
+                ?: defaults.nodeFont
+            , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
+                ?: defaults.noteDisplay
+            , textColors = read(TEXT_COLORS)?.let(::parseColorList)
+                ?: defaults.textColors
+            , themeMode = ThemeMode.entries.firstOrNull { it.name == read(THEME_MODE) }
+                ?: defaults.themeMode
         )
     }
         private set
@@ -60,6 +83,7 @@ class UserPreferencesStore(
         write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
         write(NODE_FONT, newPreferences.nodeFont.name)
         write(NOTE_DISPLAY, newPreferences.noteDisplay.name)
+        write(ATTRIBUTE_DISPLAY, newPreferences.attributeDisplay.name)
         write(MAP_THEME, newPreferences.mapThemeId)
         return preferences
     }
@@ -74,6 +98,7 @@ class UserPreferencesStore(
         const val EMOJI_TONES = "emojiTones"
         const val NODE_FONT = "nodeFont"
         const val NOTE_DISPLAY = "noteDisplay"
+        const val ATTRIBUTE_DISPLAY = "attributeDisplay"
         const val MAP_THEME = "mapTheme"
     }
 }

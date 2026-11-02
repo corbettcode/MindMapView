@@ -2,6 +2,8 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.MapThemes
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,12 +21,13 @@ class UserPreferencesTest {
     @Test
     fun preferencesAreKeptFromOneRunToTheNext() {
         val changed = UserPreferences(
-            ThemeMode.DARK
-            , NodeShape.entries.last()
+            arrowLinkColors = listOf(Color(0xFF654321), Color.Black)
+            , attributeDisplay = AttributeDisplay.FLYOVER
             , isRemoveConfirmed = false
+            , newNodeShape = NodeShape.entries.last()
             , nodeColors = listOf(Color(0xFF123456), Color.White)
             , textColors = listOf(Color(0xFFABCDEF))
-            , arrowLinkColors = listOf(Color(0xFF654321), Color.Black)
+            , themeMode = ThemeMode.DARK
         )
         assertEquals(changed, store().update(changed))
         assertEquals(changed, store().preferences)
@@ -81,6 +84,19 @@ class UserPreferencesTest {
     fun unknownNoteDisplayIsFlyover() {
         stored[UserPreferencesStore.NOTE_DISPLAY] = "SIDEBAR"
         assertEquals(NoteDisplay.FLYOVER, store().preferences.noteDisplay)
+    }
+
+    @Test
+    fun unknownAttributeDisplayIsInline() {
+        stored[UserPreferencesStore.ATTRIBUTE_DISPLAY] = "SIDEBAR"
+        assertEquals(AttributeDisplay.INLINE, store().preferences.attributeDisplay)
+    }
+
+    @Test
+    fun attributeDisplayOfTheThemeIsUsedOverThePreference() {
+        val theme = MapThemes.CLASSIC.copy(attributeDisplay = AttributeDisplay.HIDDEN)
+        assertEquals(AttributeDisplay.HIDDEN, attributeDisplayFor(theme, AttributeDisplay.INLINE))
+        assertEquals(AttributeDisplay.FLYOVER, attributeDisplayFor(MapThemes.CLASSIC, AttributeDisplay.FLYOVER))
     }
 
     @Test

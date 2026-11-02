@@ -52,6 +52,7 @@ import com.mindsync.library.util.toPx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @Composable
 fun rememberMindMapState(tree: Tree<*> = remember { Tree<Any>() }): MindMapState {
@@ -117,6 +118,14 @@ class MindMapState(
     /** The node the mouse pointer is over while no button is pressed, or null when it is over none. */
     val hoveredNode: NodeData<*>? get() = hoveredNodeId?.let { tree.nodes[it] }
 
+    private var attributeMarkerNodeId by mutableStateOf<String?>(null)
+
+    /**
+     * The node whose attribute icon the mouse pointer is over while no button is pressed, or null when it is over
+     * none, for showing its attributes. The icon is only drawn while [showAttributes] is not set.
+     */
+    val attributeMarkerNode: NodeData<*>? get() = attributeMarkerNodeId?.let { tree.nodes[it] }
+
     // The node whose add buttons are shown for the mouse pointer: the one it is over, and still the one whose add
     // buttons it went on to or is pressing.
     private var addButtonHoverNodeId by mutableStateOf<String?>(null)
@@ -151,6 +160,7 @@ class MindMapState(
         set(value) {
             attributesShown = value
             mindMapManager.showAttributes = value
+            if (value) attributeMarkerNodeId = null
             animateTreeChange()
         }
 
@@ -1016,6 +1026,7 @@ class MindMapState(
     internal fun onHover(position: Offset?) {
         if (position != null) hoverPosition = position
         hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
+        attributeMarkerNodeId = position?.let { findAttributeMarker(toTreePoint(it))?.id }
         isArrowLinkHovered = position != null && hoveredNodeId == null && findArrowLink(position) != null
         if (position != null) {
             val point = toTreePoint(position)
@@ -1049,6 +1060,21 @@ class MindMapState(
     }
 
     internal fun findNodeAt(position: Offset): NodeData<*>? = findNode(toTreePoint(position))
+
+    // The last drawn of the attribute icons at the point, as it is the one on top there.
+    private fun findAttributeMarker(
+        point: Offset
+    ): NodeData<*>? {
+        if (showAttributes) return null
+        val reach = NOTE_MARKER_SIZE.toPx(density) / 2
+        var foundNode: NodeData<*>? = null
+        tree.doVisiblePreorderTraversal { node ->
+            val distance = point - density.attributeMarkerCenter(node)
+            val isOnMarker = abs(distance.x) <= reach && abs(distance.y) <= reach
+            if (isOnMarker && tree.attributesOf(node.id).isNotEmpty()) foundNode = node
+        }
+        return foundNode
+    }
 
     private fun findNode(point: Offset): NodeData<*>? {
         var foundNode: NodeData<*>? = null

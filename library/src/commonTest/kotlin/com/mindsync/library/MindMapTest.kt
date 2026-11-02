@@ -2516,6 +2516,44 @@ class MindMapTest {
     }
 
     @Test
+    fun attributeMarkerNodeIsTheOneWhoseIconIsUnderTheMouse() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        state.showAttributes = false
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val child = state.tree.getNode(state.tree.getRootNode().children.single())
+        clickNode(child)
+        state.editNodeAttributes(listOf(NodeAttribute("priority", "high")))
+        waitForIdle()
+        val marker = density.attributeMarkerCenter(state.tree.getNode(child.id)) * state.scaleFactor +
+            state.currentPoint
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(marker) }
+        waitForIdle()
+        assertEquals(child.id, state.attributeMarkerNode?.id)
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(child)) }
+        waitForIdle()
+        assertNull(state.attributeMarkerNode)
+
+        // A node with no attributes has no icon to be over.
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(state.tree.getRootNode())) }
+        waitForIdle()
+        assertNull(state.attributeMarkerNode)
+
+        // The icon is not drawn while the attributes are shown in the node.
+        state.showAttributes = true
+        waitForIdle()
+        val shownMarker = density.attributeMarkerCenter(state.tree.getNode(child.id)) * state.scaleFactor +
+            state.currentPoint
+        onNodeWithTag(TAG).performMouseInput { moveTo(shownMarker) }
+        waitForIdle()
+        assertNull(state.attributeMarkerNode)
+    }
+
+    @Test
     fun arrowLinkIsHoveredWhileTheMouseIsOverIt() = runComposeUiTest {
         val state = MindMapState()
         setMindMap(state)

@@ -18,24 +18,53 @@ data class LevelStyle(
 )
 
 /**
+ * How the attributes of a node are shown: as an icon, as an icon that shows them while the mouse is over it, or as
+ * a table inside the node.
+ */
+enum class AttributeDisplay(
+    val label: String
+) {
+    HIDDEN("Hidden")
+    , FLYOVER("Flyover")
+    , INLINE("Inline")
+}
+
+/**
  * A look for a whole map: its [background], how its [root], main topics (the children of the root) and subtopics
  * (the nodes below them) look, the color of the text of a line node, which is drawn on the background, the lines
  * from the root in [branchColors] one after another, how wide lines are, and the font of the text, by the name of a
- * bundled font, or null for the font the app is set to. Colors, borders and lines a node is given by hand are drawn
- * as they are, whatever the theme.
+ * bundled font, or null for the font the app is set to, and how attributes are shown, or null for how the app is
+ * set to show them. Colors, borders and lines a node is given by hand are drawn as they are, whatever the theme.
+ *
+ * Represents the styling and theme configuration for a map, including visual and structural properties.
+ *
+ * @property id A unique identifier for the map theme.
+ * @property attributeDisplay How the attributes of nodes are shown in this theme, or null for how the app is set to.
+ * @property background The background color of the map.
+ * @property branchColors A list of colors used to differentiate branches originating from the root.
+ * @property fontName The name of the font to be used for text in this theme, if specified.
+ * @property isDark Indicates whether the theme uses a dark background, suitable for light-colored content.
+ * @property lineColor The color of the lines connecting nodes in the map.
+ * @property lineNodeText The color of the text that appears on the connecting lines, if any.
+ * @property lineWidth The width of the lines connecting nodes, measured in density-independent pixels (Dp).
+ * @property mainTopic The visual style applied to the main topics of the map.
+ * @property name The name of the map theme.
+ * @property root The visual style applied to the root level of the map.
+ * @property subtopic The visual style applied to the subtopics of the map.
  */
 data class MapTheme(
     val id: String
-    , val name: String
+    , val attributeDisplay: AttributeDisplay? = null
     , val background: Color
-    , val root: LevelStyle
-    , val mainTopic: LevelStyle
-    , val subtopic: LevelStyle
-    , val lineNodeText: Color?
-    , val lineColor: Color
     , val branchColors: List<Color>
-    , val lineWidth: Dp
     , val fontName: String?
+    , val lineColor: Color
+    , val lineNodeText: Color?
+    , val lineWidth: Dp
+    , val mainTopic: LevelStyle
+    , val name: String
+    , val root: LevelStyle
+    , val subtopic: LevelStyle
 ) {
     /** Whether the background is dark, for what is drawn on it to be light. */
     val isDark: Boolean get() = background.luminance() < 0.5f
@@ -45,16 +74,16 @@ data class MapTheme(
 object MapThemes {
     val CLASSIC = MapTheme(
         id = "classic"
-        , name = "Classic"
         , background = Color.White
-        , root = LevelStyle(fill = null, text = null)
-        , mainTopic = LevelStyle(fill = null, text = null)
-        , subtopic = LevelStyle(fill = null, text = null)
-        , lineNodeText = null
-        , lineColor = Color.Black
         , branchColors = DrawInfo().rootLineColors
-        , lineWidth = Dp(5f)
         , fontName = null
+        , lineColor = Color.Black
+        , lineNodeText = null
+        , lineWidth = Dp(5f)
+        , mainTopic = LevelStyle(fill = null, text = null)
+        , name = "Classic"
+        , root = LevelStyle(fill = null, text = null)
+        , subtopic = LevelStyle(fill = null, text = null)
     )
 
     private val OCEAN = MapTheme(

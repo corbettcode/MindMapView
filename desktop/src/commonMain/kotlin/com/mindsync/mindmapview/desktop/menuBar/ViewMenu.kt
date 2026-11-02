@@ -20,8 +20,6 @@ fun ViewMenu(
     onFit: () -> Unit,
     isCenterEnabled: Boolean,
     onCenter: () -> Unit,
-    showAttributes: Boolean,
-    onShowAttributesChange: (Boolean) -> Unit,
     onFold: (FoldCommand) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -45,26 +43,6 @@ fun ViewMenu(
                 onClick = {
                     expanded = false
                     onCenter()
-                },
-            )
-            HorizontalDivider()
-            // The one of the two that is in effect is checked.
-            DropdownMenuItem(
-                text = { Text("Show All Attributes") },
-                leadingIcon = { if (showAttributes) Text("\u2713") },
-                trailingIcon = { Text("Alt+S", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onShowAttributesChange(true)
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Show No Attributes") },
-                leadingIcon = { if (!showAttributes) Text("\u2713") },
-                trailingIcon = { Text("Alt+H", style = MaterialTheme.typography.labelMedium) },
-                onClick = {
-                    expanded = false
-                    onShowAttributesChange(false)
                 },
             )
             HorizontalDivider()

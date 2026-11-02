@@ -486,8 +486,24 @@
 <section id="attributes">
     <h2>9. Attributes</h2>
     <p>
-        Attributes are name-and-value pairs, such as <i>Status: In progress</i> or <i>Due: 2026-11-15</i>. They are
-        drawn as a small table below the node's text.
+        Attributes are name-and-value pairs, such as <i>Status: In progress</i> or <i>Due: 2026-11-15</i>. How
+        they are shown is set by <b>Attributes</b> in Preferences (section <a href="#preferences">16</a>):
+    </p>
+    <ul>
+        <li>
+            <b>Inline</b>, the first setting: the attributes are drawn as a small table below the node's text, and
+            the node grows to fit it.
+        </li>
+        <li>
+            <b>Flyover</b>: a node with attributes shows a small table icon at its lower right corner, as a node
+            with a note shows a note icon at its upper right. Rest the mouse on the icon to see the attributes in
+            a pop-up.
+        </li>
+        <li><b>Hidden</b>: the attributes are not shown, but the node keeps its table icon.</li>
+    </ul>
+    <p>
+        A map theme can choose how attributes are shown for its maps; the built-in themes all follow the
+        preference.
     </p>
     <ul>
         <li>
@@ -505,12 +521,6 @@
         <li>
             Buttons such as <b>+ Status</b> add a row named after an attribute that other nodes already have, to
             keep names the same across the map.
-        </li>
-        <li>
-            <span class="menu">View &rsaquo; Show All Attributes</span> (<kbd>Alt+S</kbd>) and
-            <span class="menu">Show No Attributes</span> (<kbd>Alt+H</kbd>) show or hide the attribute tables
-            across the map. While they are hidden, a node with attributes shows a small table icon at its lower
-            right corner, as a node with a note shows a note icon at its upper right.
         </li>
     </ul>
 </section>
@@ -739,6 +749,7 @@
         <tr><td>New node shape</td><td>The shape of the first child added to a node. Later children copy their last sibling.</td></tr>
         <tr><td>Classic font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of maps in the Classic theme. Other themes have their own font.</td></tr>
         <tr><td>Notes</td><td>Flyover, Inline or Hidden: how a node's note is shown (section <a href="#notes">7</a>).</td></tr>
+        <tr><td>Attributes</td><td>Inline, Flyover or Hidden: how a node's attributes are shown (section <a href="#attributes">9</a>).</td></tr>
         <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
         <tr><td>Fill colors</td><td>The fill colors offered in the edit dialog.</td></tr>
         <tr><td>Text colors</td><td>The text colors offered in the edit dialog.</td></tr>
@@ -750,7 +761,7 @@
         back to the original colors.
     </p>
     <p>
-        Window theme, Map theme, New node shape, Classic font and Notes are each chosen from a drop-down list. Click
+        Window theme, Map theme, New node shape, Classic font, Notes and Attributes are each chosen from a drop-down list. Click
         <b>Save &amp; Close</b> to keep your changes, or <b>Cancel</b> to drop them.
     </p>
     <p>
@@ -828,8 +839,6 @@
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
         <tr><td><kbd>Ctrl+Alt+C</kbd></td><td>Center the selected node</td></tr>
-        <tr><td><kbd>Alt+S</kbd></td><td>Show all attributes</td></tr>
-        <tr><td><kbd>Alt+H</kbd></td><td>Show no attributes</td></tr>
         <tr><td><kbd>Space</kbd></td><td>Fold or unfold the selected node</td></tr>
         <tr><td><kbd>Ctrl+Space</kbd></td><td>Fold or unfold its children</td></tr>
         <tr><td><kbd>Alt+PageUp</kbd> / <kbd>Alt+PageDown</kbd></td><td>Fold / unfold one level</td></tr>

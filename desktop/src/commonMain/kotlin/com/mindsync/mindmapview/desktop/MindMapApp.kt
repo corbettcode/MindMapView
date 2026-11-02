@@ -35,6 +35,7 @@ import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.io.Opml
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
@@ -57,6 +58,8 @@ import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
 
 internal const val APP_NAME = "MindMapView"
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
+// Shorter than a note's, as the pointer is put on the small icon on purpose.
+private const val ATTRIBUTE_POPUP_DELAY_MILLIS = 300L
 private const val SUCCESS_MESSAGE_MILLIS = 3000L
 
 val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
@@ -472,15 +475,7 @@ internal class MindMapApp(
                 fileMenuExpanded = true
                 true
             }
-            // FreeMind's own keys for the attributes: show all of them, show none of them and edit them.
-            event.isAltPressed && event.key == Key.S -> {
-                state.showAttributes = true
-                true
-            }
-            event.isAltPressed && event.key == Key.H -> {
-                state.showAttributes = false
-                true
-            }
+            // FreeMind's own key for editing the attributes.
             event.isAltPressed && event.key == Key.F9 -> {
                 isAttributesEditRequested = state.selectedNode != null
                 true
@@ -776,6 +771,8 @@ private fun MindMapScreen(
 
     // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
+    // The attributes of the node whose attribute icon the pointer is on, once it has stayed there.
+    var attributePopup by remember { mutableStateOf<AttributePopupContent?>(null) }
     val hoveredNode = state.hoveredNode
     val isDialogOpen =
         operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
@@ -824,6 +821,24 @@ private fun MindMapScreen(
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
         UrlImageLoader.preload(node.note)
         notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition)
+    }
+
+    val attributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay)
+    LaunchedEffect(attributeDisplay) { state.showAttributes = attributeDisplay == AttributeDisplay.INLINE }
+    val attributeMarkerNode = state.attributeMarkerNode
+    val attributes = attributeMarkerNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
+    LaunchedEffect(attributeMarkerNode?.id, attributes, isDialogOpen, attributeDisplay) {
+        attributePopup = null
+        val node = attributeMarkerNode
+            ?.takeIf { attributes.isNotEmpty() && !isDialogOpen && attributeDisplay == AttributeDisplay.FLYOVER }
+            ?: return@LaunchedEffect
+        delay(ATTRIBUTE_POPUP_DELAY_MILLIS)
+        attributePopup = AttributePopupContent(
+            attributes = attributes
+            , color = state.tree.fillOf(node.id)
+            , textColor = state.tree.textColorOf(node.id)
+            , position = state.hoverPosition
+        )
     }
 
     val isDarkTheme = when (preferences.themeMode) {
@@ -878,8 +893,6 @@ private fun MindMapScreen(
                         onFit = { state.fitScreen() },
                         isCenterEnabled = state.selectedNode != null,
                         onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
-                        showAttributes = state.showAttributes,
-                        onShowAttributesChange = { state.showAttributes = it },
                         onFold = { it.run(state) },
                     )
                     ToolMenu(onImport = onImport)
@@ -919,7 +932,8 @@ private fun MindMapScreen(
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
                     )
 
-                    notePopup?.let { NotePopup(it) }
+                    // The two popups would be on top of each other by the pointer, so the attributes win.
+                    attributePopup?.let { AttributePopup(it) } ?: notePopup?.let { NotePopup(it) }
 
                     if (arrowLinkSourceId != null) {
                         Surface(
@@ -1409,34 +1423,91 @@ private class NotePopupContent(
 @Composable
 private fun NotePopup(content: NotePopupContent) {
     val note = content.note
-    val position = content.position
     // The popup is in the colors of its node, so its links are in the node's text color too.
     val linkColor = content.textColor
     val noteState = remember(note, linkColor) { RichTextState().apply { config.linkColor = linkColor }.setHtml(note) }
     val shape = RoundedCornerShape(8.dp)
 
-    Layout(
-        content = {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = NOTE_POPUP_MAX_SIZE.width)
-                    .heightIn(max = NOTE_POPUP_MAX_SIZE.height)
-                    .shadow(4.dp, shape)
-                    .background(content.color, shape)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-                    .padding(12.dp),
-            ) {
-                RichTextView(noteState, color = content.textColor, imageLoader = UrlImageLoader)
+    PopupByPointer(content.position) {
+        Box(
+            modifier = Modifier
+                .widthIn(max = NOTE_POPUP_MAX_SIZE.width)
+                .heightIn(max = NOTE_POPUP_MAX_SIZE.height)
+                .shadow(4.dp, shape)
+                .background(content.color, shape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                .padding(12.dp),
+        ) {
+            RichTextView(noteState, color = content.textColor, imageLoader = UrlImageLoader)
+        }
+    }
+}
+
+// The attributes of a node as its popup shows them: in the colors the node is drawn in, by where the pointer was.
+private class AttributePopupContent(
+    val attributes: List<NodeAttribute>
+    , val color: Color
+    , val textColor: Color
+    , val position: Offset
+)
+
+// A table of names and values, as the node shows its attributes when they are inline.
+@Composable
+private fun AttributePopup(
+    content: AttributePopupContent
+) {
+    val shape = RoundedCornerShape(8.dp)
+    val lineColor = content.textColor.copy(alpha = 0.5f)
+
+    PopupByPointer(content.position) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = NOTE_POPUP_MAX_SIZE.width)
+                .heightIn(max = NOTE_POPUP_MAX_SIZE.height)
+                .shadow(4.dp, shape)
+                .background(content.color, shape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                .padding(12.dp)
+                .width(IntrinsicSize.Max)
+                .border(1.dp, lineColor)
+        ) {
+            content.attributes.forEachIndexed { index, attribute ->
+                if (index > 0) HorizontalDivider(color = lineColor)
+                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                    Text(
+                        attribute.name
+                        , color = content.textColor
+                        , modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                    VerticalDivider(color = lineColor)
+                    Text(
+                        attribute.value
+                        , color = content.textColor
+                        , modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-        },
-        modifier = Modifier.fillMaxSize(),
+        }
+    }
+}
+
+// Below and to the right of the pointer, or above it where there is no room below.
+@Composable
+private fun PopupByPointer(
+    position: Offset
+    , content: @Composable () -> Unit
+) {
+    Layout(
+        content = content
+        , modifier = Modifier.fillMaxSize()
     ) { measurables, constraints ->
         val placeable = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
         val gap = NOTE_POPUP_GAP.roundToPx()
         val pointerX = position.x.roundToInt()
         val pointerY = position.y.roundToInt()
         layout(constraints.maxWidth, constraints.maxHeight) {
-            // Below and to the right of the pointer, or above it where there is no room below.
             val x = (pointerX + gap).coerceAtMost(constraints.maxWidth - placeable.width).coerceAtLeast(0)
             val below = pointerY + gap
             val y =

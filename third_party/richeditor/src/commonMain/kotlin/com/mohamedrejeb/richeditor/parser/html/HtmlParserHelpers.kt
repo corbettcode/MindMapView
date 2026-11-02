@@ -94,12 +94,17 @@ internal const val CustomSpanAttrsAttr = "data-richeditor-attrs"
  * case-insensitive, which is why the map rides in one attribute value instead of one
  * attribute per key.
  */
-internal fun encodeCustomSpanAttrs(attributes: Map<String, String>): String =
-    attributes.entries.joinToString("&") { (key, value) ->
+internal fun encodeCustomSpanAttrs(
+    attributes: Map<String, String>
+): String = attributes
+    .entries
+    .joinToString("&") { (key, value) ->
         "${escapeCustomSpanToken(key)}=${escapeCustomSpanToken(value)}"
     }
 
-internal fun decodeCustomSpanAttrs(payload: String): Map<String, String> =
+internal fun decodeCustomSpanAttrs(
+    payload: String
+): Map<String, String> =
     if (payload.isEmpty()) {
         emptyMap()
     } else {

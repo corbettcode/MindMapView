@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapThemes
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
@@ -63,36 +64,52 @@ private val PREFERENCES_LABEL_WIDTH = 128.dp
 private val EDITOR_BUTTON_WIDTH = 140.dp
 
 /**
- * What the user chose in the preferences dialog. Each of them starts out as the app was before there were
- * any preferences.
+ * What the user chose in the preferences dialog. Each of them starts out as
+ * the app was before there were any preferences.
+ *
+ * Represents user-configurable preferences for a mind map application.
+ *
+ * @property arrowLinkColors The colors available for arrow links within the mind map.
+ * @property attributeDisplay The mode of displaying the attributes of nodes, for a map theme without its own.
+ * @property emojiTones The mapping of base emojis to their chosen skin tones.
+ * @property isRemoveConfirmed Whether the removal of elements requires confirmation.
+ * @property mapThemeId The identifier of the theme applied to new maps or the last selected theme.
+ * @property newNodeShape The default shape applied to newly created nodes in the mind map.
+ * @property nodeFont The font used to render text inside nodes.
+ * @property nodeColors The colors available for filling nodes during creation or editing.
+ * @property noteDisplay The mode of displaying notes associated with nodes in the mind map.
+ * @property textColors The colors available for text within nodes during creation or editing.
+ * @property themeMode The preferred theme mode, such as system default, light, or dark.
  */
 data class UserPreferences(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    // The shape of a node that is added to a parent without children, which has no last child to look like.
-    val newNodeShape: NodeShape = NodeShape.RECTANGLE,
-    val isRemoveConfirmed: Boolean = true,
-    // The fill colors offered when a node is added or edited.
-    val nodeColors: List<Color> = DEFAULT_NODE_COLORS,
-    // The text colors offered when a node is added or edited.
-    val textColors: List<Color> = DEFAULT_TEXT_COLORS,
     // The colors offered for an arrow link.
-    val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS,
+    val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS
+    // How the attributes of a node are shown, unless the map's theme has a way of its own.
+    , val attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
     // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
-    val emojiTones: Map<String, String> = emptyMap(),
-    // The font node text is drawn in.
-    val nodeFont: NodeFont = NodeFont.DEFAULT,
-    // How the note of a node is shown.
-    val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER,
+    , val emojiTones: Map<String, String> = emptyMap()
+    // The shape of a node that is added to a parent without children, which has no last child to look like.
+    , val isRemoveConfirmed: Boolean = true
     // The id of the theme new maps start in, which is also the one last chosen for an open map.
-    val mapThemeId: String = MapThemes.CLASSIC.id,
+    , val mapThemeId: String = MapThemes.CLASSIC.id
+    , val newNodeShape: NodeShape = NodeShape.RECTANGLE
+    // The fill colors offered when a node is added or edited.
+    , val nodeColors: List<Color> = DEFAULT_NODE_COLORS
+    // The font node text is drawn in.
+    , val nodeFont: NodeFont = NodeFont.DEFAULT
+    // How the note of a node is shown.
+    , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
+    // The text colors offered when a node is added or edited.
+    , val textColors: List<Color> = DEFAULT_TEXT_COLORS
+    , val themeMode: ThemeMode = ThemeMode.SYSTEM
 )
 
 // The preferences take effect when they are confirmed, as the changes of the other dialogs do.
 @Composable
 fun PreferencesDialog(
-    preferences: UserPreferences,
-    onSubmit: (UserPreferences) -> Unit,
-    onDismiss: () -> Unit,
+    preferences: UserPreferences
+    , onSubmit: (UserPreferences) -> Unit
+    , onDismiss: () -> Unit
 ) {
     var edited by remember { mutableStateOf(preferences) }
     // Closed to start with, as arrow link colors are changed less often than those of nodes.
@@ -157,6 +174,14 @@ fun PreferencesDialog(
                         , choiceLabel = { it.label }
                         , selectedChoice = edited.noteDisplay
                         , onSelect = { edited = edited.copy(noteDisplay = it) }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
+                    DropdownPicker(
+                        label = "Attributes"
+                        , choices = AttributeDisplay.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.attributeDisplay
+                        , onSelect = { edited = edited.copy(attributeDisplay = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     Row(
