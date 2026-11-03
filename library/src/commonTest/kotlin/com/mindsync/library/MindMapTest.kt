@@ -2604,6 +2604,39 @@ class MindMapTest {
     }
 
     @Test
+    fun noteMarkerNodeIsTheOneWhoseIconIsUnderTheMouse() = runComposeUiTest {
+        val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
+        setMindMap(state)
+        clickNode(state.tree.getRootNode())
+        state.addNode("child")
+        waitForIdle()
+        val child = state.tree.getNode(state.tree.getRootNode().children.single())
+        clickNode(child)
+        state.editNodeNote("<p>A note</p>")
+        waitForIdle()
+        val marker = density.noteMarkerCenter(state.tree.getNode(child.id)) * state.scaleFactor +
+            state.currentPoint
+
+        onNodeWithTag(TAG).performMouseInput { moveTo(marker) }
+        waitForIdle()
+        assertEquals(child.id, state.noteMarkerNode?.id)
+
+        // Being over the node is not being over its icon.
+        onNodeWithTag(TAG).performMouseInput { moveTo(center(child)) }
+        waitForIdle()
+        assertNull(state.noteMarkerNode)
+
+        // The icon is not drawn while the note is shown in the node.
+        state.noteDisplay = NoteDisplay.INLINE
+        waitForIdle()
+        val shownMarker = density.noteMarkerCenter(state.tree.getNode(child.id)) * state.scaleFactor +
+            state.currentPoint
+        onNodeWithTag(TAG).performMouseInput { moveTo(shownMarker) }
+        waitForIdle()
+        assertNull(state.noteMarkerNode)
+    }
+
+    @Test
     fun attributeMarkerNodeIsTheOneWhoseIconIsUnderTheMouse() = runComposeUiTest {
         val state = MindMapState(Tree<Any>(Dp(150f), Dp(300f)))
         setMindMap(state)

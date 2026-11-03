@@ -162,8 +162,8 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * A folded node, whose nodes below it are hidden, has a ring where its lines to them would start, in place
  * of its '+' button. A click on the ring unfolds the node. See [MindMapState.toggleFold].
  *
- * A node with a note has a marker on its top right edge. The note itself is not drawn:
- * [MindMapState.hoveredNode] is the node under the mouse pointer, for showing its note.
+ * While its note is not shown, a node with a note has a marker on its top right edge, and
+ * [MindMapState.noteMarkerNode] is the node whose marker is under the mouse pointer, for showing the note.
  *
  * While the attributes are not shown, a node with attributes has a marker on its bottom right edge instead, and
  * [MindMapState.attributeMarkerNode] is the node whose marker is under the mouse pointer, for showing them.

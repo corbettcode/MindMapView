@@ -121,6 +121,14 @@ class MindMapState(
     /** The node the mouse pointer is over while no button is pressed, or null when it is over none. */
     val hoveredNode: NodeData<*>? get() = hoveredNodeId?.let { tree.nodes[it] }
 
+    private var noteMarkerNodeId by mutableStateOf<String?>(null)
+
+    /**
+     * The node whose note icon the mouse pointer is over while no button is pressed, or null when it is over none,
+     * for showing its note. The icon is only drawn where the note is not shown inline.
+     */
+    val noteMarkerNode: NodeData<*>? get() = noteMarkerNodeId?.let { tree.nodes[it] }
+
     private var attributeMarkerNodeId by mutableStateOf<String?>(null)
 
     /**
@@ -189,6 +197,7 @@ class MindMapState(
             if (value == mapNoteDisplay) return
             mapNoteDisplay = value
             mindMapManager.noteDisplay = value
+            noteMarkerNodeId = null
             animateTreeChange()
         }
 
@@ -1134,6 +1143,7 @@ class MindMapState(
     internal fun onHover(position: Offset?) {
         if (position != null) hoverPosition = position
         hoveredNodeId = position?.let { findNode(toTreePoint(it))?.id }
+        noteMarkerNodeId = position?.let { findNoteMarker(toTreePoint(it))?.id }
         attributeMarkerNodeId = position?.let { findAttributeMarker(toTreePoint(it))?.id }
         isArrowLinkHovered = position != null && hoveredNodeId == null && findArrowLink(position) != null
         if (position != null) {
@@ -1168,6 +1178,22 @@ class MindMapState(
     }
 
     internal fun findNodeAt(position: Offset): NodeData<*>? = findNode(toTreePoint(position))
+
+    // The last drawn of the note icons at the point, as it is the one on top there.
+    private fun findNoteMarker(
+        point: Offset
+    ): NodeData<*>? {
+        val reach = NOTE_MARKER_SIZE.toPx(density) / 2
+        var foundNode: NodeData<*>? = null
+        tree.doVisiblePreorderTraversal { node ->
+            val distance = point - density.noteMarkerCenter(node)
+            val isOnMarker = abs(distance.x) <= reach && abs(distance.y) <= reach
+            val hasMarker = node.note.isNotBlank()
+                && (tree.noteDisplayOf(node.id) ?: noteDisplay) != NoteDisplay.INLINE
+            if (isOnMarker && hasMarker) foundNode = node
+        }
+        return foundNode
+    }
 
     // The last drawn of the attribute icons at the point, as it is the one on top there.
     private fun findAttributeMarker(

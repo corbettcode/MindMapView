@@ -786,11 +786,10 @@ private fun MindMapScreen(
     // A node that is removed without being confirmed is removed at once.
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
-    // The note of the hovered node and where the pointer was when it was shown, once the pointer has stayed on the node.
+    // The note of the node whose note icon the pointer is on and where the pointer was, once it has stayed there.
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     // The attributes of the node whose attribute icon the pointer is on, once it has stayed there.
     var attributePopup by remember { mutableStateOf<AttributePopupContent?>(null) }
-    val hoveredNode = state.hoveredNode
     val isDialogOpen =
         operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
             || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
@@ -828,13 +827,15 @@ private fun MindMapScreen(
         }
     }
     LaunchedEffect(preferences.noteDisplay) { state.noteDisplay = preferences.noteDisplay }
-    // Only a flyover note is shown in a popup: an inline one is in the node already.
-    val isNotePopupShown = hoveredNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
+    // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
+    val noteMarkerNode = state.noteMarkerNode
+    val isNotePopupShown = noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
     LaunchedEffect(
-        hoveredNode?.id, hoveredNode?.note, hoveredNode?.color, hoveredNode?.textColor, isDialogOpen, isNotePopupShown
+        noteMarkerNode?.id, noteMarkerNode?.note, noteMarkerNode?.color, noteMarkerNode?.textColor
+        , isDialogOpen, isNotePopupShown
     ) {
         notePopup = null
-        val node = hoveredNode?.takeIf { it.note.isNotBlank() && !isDialogOpen && isNotePopupShown }
+        val node = noteMarkerNode?.takeIf { it.note.isNotBlank() && !isDialogOpen && isNotePopupShown }
             ?: return@LaunchedEffect
         delay(NOTE_POPUP_DELAY_MILLIS)
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
