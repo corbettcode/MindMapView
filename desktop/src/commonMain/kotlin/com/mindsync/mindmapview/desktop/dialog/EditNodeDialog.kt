@@ -125,8 +125,8 @@ private val DIALOG_GAP = 16.dp
  * @param onDismiss A callback triggered when the dialog is dismissed.
  * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
  * added. Without it, the dialog has no such button.
- * @param chooseImage Lets the user choose an image file for the text or note, and returns the address it is shown
- * from, or null when they choose none. Without it, neither has a button for inserting an image.
+ * @param chooseImage Lets the user choose an image file for the note, and returns the address it is shown from,
+ * or null when they choose none. Without it, the note has no button for inserting an image.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -342,10 +342,7 @@ fun EditNodeDialog(
                         , emoji = selectedEmoji
                         , textStyle = descriptionStyle
                     )
-                    RichTextToolbar(
-                        richTextState
-                        , onInsertImage = insertImage(richTextState)
-                    )
+                    RichTextToolbar(richTextState)
 
                     CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                         OutlinedRichTextEditor(
