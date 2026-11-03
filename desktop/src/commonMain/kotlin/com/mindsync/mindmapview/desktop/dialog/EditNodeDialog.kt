@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -67,7 +69,10 @@ import com.mindsync.mindmapview.desktop.ShowEmojisInColor
 import com.mindsync.mindmapview.desktop.TEXT_FIELD_VERTICAL_PADDING
 import com.mindsync.mindmapview.desktop.UrlImageLoader
 import com.mindsync.mindmapview.desktop.component.AttributesEditor
+import com.mindsync.mindmapview.desktop.component.COLOR_EDITOR_BUTTON_WIDTH
+import com.mindsync.mindmapview.desktop.component.ColorEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
 import com.mindsync.mindmapview.desktop.component.attributeRowsOf
 import com.mindsync.mindmapview.desktop.component.attributesToKeep
@@ -210,8 +215,22 @@ fun EditNodeDialog(
     var selectedLine by remember { mutableStateOf(line) }
     // A border that is turned on starts in the color of the text, but is not changed along with it after that.
     var selectedBorder by remember { mutableStateOf(if (border.isNone) border.copy(color = textColor) else border) }
+    val selectFill = { picked: Color -> selectedColor = fillSwatch?.stored(picked) ?: picked }
+    val selectTextColor = { picked: Color ->
+        selectedTextColor = textSwatch?.stored(picked) ?: picked
+        // A border that is not on yet is to start in the color of the text it is turned on with.
+        if (selectedBorder.isNone) selectedBorder = selectedBorder.copy(color = picked)
+    }
+    // Which row of colors the color picker changes: the text's, or the fill's.
+    var isTextColorEdited by remember { mutableStateOf(false) }
     var selectedNoteDisplay by remember { mutableStateOf(noteDisplay) }
     var selectedAttributeDisplay by remember { mutableStateOf(attributeDisplay) }
+    // Closed unless the node has colors of its own, so the dialog fits on a small screen.
+    var isColorsOpen by remember {
+        mutableStateOf(
+            color != (shape?.defaultColor ?: rootColor) || textColor != (shape?.defaultTextColor ?: rootTextColor)
+        )
+    }
     // Closed unless the node has a line setting of its own, so the dialog fits on a small screen.
     var isLineOpen by remember { mutableStateOf(!line.isEmpty) }
     // Closed unless the node has a border, for the same reason.
@@ -359,35 +378,73 @@ fun EditNodeDialog(
                         )
                     }
 
-                    // The colors that follow the map's theme come first, to go back to.
-                    ColorPicker(
-                        label = "Fill"
-                        , colors = remember(color, nodeColors, fillSwatch?.default, fillSwatch?.themed) {
-                            (listOfNotNull(fillSwatch?.shown(fillSwatch.default)) + nodeColors
-                                + (fillSwatch?.shown(color) ?: color)).distinct()
+                    CollapsibleSection(
+                        title = "Colors"
+                        , isOpen = isColorsOpen
+                        , onToggle = { isColorsOpen = !isColorsOpen }
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            , modifier = Modifier.padding(12.dp)
+                        ) {
+                            // The colors that follow the map's theme come first, to go back to. A color made with the
+                            // color picker is offered last, as the one chosen.
+                            ColorPicker(
+                                label = "Fill"
+                                , colors = remember(
+                                    color, nodeColors, fillSwatch?.default, fillSwatch?.themed, shownColor
+                                ) {
+                                    (listOfNotNull(fillSwatch?.shown(fillSwatch.default)) + nodeColors
+                                        + (fillSwatch?.shown(color) ?: color) + shownColor).distinct()
+                                }
+                                // Only the row the color picker changes shows its color as chosen, as in the
+                                // preferences.
+                                , selectedColor = if (isTextColorEdited) Color.Unspecified else shownColor
+                                , onSelect = {
+                                    isTextColorEdited = false
+                                    selectFill(it)
+                                }
+                            )
+                            ColorPicker(
+                                label = "Text"
+                                , colors = remember(
+                                    textColor, textColors, textSwatch?.default, textSwatch?.themed, shownTextColor
+                                ) {
+                                    (listOfNotNull(textSwatch?.shown(textSwatch.default)) + textColors
+                                        + (textSwatch?.shown(textColor) ?: textColor) + shownTextColor).distinct()
+                                }
+                                , selectedColor = if (isTextColorEdited) shownTextColor else Color.Unspecified
+                                , onSelect = {
+                                    isTextColorEdited = true
+                                    selectTextColor(it)
+                                }
+                            )
+                            val edited = if (isTextColorEdited) defaultTextColor else defaultColor
+                            ColorEditor(
+                                color = if (isTextColorEdited) shownTextColor else shownColor
+                                , onColorChange = { if (isTextColorEdited) selectTextColor(it) else selectFill(it) }
+                                , modifier = Modifier.padding(start = PICKER_LABEL_WIDTH + 8.dp)
+                            ) {
+                                // Back to the color that follows the map's theme.
+                                OutlinedButton(
+                                    onClick = {
+                                        edited?.let {
+                                            if (isTextColorEdited) selectedTextColor = it else selectedColor = it
+                                        }
+                                    }
+                                    , enabled = edited != null
+                                        && edited != (if (isTextColorEdited) selectedTextColor else selectedColor)
+                                    , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+                                ) {
+                                    Text("Reset")
+                                }
+                            }
+                            Text(
+                                "The first color of each row follows the map's theme."
+                                , style = MaterialTheme.typography.labelSmall
+                            )
                         }
-                        , selectedColor = shownColor
-                        , onSelect = { selectedColor = fillSwatch?.stored(it) ?: it }
-                    )
-
-                    ColorPicker(
-                        label = "Text"
-                        , colors = remember(textColor, textColors, textSwatch?.default, textSwatch?.themed) {
-                            (listOfNotNull(textSwatch?.shown(textSwatch.default)) + textColors
-                                + (textSwatch?.shown(textColor) ?: textColor)).distinct()
-                        }
-                        , selectedColor = shownTextColor
-                        , onSelect = {
-                            selectedTextColor = textSwatch?.stored(it) ?: it
-                            // A border that is not on yet is to start in the color of the text it is turned on with.
-                            if (selectedBorder.isNone) selectedBorder = selectedBorder.copy(color = it)
-                        }
-                    )
-
-                    Text(
-                        "The first color of each row follows the map's theme."
-                        , style = MaterialTheme.typography.labelSmall
-                    )
+                    }
 
                     CollapsibleSection(
                         title = "Border"

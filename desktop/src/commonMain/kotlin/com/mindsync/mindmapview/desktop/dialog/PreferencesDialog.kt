@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,26 +43,23 @@ import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
+import com.mindsync.mindmapview.desktop.component.COLOR_EDITOR_BUTTON_WIDTH
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
+import com.mindsync.mindmapview.desktop.component.ColorEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.DialogLayout
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
-import com.mindsync.mindmapview.desktop.component.HsvColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
-import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
-import com.mindsync.mindmapview.desktop.parseHexColor
 import com.mindsync.mindmapview.desktop.themeArrowLinkColors
 import com.mindsync.mindmapview.desktop.themeFillColors
 import com.mindsync.mindmapview.desktop.themeTextColors
-import com.mindsync.mindmapview.desktop.toHex
 import com.mindsync.mindmapview.desktop.withTheme
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
 private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 840.dp)
 private val PREFERENCES_LABEL_WIDTH = 128.dp
-private val EDITOR_BUTTON_WIDTH = 140.dp
 
 /**
  * What the user chose in the preferences dialog. Each of them starts out as
@@ -185,20 +181,6 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                         , choiceFontFamily = { fontFamilies[it] }
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                        , modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
-                            .padding(end = 12.dp)
-                    ) {
-                        Checkbox(
-                            checked = edited.isRemoveConfirmed
-                            , onCheckedChange = null
-                            , modifier = Modifier.padding(8.dp)
-                        )
-                        Text("Ask before removing a node")
-                    }
                     CollapsibleSection(
                         title = "Node colors"
                         , isOpen = isNodeColorsOpen
@@ -257,6 +239,20 @@ fun PreferencesDialog(
                         , onSelect = { edited = edited.copy(attributeDisplay = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                        , modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { edited = edited.copy(isRemoveConfirmed = !edited.isRemoveConfirmed) }
+                            .padding(end = 12.dp)
+                    ) {
+                        Checkbox(
+                            checked = edited.isRemoveConfirmed
+                            , onCheckedChange = null
+                            , modifier = Modifier.padding(8.dp)
+                        )
+                        Text("Ask before removing a node")
+                    }
                 }
                 , note = null
                 , buttons = {
@@ -337,8 +333,6 @@ private fun ColorListsEditor(
     val list = lists[selectedList]
     val colors = list.colors
     val index = selectedIndex.coerceIn(colors.indices)
-    // The text is kept apart from the color, so a hex value that is still being typed is not lost.
-    var hexText by remember(selectedList, index, colors[index]) { mutableStateOf(colors[index].toHex()) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         lists.forEachIndexed { listIndex, editable ->
@@ -354,54 +348,37 @@ private fun ColorListsEditor(
                 , labelWidth = PREFERENCES_LABEL_WIDTH
             )
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        val replaceSelected = { color: Color -> list.onChange(colors.toMutableList().also { it[index] = color }) }
+        ColorEditor(
+            color = colors[index]
+            , onColorChange = replaceSelected
             , modifier = Modifier.padding(start = PREFERENCES_LABEL_WIDTH + 8.dp)
         ) {
-            val replaceSelected = { color: Color -> list.onChange(colors.toMutableList().also { it[index] = color }) }
-            HsvColorPicker(
-                color = colors[index]
-                , onColorChange = replaceSelected
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = hexText
-                    , visualTransformation = emojiVisualTransformation()
-                    , onValueChange = { text ->
-                        hexText = text
-                        parseHexColor(text)?.let(replaceSelected)
-                    }
-                    , label = { Text("Hex") }
-                    , isError = parseHexColor(hexText) == null
-                    , singleLine = true
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                )
-                OutlinedButton(
-                    onClick = {
-                        list.onChange(colors + colors[index])
-                        selectedIndex = colors.size
-                    }
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                ) {
-                    Text("Add")
+            OutlinedButton(
+                onClick = {
+                    list.onChange(colors + colors[index])
+                    selectedIndex = colors.size
                 }
-                // A picker needs a color to offer, so the last one of a list stays.
-                OutlinedButton(
-                    onClick = { list.onChange(colors.filterIndexed { i, _ -> i != index }) }
-                    , enabled = colors.size > 1
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                ) {
-                    Text("Remove")
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Add")
+            }
+            // A picker needs a color to offer, so the last one of a list stays.
+            OutlinedButton(
+                onClick = { list.onChange(colors.filterIndexed { i, _ -> i != index }) }
+                , enabled = colors.size > 1
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Remove")
+            }
+            OutlinedButton(
+                onClick = {
+                    list.onChange(list.defaults)
+                    selectedIndex = 0
                 }
-                OutlinedButton(
-                    onClick = {
-                        list.onChange(list.defaults)
-                        selectedIndex = 0
-                    }
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                ) {
-                    Text("Reset")
-                }
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Reset")
             }
         }
     }
@@ -421,8 +398,6 @@ private fun BackgroundColorEditor(
     val shown = color ?: themeBackground
     // A color of the user's own is offered with those of the themes, so it shows as the one chosen.
     val choices = (MapThemes.all.map { it.background } + shown).distinct()
-    // The text is kept apart from the color, so a hex value that is still being typed is not lost.
-    var hexText by remember(shown) { mutableStateOf(shown.toHex()) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ColorPicker(
@@ -432,34 +407,17 @@ private fun BackgroundColorEditor(
             , onSelect = onChange
             , labelWidth = PREFERENCES_LABEL_WIDTH
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ColorEditor(
+            color = shown
+            , onColorChange = onChange
             , modifier = Modifier.padding(start = PREFERENCES_LABEL_WIDTH + 8.dp)
         ) {
-            HsvColorPicker(
-                color = shown
-                , onColorChange = onChange
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = hexText
-                    , visualTransformation = emojiVisualTransformation()
-                    , onValueChange = { text ->
-                        hexText = text
-                        parseHexColor(text)?.let(onChange)
-                    }
-                    , label = { Text("Hex") }
-                    , isError = parseHexColor(hexText) == null
-                    , singleLine = true
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                )
-                OutlinedButton(
-                    onClick = { onChange(null) }
-                    , enabled = color != null
-                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
-                ) {
-                    Text("Reset")
-                }
+            OutlinedButton(
+                onClick = { onChange(null) }
+                , enabled = color != null
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Reset")
             }
         }
     }
