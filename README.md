@@ -109,7 +109,7 @@ state.setTree(MindMapViewFile.read(content))
 state.animateTreeChange() // only a dragged root's position is stored, so arrange the tree
 ```
 
-The desktop app saves to `.mmv` files. It also opens FreeMind `.mm` files, which are saved as a `.mmv` file next to them, and can export a map to one. It exports a map as a PNG image, an SVG drawing, a PDF document, an HTML outline, an OPML outline, Markdown or a FreeMind map. The PDF is made from the SVG drawing by Apache FOP, with the fonts of the app and of the computer embedded; color emoji are left blank in it, as a PDF font cannot hold their pictures.
+The desktop app saves to `.mmv` files. Tool › Import › Folder... makes a map of a folder on the computer, with a node for each folder in it, built with `Outline.toTree(OutlineItem(...))`, which makes a map of any hierarchy of names. It also opens FreeMind `.mm` files, which are saved as a `.mmv` file next to them, and can export a map to one. It exports a map as a PNG image, an SVG drawing, a PDF document, an HTML outline, an OPML outline, Markdown or a FreeMind map. The PDF is made from the SVG drawing by Apache FOP, with the fonts of the app and of the computer embedded; color emoji are left blank in it, as a PDF font cannot hold their pictures.
 
 ### FreeMind files
 `FreeMind` converts a tree to and from the text of a FreeMind `.mm` file. Reading and writing the file itself is up to the app. FreeMind only has a left and a right side, so a child of the root above or below it is written as on the left or right.

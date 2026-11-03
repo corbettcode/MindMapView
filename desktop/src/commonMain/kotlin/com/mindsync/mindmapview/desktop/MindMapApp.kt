@@ -34,6 +34,7 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.io.Outline
 import com.mindsync.library.io.Opml
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
@@ -197,8 +198,8 @@ internal class MindMapApp(
     // What waits for the unsaved changes to be saved or not, while that is asked.
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
     // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
-    // The format of the import that waits for the user to confirm it.
-    private var pendingImport by mutableStateOf<ImportFormat?>(null)
+    // The import that waits for the user to confirm it.
+    private var pendingImport by mutableStateOf<(suspend () -> Unit)?>(null)
     // The recent file that was chosen but is not found, while the user is asked whether to remove it from the list.
     private var missingRecentPath by mutableStateOf<String?>(null)
 
@@ -334,9 +335,22 @@ internal class MindMapApp(
         }
     }
 
+    // The folder takes the place of the nodes of this map, as an imported map does.
+    private suspend fun importFolder() {
+        val chooseFolder = platform.chooseFolder ?: return
+        try {
+            val folder = chooseFolder() ?: return
+            state.replaceTree(Outline.toTree(folder))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            error = "Could not import the folder: ${e.message}"
+        }
+    }
+
     // A map with only its root has no nodes to lose, so it is not asked about.
-    private fun startImport(format: ImportFormat) {
-        if (state.tree.nodes.size > 1) pendingImport = format else scope.launch { importMap(format) }
+    private fun startImport(import: suspend () -> Unit) {
+        if (state.tree.nodes.size > 1) pendingImport = import else scope.launch { import() }
     }
 
     // A file that is missing, or that the browser is not allowed to open, is told about before the unsaved
@@ -362,10 +376,10 @@ internal class MindMapApp(
     private fun onImportChoice(
         isConfirmed: Boolean
     ) {
-        val format = pendingImport ?: return
+        val import = pendingImport ?: return
         pendingImport = null
 
-        if (isConfirmed) scope.launch { importMap(format) }
+        if (isConfirmed) scope.launch { import() }
     }
 
     private fun openUserManual() {
@@ -685,7 +699,8 @@ internal class MindMapApp(
             onMissingRecentChoice = ::onMissingRecentChoice,
             onFind = { showFind() },
             onUserManual = ::openUserManual,
-            onImport = ::startImport,
+            onImport = { format -> startImport { importMap(format) } },
+            onImportFolder = platform.chooseFolder?.let { { startImport(::importFolder) } },
             chooseNoteImage = ::chooseNoteImage,
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
@@ -781,6 +796,8 @@ private fun MindMapScreen(
     onFind: () -> Unit,
     onUserManual: () -> Unit,
     onImport: (ImportFormat) -> Unit,
+    // Null where there are no folders to import, as in a browser.
+    onImportFolder: (() -> Unit)?,
     chooseNoteImage: suspend () -> String?,
     onCut: () -> Unit,
     onCopy: () -> Unit,
@@ -931,7 +948,7 @@ private fun MindMapScreen(
                         onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
                         onFold = { it.run(state) },
                     )
-                    ToolMenu(onImport = onImport)
+                    ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
                     HelpMenu(
                         onUserManual = onUserManual
                         , onReadme = { isReadmeOpen = true }

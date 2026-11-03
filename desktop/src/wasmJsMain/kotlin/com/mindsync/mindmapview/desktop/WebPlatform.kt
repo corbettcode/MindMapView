@@ -4,6 +4,7 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
+import com.mindsync.library.io.OutlineItem
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 import org.jetbrains.skia.EncodedImageFormat
@@ -140,6 +141,8 @@ internal object WebPlatform : AppPlatform {
     override val recentMaps: RecentMaps? = if (jsHasRecentMaps()) WebRecentMaps else null
 
     override val pdfFromSvg: (suspend (String) -> ByteArray)? = null
+
+    override val chooseFolder: (suspend () -> OutlineItem?)? = null
 
     override fun encodePng(image: ImageBitmap): ByteArray =
         Image.makeFromBitmap(image.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)?.bytes

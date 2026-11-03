@@ -1,6 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
+import com.mindsync.library.io.OutlineItem
 
 /**
  * A file a mind map is opened from, saved to or exported to: on the desktop a file on disk, and in a browser
@@ -38,6 +39,12 @@ interface AppPlatform {
      * a browser. It throws [MapFileException] when the PDF cannot be made.
      */
     val pdfFromSvg: (suspend (svg: String) -> ByteArray)?
+
+    /**
+     * Lets the user choose a folder, and returns it with the folders in it, or null when they choose none. It is
+     * null where the folders on the computer cannot be read, as in a browser.
+     */
+    val chooseFolder: (suspend () -> OutlineItem?)?
 
     /**
      * Shows the user manual, [USER_MANUAL_FILE]: on the desktop in the program that opens PDF files, and in a

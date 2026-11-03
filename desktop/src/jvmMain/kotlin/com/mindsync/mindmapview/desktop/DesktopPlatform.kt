@@ -1,6 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
+import com.mindsync.library.io.OutlineItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Desktop
@@ -14,6 +15,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.util.prefs.Preferences
+import javax.swing.JFileChooser
 
 /** A mind map file on disk. */
 internal data class DesktopDocument(
@@ -145,6 +147,21 @@ internal class DesktopPlatform(
             } catch (e: IOException) {
                 throw MapFileException(e.message)
             }
+        }
+    }
+
+    // AWT's file dialog cannot choose a folder on every desktop, so Swing's chooser does.
+    override val chooseFolder: suspend () -> OutlineItem? = {
+        val chooser = JFileChooser().apply {
+            dialogTitle = "Import Folder"
+            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+        }
+        if (chooser.showOpenDialog(window()) == JFileChooser.APPROVE_OPTION) {
+            val folder = chosenFolder(chooser.selectedFile, chooser.currentDirectory)
+            withContext(Dispatchers.IO) { folderOutline(folder) }
+        }
+        else {
+            null
         }
     }
 

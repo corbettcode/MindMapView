@@ -15,6 +15,8 @@ import com.mindsync.mindmapview.desktop.ImportFormat
 @Composable
 internal fun ToolMenu(
     onImport: (ImportFormat) -> Unit
+    // Without it, there is no folder to import.
+    , onImportFolder: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     var importExpanded by remember { mutableStateOf(false) }
@@ -51,6 +53,16 @@ internal fun ToolMenu(
                                 importExpanded = false
                                 expanded = false
                                 onImport(format)
+                            }
+                        )
+                    }
+                    onImportFolder?.let { importFolder ->
+                        DropdownMenuItem(
+                            text = { Text("Folder...") }
+                            , onClick = {
+                                importExpanded = false
+                                expanded = false
+                                importFolder()
                             }
                         )
                     }

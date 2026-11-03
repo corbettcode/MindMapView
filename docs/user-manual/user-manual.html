@@ -680,7 +680,14 @@
         <tr><td>Map...</td><td>A MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
         <tr><td>Markdown (md)...</td><td>A Markdown document, as a map of its headings and lists (see below).</td></tr>
         <tr><td>XMind (xmind)...</td><td>An XMind map, from XMind 8 or a later XMind (see below).</td></tr>
+        <tr><td>Folder...</td><td>A folder on your computer, as a map of the folders in it (desktop app only; see below).</td></tr>
     </table>
+    <p>
+        From a folder, the root is the folder you chose, with its full path as its note, and each folder inside
+        it becomes a node under the folder it is in. Files, hidden folders and links to folders are left out.
+        Folders more than two levels down start folded, so the map opens small. A map holds at most 1,000
+        folders: past that, the deepest ones are left out, and the root's note says so.
+    </p>
     <p>
         From a Markdown document, each heading and each list item becomes a node. A heading holds the lower
         headings after it and the lists under it, and a list item holds the items indented under it. Other text
