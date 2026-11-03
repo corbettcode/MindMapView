@@ -1062,8 +1062,9 @@ private fun MindMapScreen(
             }
         }
 
-        error?.let { message ->
+        AnimatedDialog(value = error) { message ->
             AlertDialog(
+                modifier = Modifier.dialogAnimation(),
                 onDismissRequest = onErrorDismiss,
                 text = { Text(message) },
                 confirmButton = {
@@ -1074,19 +1075,21 @@ private fun MindMapScreen(
             )
         }
 
-        saveQuestion?.let { question -> SaveChangesDialog(question, onSaveChoice) }
+        AnimatedDialog(value = saveQuestion) { question -> SaveChangesDialog(question, onSaveChoice) }
 
-        if (isImportConfirmOpen) {
+        AnimatedDialog(isOpen = isImportConfirmOpen) {
             ImportDialog(onChoice = onImportChoice)
         }
 
-        missingRecentPath?.let { path ->
+        AnimatedDialog(value = missingRecentPath) { path ->
             MissingRecentFileDialog(recentLocationOf(path), onChoice = onMissingRecentChoice)
         }
 
-        if (isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
+        // The count is kept from when the dialog opened, as the nodes are gone while it closes.
+        val removeCount = remember(isRemoveConfirmOpen) { state.selectedBranches.size }
+        AnimatedDialog(isOpen = isRemoveConfirmOpen && state.selectedBranches.isRemovable()) {
             RemoveNodeDialog(
-                count = state.selectedBranches.size,
+                count = removeCount,
                 onConfirm = {
                     isRemoveConfirmOpen = false
                     state.removeNode()
@@ -1104,7 +1107,7 @@ private fun MindMapScreen(
             operation = Operation.Update
         }
 
-        if (isPreferencesOpen) {
+        AnimatedDialog(isOpen = isPreferencesOpen) {
             // The map theme shown is that of the open map, which choosing another changes.
             val opened = remember { preferences.copy(mapThemeId = state.theme.id) }
             PreferencesDialog(
@@ -1114,15 +1117,15 @@ private fun MindMapScreen(
             )
         }
 
-        if (isReadmeOpen) {
+        AnimatedDialog(isOpen = isReadmeOpen) {
             ReadmeDialog(onDismiss = { isReadmeOpen = false })
         }
 
-        if (isAboutOpen) {
+        AnimatedDialog(isOpen = isAboutOpen) {
             AboutDialog(onDismiss = { isAboutOpen = false })
         }
 
-        operation?.let { currentOperation ->
+        AnimatedDialog(value = operation) { currentOperation ->
             val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
             val newNodeStyle = remember(currentOperation) {
                 (currentOperation as? Operation.Add)?.let { add ->

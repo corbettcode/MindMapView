@@ -5,6 +5,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.mindsync.mindmapview.desktop.dialogAnimation
 
 @Composable
 fun RemoveNodeDialog(
@@ -13,6 +15,7 @@ fun RemoveNodeDialog(
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
+        modifier = Modifier.dialogAnimation(),
         onDismissRequest = onDismiss,
         title = { Text(if (count == 1) "Remove node" else "Remove $count nodes") },
         text = { Text("Are you sure?") },

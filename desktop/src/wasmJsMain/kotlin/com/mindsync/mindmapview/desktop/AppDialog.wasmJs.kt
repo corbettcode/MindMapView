@@ -51,10 +51,12 @@ actual fun AppDialog(
         Surface(
             shape = RoundedCornerShape(12.dp)
             , shadowElevation = 8.dp
-            , modifier = Modifier.size(
-                width = min(state.size.width, page.width - PAGE_MARGIN * 2)
-                , height = min(state.size.height, page.height - PAGE_MARGIN * 2)
-            )
+            , modifier = Modifier
+                .size(
+                    width = min(state.size.width, page.width - PAGE_MARGIN * 2)
+                    , height = min(state.size.height, page.height - PAGE_MARGIN * 2)
+                )
+                .dialogAnimation()
         ) {
             Column {
                 Text(

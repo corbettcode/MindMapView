@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.mindmapview.desktop.LINK_DIALOG_FIELD_WIDTH
 import com.mindsync.mindmapview.desktop.LINK_SCHEMES
 import com.mindsync.mindmapview.desktop.completeUrl
+import com.mindsync.mindmapview.desktop.dialogAnimation
 import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.linkScheme
 
@@ -38,6 +39,7 @@ fun LinkDialog(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     AlertDialog(
+        modifier = Modifier.dialogAnimation(),
         onDismissRequest = onDismiss,
         title = { Text(if (url == null) "Add link" else "Edit link") },
         text = {

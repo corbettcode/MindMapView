@@ -5,6 +5,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.mindsync.mindmapview.desktop.dialogAnimation
 
 /** Tells that the recent file at [path] is not found and asks whether to remove it from the recent files. */
 @Composable
@@ -14,6 +16,7 @@ fun MissingRecentFileDialog(
 ) {
     AlertDialog(
         onDismissRequest = { onChoice(false) }
+        , modifier = Modifier.dialogAnimation()
         , title = { Text("File not found") }
         , text = { Text(missingRecentFileMessage(path)) }
         , confirmButton = {

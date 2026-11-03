@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -78,7 +80,12 @@ actual fun AppDialog(
         LaunchedEffect(Unit) {
             snapshotFlow { state.contentMinHeight }.collect { state.fitToContent(titleBarHeight, keepsSize = true) }
         }
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // A window cannot fade on every desktop, so its content does, on the color of the dialog.
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+        ) {
             val minSize = state.minSize ?: state.size
             val width = max(maxWidth, minSize.width)
             // A dialog that scrolls its content itself is given the room there is.
@@ -90,10 +97,12 @@ actual fun AppDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Box(
-                    modifier = Modifier.size(
-                        width = width
-                        , height = height
-                    )
+                    modifier = Modifier
+                        .size(
+                            width = width
+                            , height = height
+                        )
+                        .dialogAnimation()
                 ) {
                     content()
                 }

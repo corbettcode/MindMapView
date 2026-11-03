@@ -6,6 +6,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.mindsync.mindmapview.desktop.dialogAnimation
 
 /** What to do with the unsaved changes of a mind map before another one is shown or the app is closed. */
 enum class SaveChoice { SAVE, DISCARD, CANCEL }
@@ -16,6 +18,7 @@ fun SaveChangesDialog(
     onChoice: (SaveChoice) -> Unit,
 ) {
     AlertDialog(
+        modifier = Modifier.dialogAnimation(),
         onDismissRequest = { onChoice(SaveChoice.CANCEL) },
         title = { Text(question) },
         text = { Text("Your changes are lost if you don't save them.") },

@@ -17,6 +17,7 @@ import com.mindsync.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.dialog.LinkDialog
 import com.mindsync.mindmapview.desktop.setLink
 import com.mindsync.mindmapview.desktop.setSize
+import com.mindsync.mindmapview.desktop.AnimatedDialog
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 @Composable
@@ -29,7 +30,7 @@ fun RichTextToolbar(
     val decoration = spanStyle.textDecoration ?: TextDecoration.None
     var linkDialogOpen by remember { mutableStateOf(false) }
 
-    if (linkDialogOpen) {
+    AnimatedDialog(isOpen = linkDialogOpen) {
         LinkDialog(
             url = state.selectedLinkUrl,
             onSubmit = { state.setLink(it) },
