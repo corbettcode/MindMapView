@@ -23,6 +23,7 @@ import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -261,5 +262,27 @@ class MindMapViewFileTest {
             "</node></mindmapview>"
 
         assertEquals(NodeLine(), MindMapViewFile.read(text).lineOf("a"))
+    }
+
+    @Test
+    fun imagesAreKeptByTheirAddresses() {
+        val tree = Tree<Any>()
+        val images = mapOf(
+            "https://example.com/a.png?size=1&shape=round" to byteArrayOf(-119, 80, 78, 71, 0, 1, 2)
+            , "https://example.com/b.jpg" to byteArrayOf()
+        )
+
+        val read = MindMapViewFile.readImages(MindMapViewFile.write(tree, images))
+
+        assertEquals(images.keys, read.keys)
+        images.forEach { (src, bytes) -> assertContentEquals(bytes, read[src]) }
+    }
+
+    @Test
+    fun anImageThatIsNoBase64IsLeftOut() {
+        val text = "<mindmapview version=\"1\"><node id=\"r\" text=\"r\"/>" +
+            "<image src=\"https://example.com/a.png\">not base64!</image></mindmapview>"
+
+        assertEquals(emptyMap(), MindMapViewFile.readImages(text))
     }
 }

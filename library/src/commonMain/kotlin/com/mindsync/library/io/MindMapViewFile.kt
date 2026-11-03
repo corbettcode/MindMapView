@@ -22,6 +22,7 @@ import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
+import kotlin.io.encoding.Base64
 
 /**
  * Reads and writes mind maps in this library's own `.mmv` format, which keeps all there is of a [Tree]:
@@ -29,8 +30,12 @@ import com.mindsync.library.util.IdGenerator
  * of its children is on, the arrow links, and where the root is when the user dragged it there.
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
- * order, and then the `<arrowlink>` elements. A node's text and note are the HTML they are kept as. Where the
- * other nodes are is not stored: a map that was read needs to be arranged, as one read with [FreeMind] does.
+ * order, then the `<arrowlink>` elements, and then the `<image>` elements. A node's text and note are the HTML
+ * they are kept as. Where the other nodes are is not stored: a map that was read needs to be arranged, as one
+ * read with [FreeMind] does.
+ *
+ * The images of the HTML are stored in the file, so the map shows them where their addresses cannot be reached.
+ * An `<image>` holds the bytes of the image at its `src` address in Base64; the HTML keeps the address.
  */
 object MindMapViewFile {
     const val EXTENSION = "mmv"
@@ -38,7 +43,11 @@ object MindMapViewFile {
     private const val FORMAT_VERSION = 1
     private const val ROOT_ELEMENT = "mindmapview"
 
-    fun write(tree: Tree<*>): String = buildString {
+    /** Returns [tree] in this format, with [images], the bytes of each image by its address. */
+    fun write(
+        tree: Tree<*>
+        , images: Map<String, ByteArray> = emptyMap()
+    ): String = buildString {
         append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append('"')
         // A map in the Classic theme looks as one saved before there were themes, so it is written as one.
@@ -56,7 +65,32 @@ object MindMapViewFile {
         tree.arrowLinks
             .filter { it.sourceId in writtenIds && it.targetId in writtenIds }
             .forEach { writeArrowLink(it) }
+        images.forEach { (src, bytes) ->
+            append("  <image src=\"").append(escapeAttribute(src)).append("\">")
+            append(Base64.encode(bytes)).append("</image>\n")
+        }
         append("</").append(ROOT_ELEMENT).append(">\n")
+    }
+
+    /**
+     * Returns the bytes of the images stored in [content], by their addresses. An image that cannot be read is
+     * left out, as is any of a [content] that is not a mind map in this format.
+     */
+    fun readImages(content: String): Map<String, ByteArray> {
+        val map = XmlParser(content).parse().firstOrNull { it.name == ROOT_ELEMENT } ?: return emptyMap()
+        return map
+            .children
+            .filter { it.name == "image" }
+            .mapNotNull { element ->
+                val src = element.attributes["src"]?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val bytes = try {
+                    Base64.decode(element.text.filterNot { it.isWhitespace() })
+                } catch (e: IllegalArgumentException) {
+                    return@mapNotNull null
+                }
+                src to bytes
+            }
+            .toMap()
     }
 
     /**

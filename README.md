@@ -100,6 +100,8 @@ fun MindMapScreen() {
 ### MindMapView files
 `MindMapViewFile` converts a tree to and from the text of a `.mmv` file, this library's own format, which keeps all there is of a mind map: the shapes, colors, rich text, notes and attributes and how they are shown, and folds of the nodes, the side of the root each of its children is on, the arrow links, and where the root is when it was dragged. Reading and writing the file itself is up to the app.
 
+The images of the text and notes can be stored in the file too, so a map shows them without the web: `MindMapViewFile.write(tree, images)` takes the bytes of each image by its address, and `MindMapViewFile.readImages(content)` returns them. The HTML keeps the addresses. The desktop and web app stores the images of a map each time it is saved.
+
 ```kotlin
 val content = MindMapViewFile.write(state.tree)
 

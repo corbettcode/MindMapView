@@ -77,7 +77,7 @@ internal const val OPML_EXTENSION = "." + Opml.EXTENSION
 
 /**
  * Reads the mind map [content] of a file named [fileName]: a FreeMind map when its extension is FreeMind's,
- * and otherwise one in this app's own format.
+ * and otherwise one in this app's own format, whose stored images are shown in place of their addresses.
  *
  * @throws IllegalArgumentException when [content] is not a mind map in that format.
  */
@@ -86,7 +86,10 @@ internal fun readMap(
     , content: String
 ): Tree<Any> {
     val isFreeMind = fileName.endsWith(FREE_MIND_EXTENSION, ignoreCase = true)
-    return if (isFreeMind) FreeMind.read(content) else MindMapViewFile.read(content)
+    if (isFreeMind) return FreeMind.read(content)
+    val tree = MindMapViewFile.read(content)
+    UrlImageLoader.addImages(MindMapViewFile.readImages(content))
+    return tree
 }
 
 /**

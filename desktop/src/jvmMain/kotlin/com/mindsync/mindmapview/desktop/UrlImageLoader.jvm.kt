@@ -14,18 +14,20 @@ private const val TIMEOUT_MILLIS = 10_000
 private const val MAX_IMAGE_BYTES = 20 * 1024 * 1024
 private const val USER_AGENT = "MindMapView/1.0 (https://github.com/hegleB/MindMapView)"
 
-internal actual suspend fun fetchImage(url: String): ImageBitmap? = withContext(Dispatchers.IO) {
+internal actual suspend fun fetchImageBytes(url: String): ByteArray? = withContext(Dispatchers.IO) {
     try {
         val connection = imageConnection(url) ?: return@withContext null
-        val bytes = connection.getInputStream().use { it.readNBytes(MAX_IMAGE_BYTES) }
-        Image.makeFromEncoded(bytes).toComposeImageBitmap()
+        connection.getInputStream().use { it.readNBytes(MAX_IMAGE_BYTES) }
     } catch (e: IOException) {
         System.err.println("Could not load the image at $url: $e")
         null
-    } catch (e: IllegalArgumentException) {
-        System.err.println("Could not load the image at $url: $e")
-        null
     }
+}
+
+internal actual fun decodeImage(bytes: ByteArray): ImageBitmap? = try {
+    Image.makeFromEncoded(bytes).toComposeImageBitmap()
+} catch (e: IllegalArgumentException) {
+    null
 }
 
 /**

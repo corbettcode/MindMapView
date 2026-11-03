@@ -226,7 +226,8 @@ internal class MindMapApp(
     // Returns whether the mind map is saved.
     private suspend fun save(target: MapDocument): Boolean {
         try {
-            platform.files.write(target, MindMapViewFile.write(state.tree).encodeToByteArray())
+            val images = UrlImageLoader.bytesOf(imageSources(state.tree))
+            platform.files.write(target, MindMapViewFile.write(state.tree, images).encodeToByteArray())
             state.markSaved()
             // A mind map that is saved under a new name is one to open again, as one that was opened is.
             if (target != document) recentPaths = recentMaps?.add(target)
