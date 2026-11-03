@@ -85,6 +85,17 @@ object RichText {
     private val LINE_BOUNDARY = Regex("""<br\s*/?>|</?(?:p|li|div|h[1-6])(?:\s[^>]*)?>""")
     private val LIST_TAG = Regex("""</?(?:ul|ol)(?:\s[^>]*)?>""")
 
+    private val IMAGE = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CASE)
+    private val IMAGE_SOURCE = Regex("""<img\s[^>]*?src="([^"]*)"""", RegexOption.IGNORE_CASE)
+
+    /** Returns the addresses of the images in [html], in the order they are in it. */
+    fun imageSources(html: String): List<String> {
+        return IMAGE_SOURCE.findAll(html).map { it.groupValues[1].replace("&amp;", "&") }.toList()
+    }
+
+    /** Returns [html] without its images. */
+    fun withoutImages(html: String): String = html.replace(IMAGE, "")
+
     /** Returns [text] as rich text that shows it as it is, its line breaks included. */
     fun fromPlainText(text: String): String {
         return text

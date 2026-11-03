@@ -1,5 +1,6 @@
 package com.mindsync.library.layout
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
@@ -35,6 +36,12 @@ class MeasureTextSize(
     private val emojiFontFamily: FontFamily? = null,
 ) {
     private val richTextCache = mutableMapOf<String, AnnotatedString>()
+
+    /**
+     * Returns the image at an address in a node's text, or null while it is not loaded. An image that is not loaded
+     * takes no room.
+     */
+    var imageOf: (String) -> ImageBitmap? = { null }
 
     // The attributes are plain text on one line each, a little smaller than the text of the node.
     private val attributeTextStyle =
@@ -73,7 +80,11 @@ class MeasureTextSize(
     ): NodeContent {
         val isTableShown = (tree.attributeDisplayOf(node.id) ?: attributeDisplay) == AttributeDisplay.INLINE
         val attributes = if (isTableShown) tree.attributesOf(node.id) else emptyList()
-        val text = measure(node.description)
+        val images = RichText
+            .imageSources(node.description)
+            .mapNotNull { imageOf(it) }
+            .map { NodeImage(it, maxSize = with(density) { IMAGE_MAX_SIZE.dp.toPx() }) }
+        val text = measure(if (images.isEmpty()) node.description else RichText.withoutImages(node.description))
         val isNoteShown = node.note.isNotBlank() && (tree.noteDisplayOf(node.id) ?: noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
             text = text
@@ -81,6 +92,8 @@ class MeasureTextSize(
             , table = if (attributes.isEmpty()) null else measureAttributes(attributes)
             , gap = with(density) { ATTRIBUTE_TABLE_GAP.dp.toPx() }
             , noteGap = with(density) { NOTE_GAP.dp.toPx() }
+            , images = images
+            , imageGap = with(density) { IMAGE_GAP.dp.toPx() }
         )
     }
 
@@ -209,12 +222,16 @@ class MeasureTextSize(
         private const val NOTE_MAX_WIDTH = 240f
         // Room for the line between the text and the note, with space on either side of it.
         private const val NOTE_GAP = 12f
+        // An image is drawn no larger than this each way, so a photo does not fill the map.
+        private const val IMAGE_MAX_SIZE = 200f
+        private const val IMAGE_GAP = 4f
     }
 }
 
 /**
- * What is drawn in a node, in pixels: its [text], below it its [note] when it is shown, and below those the
- * [table] of its attributes when it has one. They are centered on the node together.
+ * What is drawn in a node, in pixels: the [images] of its text, below them its [text], below that its [note] when
+ * it is shown, and below those the [table] of its attributes when it has one. They are centered on the node
+ * together.
  */
 class NodeContent(
     val text: TextLayoutResult
@@ -222,22 +239,57 @@ class NodeContent(
     , val table: AttributeTable?
     , gap: Float
     , noteGap: Float
+    // Drawn above the text, one below the other.
+    , val images: List<NodeImage> = emptyList()
+    , imageGap: Float = 0f
 ) {
-    val width: Float = maxOf(text.size.width.toFloat(), note?.size?.width?.toFloat() ?: 0f, table?.width ?: 0f)
+    // A text of only images has no line of text below them.
+    val isTextShown: Boolean = images.isEmpty() || text.layoutInput.text.text.isNotBlank()
+
+    private val textHeight: Float = if (isTextShown) text.size.height.toFloat() else 0f
+
+    /** How far below the top of the content each image is. */
+    val imageTops: List<Float> = images.runningFold(0f) { top, image -> top + image.height + imageGap }.dropLast(1)
+
+    private val imagesHeight: Float =
+        if (images.isEmpty()) 0f else images.sumOf { it.height.toDouble() }.toFloat() + imageGap * (images.size - 1)
+
+    // The text is below the images, with a gap between them.
+    private val textTop: Float = if (images.isNotEmpty() && isTextShown) imagesHeight + imageGap else imagesHeight
+
+    val width: Float = maxOf(
+        if (isTextShown) text.size.width.toFloat() else 0f
+        , note?.size?.width?.toFloat() ?: 0f
+        , table?.width ?: 0f
+        , images.maxOfOrNull { it.width } ?: 0f
+    )
     val height: Float =
-        text.size.height + (note?.let { noteGap + it.size.height } ?: 0f) + (table?.let { gap + it.height } ?: 0f)
+        textTop + textHeight + (note?.let { noteGap + it.size.height } ?: 0f) + (table?.let { gap + it.height } ?: 0f)
 
     /** How far above the center of the node the center of the text is. */
-    val textRise: Float = (height - text.size.height) / 2
+    val textRise: Float = height / 2 - textTop - textHeight / 2
+
+    /** How far below the center of the node the top of the images is. */
+    val imagesTop: Float = -height / 2
 
     /** How far below the center of the node the line between the text and the note is. */
-    val noteLineY: Float = -height / 2 + text.size.height + noteGap / 2
+    val noteLineY: Float = -height / 2 + textTop + textHeight + noteGap / 2
 
     /** How far below the center of the node the top of the note is. */
-    val noteTop: Float = -height / 2 + text.size.height + noteGap
+    val noteTop: Float = -height / 2 + textTop + textHeight + noteGap
 
     /** How far below the center of the node the top of the table is. */
     val tableTop: Float = height / 2 - (table?.height ?: 0f)
+}
+
+/** An image in a node's text, in pixels: scaled down to fit within [maxSize] each way, keeping its proportions. */
+class NodeImage(
+    val image: ImageBitmap
+    , maxSize: Float
+) {
+    private val scale: Float = minOf(1f, maxSize / image.width, maxSize / image.height)
+    val width: Float = image.width * scale
+    val height: Float = image.height * scale
 }
 
 /**

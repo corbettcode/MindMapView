@@ -16,6 +16,9 @@ internal const val FREE_MIND_EXTENSION = ".mm"
 
 internal val OPENABLE_EXTENSIONS = listOf(MIND_MAP_VIEW_EXTENSION, FREE_MIND_EXTENSION)
 
+/** The extensions of the image files that can be inserted in a note. */
+internal val IMAGE_EXTENSIONS = listOf(".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
+
 /** The extension of Markdown documents, which are imported as a mind map of their headings and lists. */
 internal const val MARKDOWN_EXTENSION = "." + Markdown.EXTENSION
 

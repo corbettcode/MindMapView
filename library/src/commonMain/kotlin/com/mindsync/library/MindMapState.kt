@@ -160,6 +160,35 @@ class MindMapState(
             return tree.arrowLinks
         }
 
+    /**
+     * Loads the image at an address in a node's text, or returns null when it cannot. Without it, no images are
+     * shown in the nodes. Each image is loaded once, and the tree is arranged again when it is, as its node grows.
+     */
+    var imageLoader: (suspend (String) -> ImageBitmap?)? = null
+        set(value) {
+            field = value
+            requestedImages.clear()
+        }
+
+    private val images = mutableMapOf<String, ImageBitmap>()
+    private val requestedImages = mutableSetOf<String>()
+
+    // An image that is not loaded yet is asked for, and takes no room until it is there.
+    private fun imageOf(src: String): ImageBitmap? {
+        images[src]?.let { return it }
+        val loader = imageLoader ?: return null
+        val currentScope = scope ?: return null
+        if (requestedImages.add(src)) {
+            currentScope.launch {
+                val image = loader(src) ?: return@launch
+                images[src] = image
+                mindMapManager.update(tree)
+                animateTreeChange()
+            }
+        }
+        return null
+    }
+
     private var mapAttributeDisplay by mutableStateOf(AttributeDisplay.INLINE)
 
     /**
@@ -1105,6 +1134,7 @@ class MindMapState(
     internal fun attach(measureTextSize: MeasureTextSize, density: Density, scope: CoroutineScope) {
         this.density = density
         this.scope = scope
+        measureTextSize.imageOf = ::imageOf
         mindMapManager.setMeasureTextSize(measureTextSize)
         invalidate()
         val animations = pendingAnimations.toList()

@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.ArrowLink
@@ -66,6 +68,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.NodeContent
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.AttributeDisplay
@@ -462,7 +465,8 @@ private fun DrawScope.drawTree(
         if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
-        translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        if (content.isTextShown) translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        drawNodeImages(node, content)
         content.note?.let { note ->
             val centerX = node.path.centerX.toPx(this)
             val centerY = node.path.centerY.toPx(this)
@@ -478,6 +482,21 @@ private fun DrawScope.drawTree(
         }
         content.table?.let { drawAttributeTable(node, it, content.tableTop) }
         drawMarkers(state, node, drawInfo)
+    }
+}
+
+private fun DrawScope.drawNodeImages(
+    node: NodeData<*>
+    , content: NodeContent
+) {
+    val centerX = node.path.centerX.toPx(this)
+    val top = node.path.centerY.toPx(this) + content.imagesTop
+    content.images.zip(content.imageTops).forEach { (image, imageTop) ->
+        drawImage(
+            image = image.image
+            , dstOffset = IntOffset((centerX - image.width / 2).roundToInt(), (top + imageTop).roundToInt())
+            , dstSize = IntSize(image.width.roundToInt(), image.height.roundToInt())
+        )
     }
 }
 

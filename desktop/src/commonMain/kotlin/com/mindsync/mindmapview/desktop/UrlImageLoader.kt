@@ -6,13 +6,17 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import com.mindsync.library.data.Tree
+import com.mindsync.library.util.RichText
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.ImageData
 import com.mohamedrejeb.richeditor.model.ImageLoader
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.uuid.Uuid
 
 private const val PRELOAD_TIMEOUT_MILLIS = 5_000L
-private val IMAGE_SOURCE = Regex("""<img\s[^>]*?src="([^"]*)"""", RegexOption.IGNORE_CASE)
+// The address of an image from a file, which is shown from the mind map file it is stored in and from nowhere else.
+private const val STORED_IMAGE_SCHEME = "mmv-image"
+
 
 /**
  * Returns the bytes at the web address [url], or null when they cannot be loaded: the address may not be one
@@ -51,6 +55,17 @@ internal object UrlImageLoader : ImageLoader {
     }
 
     /**
+     * Makes the image file [bytes] an image of its own, and returns the address it is shown from, or null when the
+     * bytes are no image.
+     */
+    fun addImage(bytes: ByteArray): String? {
+        if (decodeImage(bytes) == null) return null
+        val url = "$STORED_IMAGE_SCHEME:${Uuid.random()}"
+        addImages(mapOf(url to bytes))
+        return url
+    }
+
+    /**
      * Returns the bytes of the images at [urls], by their addresses, loading those that are not loaded yet and
      * giving up on the rest after a while. An image that cannot be loaded is left out.
      */
@@ -77,7 +92,8 @@ internal object UrlImageLoader : ImageLoader {
         return image?.let { ImageData(painter = BitmapPainter(it)) }
     }
 
-    private suspend fun imageOf(url: String): ImageBitmap? {
+    /** Returns the image at [url], loading it when it is not loaded yet, or null when it cannot be loaded. */
+    suspend fun imageOf(url: String): ImageBitmap? {
         images[url]?.let { return it }
         if (url in failedUrls) return null
         val bytes = fetchImageBytes(url)
@@ -94,9 +110,7 @@ internal object UrlImageLoader : ImageLoader {
 }
 
 /** Returns the addresses of the images in [html], in the order they are in it. */
-internal fun imageSources(html: String): List<String> {
-    return IMAGE_SOURCE.findAll(html).map { it.groupValues[1].replace("&amp;", "&") }.toList()
-}
+internal fun imageSources(html: String): List<String> = RichText.imageSources(html)
 
 /** Returns the addresses of the images in the text and notes of the nodes of [tree], each once. */
 internal fun imageSources(tree: Tree<*>): Set<String> {

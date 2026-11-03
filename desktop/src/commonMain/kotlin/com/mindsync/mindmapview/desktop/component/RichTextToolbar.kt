@@ -20,7 +20,11 @@ import com.mindsync.mindmapview.desktop.setSize
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 @Composable
-fun RichTextToolbar(state: RichTextState) {
+fun RichTextToolbar(
+    state: RichTextState
+    // Without it, the toolbar has no button for inserting an image.
+    , onInsertImage: (() -> Unit)? = null
+) {
     val spanStyle = state.currentSpanStyle
     val decoration = spanStyle.textDecoration ?: TextDecoration.None
     var linkDialogOpen by remember { mutableStateOf(false) }
@@ -80,6 +84,14 @@ fun RichTextToolbar(state: RichTextState) {
             checked = state.isLink,
             onToggle = { linkDialogOpen = true },
         )
+        onInsertImage?.let {
+            RichTextToggle(
+                label = "\uD83D\uDDBC",
+                labelStyle = SpanStyle(),
+                checked = false,
+                onToggle = it,
+            )
+        }
         RichTextSizeSelect(
             selectedSize = RichTextSize.of(spanStyle.fontSize),
             onSelect = { state.setSize(it) },

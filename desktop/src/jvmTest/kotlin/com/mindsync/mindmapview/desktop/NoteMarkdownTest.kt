@@ -35,6 +35,7 @@ class NoteMarkdownTest {
     @Test
     fun imagesAreKept() {
         assertRoundTrip("<p>see <img src=\"https://e.org/x.png\"> here</p>")
+        assertRoundTrip("<p>see <img src=\"mmv-image:0b6c2a8e-5f3e-4d55-9c1a-7e2f1d9b3a44\"> here</p>")
     }
 
     @Test

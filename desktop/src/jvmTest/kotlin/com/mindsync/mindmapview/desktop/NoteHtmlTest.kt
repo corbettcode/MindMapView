@@ -1,10 +1,24 @@
 package com.mindsync.mindmapview.desktop
 
+import androidx.compose.ui.text.TextRange
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class NoteHtmlTest {
+    @Test
+    fun insertedImageIsInTheNote() {
+        val state = RichTextState().setHtml("<p>before</p>")
+        state.selection = TextRange(state.annotatedString.text.length)
+
+        state.insertHtmlAfterSelection("<img src=\"mmv-image:abc\">")
+
+        val html = noteHtml(state)
+        assertTrue("before" in html, html)
+        assertTrue("<img src=\"mmv-image:abc\"" in html, html)
+    }
+
     @Test
     fun emptiedEditorIsNoNote() {
         assertEquals("", noteHtml(RichTextState().setHtml("<p></p>")))

@@ -84,6 +84,7 @@ import com.mindsync.mindmapview.desktop.noteFromMarkdown
 import com.mindsync.mindmapview.desktop.noteHtml
 import com.mindsync.mindmapview.desktop.noteToMarkdown
 import com.mindsync.mindmapview.desktop.noteWithImages
+import com.mindsync.mindmapview.desktop.richTextHtml
 import com.mohamedrejeb.richeditor.model.LocalImageLoader
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
@@ -124,6 +125,8 @@ private val DIALOG_GAP = 16.dp
  * @param onDismiss A callback triggered when the dialog is dismissed.
  * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
  * added. Without it, the dialog has no such button.
+ * @param chooseImage Lets the user choose an image file for the text or note, and returns the address it is shown
+ * from, or null when they choose none. Without it, neither has a button for inserting an image.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,6 +176,7 @@ fun EditNodeDialog(
     ) -> Unit
     , onDismiss: () -> Unit
     , onAddAnother: (() -> Unit)? = null
+    , chooseImage: (suspend () -> String?)? = null
 ) {
     // The emoji in front of the description is picked on its own, so it is kept out of the editor.
     val (emoji, text) = remember { DescriptionEmoji.split(description) }
@@ -238,9 +242,18 @@ fun EditNodeDialog(
     var isDescriptionFocused by remember { mutableStateOf(false) }
     var isNoteFocused by remember { mutableStateOf(false) }
 
+    // The image the user chooses goes where the cursor is in the editor of [state].
+    fun insertImage(state: RichTextState): (() -> Unit)? = chooseImage?.let { choose ->
+        {
+            scope.launch {
+                choose()?.let { src -> state.insertHtmlAfterSelection("<img src=\"$src\">") }
+            }
+        }
+    }
+
     fun save() {
         onSubmit(
-            DescriptionEmoji.prepend(selectedEmoji, richTextState.toHtml())
+            DescriptionEmoji.prepend(selectedEmoji, richTextHtml(richTextState))
             , noteMarkdown?.let { noteFromMarkdown(it) } ?: noteState?.let { noteHtml(it) } ?: note
             , selectedShape
             , selectedColor
@@ -329,20 +342,25 @@ fun EditNodeDialog(
                         , emoji = selectedEmoji
                         , textStyle = descriptionStyle
                     )
-                    RichTextToolbar(richTextState)
-
-                    OutlinedRichTextEditor(
-                        state = richTextState
-                        , textStyle = descriptionStyle
-                        , modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(
-                                min = 120.dp
-                                , max = 200.dp
-                            )
-                            .focusRequester(descriptionFocusRequester)
-                            .onFocusChanged { isDescriptionFocused = it.hasFocus }
+                    RichTextToolbar(
+                        richTextState
+                        , onInsertImage = insertImage(richTextState)
                     )
+
+                    CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
+                        OutlinedRichTextEditor(
+                            state = richTextState
+                            , textStyle = descriptionStyle
+                            , modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(
+                                    min = 120.dp
+                                    , max = 200.dp
+                                )
+                                .focusRequester(descriptionFocusRequester)
+                                .onFocusChanged { isDescriptionFocused = it.hasFocus }
+                        )
+                    }
 
                     // The colors that follow the map's theme come first, to go back to.
                     ColorPicker(
@@ -441,7 +459,14 @@ fun EditNodeDialog(
                             , verticalAlignment = Alignment.CenterVertically
                             , modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp)
                         ) {
-                            if (noteMarkdown == null) noteState?.let { RichTextToolbar(it) }
+                            if (noteMarkdown == null) {
+                                noteState?.let { state ->
+                                    RichTextToolbar(
+                                        state
+                                        , onInsertImage = insertImage(state)
+                                    )
+                                }
+                            }
                             RichTextToggle(
                                 label = "MD"
                                 , labelStyle = SpanStyle(fontFamily = FontFamily.Monospace)

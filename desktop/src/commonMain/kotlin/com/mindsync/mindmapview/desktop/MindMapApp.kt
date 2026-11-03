@@ -209,6 +209,7 @@ internal class MindMapApp(
 
     // The app starts with an empty map, in the theme new maps start in.
     init {
+        state.imageLoader = UrlImageLoader::imageOf
         state.setTree(newMapTree(preferences))
     }
 
@@ -316,6 +317,20 @@ internal class MindMapApp(
         }
         catch (e: Exception) {
             error = "Could not import ${chosen.name}: ${e.message}"
+        }
+    }
+
+    // The image is stored with the map from then on, so it shows wherever the map is opened.
+    private suspend fun chooseNoteImage(): String? {
+        val chosen = platform.files.chooseToOpen(document, IMAGE_EXTENSIONS) ?: return null
+        return try {
+            UrlImageLoader.addImage(platform.files.readBytes(chosen))
+                ?: null.also { error = "Could not insert ${chosen.name}: it is not an image" }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            error = "Could not insert ${chosen.name}: ${e.message}"
+            null
         }
     }
 
@@ -671,6 +686,7 @@ internal class MindMapApp(
             onFind = { showFind() },
             onUserManual = ::openUserManual,
             onImport = ::startImport,
+            chooseNoteImage = ::chooseNoteImage,
             onCut = ::cutNodeToClipboard,
             onCopy = ::copyNodeToClipboard,
             isPasteEnabled = { state.hasCopiedNode || platform.clipboard.hasText() },
@@ -765,6 +781,7 @@ private fun MindMapScreen(
     onFind: () -> Unit,
     onUserManual: () -> Unit,
     onImport: (ImportFormat) -> Unit,
+    chooseNoteImage: suspend () -> String?,
     onCut: () -> Unit,
     onCopy: () -> Unit,
     isPasteEnabled: () -> Boolean,
@@ -1200,6 +1217,7 @@ private fun MindMapScreen(
                     onAddAnother = (currentOperation as? Operation.Add)?.let { add ->
                         { operation = add.copy(count = add.count + 1) }
                     },
+                    chooseImage = chooseNoteImage,
                 )
             }
         }

@@ -13,8 +13,12 @@ private val WHOLE_IMAGE_SIZE = Regex("""( (?:width|height)="\d+)\.0"""")
  */
 internal fun noteHtml(state: RichTextState): String {
     if (state.annotatedString.text.isBlank()) return ""
-    return state.toHtml().replace(UNSIZED_IMAGE, "").replace(WHOLE_IMAGE_SIZE, "$1\"")
+    return richTextHtml(state)
 }
+
+/** Returns the rich text in [state] as HTML, with its images as they are read again. */
+internal fun richTextHtml(state: RichTextState): String =
+    state.toHtml().replace(UNSIZED_IMAGE, "").replace(WHOLE_IMAGE_SIZE, "$1\"")
 
 /** Returns [html] in a new editor once its images are loaded: one that is loaded later does not show. */
 internal suspend fun noteWithImages(html: String): RichTextState {

@@ -1,7 +1,11 @@
 package com.mindsync.mindmapview.desktop
 
+import kotlinx.coroutines.runBlocking
+import java.util.Base64
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -30,5 +34,26 @@ class UrlImageLoaderTest {
             ),
         )
         assertEquals(emptyList(), imageSources("<p>no images</p>"))
+    }
+
+    @Test
+    fun anImageFromAFileIsStoredUnderAnAddressOfItsOwn() = runBlocking {
+        val png = Base64.getDecoder().decode(ONE_PIXEL_PNG)
+
+        val url = assertNotNull(UrlImageLoader.addImage(png))
+
+        assertTrue(url.startsWith("mmv-image:"))
+        assertNotEquals(url, UrlImageLoader.addImage(png))
+        assertContentEquals(png, UrlImageLoader.bytesOf(listOf(url))[url])
+    }
+
+    @Test
+    fun aFileThatIsNoImageIsNotAdded() {
+        assertNull(UrlImageLoader.addImage("not an image".encodeToByteArray()))
+    }
+
+    private companion object {
+        const val ONE_PIXEL_PNG =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
     }
 }
