@@ -50,7 +50,7 @@ internal class DesktopRichTextClipboardManager(
                     withContext(Dispatchers.IO) {
                         transferable.getTransferData(DataFlavor.fragmentHtmlFlavor)
                     } as String
-                richTextState.pendingClipboardHtml = rawHtmlText
+                richTextState.pendingClipboardHtml = repairClipboardHtml(rawHtmlText)
                 if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                     richTextState.pendingClipboardPlainText =
                         withContext(Dispatchers.IO) {
