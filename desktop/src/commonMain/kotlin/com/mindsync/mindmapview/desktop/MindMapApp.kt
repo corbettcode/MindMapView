@@ -195,6 +195,7 @@ internal class MindMapApp(
     // Each change of it adds a child to the selected node, as its '+' button does.
     private var addChildRequest by mutableStateOf(0)
     private var editNodeRequest by mutableStateOf(0)
+    private var preferencesRequest by mutableStateOf(0)
     // What waits for the unsaved changes to be saved or not, while that is asked.
     private var afterSaveChoice by mutableStateOf<(suspend () -> Unit)?>(null)
     // Whether the user is asked if the nodes of the mind map may be replaced by those of a map to import.
@@ -595,6 +596,10 @@ internal class MindMapApp(
                 state.moveNodeAround(isClockwise = !event.isShiftPressed)
                 true
             }
+            !isDialogOpen && error == null && event.key == Key.Comma -> {
+                preferencesRequest++
+                true
+            }
             !isDialogOpen && error == null && event.key == Key.L -> {
                 arrowLinkSourceId = state.selectedNode?.id
                 true
@@ -695,6 +700,7 @@ internal class MindMapApp(
             onDialogOpenChange = { isDialogOpen = it },
             addChildRequest = addChildRequest,
             editNodeRequest = editNodeRequest,
+            preferencesRequest = preferencesRequest,
             preferences = preferences,
             onPreferencesChange = { preferences = platform.preferencesStore.update(it) },
             nodeFontFamily = nodeFontFamily,
@@ -791,6 +797,7 @@ private fun MindMapScreen(
     onDialogOpenChange: (Boolean) -> Unit,
     addChildRequest: Int,
     editNodeRequest: Int,
+    preferencesRequest: Int,
     preferences: UserPreferences,
     nodeFontFamily: FontFamily?,
     onPreferencesChange: (UserPreferences) -> Unit,
@@ -847,6 +854,7 @@ private fun MindMapScreen(
     LaunchedEffect(addChildRequest) { if (addChildRequest > 0) addChild(side = null) }
     // As a double click on the node does.
     LaunchedEffect(editNodeRequest) { if (editNodeRequest > 0) operation = Operation.Update }
+    LaunchedEffect(preferencesRequest) { if (preferencesRequest > 0) isPreferencesOpen = true }
 
     LaunchedEffect(successMessage) {
         if (successMessage == null) return@LaunchedEffect

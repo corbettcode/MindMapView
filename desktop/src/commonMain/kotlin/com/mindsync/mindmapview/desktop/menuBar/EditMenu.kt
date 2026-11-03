@@ -262,6 +262,7 @@ fun EditMenu(
 
             DropdownMenuItem(
                 text = { Text("Preferences...") }
+                , trailingIcon = { Text("Ctrl+,", style = MaterialTheme.typography.labelMedium) }
                 , onClick = {
                     expanded = false
                     onPreferences()
