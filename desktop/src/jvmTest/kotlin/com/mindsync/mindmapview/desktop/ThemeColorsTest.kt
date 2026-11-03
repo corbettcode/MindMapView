@@ -10,6 +10,7 @@ class ThemeColorsTest {
     fun classicOffersTheDefaultColors() {
         assertEquals(DEFAULT_NODE_COLORS, themeFillColors(MapThemes.CLASSIC))
         assertEquals(DEFAULT_TEXT_COLORS, themeTextColors(MapThemes.CLASSIC))
+        assertEquals(DEFAULT_ARROW_LINK_COLORS, themeArrowLinkColors(MapThemes.CLASSIC))
     }
 
     @Test
@@ -24,5 +25,7 @@ class ThemeColorsTest {
         assertEquals(ocean.root.text, texts.first())
         assertTrue(texts.containsAll(DEFAULT_TEXT_COLORS))
         assertEquals(texts.distinct(), texts)
+
+        assertEquals(ocean.arrowLinkColors, themeArrowLinkColors(ocean))
     }
 }

@@ -96,6 +96,16 @@ internal fun readMap(
 }
 
 /**
+ * Returns the preferences stored in the mind map [content] of a file named [fileName], by their names, or null
+ * when it has none, as a FreeMind map and a map saved before maps kept them have not.
+ */
+internal fun readMapPreferences(
+    fileName: String
+    , content: String
+): Map<String, String>? =
+    if (fileName.endsWith(FREE_MIND_EXTENSION, ignoreCase = true)) null else MindMapViewFile.readPreferences(content)
+
+/**
  * Returns the name to suggest for an export of the mind map in the file [mapFileName]: the name of the mind map
  * with [extension] in place of its own. A mind map that has no file yet suggests only the extension.
  */

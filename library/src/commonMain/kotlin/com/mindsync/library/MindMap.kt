@@ -394,11 +394,11 @@ fun MindMap(
     ) {
         state.drawTick
         val theme = state.tree.theme
-        drawRect(theme.background)
+        drawRect(state.background)
         val measure = state.mindMapManager.getMeasureTextSize() ?: return@Canvas
         val lineColor = theme.lineColor
         // The icon is drawn on a line, so it takes the background's side of light and dark.
-        val addIconColor = if (theme.isDark) Color.Black else Color.White
+        val addIconColor = if (state.isDark) Color.Black else Color.White
         withTransform({
             translate(state.currentPoint.x, state.currentPoint.y)
             scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
@@ -759,7 +759,7 @@ private fun DrawScope.drawAttachedNode(
             is CircleNodeData -> attachedNode.path.radius + Dp(ATTACH_CIRCLE_NODE_RANGE_VALUE)
         }
         drawCircle(
-            color = attachHighlightColor(state.tree.theme),
+            color = attachHighlightColor(state.background),
             radius = maxOf(height.toPx(this), width.toPx(this)),
             center = Offset(attachedNode.path.centerX.toPx(this), attachedNode.path.centerY.toPx(this)),
         )

@@ -30,12 +30,15 @@ import kotlin.io.encoding.Base64
  * of its children is on, the arrow links, and where the root is when the user dragged it there.
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
- * order, then the `<arrowlink>` elements, and then the `<image>` elements. A node's text and note are the HTML
+ * order, then the `<arrowlink>` elements, then the `<preference>` elements, and then the `<image>` elements. A node's text and note are the HTML
  * they are kept as. Where the other nodes are is not stored: a map that was read needs to be arranged, as one
  * read with [FreeMind] does.
  *
  * The images of the HTML are stored in the file, so the map shows them where their addresses cannot be reached.
  * An `<image>` holds the bytes of the image at its `src` address in Base64; the HTML keeps the address.
+ *
+ * The preferences of the app the map was saved with are kept too, each in a `<preference>` with its `name` and
+ * `value`, for the map to be opened as it was. What a value means is the app's to know.
  */
 object MindMapViewFile {
     const val EXTENSION = "mmv"
@@ -43,10 +46,14 @@ object MindMapViewFile {
     private const val FORMAT_VERSION = 1
     private const val ROOT_ELEMENT = "mindmapview"
 
-    /** Returns [tree] in this format, with [images], the bytes of each image by its address. */
+    /**
+     * Returns [tree] in this format, with [images], the bytes of each image by its address, and [preferences],
+     * each value by its name.
+     */
     fun write(
         tree: Tree<*>
         , images: Map<String, ByteArray> = emptyMap()
+        , preferences: Map<String, String> = emptyMap()
     ): String = buildString {
         append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
         append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append('"')
@@ -65,6 +72,10 @@ object MindMapViewFile {
         tree.arrowLinks
             .filter { it.sourceId in writtenIds && it.targetId in writtenIds }
             .forEach { writeArrowLink(it) }
+        preferences.forEach { (name, value) ->
+            append("  <preference name=\"").append(escapeAttribute(name))
+            append("\" value=\"").append(escapeAttribute(value)).append("\"/>\n")
+        }
         images.forEach { (src, bytes) ->
             append("  <image src=\"").append(escapeAttribute(src)).append("\">")
             append(Base64.encode(bytes)).append("</image>\n")
@@ -91,6 +102,23 @@ object MindMapViewFile {
                 src to bytes
             }
             .toMap()
+    }
+
+    /**
+     * Returns the preferences stored in [content], each value by its name, or null when it has none, as a map saved
+     * before maps kept them has not, or when [content] is not a mind map in this format.
+     */
+    fun readPreferences(content: String): Map<String, String>? {
+        val map = XmlParser(content).parse().firstOrNull { it.name == ROOT_ELEMENT } ?: return null
+        return map
+            .children
+            .filter { it.name == "preference" }
+            .mapNotNull { element ->
+                val name = element.attributes["name"]?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                name to element.attributes["value"].orEmpty()
+            }
+            .toMap()
+            .takeIf { it.isNotEmpty() }
     }
 
     /**

@@ -24,6 +24,7 @@ class UserPreferencesTest {
         val changed = UserPreferences(
             arrowLinkColors = listOf(Color(0xFF654321), Color.Black)
             , attributeDisplay = AttributeDisplay.FLYOVER
+            , backgroundColor = Color(0xFF101820)
             , isRemoveConfirmed = false
             , newNodeShape = NodeShape.entries.last()
             , nodeColors = listOf(Color(0xFF123456), Color.White)
@@ -59,6 +60,19 @@ class UserPreferencesTest {
     fun unknownEmojiTonesAreIgnored() {
         stored[UserPreferencesStore.EMOJI_TONES] = "👍=👍🏽,😀=😀🏽,x=y,garbage"
         assertEquals(mapOf("👍" to "👍🏽"), store().preferences.emojiTones)
+    }
+
+    @Test
+    fun backgroundColorIsKept() {
+        store().update(UserPreferences(backgroundColor = Color(0xFF223344)))
+        assertEquals(Color(0xFF223344), store().preferences.backgroundColor)
+    }
+
+    @Test
+    fun noBackgroundColorIsKeptAsNone() {
+        store().update(UserPreferences(backgroundColor = Color(0xFF223344)))
+        store().update(UserPreferences())
+        assertEquals(null, store().preferences.backgroundColor)
     }
 
     @Test

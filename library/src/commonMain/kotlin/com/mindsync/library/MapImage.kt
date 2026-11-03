@@ -43,7 +43,7 @@ internal fun mapImage(
     val image = ImageBitmap(width, height)
     CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(image), Size(width.toFloat(), height.toFloat())) {
         // The image is rounded to whole pixels, so it can be a little larger than the map.
-        drawRect(state.tree.theme.background)
+        drawRect(state.background)
         scale(scale, Offset.Zero) {
             drawExportedMap(state, bounds, measureTextSize)
         }
@@ -61,7 +61,7 @@ internal fun DrawScope.drawExportedMap(
     , measureTextSize: MeasureTextSize
 ) {
     val drawInfo = DrawInfo()
-    drawRect(state.tree.theme.background, topLeft = Offset.Zero, size = bounds.size)
+    drawRect(state.background, topLeft = Offset.Zero, size = bounds.size)
     translate(-bounds.left, -bounds.top) {
         drawMap(state, drawInfo, measureTextSize, state.tree.theme.lineColor)
     }

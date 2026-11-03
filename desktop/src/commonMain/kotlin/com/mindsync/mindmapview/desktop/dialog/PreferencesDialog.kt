@@ -54,9 +54,11 @@ import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
 import com.mindsync.mindmapview.desktop.parseHexColor
+import com.mindsync.mindmapview.desktop.themeArrowLinkColors
 import com.mindsync.mindmapview.desktop.themeFillColors
 import com.mindsync.mindmapview.desktop.themeTextColors
 import com.mindsync.mindmapview.desktop.toHex
+import com.mindsync.mindmapview.desktop.withTheme
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
 private val PREFERENCES_DIALOG_SIZE = DpSize(720.dp, 840.dp)
@@ -71,6 +73,7 @@ private val EDITOR_BUTTON_WIDTH = 140.dp
  *
  * @property arrowLinkColors The colors available for arrow links within the mind map.
  * @property attributeDisplay The mode of displaying the attributes of nodes, for a map theme without its own.
+ * @property backgroundColor The color maps are drawn on, or null for the background of their theme.
  * @property emojiTones The mapping of base emojis to their chosen skin tones.
  * @property isRemoveConfirmed Whether the removal of elements requires confirmation.
  * @property mapThemeId The identifier of the theme applied to new maps or the last selected theme.
@@ -85,6 +88,8 @@ data class UserPreferences(
     val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS
     // How the attributes of a node are shown, unless the map's theme has a way of its own.
     , val attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
+    // The color maps are drawn on in place of their theme's background, or null for the theme's.
+    , val backgroundColor: Color? = null
     // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
     , val emojiTones: Map<String, String> = emptyMap()
     // The shape of a node that is added to a parent without children, which has no last child to look like.
@@ -110,7 +115,9 @@ fun PreferencesDialog(
     , onDismiss: () -> Unit
 ) {
     var edited by remember { mutableStateOf(preferences) }
-    // Closed to start with, as arrow link colors are changed less often than those of nodes.
+    // The color sections are closed to start with, so the other settings are seen at a glance.
+    var isBackgroundColorOpen by remember { mutableStateOf(false) }
+    var isNodeColorsOpen by remember { mutableStateOf(false) }
     var isArrowLinkColorsOpen by remember { mutableStateOf(false) }
     // Each font's name is drawn in that font once it has loaded.
     var fontFamilies by remember { mutableStateOf<Map<NodeFont, FontFamily>>(emptyMap()) }
@@ -140,18 +147,27 @@ fun PreferencesDialog(
                         , choices = MapThemes.all
                         , choiceLabel = { it.name }
                         , selectedChoice = MapThemes.byId(edited.mapThemeId)
-                        // The colors offered for nodes go with the theme, in place of those of the last one.
+                        // What the theme sets takes the place of what was set before.
                         , onSelect = { theme ->
                             if (theme.id != edited.mapThemeId) {
-                                edited = edited.copy(
-                                    mapThemeId = theme.id
-                                    , nodeColors = themeFillColors(theme)
-                                    , textColors = themeTextColors(theme)
-                                )
+                                edited = edited.withTheme(theme).copy(mapThemeId = theme.id)
                             }
                         }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
+                    CollapsibleSection(
+                        title = "Background color"
+                        , isOpen = isBackgroundColorOpen
+                        , onToggle = { isBackgroundColorOpen = !isBackgroundColorOpen }
+                    ) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            BackgroundColorEditor(
+                                color = edited.backgroundColor
+                                , themeBackground = MapThemes.byId(edited.mapThemeId).background
+                                , onChange = { edited = edited.copy(backgroundColor = it) }
+                            )
+                        }
+                    }
                     DropdownPicker(
                         label = "Node shape"
                         , choices = NodeShape.entries
@@ -183,22 +199,30 @@ fun PreferencesDialog(
                         )
                         Text("Ask before removing a node")
                     }
-                    ColorListsEditor(
-                        listOf(
-                            EditableColors(
-                                label = "Fill colors"
-                                , colors = edited.nodeColors
-                                , defaults = themeFillColors(MapThemes.byId(edited.mapThemeId))
-                                , onChange = { edited = edited.copy(nodeColors = it) }
+                    CollapsibleSection(
+                        title = "Node colors"
+                        , isOpen = isNodeColorsOpen
+                        , onToggle = { isNodeColorsOpen = !isNodeColorsOpen }
+                    ) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            ColorListsEditor(
+                                listOf(
+                                    EditableColors(
+                                        label = "Fill colors"
+                                        , colors = edited.nodeColors
+                                        , defaults = themeFillColors(MapThemes.byId(edited.mapThemeId))
+                                        , onChange = { edited = edited.copy(nodeColors = it) }
+                                    )
+                                    , EditableColors(
+                                        label = "Text colors"
+                                        , colors = edited.textColors
+                                        , defaults = themeTextColors(MapThemes.byId(edited.mapThemeId))
+                                        , onChange = { edited = edited.copy(textColors = it) }
+                                    )
+                                )
                             )
-                            , EditableColors(
-                                label = "Text colors"
-                                , colors = edited.textColors
-                                , defaults = themeTextColors(MapThemes.byId(edited.mapThemeId))
-                                , onChange = { edited = edited.copy(textColors = it) }
-                            )
-                        )
-                    )
+                        }
+                    }
                     CollapsibleSection(
                         title = "Arrow link colors"
                         , isOpen = isArrowLinkColorsOpen
@@ -210,7 +234,7 @@ fun PreferencesDialog(
                                     EditableColors(
                                         label = "Colors"
                                         , colors = edited.arrowLinkColors
-                                        , defaults = DEFAULT_ARROW_LINK_COLORS
+                                        , defaults = themeArrowLinkColors(MapThemes.byId(edited.mapThemeId))
                                         , onChange = { edited = edited.copy(arrowLinkColors = it) }
                                     )
                                 )
@@ -374,6 +398,64 @@ private fun ColorListsEditor(
                         list.onChange(list.defaults)
                         selectedIndex = 0
                     }
+                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
+                ) {
+                    Text("Reset")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Lets the user choose the one [color] maps are drawn on: one of the backgrounds of the themes, or any other with
+ * the color picker or its hex value. Null is the background of the map's theme, [themeBackground], which Reset
+ * goes back to.
+ */
+@Composable
+private fun BackgroundColorEditor(
+    color: Color?
+    , themeBackground: Color
+    , onChange: (Color?) -> Unit
+) {
+    val shown = color ?: themeBackground
+    // A color of the user's own is offered with those of the themes, so it shows as the one chosen.
+    val choices = (MapThemes.all.map { it.background } + shown).distinct()
+    // The text is kept apart from the color, so a hex value that is still being typed is not lost.
+    var hexText by remember(shown) { mutableStateOf(shown.toHex()) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ColorPicker(
+            label = "Background"
+            , colors = choices
+            , selectedColor = shown
+            , onSelect = onChange
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            , modifier = Modifier.padding(start = PREFERENCES_LABEL_WIDTH + 8.dp)
+        ) {
+            HsvColorPicker(
+                color = shown
+                , onColorChange = onChange
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = hexText
+                    , visualTransformation = emojiVisualTransformation()
+                    , onValueChange = { text ->
+                        hexText = text
+                        parseHexColor(text)?.let(onChange)
+                    }
+                    , label = { Text("Hex") }
+                    , isError = parseHexColor(hexText) == null
+                    , singleLine = true
+                    , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
+                )
+                OutlinedButton(
+                    onClick = { onChange(null) }
+                    , enabled = color != null
                     , modifier = Modifier.width(EDITOR_BUTTON_WIDTH)
                 ) {
                     Text("Reset")

@@ -229,7 +229,8 @@ internal class MindMapApp(
     private suspend fun save(target: MapDocument): Boolean {
         try {
             val images = UrlImageLoader.bytesOf(imageSources(state.tree))
-            platform.files.write(target, MindMapViewFile.write(state.tree, images).encodeToByteArray())
+            val content = MindMapViewFile.write(state.tree, images, preferences.mapValues())
+            platform.files.write(target, content.encodeToByteArray())
             state.markSaved()
             // A mind map that is saved under a new name is one to open again, as one that was opened is.
             if (target != document) recentPaths = recentMaps?.add(target)
@@ -281,7 +282,13 @@ internal class MindMapApp(
         , recentPath: String? = null
     ) {
         try {
-            state.setTree(readMap(chosen.name, platform.files.read(chosen)))
+            val content = platform.files.read(chosen)
+            val tree = readMap(chosen.name, content)
+            state.setTree(tree)
+            // The map is shown as it was saved, so the preferences become those it was saved with.
+            preferences = platform.preferencesStore.update(
+                preferences.openedWith(tree, readMapPreferences(chosen.name, content))
+            )
             state.animateTreeChange()
             document = chosen
             createdNodeCount = 0
@@ -862,6 +869,7 @@ private fun MindMapScreen(
         }
     }
     LaunchedEffect(preferences.noteDisplay) { state.noteDisplay = preferences.noteDisplay }
+    LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
     // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
     val noteMarkerNode = state.noteMarkerNode
     val isNotePopupShown = noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
@@ -899,7 +907,7 @@ private fun MindMapScreen(
     }
 
     // The window is dark around a map on a dark background, and light around one on a light background.
-    MaterialTheme(colorScheme = if (state.theme.isDark) darkColorScheme() else lightColorScheme()) {
+    MaterialTheme(colorScheme = if (state.isDark) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(modifier = Modifier.padding(horizontal = 8.dp)) {

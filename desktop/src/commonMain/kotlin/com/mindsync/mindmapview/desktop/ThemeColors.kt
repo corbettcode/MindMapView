@@ -25,3 +25,11 @@ internal fun themeTextColors(
     .takeIf { it.isNotEmpty() }
     ?.let { (it + theme.lineColor + DEFAULT_TEXT_COLORS).distinct() }
     ?: DEFAULT_TEXT_COLORS
+
+/**
+ * Returns the arrow link colors offered for a map in [theme]: its own, or the default arrow link colors for a theme
+ * without any, as Classic is.
+ */
+internal fun themeArrowLinkColors(
+    theme: MapTheme
+): List<Color> = theme.arrowLinkColors ?: DEFAULT_ARROW_LINK_COLORS

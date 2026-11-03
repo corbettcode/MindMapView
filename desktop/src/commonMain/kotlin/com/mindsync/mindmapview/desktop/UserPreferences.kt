@@ -26,45 +26,12 @@ class UserPreferencesStore(
     read: (String) -> String?,
     private val write: (String, String) -> Unit,
 ) {
-    // A value that is no longer known, as one of a later version of the app may be, is the default.
-    var preferences: UserPreferences = UserPreferences().let { defaults ->
-        UserPreferences(
-            arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
-                ?: defaults.arrowLinkColors
-            , attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == read(ATTRIBUTE_DISPLAY) }
-                ?: defaults.attributeDisplay
-            , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones)
-                ?: defaults.emojiTones
-            , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull()
-                ?: defaults.isRemoveConfirmed
-            , mapThemeId = read(MAP_THEME)
-                ?: defaults.mapThemeId
-            , newNodeShape = NodeShape.entries.firstOrNull { it.name == read(NEW_NODE_SHAPE) }
-                ?: defaults.newNodeShape
-            , nodeColors = read(NODE_COLORS)?.let(::parseColorList)
-                ?: defaults.nodeColors
-            , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) }
-                ?: defaults.nodeFont
-            , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
-                ?: defaults.noteDisplay
-            , textColors = read(TEXT_COLORS)?.let(::parseColorList)
-                ?: defaults.textColors
-        )
-    }
+    var preferences: UserPreferences = readUserPreferences(read, UserPreferences())
         private set
 
     fun update(newPreferences: UserPreferences): UserPreferences {
         preferences = newPreferences
-        write(NEW_NODE_SHAPE, newPreferences.newNodeShape.name)
-        write(IS_REMOVE_CONFIRMED, newPreferences.isRemoveConfirmed.toString())
-        write(NODE_COLORS, newPreferences.nodeColors.joinToString(",") { it.toHex() })
-        write(TEXT_COLORS, newPreferences.textColors.joinToString(",") { it.toHex() })
-        write(ARROW_LINK_COLORS, newPreferences.arrowLinkColors.joinToString(",") { it.toHex() })
-        write(EMOJI_TONES, newPreferences.emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" })
-        write(NODE_FONT, newPreferences.nodeFont.name)
-        write(NOTE_DISPLAY, newPreferences.noteDisplay.name)
-        write(ATTRIBUTE_DISPLAY, newPreferences.attributeDisplay.name)
-        write(MAP_THEME, newPreferences.mapThemeId)
+        newPreferences.values().forEach { (name, value) -> write(name, value) }
         return preferences
     }
 
@@ -79,8 +46,93 @@ class UserPreferencesStore(
         const val NOTE_DISPLAY = "noteDisplay"
         const val ATTRIBUTE_DISPLAY = "attributeDisplay"
         const val MAP_THEME = "mapTheme"
+        const val BACKGROUND_COLOR = "backgroundColor"
+
+        /**
+         * The names of the preferences of how a map looks and is added to, which a map file keeps. Whether a
+         * removal is asked about and the emoji tones are the app's way of working, whatever the map, and the map
+         * keeps its theme of its own.
+         */
+        val MAP_PREFERENCES = setOf(
+            ARROW_LINK_COLORS
+            , ATTRIBUTE_DISPLAY
+            , BACKGROUND_COLOR
+            , NEW_NODE_SHAPE
+            , NODE_COLORS
+            , NODE_FONT
+            , NOTE_DISPLAY
+            , TEXT_COLORS
+        )
     }
 }
+
+/**
+ * Returns the preferences [read] returns the values of, by their names. A value that is missing, or that is no
+ * longer known, as one of a later version of the app may be, is the one in [defaults].
+ */
+internal fun readUserPreferences(
+    read: (String) -> String?
+    , defaults: UserPreferences
+): UserPreferences = with(UserPreferencesStore) {
+    UserPreferences(
+        arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
+            ?: defaults.arrowLinkColors
+        , attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == read(ATTRIBUTE_DISPLAY) }
+            ?: defaults.attributeDisplay
+        // No color is kept as none, for the map to be drawn on its theme's background.
+        , backgroundColor = read(BACKGROUND_COLOR).let { text ->
+            if (text?.isEmpty() == true) null else text?.let(::parseHexColor) ?: defaults.backgroundColor
+        }
+        , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones)
+            ?: defaults.emojiTones
+        , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull()
+            ?: defaults.isRemoveConfirmed
+        , mapThemeId = read(MAP_THEME)
+            ?: defaults.mapThemeId
+        , newNodeShape = NodeShape.entries.firstOrNull { it.name == read(NEW_NODE_SHAPE) }
+            ?: defaults.newNodeShape
+        , nodeColors = read(NODE_COLORS)?.let(::parseColorList)
+            ?: defaults.nodeColors
+        , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) }
+            ?: defaults.nodeFont
+        , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
+            ?: defaults.noteDisplay
+        , textColors = read(TEXT_COLORS)?.let(::parseColorList)
+            ?: defaults.textColors
+    )
+}
+
+/** Returns the value of each of the preferences, by its name, as [readUserPreferences] reads them. */
+internal fun UserPreferences.values(): Map<String, String> = with(UserPreferencesStore) {
+    mapOf(
+        NEW_NODE_SHAPE to newNodeShape.name
+        , IS_REMOVE_CONFIRMED to isRemoveConfirmed.toString()
+        , NODE_COLORS to nodeColors.joinToString(",") { it.toHex() }
+        , TEXT_COLORS to textColors.joinToString(",") { it.toHex() }
+        , ARROW_LINK_COLORS to arrowLinkColors.joinToString(",") { it.toHex() }
+        , EMOJI_TONES to emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" }
+        , NODE_FONT to nodeFont.name
+        , NOTE_DISPLAY to noteDisplay.name
+        , ATTRIBUTE_DISPLAY to attributeDisplay.name
+        , MAP_THEME to mapThemeId
+        , BACKGROUND_COLOR to backgroundColor?.toHex().orEmpty()
+    )
+}
+
+/** Returns the values of the preferences a map file keeps, by their names. */
+internal fun UserPreferences.mapValues(): Map<String, String> =
+    values().filterKeys { it in UserPreferencesStore.MAP_PREFERENCES }
+
+/**
+ * Returns these preferences with those a map file keeps taken from [values], by their names. The others, and
+ * any that is missing or not known, stay as they are.
+ */
+internal fun UserPreferences.withMapValues(
+    values: Map<String, String>
+): UserPreferences = readUserPreferences(
+    read = { name -> values[name]?.takeIf { name in UserPreferencesStore.MAP_PREFERENCES } }
+    , defaults = this
+)
 
 private val HEX_COLOR = Regex("#?([0-9A-Fa-f]{6})")
 

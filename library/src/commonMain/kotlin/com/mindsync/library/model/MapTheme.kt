@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.luminance
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeBorderStyle
 import com.mindsync.library.data.NodeLineWidth
+import com.mindsync.library.data.NodeShape
 import com.mindsync.library.util.Dp
 
 /**
@@ -34,11 +35,14 @@ enum class AttributeDisplay(
  * (the nodes below them) look, the color of the text of a line node, which is drawn on the background, the lines
  * from the root in [branchColors] one after another, how wide lines are, and the font of the text, by the name of a
  * bundled font, or null for the font the app is set to, and how attributes are shown, or null for how the app is
- * set to show them. Colors, borders and lines a node is given by hand are drawn as they are, whatever the theme.
+ * set to show them, the colors offered for an arrow link, the shape of a new node and how notes are shown, each
+ * null for what the app is set to. Colors, borders and lines a node is given by hand are drawn as they are,
+ * whatever the theme.
  *
  * Represents the styling and theme configuration for a map, including visual and structural properties.
  *
  * @property id A unique identifier for the map theme.
+ * @property arrowLinkColors The colors offered for an arrow link in this theme, or null for those the app offers.
  * @property attributeDisplay How the attributes of nodes are shown in this theme, or null for how the app is set to.
  * @property background The background color of the map.
  * @property branchColors A list of colors used to differentiate branches originating from the root.
@@ -49,11 +53,15 @@ enum class AttributeDisplay(
  * @property lineWidth The width of the lines connecting nodes, measured in density-independent pixels (Dp).
  * @property mainTopic The visual style applied to the main topics of the map.
  * @property name The name of the map theme.
+ * @property newNodeShape The shape of a node added to a parent without children in this theme, or null for the
+ * one the app is set to.
+ * @property noteDisplay How the notes of nodes are shown in this theme, or null for how the app is set to.
  * @property root The visual style applied to the root level of the map.
  * @property subtopic The visual style applied to the subtopics of the map.
  */
 data class MapTheme(
     val id: String
+    , val arrowLinkColors: List<Color>? = null
     , val attributeDisplay: AttributeDisplay? = null
     , val background: Color
     , val branchColors: List<Color>
@@ -63,11 +71,13 @@ data class MapTheme(
     , val lineWidth: Dp
     , val mainTopic: LevelStyle
     , val name: String
+    , val newNodeShape: NodeShape? = null
+    , val noteDisplay: NoteDisplay? = null
     , val root: LevelStyle
     , val subtopic: LevelStyle
 ) {
     /** Whether the background is dark, for what is drawn on it to be light. */
-    val isDark: Boolean get() = background.luminance() < 0.5f
+    val isDark: Boolean get() = isDarkBackground(background)
 }
 
 /** The themes that come with the library, [CLASSIC] first. */
@@ -96,8 +106,13 @@ object MapThemes {
         , lineNodeText = Color(0xFF0B4F6C)
         , lineColor = Color(0xFF0B4F6C)
         , branchColors = listOf(Color(0xFF0B4F6C), Color(0xFF20A4C3), Color(0xFF01BAEF), Color(0xFF3D7EA6))
+        , arrowLinkColors = listOf(
+            Color(0xFF0B4F6C), Color(0xFF1B7F9A), Color(0xFF3D7EA6), Color(0xFFD1495B), Color(0xFF5C5C5C)
+        )
         , lineWidth = Dp(5f)
         , fontName = null
+        , newNodeShape = NodeShape.STADIUM
+        , noteDisplay = NoteDisplay.FLYOVER
     )
 
     private val NIGHT = MapTheme(
@@ -110,8 +125,13 @@ object MapThemes {
         , lineNodeText = Color(0xFFF5F5F5)
         , lineColor = Color(0xFF9AA0B4)
         , branchColors = listOf(Color(0xFFF2C14E), Color(0xFFF78154), Color(0xFF4D9078), Color(0xFF5FAD9E))
+        , arrowLinkColors = listOf(
+            Color(0xFFF2C14E), Color(0xFFF78154), Color(0xFF5FAD9E), Color(0xFF9AA0B4), Color(0xFFC9A0DC)
+        )
         , lineWidth = Dp(5f)
         , fontName = null
+        , newNodeShape = NodeShape.RECTANGLE
+        , noteDisplay = NoteDisplay.FLYOVER
     )
 
     private val INK = Color(0xFF3B3B3B)
@@ -127,8 +147,11 @@ object MapThemes {
         , lineNodeText = INK
         , lineColor = INK
         , branchColors = listOf(INK)
+        , arrowLinkColors = listOf(INK, Color(0xFFA23E48), Color(0xFF2F5D8A), Color(0xFF5E7F3E), Color(0xFF8A5A2B))
         , lineWidth = Dp(2f)
         , fontName = "Lora"
+        , newNodeShape = NodeShape.RECTANGLE
+        , noteDisplay = NoteDisplay.INLINE
     )
 
     private val MEADOW = MapTheme(
@@ -143,8 +166,13 @@ object MapThemes {
         , branchColors = listOf(
             Color(0xFF2E6B30), Color(0xFFF4A259), Color(0xFF5B8E7D), Color(0xFFBC4B51), Color(0xFF8CB369)
         )
+        , arrowLinkColors = listOf(
+            Color(0xFF2E6B30), Color(0xFFBC4B51), Color(0xFF4E7D6D), Color(0xFFB5651D), Color(0xFF4A5899)
+        )
         , lineWidth = Dp(5f)
         , fontName = "Nunito"
+        , newNodeShape = NodeShape.OVAL
+        , noteDisplay = NoteDisplay.FLYOVER
     )
 
     private val HIGH_CONTRAST = MapTheme(
@@ -159,8 +187,13 @@ object MapThemes {
         , lineNodeText = Color.White
         , lineColor = Color.White
         , branchColors = listOf(Color(0xFFFFD400), Color(0xFF00E5FF), Color(0xFFFF4FD8), Color(0xFF7CFF4F))
+        , arrowLinkColors = listOf(
+            Color(0xFFFFD400), Color(0xFF00E5FF), Color(0xFFFF4FD8), Color(0xFF7CFF4F), Color.White
+        )
         , lineWidth = Dp(4f)
         , fontName = "Inter"
+        , newNodeShape = NodeShape.RECTANGLE
+        , noteDisplay = NoteDisplay.INLINE
     )
 
     val all: List<MapTheme> = listOf(CLASSIC, OCEAN, NIGHT, PAPER, MEADOW, HIGH_CONTRAST)
@@ -179,9 +212,19 @@ internal fun contrastRatio(
     return (lighter + 0.05f) / (darker + 0.05f)
 }
 
+/** Whether [background] is dark, for what is drawn on it to be light. */
+fun isDarkBackground(
+    background: Color
+): Boolean = background.luminance() < 0.5f
+
 /**
  * The color of the halo around the node a dragged node would be attached to: a shade on a light background, and a
  * light one on a dark background, where a shade would not show.
  */
-internal fun attachHighlightColor(theme: MapTheme): Color =
-    if (theme.isDark) Color.White.copy(alpha = 60 / 255f) else Color.Black.copy(alpha = 50 / 255f)
+internal fun attachHighlightColor(
+    background: Color
+): Color = if (isDarkBackground(background)) {
+    Color.White.copy(alpha = 60 / 255f)
+} else {
+    Color.Black.copy(alpha = 50 / 255f)
+}

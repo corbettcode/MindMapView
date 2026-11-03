@@ -44,6 +44,7 @@ import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.MapTheme
+import com.mindsync.library.model.isDarkBackground
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
@@ -844,6 +845,20 @@ class MindMapState(
             drawTick
             return tree.theme
         }
+
+    /**
+     * The color the map is drawn on in place of its theme's background, or null for the theme's. It is the app's
+     * choice, not the map's, so it is not saved with the map and a change of it is not undone.
+     */
+    var backgroundColor: Color? by mutableStateOf(null)
+
+    /** The color the map is drawn on: [backgroundColor], or the background of its theme when there is none. */
+    val background: Color
+        get() = backgroundColor ?: theme.background
+
+    /** Whether the map is drawn on a dark [background], for what is drawn on it to be light. */
+    val isDark: Boolean
+        get() = isDarkBackground(background)
 
     /** Gives the map another look, as one change. The colors and borders nodes were given by hand stay. */
     fun setTheme(theme: MapTheme) {

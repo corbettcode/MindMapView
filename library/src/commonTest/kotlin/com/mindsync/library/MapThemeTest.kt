@@ -75,9 +75,20 @@ class MapThemeTest {
     }
 
     @Test
+    fun arrowLinkColorsShowOnTheBackground() {
+        MapThemes.all.drop(1).forEach { theme ->
+            val colors = assertNotNull(theme.arrowLinkColors, theme.id)
+            colors.forEach { color ->
+                val ratio = contrastRatio(color, theme.background)
+                assertTrue(ratio >= 3f, "${theme.id}: $ratio for $color")
+            }
+        }
+    }
+
+    @Test
     fun attachHighlightShowsOnEveryBackground() {
         MapThemes.all.forEach { theme ->
-            val highlight = attachHighlightColor(theme).compositeOver(theme.background)
+            val highlight = attachHighlightColor(theme.background).compositeOver(theme.background)
             assertTrue(contrastRatio(highlight, theme.background) >= 1.15f, theme.id)
         }
     }
