@@ -11,13 +11,43 @@ class TopicNumberTest {
     }
 
     @Test
-    fun nextNumberIsAfterTheHighestOfTopicsAndSubtopics() {
-        assertEquals(8, nextNodeNumber(tree("Topic 2", "Subtopic 7", "Idea"), createdNodeCount = 0))
+    fun topicsAndSubtopicsAreEachCountedOnTheirOwn() {
+        val tree = tree("Topic 2", "Topic 7").apply {
+            addNode("s0", "n0", "<p>Subtopic 3</p>")
+        }
+
+        assertEquals(8, nextNodeNumber(tree, TopicKind.TOPIC, createdNodeCount = 0))
+        assertEquals(4, nextNodeNumber(tree, TopicKind.SUBTOPIC, createdNodeCount = 0))
     }
 
     @Test
-    fun nodesNumberedInMapsMadeBeforeTopicsCount() {
-        assertEquals(10, nextNodeNumber(tree("node_9", "Topic 3"), createdNodeCount = 0))
+    fun nodesOfAKindAreCountedWhateverTheirText() {
+        val tree = tree("Idea", "Plan", "Goal")
+
+        assertEquals(4, nextNodeNumber(tree, TopicKind.TOPIC, createdNodeCount = 0))
+        assertEquals(1, nextNodeNumber(tree, TopicKind.SUBTOPIC, createdNodeCount = 0))
+    }
+
+    @Test
+    fun numberCountsForTheKindItsTextNames() {
+        // A subtopic moved up to be a topic keeps the number of a subtopic.
+        val tree = tree("Subtopic 9")
+
+        assertEquals(2, nextNodeNumber(tree, TopicKind.TOPIC, createdNodeCount = 0))
+        assertEquals(10, nextNodeNumber(tree, TopicKind.SUBTOPIC, createdNodeCount = 0))
+    }
+
+    @Test
+    fun nodesNumberedInMapsMadeBeforeTopicsCountForTheirLevel() {
+        val tree = tree("node_9").apply { addNode("s0", "n0", "<p>node_4</p>") }
+
+        assertEquals(10, nextNodeNumber(tree, TopicKind.TOPIC, createdNodeCount = 0))
+        assertEquals(5, nextNodeNumber(tree, TopicKind.SUBTOPIC, createdNodeCount = 0))
+    }
+
+    @Test
+    fun nodeThatWasAddedAndRemovedIsNotNumberedAgain() {
+        assertEquals(6, nextNodeNumber(tree(), TopicKind.SUBTOPIC, createdNodeCount = 5))
     }
 
     @Test

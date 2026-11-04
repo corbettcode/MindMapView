@@ -79,10 +79,9 @@ private val NOTE_POPUP_GAP = 16.dp
 val LINK_MENU_MAX_WIDTH = 480.dp
 private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
 
-// The description a new node starts out with is this and the number of the node. Maps made before it had an
-// underscore have "node " and a number, which are counted as well.
-// The number of a new node's text, as "Topic 3" or "Subtopic 4" has it, or "node_3" in a map made before those.
-private val NUMBERED_DESCRIPTION = Regex("(?:node[ _]|(?:Root Topic|Topic|Subtopic) )(\\d+)")
+// The text a new node starts with: its kind and its number, as "Topic 3" or "Subtopic 4". Maps made before the
+// kinds had "node_3", or "node 3" before that, which is counted for the kind of the level the node is on.
+private val NUMBERED_DESCRIPTION = Regex("(node[ _]|Root Topic |Topic |Subtopic )(\\d+)")
 val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
@@ -188,7 +187,7 @@ internal class MindMapApp(
     var isDialogOpen by mutableStateOf(false)
         private set
     // How many nodes were added to the mind map since it was started or opened.
-    private var createdNodeCount by mutableStateOf(0)
+    private var createdNodeCount by mutableStateOf(emptyMap<TopicKind, Int>())
     // The text to find, which is kept when the find bar is closed for F3 to find it again.
     private var findText by mutableStateOf("")
     private var isFindOpen by mutableStateOf(false)
@@ -296,7 +295,7 @@ internal class MindMapApp(
             )
             state.animateTreeChange()
             document = chosen
-            createdNodeCount = 0
+            createdNodeCount = emptyMap()
             recentPaths = recentMaps?.add(chosen)
         } catch (e: CancellationException) {
             throw e
@@ -426,7 +425,7 @@ internal class MindMapApp(
             afterSavingChanges {
                 state.setTree(newMapTree(preferences))
                 document = null
-                createdNodeCount = 0
+                createdNodeCount = emptyMap()
             }
         },
         open = { afterSavingChanges { platform.files.chooseToOpen(document)?.let { open(it) } } },
@@ -802,8 +801,9 @@ private fun MindMapScreen(
     onFileMenuExpandedChange: (Boolean) -> Unit,
     arrowLinkSourceId: String?,
     onArrowLinkSourceIdChange: (String?) -> Unit,
-    createdNodeCount: Int,
-    onCreatedNodeCountChange: (Int) -> Unit,
+    // The number of the last node of each kind that was added, as "Topic 3" is numbered 3.
+    createdNodeCount: Map<TopicKind, Int>,
+    onCreatedNodeCountChange: (Map<TopicKind, Int>) -> Unit,
     isAttributesEditRequested: Boolean,
     onAttributesEditRequestedChange: (Boolean) -> Unit,
     onDialogOpenChange: (Boolean) -> Unit,
@@ -1173,13 +1173,16 @@ private fun MindMapScreen(
         }
 
         AnimatedDialog(value = operation) { currentOperation ->
-            val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
             // Kept from when the dialog opened, as an added node is selected while the dialog closes.
             val editedKind = remember(currentOperation) {
                 selectedNode?.let { node ->
                     if (currentOperation is Operation.Update) state.tree.topicKindOf(node.id)
                     else state.tree.childTopicKindOf(node.id)
                 } ?: TopicKind.TOPIC
+            }
+            // Topics and subtopics are each counted on their own.
+            val nodeNumber = remember(currentOperation) {
+                nextNodeNumber(state.tree, editedKind, createdNodeCount[editedKind] ?: 0)
             }
             val newNodeStyle = remember(currentOperation) {
                 (currentOperation as? Operation.Add)?.let { add ->
@@ -1284,7 +1287,7 @@ private fun MindMapScreen(
                                     attributeDisplay,
                                 )
                                 state.getAddNode()?.let { state.tree.setAttributes(it.id, attributes) }
-                                onCreatedNodeCountChange(nodeNumber)
+                                onCreatedNodeCountChange(createdNodeCount + (editedKind to nodeNumber))
                             }
                             Operation.Update -> state.groupChanges {
                                 shape?.let { state.editNodeShape(it) }
@@ -1314,21 +1317,27 @@ private fun MindMapScreen(
     }
 }
 
-// The number of the node that is added next: one more than the nodes there are and the nodes that were
-// added, some of which may have been removed since. A map that was opened may hold numbered nodes of
-// removed ones too, so the highest number in it counts as well.
+/**
+ * Returns the number of the node of [kind] that is added next: one more than the nodes of that kind there are, and
+ * than [createdNodeCount], the number of the last one that was added, which may have been removed since. A map that
+ * was opened may hold numbered nodes of removed ones too, so the highest number of the kind in it counts as well.
+ * A number counts for the kind its text names, as "Subtopic 4" does wherever the node is now.
+ */
 internal fun nextNodeNumber(
     tree: Tree<*>,
+    kind: TopicKind,
     createdNodeCount: Int,
 ): Int {
     var nodeCount = 0
     var highestNumber = 0
     tree.doPreorderTraversal { node ->
-        if (node.parentId != null) nodeCount++
+        val nodeKind = tree.topicKindOf(node.id)
+        if (nodeKind == kind) nodeCount++
         val text = RichText.parse(DescriptionEmoji.split(node.description).second).text.trim()
-        NUMBERED_DESCRIPTION.matchEntire(text)?.groupValues?.get(1)?.toIntOrNull()?.let {
-            highestNumber = maxOf(highestNumber, it)
-        }
+        val match = NUMBERED_DESCRIPTION.matchEntire(text) ?: return@doPreorderTraversal
+        val named = match.groupValues[1]
+        val numberedKind = TopicKind.entries.firstOrNull { "${it.label} " == named } ?: nodeKind
+        if (numberedKind == kind) match.groupValues[2].toIntOrNull()?.let { highestNumber = maxOf(highestNumber, it) }
     }
     return maxOf(nodeCount, highestNumber, createdNodeCount) + 1
 }
