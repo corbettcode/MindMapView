@@ -209,12 +209,28 @@ class MindMapState(
             animateTreeChange()
         }
 
-    /** Returns how the attributes of the node are shown: its own way, or [attributeDisplay] when it has none. */
+    /**
+     * Returns how the attributes of the node are shown: its own way, or that of its kind of topic, in
+     * [topicAttributeDisplays], or else [attributeDisplay].
+     */
     fun attributeDisplayOf(id: String): AttributeDisplay {
         // The tree is no state of its own, so reading the tick is what tells a reader of a change.
         drawTick
-        return tree.attributeDisplayOf(id) ?: attributeDisplay
+        return tree.shownAttributeDisplayOf(id, attributeDisplay)
     }
+
+    /**
+     * How the attributes of each kind of topic are shown where a node has no way of its own, as
+     * [Tree.topicAttributeDisplays]. Like [topicStyles], it is kept for a map opened after it, and not undone.
+     */
+    var topicAttributeDisplays: Map<TopicKind, AttributeDisplay> = emptyMap()
+        set(value) {
+            if (value == field) return
+            field = value
+            tree.topicAttributeDisplays = value
+            attributeMarkerNodeId = null
+            animateTreeChange()
+        }
 
     private var mapNoteDisplay by mutableStateOf(NoteDisplay.FLYOVER)
 
@@ -233,12 +249,28 @@ class MindMapState(
             animateTreeChange()
         }
 
-    /** Returns how the note of the node is shown: its own way, or [noteDisplay] when it has none. */
+    /**
+     * Returns how the note of the node is shown: its own way, or that of its kind of topic, in [topicNoteDisplays],
+     * or else [noteDisplay].
+     */
     fun noteDisplayOf(id: String): NoteDisplay {
         // The tree is no state of its own, so reading the tick is what tells a reader of a change.
         drawTick
-        return tree.noteDisplayOf(id) ?: noteDisplay
+        return tree.shownNoteDisplayOf(id, noteDisplay)
     }
+
+    /**
+     * How the notes of each kind of topic are shown where a node has no way of its own, as
+     * [Tree.topicNoteDisplays]. Like [topicStyles], it is kept for a map opened after it, and not undone.
+     */
+    var topicNoteDisplays: Map<TopicKind, NoteDisplay> = emptyMap()
+        set(value) {
+            if (value == field) return
+            field = value
+            tree.topicNoteDisplays = value
+            noteMarkerNodeId = null
+            animateTreeChange()
+        }
 
     private var defaultSide by mutableStateOf(LayoutSide.RIGHT)
 
@@ -358,6 +390,8 @@ class MindMapState(
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         otherSelectedIds = emptyList()
         tree.topicStyles = topicStyles
+        tree.topicNoteDisplays = topicNoteDisplays
+        tree.topicAttributeDisplays = topicAttributeDisplays
         mindMapManager.setTree(tree)
         history.clear()
         savedSnapshot = tree.snapshot()
@@ -1249,7 +1283,7 @@ class MindMapState(
             val distance = point - density.noteMarkerCenter(node)
             val isOnMarker = abs(distance.x) <= reach && abs(distance.y) <= reach
             val hasMarker = node.note.isNotBlank()
-                && (tree.noteDisplayOf(node.id) ?: noteDisplay) != NoteDisplay.INLINE
+                && tree.shownNoteDisplayOf(node.id, noteDisplay) != NoteDisplay.INLINE
             if (isOnMarker && hasMarker) foundNode = node
         }
         return foundNode
@@ -1265,7 +1299,7 @@ class MindMapState(
             val distance = point - density.attributeMarkerCenter(node)
             val isOnMarker = abs(distance.x) <= reach && abs(distance.y) <= reach
             val hasMarker = tree.attributesOf(node.id).isNotEmpty()
-                && (tree.attributeDisplayOf(node.id) ?: attributeDisplay) != AttributeDisplay.INLINE
+                && tree.shownAttributeDisplayOf(node.id, attributeDisplay) != AttributeDisplay.INLINE
             if (isOnMarker && hasMarker) foundNode = node
         }
         return foundNode

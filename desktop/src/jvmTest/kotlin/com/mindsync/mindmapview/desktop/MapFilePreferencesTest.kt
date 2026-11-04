@@ -19,14 +19,14 @@ import kotlin.test.assertNull
 class MapFilePreferencesTest {
     private val saved = UserPreferences(
         arrowLinkColors = listOf(Color(0xFF111111))
-        , attributeDisplay = AttributeDisplay.FLYOVER
         , backgroundColor = Color(0xFF223344)
         , emojiTones = mapOf("👍" to "👍🏽")
         , isRemoveConfirmed = false
         , mapThemeId = "night"
-        , noteDisplay = NoteDisplay.INLINE
         , topic = TopicPreferences(
-            font = NodeFont.CAVEAT
+            attributeDisplay = AttributeDisplay.FLYOVER
+            , font = NodeFont.CAVEAT
+            , noteDisplay = NoteDisplay.INLINE
             , shape = NodeShape.entries.last()
             , style = LevelStyle(fill = Color(0xFF445566), text = Color(0xFF000000))
             , fillColors = listOf(Color(0xFF123456))
@@ -88,7 +88,7 @@ class MapFilePreferencesTest {
 
         assertEquals(ocean.mainTopic, opened.topic.style)
         assertEquals(listOf(Color(0xFF123456)), opened.subtopic.fillColors)
-        assertEquals(NoteDisplay.INLINE, opened.noteDisplay)
+        TopicKind.entries.forEach { assertEquals(NoteDisplay.INLINE, opened.topicOf(it).noteDisplay) }
     }
 
     @Test
@@ -111,10 +111,10 @@ class MapFilePreferencesTest {
         assertNull(chosen.backgroundColor)
         assertEquals(ocean.newNodeShape, chosen.topic.shape)
         assertEquals(ocean.newNodeShape, chosen.subtopic.shape)
-        assertEquals(ocean.noteDisplay, chosen.noteDisplay)
+        TopicKind.entries.forEach { assertEquals(ocean.noteDisplay, chosen.topicOf(it).noteDisplay) }
         // Ocean has no font or way of showing attributes of its own, so those stay.
         assertEquals(NodeFont.CAVEAT, chosen.topic.font)
-        assertEquals(AttributeDisplay.FLYOVER, chosen.attributeDisplay)
+        assertEquals(AttributeDisplay.FLYOVER, chosen.topic.attributeDisplay)
     }
 
     @Test
@@ -130,6 +130,6 @@ class MapFilePreferencesTest {
         val chosen = saved.withTheme(MapThemes.CLASSIC)
 
         assertEquals(saved.topic.shape, chosen.topic.shape)
-        assertEquals(saved.noteDisplay, chosen.noteDisplay)
+        assertEquals(saved.topic.noteDisplay, chosen.topic.noteDisplay)
     }
 }

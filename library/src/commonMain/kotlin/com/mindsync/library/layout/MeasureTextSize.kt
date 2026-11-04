@@ -95,7 +95,7 @@ class MeasureTextSize(
         , attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
         , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ): NodeContent {
-        val isTableShown = (tree.attributeDisplayOf(node.id) ?: attributeDisplay) == AttributeDisplay.INLINE
+        val isTableShown = tree.shownAttributeDisplayOf(node.id, attributeDisplay) == AttributeDisplay.INLINE
         val attributes = if (isTableShown) tree.attributesOf(node.id) else emptyList()
         val images = RichText
             .imageSources(node.description)
@@ -103,7 +103,7 @@ class MeasureTextSize(
             .map { NodeImage(it, maxSize = with(density) { IMAGE_MAX_SIZE.dp.toPx() }) }
         val style = topicTextStyles.getValue(tree.topicKindOf(node.id))
         val text = measure(if (images.isEmpty()) node.description else RichText.withoutImages(node.description), style)
-        val isNoteShown = node.note.isNotBlank() && (tree.noteDisplayOf(node.id) ?: noteDisplay) == NoteDisplay.INLINE
+        val isNoteShown = node.note.isNotBlank() && tree.shownNoteDisplayOf(node.id, noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
             text = text
             , note = if (isNoteShown) measureNote(node.note, text.size.width, style) else null

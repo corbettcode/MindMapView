@@ -70,12 +70,10 @@ private val PREFERENCES_LABEL_WIDTH = 128.dp
  * Represents user-configurable preferences for a mind map application.
  *
  * @property arrowLinkColors The colors available for arrow links within the mind map.
- * @property attributeDisplay The mode of displaying the attributes of nodes, for a map theme without its own.
  * @property backgroundColor The color maps are drawn on, or null for the background of their theme.
  * @property emojiTones The mapping of base emojis to their chosen skin tones.
  * @property isRemoveConfirmed Whether the removal of elements requires confirmation.
  * @property mapThemeId The identifier of the theme applied to new maps or the last selected theme.
- * @property noteDisplay The mode of displaying notes associated with nodes in the mind map.
  * @property rootTopic How the root topic is drawn, and the colors offered for it.
  * @property subtopic How the subtopics are drawn and added, and the colors offered for them.
  * @property topic How the topics are drawn and added, and the colors offered for them.
@@ -83,8 +81,6 @@ private val PREFERENCES_LABEL_WIDTH = 128.dp
 data class UserPreferences(
     // The colors offered for an arrow link.
     val arrowLinkColors: List<Color> = DEFAULT_ARROW_LINK_COLORS
-    // How the attributes of a node are shown, unless the map's theme has a way of its own.
-    , val attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
     // The color maps are drawn on in place of their theme's background, or null for the theme's.
     , val backgroundColor: Color? = null
     // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
@@ -92,8 +88,6 @@ data class UserPreferences(
     , val isRemoveConfirmed: Boolean = true
     // The id of the theme new maps start in, which is also the one last chosen for an open map.
     , val mapThemeId: String = MapThemes.CLASSIC.id
-    // How the note of a node is shown.
-    , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     , val rootTopic: TopicPreferences = TopicPreferences()
     , val subtopic: TopicPreferences = TopicPreferences()
     , val topic: TopicPreferences = TopicPreferences()
@@ -120,22 +114,34 @@ data class UserPreferences(
     /** How each kind of topic is drawn, in place of the theme's style for its level. */
     val topicStyles: Map<TopicKind, LevelStyle>
         get() = TopicKind.entries.associateWith { topicOf(it).style }
+
+    /** How the notes of each kind of topic are shown, where a node has no way of its own. */
+    val topicNoteDisplays: Map<TopicKind, NoteDisplay>
+        get() = TopicKind.entries.associateWith { topicOf(it).noteDisplay }
+
+    /** How the attributes of each kind of topic are shown, where a node has no way of its own. */
+    val topicAttributeDisplays: Map<TopicKind, AttributeDisplay>
+        get() = TopicKind.entries.associateWith { topicOf(it).attributeDisplay }
 }
 
 /**
  * What the user chose for one kind of topic: how its nodes are drawn where they have no colors or border of their
  * own, the shape one is added in, and the colors offered for one when it is added or edited.
  *
+ * @property attributeDisplay How the attributes of a node of this kind are shown, where it has no way of its own.
  * @property font The font the text of a node of this kind is drawn in.
  * @property shape The shape a node of this kind is added in, where it has no sibling to look like. The root stays
  * the oval it is.
  * @property style The fill, text color and border nodes of this kind are drawn in. A null fill or text color
  * leaves each node in the color of its shape, as the Classic theme does.
+ * @property noteDisplay How the note of a node of this kind is shown, where it has no way of its own.
  * @property fillColors The fill colors offered for a node of this kind.
  * @property textColors The text colors offered for a node of this kind.
  */
 data class TopicPreferences(
-    val font: NodeFont = NodeFont.DEFAULT
+    val attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
+    , val font: NodeFont = NodeFont.DEFAULT
+    , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     , val shape: NodeShape = NodeShape.RECTANGLE
     , val style: LevelStyle = LevelStyle(fill = null, text = null)
     , val fillColors: List<Color> = DEFAULT_NODE_COLORS
@@ -241,22 +247,6 @@ fun PreferencesDialog(
                             )
                         }
                     }
-                    DropdownPicker(
-                        label = "Notes"
-                        , choices = NoteDisplay.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.noteDisplay
-                        , onSelect = { edited = edited.copy(noteDisplay = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
-                    DropdownPicker(
-                        label = "Attributes"
-                        , choices = AttributeDisplay.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.attributeDisplay
-                        , onSelect = { edited = edited.copy(attributeDisplay = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                         , modifier = Modifier
@@ -446,7 +436,7 @@ private val SHAPE_COLOR = Color.Transparent
 
 /**
  * Lets the user choose how the nodes of [kind] are drawn and added: the font of their text, their shape, but for
- * the root, which stays an oval, their fill and text colors, from the colors offered for them or any other with the
+ * the root, which stays an oval, how their notes and attributes are shown, their fill and text colors, from the colors offered for them or any other with the
  * color picker, the colors offered, and their border. Reset goes back to what the theme sets, [themed].
  */
 @Composable
@@ -495,6 +485,22 @@ private fun TopicEditor(
                 , labelWidth = PREFERENCES_LABEL_WIDTH
             )
         }
+        DropdownPicker(
+            label = "Notes"
+            , choices = NoteDisplay.entries
+            , choiceLabel = { it.label }
+            , selectedChoice = topic.noteDisplay
+            , onSelect = { onChange(topic.copy(noteDisplay = it)) }
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+        )
+        DropdownPicker(
+            label = "Attributes"
+            , choices = AttributeDisplay.entries
+            , choiceLabel = { it.label }
+            , selectedChoice = topic.attributeDisplay
+            , onSelect = { onChange(topic.copy(attributeDisplay = it)) }
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+        )
         // The colors offered come after the topic's own, which is offered as well where it is not one of them.
         ColorPicker(
             label = "Fill"

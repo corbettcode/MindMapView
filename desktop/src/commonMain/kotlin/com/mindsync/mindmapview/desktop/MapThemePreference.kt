@@ -38,9 +38,7 @@ internal fun UserPreferences.withTheme(
     theme: MapTheme
 ): UserPreferences = copy(
     arrowLinkColors = themeArrowLinkColors(theme)
-    , attributeDisplay = theme.attributeDisplay ?: attributeDisplay
     , backgroundColor = null
-    , noteDisplay = theme.noteDisplay ?: noteDisplay
     , rootTopic = rootTopic.withTheme(theme, TopicKind.ROOT_TOPIC)
     , subtopic = subtopic.withTheme(theme, TopicKind.SUBTOPIC)
     , topic = topic.withTheme(theme, TopicKind.TOPIC)
@@ -51,7 +49,9 @@ internal fun TopicPreferences.withTheme(
     theme: MapTheme
     , kind: TopicKind
 ): TopicPreferences = copy(
-    font = nodeFontFor(theme, font)
+    attributeDisplay = theme.attributeDisplay ?: attributeDisplay
+    , font = nodeFontFor(theme, font)
+    , noteDisplay = theme.noteDisplay ?: noteDisplay
     , shape = theme.newNodeShapeOf(kind) ?: shape
     , style = theme.levelStyleOf(kind)
     , fillColors = themeFillColors(theme)

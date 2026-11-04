@@ -890,7 +890,7 @@ private fun MindMapScreen(
             }
         }
     }
-    LaunchedEffect(preferences.noteDisplay) { state.noteDisplay = preferences.noteDisplay }
+    LaunchedEffect(preferences.topicNoteDisplays) { state.topicNoteDisplays = preferences.topicNoteDisplays }
     LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
     LaunchedEffect(preferences.topicStyles) { state.topicStyles = preferences.topicStyles }
     // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
@@ -909,11 +909,11 @@ private fun MindMapScreen(
         notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition)
     }
 
-    val attributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay)
-    LaunchedEffect(attributeDisplay) { state.attributeDisplay = attributeDisplay }
+    val topicAttributeDisplays = preferences.topicAttributeDisplays
+    LaunchedEffect(topicAttributeDisplays) { state.topicAttributeDisplays = topicAttributeDisplays }
     val attributeMarkerNode = state.attributeMarkerNode
     val attributes = attributeMarkerNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
-    LaunchedEffect(attributeMarkerNode?.id, attributes, isDialogOpen, attributeDisplay) {
+    LaunchedEffect(attributeMarkerNode?.id, attributes, isDialogOpen, topicAttributeDisplays) {
         attributePopup = null
         val node = attributeMarkerNode
             ?.takeIf {
@@ -1240,12 +1240,12 @@ private fun MindMapScreen(
                         is Operation.Add -> null
                         Operation.Update -> selectedNode?.let { state.tree.noteDisplayOf(it.id) }
                     },
-                    defaultNoteDisplay = preferences.noteDisplay,
+                    defaultNoteDisplay = preferences.topicOf(editedKind).noteDisplay,
                     attributeDisplay = when (currentOperation) {
                         is Operation.Add -> null
                         Operation.Update -> selectedNode?.let { state.tree.attributeDisplayOf(it.id) }
                     },
-                    defaultAttributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay),
+                    defaultAttributeDisplay = preferences.topicOf(editedKind).attributeDisplay,
                     nodeColors = preferences.topicOf(editedKind).fillColors,
                     textColors = preferences.topicOf(editedKind).textColors,
                     rootColor = selectedNode

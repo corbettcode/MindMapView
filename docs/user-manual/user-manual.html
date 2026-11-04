@@ -443,7 +443,8 @@
     <h2>7. Notes</h2>
     <p>
         A note holds more than fits in a node: details, lists, links or pictures. How notes are shown is set by
-        <b>Notes</b> in Preferences (section <a href="#preferences">16</a>):
+        <b>Notes</b> for the root topic, the topics and the subtopics each in Preferences (section
+        <a href="#preferences">16</a>):
     </p>
     <ul>
         <li>
@@ -498,7 +499,8 @@
     <h2>9. Attributes</h2>
     <p>
         Attributes are name-and-value pairs, such as <i>Status: In progress</i> or <i>Due: 2026-11-15</i>. How
-        they are shown is set by <b>Attributes</b> in Preferences (section <a href="#preferences">16</a>):
+        they are shown is set by <b>Attributes</b> for the root topic, the topics and the subtopics each in
+        Preferences (section <a href="#preferences">16</a>):
     </p>
     <ul>
         <li>
@@ -771,8 +773,6 @@
         <tr><td>Background color</td><td>The color the map is drawn on. <b>Reset</b> goes back to the theme's background.</td></tr>
         <tr><td>Root Topic, Topic, Subtopic</td><td>How each kind of node is drawn and added (see below).</td></tr>
         <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu.</td></tr>
-        <tr><td>Notes</td><td>Flyover, Inline or Hidden: how a node's note is shown (section <a href="#notes">7</a>).</td></tr>
-        <tr><td>Attributes</td><td>Inline, Flyover or Hidden: how a node's attributes are shown (section <a href="#attributes">9</a>).</td></tr>
         <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
     </table>
     <p>
@@ -786,6 +786,8 @@
     <table>
         <tr><th>Setting</th><th>What it does</th></tr>
         <tr><td>Text font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of nodes of this kind.</td></tr>
+        <tr><td>Notes</td><td>Flyover, Inline or Hidden: how the note of a node of this kind is shown (section <a href="#notes">7</a>), unless the node has a way of its own.</td></tr>
+        <tr><td>Attributes</td><td>Inline, Flyover or Hidden: how the attributes of a node of this kind are shown (section <a href="#attributes">9</a>), unless the node has a way of its own.</td></tr>
         <tr><td>Shape</td><td>The shape a node of this kind is added in, when it is the first child of its parent. Later children copy their last sibling. The root is always an oval, so the Root Topic has no shape.</td></tr>
         <tr><td>Fill and Text</td><td>The colors nodes of this kind are drawn in, unless a node has been given colors of its own. The empty circle leaves each node in the color of its shape, as the Classic theme does. The other circles are the colors offered in the edit dialog for a node of this kind.</td></tr>
         <tr><td>Border</td><td>The border nodes of this kind are drawn with, unless a node has a border of its own.</td></tr>

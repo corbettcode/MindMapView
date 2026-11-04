@@ -17,15 +17,6 @@ import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
 /**
- * Returns how attributes are shown on a map in [theme]: the theme's own way, or the way the app is set to,
- * [preference], for a theme without one.
- */
-internal fun attributeDisplayFor(
-    theme: MapTheme
-    , preference: AttributeDisplay
-): AttributeDisplay = theme.attributeDisplay ?: preference
-
-/**
  * Keeps the [UserPreferences] from one run of the app to the next. They are read with [read], which returns
  * the value kept under a name or null when there is none, and written with [write] on every change.
  */
@@ -50,13 +41,14 @@ class UserPreferencesStore(
         const val IS_REMOVE_CONFIRMED = "isRemoveConfirmed"
         const val ARROW_LINK_COLORS = "arrowLinkColors"
         const val EMOJI_TONES = "emojiTones"
-        const val NOTE_DISPLAY = "noteDisplay"
-        const val ATTRIBUTE_DISPLAY = "attributeDisplay"
         const val MAP_THEME = "mapTheme"
         const val BACKGROUND_COLOR = "backgroundColor"
 
-        // One font, shape and lists of colors for every kind of topic, as kept before each kind had its own. They
-        // are still read, for the kinds that have none of their own.
+        // One font, shape, ways of showing notes and attributes, and lists of colors for every kind of topic, as
+        // kept before each kind had its own. They are still read, for the kinds that have none of their own. A
+        // kind's own are kept under the same names as the ways of showing notes and attributes, after its own.
+        const val NOTE_DISPLAY = "noteDisplay"
+        const val ATTRIBUTE_DISPLAY = "attributeDisplay"
         const val NODE_FONT = "nodeFont"
         const val NEW_NODE_SHAPE = "newNodeShape"
         const val NODE_COLORS = "nodeColors"
@@ -91,15 +83,15 @@ class UserPreferencesStore(
          */
         val MAP_PREFERENCES: Set<String> = setOf(
             ARROW_LINK_COLORS
-            , ATTRIBUTE_DISPLAY
             , BACKGROUND_COLOR
-            , NOTE_DISPLAY
         ) + TopicKind.entries.flatMap { kind ->
-            listOf(FONT, SHAPE, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS).map { topicKey(kind, it) }
+            listOf(FONT, SHAPE, NOTE_DISPLAY, ATTRIBUTE_DISPLAY, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS)
+                .map { topicKey(kind, it) }
         }
 
         // What a map file saved before each kind of topic had its own preferences keeps, read for all of them.
-        internal val LEGACY_MAP_PREFERENCES = setOf(NODE_FONT, NEW_NODE_SHAPE, NODE_COLORS, TEXT_COLORS)
+        internal val LEGACY_MAP_PREFERENCES =
+            setOf(NODE_FONT, NEW_NODE_SHAPE, NOTE_DISPLAY, ATTRIBUTE_DISPLAY, NODE_COLORS, TEXT_COLORS)
     }
 }
 
@@ -120,14 +112,13 @@ internal fun readUserPreferences(
             , kind
             , defaults.topicOf(kind)
             , isThemeFont = theme?.fontName != null
+            , isThemeAttributes = theme?.attributeDisplay != null
             , isThemeShaped = theme?.newNodeShapeOf(kind) != null
         )
     }
     UserPreferences(
         arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
             ?: defaults.arrowLinkColors
-        , attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == read(ATTRIBUTE_DISPLAY) }
-            ?: defaults.attributeDisplay
         // No color is kept as none, for the map to be drawn on its theme's background.
         , backgroundColor = readOptionalColor(read(BACKGROUND_COLOR), defaults.backgroundColor)
         , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones)
@@ -136,30 +127,35 @@ internal fun readUserPreferences(
             ?: defaults.isRemoveConfirmed
         , mapThemeId = read(MAP_THEME)
             ?: defaults.mapThemeId
-        , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
-            ?: defaults.noteDisplay
         , rootTopic = topics.getValue(TopicKind.ROOT_TOPIC)
         , subtopic = topics.getValue(TopicKind.SUBTOPIC)
         , topic = topics.getValue(TopicKind.TOPIC)
     )
 }
 
-// A kind of topic without a font, shape or colors of its own takes the one font, shape and lists kept for all of
-// them before, but for a font the theme has, [isThemeFont], or a shape it has for the kind, [isThemeShaped], which
-// is kept: the theme's font was drawn whatever the one font was, and the one shape was the theme's for all kinds,
-// or one chosen before the theme had a shape for each.
+// A kind of topic without settings of its own takes those kept for all of them before, but for a font the theme
+// has, [isThemeFont], a way of showing attributes it has, [isThemeAttributes], or a shape it has for the kind,
+// [isThemeShaped], which is kept: the theme's font and way of showing attributes were drawn whatever was set for
+// all kinds, and the one shape was the theme's for all kinds, or one chosen before the theme had one for each.
 private fun readTopic(
     read: (String) -> String?
     , kind: TopicKind
     , defaults: TopicPreferences
     , isThemeFont: Boolean
+    , isThemeAttributes: Boolean
     , isThemeShaped: Boolean
 ): TopicPreferences = with(UserPreferencesStore) {
     val key = { name: String -> topicKey(kind, name) }
     val fontName = read(key(FONT)) ?: read(NODE_FONT).takeUnless { isThemeFont }
     val shapeName = read(key(SHAPE)) ?: read(NEW_NODE_SHAPE).takeUnless { isThemeShaped }
+    val noteName = read(key(NOTE_DISPLAY)) ?: read(NOTE_DISPLAY)
+    val attributeName = read(key(ATTRIBUTE_DISPLAY)) ?: read(ATTRIBUTE_DISPLAY).takeUnless { isThemeAttributes }
     TopicPreferences(
-        font = NodeFont.entries.firstOrNull { it.name == fontName }
+        attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == attributeName }
+            ?: defaults.attributeDisplay
+        , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == noteName }
+            ?: defaults.noteDisplay
+        , font = NodeFont.entries.firstOrNull { it.name == fontName }
             ?: defaults.font
         , shape = NodeShape.entries.firstOrNull { it.name == shapeName }
             ?: defaults.shape
@@ -181,14 +177,14 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
         IS_REMOVE_CONFIRMED to isRemoveConfirmed.toString()
         , ARROW_LINK_COLORS to arrowLinkColors.joinToString(",") { it.toHex() }
         , EMOJI_TONES to emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" }
-        , NOTE_DISPLAY to noteDisplay.name
-        , ATTRIBUTE_DISPLAY to attributeDisplay.name
         , MAP_THEME to mapThemeId
         , BACKGROUND_COLOR to backgroundColor?.toHex().orEmpty()
     ) + TopicKind.entries.flatMap { kind ->
         val topic = topicOf(kind)
         listOf(
             topicKey(kind, FONT) to topic.font.name
+            , topicKey(kind, NOTE_DISPLAY) to topic.noteDisplay.name
+            , topicKey(kind, ATTRIBUTE_DISPLAY) to topic.attributeDisplay.name
             , topicKey(kind, SHAPE) to topic.shape.name
             , topicKey(kind, FILL) to topic.style.fill?.toHex().orEmpty()
             , topicKey(kind, TEXT) to topic.style.text?.toHex().orEmpty()

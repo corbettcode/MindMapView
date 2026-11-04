@@ -48,6 +48,18 @@ class Tree<T> {
      */
     var topicStyles: Map<TopicKind, LevelStyle> = emptyMap()
 
+    /**
+     * How the app shows the notes of each kind of topic where a node has no way of its own. Like [topicStyles], it
+     * is the app's, not the map's.
+     */
+    var topicNoteDisplays: Map<TopicKind, NoteDisplay> = emptyMap()
+
+    /**
+     * How the app shows the attributes of each kind of topic where a node has no way of its own. Like
+     * [topicStyles], it is the app's, not the map's.
+     */
+    var topicAttributeDisplays: Map<TopicKind, AttributeDisplay> = emptyMap()
+
     private val _arrowLinks = mutableListOf<ArrowLink>()
 
     /** The arrow links between the nodes of the tree, in the order they are drawn. */
@@ -152,6 +164,15 @@ class Tree<T> {
     /** Returns how the node's note is shown when it was given a way of its own, or null when it follows the map. */
     fun noteDisplayOf(id: String): NoteDisplay? = nodeNoteDisplays[id]
 
+    /**
+     * Returns how the node's note is shown: its own way, or that of its kind of topic, or else [default], the way
+     * of the map.
+     */
+    fun shownNoteDisplayOf(
+        id: String
+        , default: NoteDisplay
+    ): NoteDisplay = nodeNoteDisplays[id] ?: topicNoteDisplays[topicKindOf(id)] ?: default
+
     /** Gives the node its own way of showing its note, or with null makes it follow the map again. */
     fun setNoteDisplay(
         id: String
@@ -166,6 +187,15 @@ class Tree<T> {
      * the map.
      */
     fun attributeDisplayOf(id: String): AttributeDisplay? = nodeAttributeDisplays[id]
+
+    /**
+     * Returns how the node's attributes are shown: its own way, or that of its kind of topic, or else [default],
+     * the way of the map.
+     */
+    fun shownAttributeDisplayOf(
+        id: String
+        , default: AttributeDisplay
+    ): AttributeDisplay = nodeAttributeDisplays[id] ?: topicAttributeDisplays[topicKindOf(id)] ?: default
 
     /** Gives the node its own way of showing its attributes, or with null makes it follow the map again. */
     fun setAttributeDisplay(

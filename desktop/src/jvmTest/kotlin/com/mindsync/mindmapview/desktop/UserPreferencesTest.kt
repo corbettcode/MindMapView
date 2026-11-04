@@ -29,7 +29,6 @@ class UserPreferencesTest {
     fun preferencesAreKeptFromOneRunToTheNext() {
         val changed = UserPreferences(
             arrowLinkColors = listOf(Color(0xFF654321), Color.Black)
-            , attributeDisplay = AttributeDisplay.FLYOVER
             , backgroundColor = Color(0xFF101820)
             , isRemoveConfirmed = false
             , subtopic = TopicPreferences(
@@ -42,7 +41,11 @@ class UserPreferencesTest {
                 , fillColors = listOf(Color(0xFF123456), Color.White)
                 , textColors = listOf(Color(0xFFABCDEF))
             )
-            , rootTopic = TopicPreferences(style = LevelStyle(fill = null, text = Color(0xFF010203)))
+            , rootTopic = TopicPreferences(
+                attributeDisplay = AttributeDisplay.FLYOVER
+                , noteDisplay = NoteDisplay.HIDDEN
+                , style = LevelStyle(fill = null, text = Color(0xFF010203))
+            )
         )
         assertEquals(changed, store().update(changed))
         assertEquals(changed, store().preferences)
@@ -162,28 +165,33 @@ class UserPreferencesTest {
     }
 
     @Test
-    fun noteDisplayIsKept() {
-        store().update(UserPreferences(noteDisplay = NoteDisplay.INLINE))
-        assertEquals(NoteDisplay.INLINE, store().preferences.noteDisplay)
+    fun eachTopicKeepsItsOwnNoteDisplay() {
+        store().update(UserPreferences(subtopic = TopicPreferences(noteDisplay = NoteDisplay.INLINE)))
+        assertEquals(NoteDisplay.INLINE, store().preferences.subtopic.noteDisplay)
+        assertEquals(NoteDisplay.FLYOVER, store().preferences.topic.noteDisplay)
     }
 
     @Test
     fun unknownNoteDisplayIsFlyover() {
         stored[UserPreferencesStore.NOTE_DISPLAY] = "SIDEBAR"
-        assertEquals(NoteDisplay.FLYOVER, store().preferences.noteDisplay)
+        assertEquals(NoteDisplay.FLYOVER, store().preferences.topic.noteDisplay)
     }
 
     @Test
     fun unknownAttributeDisplayIsInline() {
         stored[UserPreferencesStore.ATTRIBUTE_DISPLAY] = "SIDEBAR"
-        assertEquals(AttributeDisplay.INLINE, store().preferences.attributeDisplay)
+        assertEquals(AttributeDisplay.INLINE, store().preferences.topic.attributeDisplay)
     }
 
     @Test
-    fun attributeDisplayOfTheThemeIsUsedOverThePreference() {
-        val theme = MapThemes.CLASSIC.copy(attributeDisplay = AttributeDisplay.HIDDEN)
-        assertEquals(AttributeDisplay.HIDDEN, attributeDisplayFor(theme, AttributeDisplay.INLINE))
-        assertEquals(AttributeDisplay.FLYOVER, attributeDisplayFor(MapThemes.CLASSIC, AttributeDisplay.FLYOVER))
+    fun notesAndAttributesKeptBeforeEachTopicHadItsOwnAreThoseOfEveryTopic() {
+        stored[UserPreferencesStore.NOTE_DISPLAY] = NoteDisplay.INLINE.name
+        stored[UserPreferencesStore.ATTRIBUTE_DISPLAY] = AttributeDisplay.HIDDEN.name
+
+        TopicKind.entries.forEach { kind ->
+            assertEquals(NoteDisplay.INLINE, store().preferences.topicOf(kind).noteDisplay)
+            assertEquals(AttributeDisplay.HIDDEN, store().preferences.topicOf(kind).attributeDisplay)
+        }
     }
 
     @Test

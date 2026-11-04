@@ -4,8 +4,10 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeBorderStyle
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
@@ -51,5 +53,20 @@ class TopicStyleTest {
         state.setTree(tree())
 
         assertEquals(topicStyle.fill, state.tree.fillOf("b"))
+    }
+
+    @Test
+    fun noteAndAttributesAreShownAsTheirKindOfTopicIsSetTo() {
+        val tree = tree().apply {
+            topicNoteDisplays = mapOf(TopicKind.TOPIC to NoteDisplay.INLINE)
+            topicAttributeDisplays = mapOf(TopicKind.SUBTOPIC to AttributeDisplay.HIDDEN)
+        }
+
+        assertEquals(NoteDisplay.INLINE, tree.shownNoteDisplayOf("a", NoteDisplay.FLYOVER))
+        assertEquals(NoteDisplay.FLYOVER, tree.shownNoteDisplayOf("b", NoteDisplay.FLYOVER))
+        assertEquals(AttributeDisplay.HIDDEN, tree.shownAttributeDisplayOf("b", AttributeDisplay.INLINE))
+        // A node's own way wins over that of its kind.
+        tree.setNoteDisplay("a", NoteDisplay.HIDDEN)
+        assertEquals(NoteDisplay.HIDDEN, tree.shownNoteDisplayOf("a", NoteDisplay.FLYOVER))
     }
 }
