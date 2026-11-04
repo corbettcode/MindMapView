@@ -52,7 +52,7 @@ internal fun TopicPreferences.withTheme(
     theme: MapTheme
     , kind: TopicKind
 ): TopicPreferences = copy(
-    shape = theme.newNodeShape ?: shape
+    shape = theme.newNodeShapeOf(kind) ?: shape
     , style = theme.levelStyleOf(kind)
     , fillColors = themeFillColors(theme)
     , textColors = themeTextColors(theme)

@@ -53,11 +53,13 @@ enum class AttributeDisplay(
  * @property lineWidth The width of the lines connecting nodes, measured in density-independent pixels (Dp).
  * @property mainTopic The visual style applied to the main topics of the map.
  * @property name The name of the map theme.
- * @property newNodeShape The shape of a node added to a parent without children in this theme, or null for the
+ * @property newNodeShape The shape of a topic added to a parent without children in this theme, or null for the
  * one the app is set to.
  * @property noteDisplay How the notes of nodes are shown in this theme, or null for how the app is set to.
  * @property root The visual style applied to the root level of the map.
  * @property subtopic The visual style applied to the subtopics of the map.
+ * @property subtopicShape The shape of a subtopic added to a parent without children in this theme, or null for
+ * [newNodeShape].
  */
 data class MapTheme(
     val id: String
@@ -75,9 +77,19 @@ data class MapTheme(
     , val noteDisplay: NoteDisplay? = null
     , val root: LevelStyle
     , val subtopic: LevelStyle
+    , val subtopicShape: NodeShape? = null
 ) {
     /** Whether the background is dark, for what is drawn on it to be light. */
     val isDark: Boolean get() = isDarkBackground(background)
+
+    /** Returns the shape this theme adds a node of [kind] in, or null for the one the app is set to. */
+    fun newNodeShapeOf(
+        kind: TopicKind
+    ): NodeShape? = when (kind) {
+        TopicKind.ROOT_TOPIC -> null
+        TopicKind.TOPIC -> newNodeShape
+        TopicKind.SUBTOPIC -> subtopicShape ?: newNodeShape
+    }
 
     /** Returns how this theme draws a node of [kind]. Its main topics are the topics, on level 1. */
     fun levelStyleOf(
@@ -202,6 +214,7 @@ object MapThemes {
         , lineWidth = Dp(4f)
         , fontName = "Inter"
         , newNodeShape = NodeShape.RECTANGLE
+        , subtopicShape = NodeShape.LINE
         , noteDisplay = NoteDisplay.INLINE
     )
 

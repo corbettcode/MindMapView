@@ -118,6 +118,14 @@ class MapFilePreferencesTest {
     }
 
     @Test
+    fun highContrastAddsSubtopicsAsLines() {
+        val chosen = saved.withTheme(MapThemes.byId("contrast"))
+
+        assertEquals(NodeShape.RECTANGLE, chosen.topic.shape)
+        assertEquals(NodeShape.LINE, chosen.subtopic.shape)
+    }
+
+    @Test
     fun classicLeavesTheShapeAndNoteDisplayAsTheyAre() {
         val chosen = saved.withTheme(MapThemes.CLASSIC)
 
