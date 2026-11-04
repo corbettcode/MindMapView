@@ -31,7 +31,7 @@ internal fun submitPreferences(
 
 /**
  * Returns these preferences with what [theme] sets in place of their own: its colors, its background, the style
- * of each kind of topic, and its font, ways of showing attributes and notes, and shape of a new node where it has
+ * of each kind of topic, and its font, ways of showing attributes and notes, and shapes of new nodes where it has
  * them. The theme new maps start in stays as it was.
  */
 internal fun UserPreferences.withTheme(
@@ -40,7 +40,6 @@ internal fun UserPreferences.withTheme(
     arrowLinkColors = themeArrowLinkColors(theme)
     , attributeDisplay = theme.attributeDisplay ?: attributeDisplay
     , backgroundColor = null
-    , nodeFont = nodeFontFor(theme, nodeFont)
     , noteDisplay = theme.noteDisplay ?: noteDisplay
     , rootTopic = rootTopic.withTheme(theme, TopicKind.ROOT_TOPIC)
     , subtopic = subtopic.withTheme(theme, TopicKind.SUBTOPIC)
@@ -52,7 +51,8 @@ internal fun TopicPreferences.withTheme(
     theme: MapTheme
     , kind: TopicKind
 ): TopicPreferences = copy(
-    shape = theme.newNodeShapeOf(kind) ?: shape
+    font = nodeFontFor(theme, font)
+    , shape = theme.newNodeShapeOf(kind) ?: shape
     , style = theme.levelStyleOf(kind)
     , fillColors = themeFillColors(theme)
     , textColors = themeTextColors(theme)

@@ -75,7 +75,6 @@ private val PREFERENCES_LABEL_WIDTH = 128.dp
  * @property emojiTones The mapping of base emojis to their chosen skin tones.
  * @property isRemoveConfirmed Whether the removal of elements requires confirmation.
  * @property mapThemeId The identifier of the theme applied to new maps or the last selected theme.
- * @property nodeFont The font used to render text inside nodes.
  * @property noteDisplay The mode of displaying notes associated with nodes in the mind map.
  * @property rootTopic How the root topic is drawn, and the colors offered for it.
  * @property subtopic How the subtopics are drawn and added, and the colors offered for them.
@@ -93,8 +92,6 @@ data class UserPreferences(
     , val isRemoveConfirmed: Boolean = true
     // The id of the theme new maps start in, which is also the one last chosen for an open map.
     , val mapThemeId: String = MapThemes.CLASSIC.id
-    // The font node text is drawn in.
-    , val nodeFont: NodeFont = NodeFont.DEFAULT
     // How the note of a node is shown.
     , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     , val rootTopic: TopicPreferences = TopicPreferences()
@@ -129,6 +126,7 @@ data class UserPreferences(
  * What the user chose for one kind of topic: how its nodes are drawn where they have no colors or border of their
  * own, the shape one is added in, and the colors offered for one when it is added or edited.
  *
+ * @property font The font the text of a node of this kind is drawn in.
  * @property shape The shape a node of this kind is added in, where it has no sibling to look like. The root stays
  * the oval it is.
  * @property style The fill, text color and border nodes of this kind are drawn in. A null fill or text color
@@ -137,7 +135,8 @@ data class UserPreferences(
  * @property textColors The text colors offered for a node of this kind.
  */
 data class TopicPreferences(
-    val shape: NodeShape = NodeShape.RECTANGLE
+    val font: NodeFont = NodeFont.DEFAULT
+    , val shape: NodeShape = NodeShape.RECTANGLE
     , val style: LevelStyle = LevelStyle(fill = null, text = null)
     , val fillColors: List<Color> = DEFAULT_NODE_COLORS
     , val textColors: List<Color> = DEFAULT_TEXT_COLORS
@@ -217,21 +216,13 @@ fun PreferencesDialog(
                                 TopicEditor(
                                     kind = kind
                                     , topic = edited.topicOf(kind)
+                                    , fontFamilies = fontFamilies
                                     , themed = edited.topicOf(kind).withTheme(MapThemes.byId(edited.mapThemeId), kind)
                                     , onChange = { edited = edited.withTopic(kind, it) }
                                 )
                             }
                         }
                     }
-                    DropdownPicker(
-                        label = "Text font"
-                        , choices = NodeFont.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.nodeFont
-                        , onSelect = { edited = edited.copy(nodeFont = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                        , choiceFontFamily = { fontFamilies[it] }
-                    )
                     CollapsibleSection(
                         title = "Arrow link colors"
                         , isOpen = isArrowLinkColorsOpen
@@ -454,14 +445,16 @@ private fun BackgroundColorEditor(
 private val SHAPE_COLOR = Color.Transparent
 
 /**
- * Lets the user choose how the nodes of [kind] are drawn and added: their shape, but for the root, which stays an
- * oval, their fill and text colors, from the colors offered for them or any other with the color picker, the colors
- * offered, and their border. Reset goes back to what the theme sets, [themed].
+ * Lets the user choose how the nodes of [kind] are drawn and added: the font of their text, their shape, but for
+ * the root, which stays an oval, their fill and text colors, from the colors offered for them or any other with the
+ * color picker, the colors offered, and their border. Reset goes back to what the theme sets, [themed].
  */
 @Composable
 private fun TopicEditor(
     kind: TopicKind
     , topic: TopicPreferences
+    // Each font's name is drawn in that font once it has loaded.
+    , fontFamilies: Map<NodeFont, FontFamily>
     , themed: TopicPreferences
     , onChange: (TopicPreferences) -> Unit
 ) {
@@ -483,6 +476,15 @@ private fun TopicEditor(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        DropdownPicker(
+            label = "Text font"
+            , choices = NodeFont.entries
+            , choiceLabel = { it.label }
+            , selectedChoice = topic.font
+            , onSelect = { onChange(topic.copy(font = it)) }
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+            , choiceFontFamily = { fontFamilies[it] }
+        )
         if (kind != TopicKind.ROOT_TOPIC) {
             DropdownPicker(
                 label = "Shape"

@@ -22,6 +22,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.Px
 import com.mindsync.library.util.RichText
@@ -34,6 +35,9 @@ class MeasureTextSize(
     private val density: Density,
     private val drawInfo: DrawInfo = DrawInfo(),
     private val emojiFontFamily: FontFamily? = null,
+    // The font of the text of each kind of topic, in place of that of [textStyle]. A kind without one, or whose
+    // font is null, takes that of [textStyle].
+    private val topicFontFamilies: Map<TopicKind, FontFamily?> = emptyMap(),
 ) {
     private val richTextCache = mutableMapOf<String, AnnotatedString>()
 
@@ -43,15 +47,22 @@ class MeasureTextSize(
      */
     var imageOf: (String) -> ImageBitmap? = { null }
 
+    private val topicTextStyles: Map<TopicKind, TextStyle> = TopicKind.entries.associateWith { kind ->
+        topicFontFamilies[kind]?.let { textStyle.copy(fontFamily = it) } ?: textStyle
+    }
+
     // The attributes are plain text on one line each, a little smaller than the text of the node.
-    private val attributeTextStyle =
-        textStyle.copy(fontSize = textStyle.fontSize * ATTRIBUTE_TEXT_SCALE, textAlign = TextAlign.Start)
+    private fun attributeTextStyle(style: TextStyle) =
+        style.copy(fontSize = style.fontSize * ATTRIBUTE_TEXT_SCALE, textAlign = TextAlign.Start)
 
     // A note is a paragraph, a little smaller than the text of the node and read from the left.
-    private val noteTextStyle =
-        textStyle.copy(fontSize = textStyle.fontSize * NOTE_TEXT_SCALE, textAlign = TextAlign.Start)
+    private fun noteTextStyle(style: TextStyle) =
+        style.copy(fontSize = style.fontSize * NOTE_TEXT_SCALE, textAlign = TextAlign.Start)
 
-    fun measure(description: String): TextLayoutResult = textMeasurer.measure(richText(description), textStyle)
+    fun measure(
+        description: String
+        , style: TextStyle = textStyle
+    ): TextLayoutResult = textMeasurer.measure(richText(description), style)
 
     private fun richText(html: String): AnnotatedString {
         if (richTextCache.size >= RICH_TEXT_CACHE_SIZE && html !in richTextCache) richTextCache.clear()
@@ -62,15 +73,21 @@ class MeasureTextSize(
     private fun measureNote(
         note: String
         , textWidth: Int
+        , style: TextStyle
     ): TextLayoutResult {
         val maxWidth = maxOf(textWidth, with(density) { NOTE_MAX_WIDTH.dp.roundToPx() })
-        return textMeasurer.measure(richText(note), noteTextStyle, constraints = Constraints(maxWidth = maxWidth))
+        return textMeasurer.measure(
+            richText(note)
+            , noteTextStyle(style)
+            , constraints = Constraints(maxWidth = maxWidth)
+        )
     }
 
     /**
      * Measures what is drawn in a node: its text, below it its note when it has one shown inline, by its own
      * way of showing it or else by [noteDisplay], and below those the table of its attributes when it has any
-     * shown inline, by its own way of showing them or else by [attributeDisplay].
+     * shown inline, by its own way of showing them or else by [attributeDisplay]. All of it is in the font of the
+     * node's kind of topic.
      */
     fun measureContent(
         tree: Tree<*>
@@ -84,12 +101,13 @@ class MeasureTextSize(
             .imageSources(node.description)
             .mapNotNull { imageOf(it) }
             .map { NodeImage(it, maxSize = with(density) { IMAGE_MAX_SIZE.dp.toPx() }) }
-        val text = measure(if (images.isEmpty()) node.description else RichText.withoutImages(node.description))
+        val style = topicTextStyles.getValue(tree.topicKindOf(node.id))
+        val text = measure(if (images.isEmpty()) node.description else RichText.withoutImages(node.description), style)
         val isNoteShown = node.note.isNotBlank() && (tree.noteDisplayOf(node.id) ?: noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
             text = text
-            , note = if (isNoteShown) measureNote(node.note, text.size.width) else null
-            , table = if (attributes.isEmpty()) null else measureAttributes(attributes)
+            , note = if (isNoteShown) measureNote(node.note, text.size.width, style) else null
+            , table = if (attributes.isEmpty()) null else measureAttributes(attributes, style)
             , gap = with(density) { ATTRIBUTE_TABLE_GAP.dp.toPx() }
             , noteGap = with(density) { NOTE_GAP.dp.toPx() }
             , images = images
@@ -97,7 +115,11 @@ class MeasureTextSize(
         )
     }
 
-    private fun measureAttributes(attributes: List<NodeAttribute>): AttributeTable {
+    private fun measureAttributes(
+        attributes: List<NodeAttribute>
+        , style: TextStyle
+    ): AttributeTable {
+        val attributeTextStyle = attributeTextStyle(style)
         val paddingX = with(density) { ATTRIBUTE_CELL_PADDING_X.dp.toPx() }
         val paddingY = with(density) { ATTRIBUTE_CELL_PADDING_Y.dp.toPx() }
         val rows = attributes.map { attribute ->

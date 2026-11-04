@@ -126,15 +126,39 @@ class UserPreferencesTest {
     }
 
     @Test
-    fun nodeFontIsKept() {
-        store().update(UserPreferences(nodeFont = NodeFont.LORA))
-        assertEquals(NodeFont.LORA, store().preferences.nodeFont)
+    fun eachTopicKeepsItsOwnFont() {
+        store().update(
+            UserPreferences(
+                rootTopic = TopicPreferences(font = NodeFont.LORA)
+                , topic = TopicPreferences(font = NodeFont.CAVEAT)
+            )
+        )
+
+        assertEquals(NodeFont.LORA, store().preferences.rootTopic.font)
+        assertEquals(NodeFont.CAVEAT, store().preferences.topic.font)
+        assertEquals(NodeFont.DEFAULT, store().preferences.subtopic.font)
     }
 
     @Test
     fun unknownNodeFontIsDefault() {
         stored[UserPreferencesStore.NODE_FONT] = "COMIC_SANS"
-        assertEquals(NodeFont.DEFAULT, store().preferences.nodeFont)
+        assertEquals(NodeFont.DEFAULT, store().preferences.topic.font)
+    }
+
+    @Test
+    fun fontKeptBeforeEachTopicHadItsOwnIsThatOfEveryTopic() {
+        stored[UserPreferencesStore.NODE_FONT] = NodeFont.INTER.name
+
+        TopicKind.entries.forEach { assertEquals(NodeFont.INTER, store().preferences.topicOf(it).font) }
+    }
+
+    @Test
+    fun themesFontWinsOverTheFontKeptBeforeEachTopicHadItsOwn() {
+        // Paper's font was drawn before, whatever the one font was set to.
+        stored[UserPreferencesStore.MAP_THEME] = "paper"
+        stored[UserPreferencesStore.NODE_FONT] = NodeFont.INTER.name
+
+        TopicKind.entries.forEach { assertEquals(NodeFont.LORA, store().preferences.topicOf(it).font) }
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.mindsync.mindmapview.desktop
 import com.mindsync.library.MindMapState
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.MapThemes
+import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,12 +60,12 @@ class MapThemePreferenceTest {
         val kept = submitPreferences(
             state
             , opened = UserPreferences(mapThemeId = "night")
-            , submitted = UserPreferences(mapThemeId = "night", nodeFont = NodeFont.LORA)
+            , submitted = UserPreferences(mapThemeId = "night", topic = TopicPreferences(font = NodeFont.LORA))
             , remembered = UserPreferences(mapThemeId = "ocean")
         )
 
         assertEquals("night", state.theme.id)
         assertEquals("ocean", kept.mapThemeId)
-        assertEquals(NodeFont.LORA, kept.nodeFont)
+        assertEquals(NodeFont.LORA, kept.topic.font)
     }
 }

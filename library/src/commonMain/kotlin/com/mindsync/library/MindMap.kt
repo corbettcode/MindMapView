@@ -70,6 +70,7 @@ import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.NodeContent
 import com.mindsync.library.model.DrawInfo
+import com.mindsync.library.model.TopicKind
 import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
@@ -176,6 +177,7 @@ fun MindMap(
     state: MindMapState
     , modifier: Modifier = Modifier
     , fontFamily: FontFamily? = null
+    , topicFontFamilies: Map<TopicKind, FontFamily?> = emptyMap()
     , emojiFontFamily: FontFamily? = null
     , onNodeClick: (node: NodeData<*>?) -> Unit = {}
     , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
@@ -190,13 +192,13 @@ fun MindMap(
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
     val drawInfo = remember { DrawInfo() }
-    val measureTextSize = remember(textMeasurer, density, fontFamily, emojiFontFamily) {
+    val measureTextSize = remember(textMeasurer, density, fontFamily, topicFontFamilies, emojiFontFamily) {
         val textStyle = TextStyle(
             fontSize = with(density) { drawInfo.textSize.dpVal.dp.toSp() },
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,
         )
-        MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily)
+        MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily, topicFontFamilies)
     }
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)

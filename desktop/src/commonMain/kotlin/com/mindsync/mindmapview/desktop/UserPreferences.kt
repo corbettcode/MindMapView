@@ -50,14 +50,14 @@ class UserPreferencesStore(
         const val IS_REMOVE_CONFIRMED = "isRemoveConfirmed"
         const val ARROW_LINK_COLORS = "arrowLinkColors"
         const val EMOJI_TONES = "emojiTones"
-        const val NODE_FONT = "nodeFont"
         const val NOTE_DISPLAY = "noteDisplay"
         const val ATTRIBUTE_DISPLAY = "attributeDisplay"
         const val MAP_THEME = "mapTheme"
         const val BACKGROUND_COLOR = "backgroundColor"
 
-        // One shape and lists of colors for every kind of topic, as kept before each kind had its own. They are
-        // still read, for the kinds that have none of their own.
+        // One font, shape and lists of colors for every kind of topic, as kept before each kind had its own. They
+        // are still read, for the kinds that have none of their own.
+        const val NODE_FONT = "nodeFont"
         const val NEW_NODE_SHAPE = "newNodeShape"
         const val NODE_COLORS = "nodeColors"
         const val TEXT_COLORS = "textColors"
@@ -68,6 +68,7 @@ class UserPreferencesStore(
             , name: String
         ): String = "${topicPrefix(kind)}.$name"
 
+        const val FONT = "font"
         const val SHAPE = "shape"
         const val FILL = "fill"
         const val TEXT = "text"
@@ -92,21 +93,21 @@ class UserPreferencesStore(
             ARROW_LINK_COLORS
             , ATTRIBUTE_DISPLAY
             , BACKGROUND_COLOR
-            , NODE_FONT
             , NOTE_DISPLAY
         ) + TopicKind.entries.flatMap { kind ->
-            listOf(SHAPE, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS).map { topicKey(kind, it) }
+            listOf(FONT, SHAPE, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS).map { topicKey(kind, it) }
         }
 
         // What a map file saved before each kind of topic had its own preferences keeps, read for all of them.
-        internal val LEGACY_MAP_PREFERENCES = setOf(NEW_NODE_SHAPE, NODE_COLORS, TEXT_COLORS)
+        internal val LEGACY_MAP_PREFERENCES = setOf(NODE_FONT, NEW_NODE_SHAPE, NODE_COLORS, TEXT_COLORS)
     }
 }
 
 /**
  * Returns the preferences [read] returns the values of, by their names. A value that is missing, or that is no
- * longer known, as one of a later version of the app may be, is the one in [defaults]. The one shape kept for
- * every kind of topic before each had its own is not taken for a kind [theme] has a shape of its own for.
+ * longer known, as one of a later version of the app may be, is the one in [defaults]. The one font and shape kept
+ * for every kind of topic before each had its own are not taken where [theme] has a font, or a shape for the
+ * kind, of its own.
  */
 internal fun readUserPreferences(
     read: (String) -> String?
@@ -114,7 +115,13 @@ internal fun readUserPreferences(
     , theme: MapTheme? = null
 ): UserPreferences = with(UserPreferencesStore) {
     val topics = TopicKind.entries.associateWith { kind ->
-        readTopic(read, kind, defaults.topicOf(kind), isThemeShaped = theme?.newNodeShapeOf(kind) != null)
+        readTopic(
+            read
+            , kind
+            , defaults.topicOf(kind)
+            , isThemeFont = theme?.fontName != null
+            , isThemeShaped = theme?.newNodeShapeOf(kind) != null
+        )
     }
     UserPreferences(
         arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
@@ -129,8 +136,6 @@ internal fun readUserPreferences(
             ?: defaults.isRemoveConfirmed
         , mapThemeId = read(MAP_THEME)
             ?: defaults.mapThemeId
-        , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) }
-            ?: defaults.nodeFont
         , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
             ?: defaults.noteDisplay
         , rootTopic = topics.getValue(TopicKind.ROOT_TOPIC)
@@ -139,19 +144,24 @@ internal fun readUserPreferences(
     )
 }
 
-// A kind of topic without a shape or colors of its own takes the one shape and lists kept for all of them before,
-// but for a shape the theme has for the kind, [isThemeShaped], which is kept: the one shape was the theme's
-// for all kinds, or one chosen before the theme had a shape for each.
+// A kind of topic without a font, shape or colors of its own takes the one font, shape and lists kept for all of
+// them before, but for a font the theme has, [isThemeFont], or a shape it has for the kind, [isThemeShaped], which
+// is kept: the theme's font was drawn whatever the one font was, and the one shape was the theme's for all kinds,
+// or one chosen before the theme had a shape for each.
 private fun readTopic(
     read: (String) -> String?
     , kind: TopicKind
     , defaults: TopicPreferences
+    , isThemeFont: Boolean
     , isThemeShaped: Boolean
 ): TopicPreferences = with(UserPreferencesStore) {
     val key = { name: String -> topicKey(kind, name) }
+    val fontName = read(key(FONT)) ?: read(NODE_FONT).takeUnless { isThemeFont }
     val shapeName = read(key(SHAPE)) ?: read(NEW_NODE_SHAPE).takeUnless { isThemeShaped }
     TopicPreferences(
-        shape = NodeShape.entries.firstOrNull { it.name == shapeName }
+        font = NodeFont.entries.firstOrNull { it.name == fontName }
+            ?: defaults.font
+        , shape = NodeShape.entries.firstOrNull { it.name == shapeName }
             ?: defaults.shape
         , style = LevelStyle(
             fill = readOptionalColor(read(key(FILL)), defaults.style.fill)
@@ -171,7 +181,6 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
         IS_REMOVE_CONFIRMED to isRemoveConfirmed.toString()
         , ARROW_LINK_COLORS to arrowLinkColors.joinToString(",") { it.toHex() }
         , EMOJI_TONES to emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" }
-        , NODE_FONT to nodeFont.name
         , NOTE_DISPLAY to noteDisplay.name
         , ATTRIBUTE_DISPLAY to attributeDisplay.name
         , MAP_THEME to mapThemeId
@@ -179,7 +188,8 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
     ) + TopicKind.entries.flatMap { kind ->
         val topic = topicOf(kind)
         listOf(
-            topicKey(kind, SHAPE) to topic.shape.name
+            topicKey(kind, FONT) to topic.font.name
+            , topicKey(kind, SHAPE) to topic.shape.name
             , topicKey(kind, FILL) to topic.style.fill?.toHex().orEmpty()
             , topicKey(kind, TEXT) to topic.style.text?.toHex().orEmpty()
             , topicKey(kind, BORDER) to topic.style.border.toText()

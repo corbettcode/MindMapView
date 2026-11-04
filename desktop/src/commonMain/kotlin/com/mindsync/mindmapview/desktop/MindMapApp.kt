@@ -220,7 +220,7 @@ internal class MindMapApp(
 
     // Null until the bundled font is loaded, and emojis are drawn in the text's own font until then.
     private var emojiFontFamily by mutableStateOf<FontFamily?>(null)
-    private var nodeFontFamily by mutableStateOf<FontFamily?>(null)
+    private var topicFontFamilies by mutableStateOf<Map<TopicKind, FontFamily?>>(emptyMap())
 
     // The text on the clipboard when a node was copied last. While the clipboard holds it, it is the copied node
     // that is pasted, with all of what the outline of it leaves out.
@@ -673,11 +673,11 @@ internal class MindMapApp(
             emojiFontFamily = family
         }
         // A newer choice cancels the loading of an older one, and a font that cannot be read leaves the default.
-        // A theme's own font wins over the one the app is set to.
-        val nodeFont = nodeFontFor(state.theme, preferences.nodeFont)
-        LaunchedEffect(nodeFont) {
-            nodeFontFamily = null
-            nodeFontFamily = loadNodeFontFamily(nodeFont)
+        // Each kind of topic is drawn in its own font, and a font that two of them share is loaded once.
+        val topicFonts = TopicKind.entries.associateWith { preferences.topicOf(it).font }
+        LaunchedEffect(topicFonts) {
+            val families = topicFonts.values.distinct().associateWith { loadNodeFontFamily(it) }
+            topicFontFamilies = topicFonts.mapValues { (_, font) -> families[font] }
         }
         CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
             Screen(onMapPress)
@@ -712,7 +712,7 @@ internal class MindMapApp(
             preferencesRequest = preferencesRequest,
             preferences = preferences,
             onPreferencesChange = { preferences = platform.preferencesStore.update(it) },
-            nodeFontFamily = nodeFontFamily,
+            topicFontFamilies = topicFontFamilies,
             saveQuestion = afterSaveChoice?.let { saveChangesQuestion(document?.name) },
             onSaveChoice = ::onSaveChoice,
             isImportConfirmOpen = pendingImport != null,
@@ -811,7 +811,8 @@ private fun MindMapScreen(
     editNodeRequest: Int,
     preferencesRequest: Int,
     preferences: UserPreferences,
-    nodeFontFamily: FontFamily?,
+    // The font the text of each kind of topic is drawn in, or null for the default.
+    topicFontFamilies: Map<TopicKind, FontFamily?>,
     onPreferencesChange: (UserPreferences) -> Unit,
     saveQuestion: String?,
     onSaveChoice: (SaveChoice) -> Unit,
@@ -1016,7 +1017,7 @@ private fun MindMapScreen(
                     MindMap(
                         state = state
                         , modifier = Modifier.fillMaxSize()
-                        , fontFamily = nodeFontFamily
+                        , topicFontFamilies = topicFontFamilies
                         , emojiFontFamily = LocalEmojiFontFamily.current
                         // While an arrow link is being added, the next click chooses the node it leads to, or none.
                         , onNodeClick = { node ->

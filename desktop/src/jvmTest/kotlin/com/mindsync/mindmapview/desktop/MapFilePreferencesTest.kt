@@ -24,10 +24,10 @@ class MapFilePreferencesTest {
         , emojiTones = mapOf("👍" to "👍🏽")
         , isRemoveConfirmed = false
         , mapThemeId = "night"
-        , nodeFont = NodeFont.CAVEAT
         , noteDisplay = NoteDisplay.INLINE
         , topic = TopicPreferences(
-            shape = NodeShape.entries.last()
+            font = NodeFont.CAVEAT
+            , shape = NodeShape.entries.last()
             , style = LevelStyle(fill = Color(0xFF445566), text = Color(0xFF000000))
             , fillColors = listOf(Color(0xFF123456))
             , textColors = listOf(Color(0xFFABCDEF))
@@ -68,7 +68,7 @@ class MapFilePreferencesTest {
         val opened = saved.openedWith(tree("paper"), readMapPreferences("a.mmv", content))
 
         assertEquals(saved.withTheme(paper), opened)
-        assertEquals(NodeFont.LORA, opened.nodeFont)
+        TopicKind.entries.forEach { assertEquals(NodeFont.LORA, opened.topicOf(it).font) }
         assertNull(opened.backgroundColor)
         assertEquals(themeArrowLinkColors(paper), opened.arrowLinkColors)
     }
@@ -113,7 +113,7 @@ class MapFilePreferencesTest {
         assertEquals(ocean.newNodeShape, chosen.subtopic.shape)
         assertEquals(ocean.noteDisplay, chosen.noteDisplay)
         // Ocean has no font or way of showing attributes of its own, so those stay.
-        assertEquals(NodeFont.CAVEAT, chosen.nodeFont)
+        assertEquals(NodeFont.CAVEAT, chosen.topic.font)
         assertEquals(AttributeDisplay.FLYOVER, chosen.attributeDisplay)
     }
 
