@@ -8,6 +8,15 @@ internal fun windowTitle(fileName: String?, isModified: Boolean): String {
     return if (isModified) "*$title" else title
 }
 
+/**
+ * The name the menu bar shows for the map in the file [fileName], or for a new map, which has none yet. A map with
+ * changes that are not saved is marked with a `*`, as the window's title is.
+ */
+internal fun mapName(fileName: String?, isModified: Boolean): String {
+    val name = fileName ?: "Untitled"
+    return if (isModified) "*$name" else name
+}
+
 internal fun saveChangesQuestion(fileName: String?): String =
     "Save changes to ${fileName ?: "this mind map"}?"
 

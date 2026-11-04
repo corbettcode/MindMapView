@@ -16,10 +16,13 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
@@ -689,6 +692,7 @@ internal class MindMapApp(
             error = error,
             onError = { error = it },
             onErrorDismiss = { error = null },
+            mapName = mapName(document?.name, state.isModified),
             successMessage = successMessage,
             onSuccessMessageDismiss = { successMessage = null },
             fileActions = fileActions,
@@ -786,6 +790,8 @@ private fun MindMapScreen(
     error: String?,
     onError: (String) -> Unit,
     onErrorDismiss: () -> Unit,
+    // The name of the map's file, shown in the middle of the menu bar.
+    mapName: String,
     successMessage: SuccessMessage?,
     onSuccessMessageDismiss: () -> Unit,
     fileActions: FileActions,
@@ -926,58 +932,78 @@ private fun MindMapScreen(
     MaterialTheme(colorScheme = if (state.isDark) darkColorScheme() else lightColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
-                Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+                // The name is centered on the window, kept clear of the menus on either side.
+                val density = LocalDensity.current
+                var menusWidth by remember { mutableStateOf(0.dp) }
+                Box(
+                    contentAlignment = Alignment.Center
+                    , modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(horizontal = 8.dp)
+                            .onSizeChanged { menusWidth = with(density) { it.width.toDp() } }
+                    ) {
 
-                    FileMenu(
-                        fileActions
-                        , recentPaths
-                        , recentFolderOf
-                        , fileMenuExpanded
-                        , onFileMenuExpandedChange
-                    )
+                        FileMenu(
+                            fileActions
+                            , recentPaths
+                            , recentFolderOf
+                            , fileMenuExpanded
+                            , onFileMenuExpandedChange
+                        )
 
-                    EditMenu(
-                        canUndo = state.canUndo,
-                        onUndo = { state.undo() },
-                        canRedo = state.canRedo,
-                        onRedo = { state.redo() },
-                        enabled = selectedNode != null,
-                        onAdd = { operation = Operation.Add(it) },
-                        onEdit = { operation = Operation.Update },
-                        removeEnabled = state.selectedBranches.isRemovable(),
-                        onRemove = removeNode,
-                        onCut = onCut,
-                        onCopy = onCopy,
-                        // Read when the menu opens, as canMove is: the clipboard may change in another program.
-                        pasteEnabled = { selectedNode != null && isPasteEnabled() },
-                        onPaste = onPaste,
-                        onSelectAll = { state.selectAll() },
-                        // Read when the menu opens: moving a node does not change the selected node.
-                        // The root is in no branch, so it is not moved.
-                        canMove = { selectedNode?.parentId != null },
-                        onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
-                        // Read when the menu opens, as canMove is.
-                        links = {
-                            selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
-                        },
-                        onOpenLink = openLink,
-                        onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
-                        onEditAttributes = { onAttributesEditRequestedChange(true) },
-                        onPreferences = { isPreferencesOpen = true },
-                        onFind = onFind,
-                    )
-                    ViewMenu(
-                        onFit = { state.fitScreen() },
-                        isCenterEnabled = state.selectedNode != null,
-                        onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
-                        onFold = { it.run(state) },
-                    )
-                    ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
-                    HelpMenu(
-                        onUserManual = onUserManual
-                        , onShortcuts = { isShortcutsOpen = true }
-                        , onReadme = { isReadmeOpen = true }
-                        , onAbout = { isAboutOpen = true }
+                        EditMenu(
+                            canUndo = state.canUndo,
+                            onUndo = { state.undo() },
+                            canRedo = state.canRedo,
+                            onRedo = { state.redo() },
+                            enabled = selectedNode != null,
+                            onAdd = { operation = Operation.Add(it) },
+                            onEdit = { operation = Operation.Update },
+                            removeEnabled = state.selectedBranches.isRemovable(),
+                            onRemove = removeNode,
+                            onCut = onCut,
+                            onCopy = onCopy,
+                            // Read when the menu opens, as canMove is: the clipboard may change in another program.
+                            pasteEnabled = { selectedNode != null && isPasteEnabled() },
+                            onPaste = onPaste,
+                            onSelectAll = { state.selectAll() },
+                            // Read when the menu opens: moving a node does not change the selected node.
+                            // The root is in no branch, so it is not moved.
+                            canMove = { selectedNode?.parentId != null },
+                            onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
+                            // Read when the menu opens, as canMove is.
+                            links = {
+                                selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
+                            },
+                            onOpenLink = openLink,
+                            onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
+                            onEditAttributes = { onAttributesEditRequestedChange(true) },
+                            onPreferences = { isPreferencesOpen = true },
+                            onFind = onFind,
+                        )
+                        ViewMenu(
+                            onFit = { state.fitScreen() },
+                            isCenterEnabled = state.selectedNode != null,
+                            onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
+                            onFold = { it.run(state) },
+                        )
+                        ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
+                        HelpMenu(
+                            onUserManual = onUserManual
+                            , onShortcuts = { isShortcutsOpen = true }
+                            , onReadme = { isReadmeOpen = true }
+                            , onAbout = { isAboutOpen = true }
+                        )
+                    }
+                    Text(
+                        mapName
+                        , style = MaterialTheme.typography.titleSmall
+                        , maxLines = 1
+                        , overflow = TextOverflow.Ellipsis
+                        , modifier = Modifier.padding(horizontal = menusWidth + 16.dp)
                     )
                 }
                 findBar()

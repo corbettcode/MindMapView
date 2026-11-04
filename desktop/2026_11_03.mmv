@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1" theme="contrast">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="🌱 root">
+    <node id="a5b0baca-b87c-4f35-a92f-6a721b062401" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 1&lt;/p&gt;">
+      <node id="78839f09-47ba-45c0-af04-a1217b76e0c8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 2&lt;/p&gt;"/>
+      <node id="311230a5-c509-4b0e-87f1-40d73ac56407" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 3&lt;/p&gt;"/>
+    </node>
+  </node>
+  <preference name="arrowLinkColors" value="#FFD400,#00E5FF,#FF4FD8,#7CFF4F,#FFFFFF"/>
+  <preference name="nodeFont" value="INTER"/>
+  <preference name="noteDisplay" value="INLINE"/>
+  <preference name="attributeDisplay" value="INLINE"/>
+  <preference name="backgroundColor" value=""/>
+  <preference name="rootTopic.shape" value="RECTANGLE"/>
+  <preference name="rootTopic.fill" value="#FFFFFF"/>
+  <preference name="rootTopic.text" value="#000000"/>
+  <preference name="rootTopic.border" value="NONE,TWO,#000000"/>
+  <preference name="rootTopic.fillColors" value="#FFFFFF,#000000,#FFD400,#00E5FF,#FF4FD8,#7CFF4F"/>
+  <preference name="rootTopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="topic.shape" value="RECTANGLE"/>
+  <preference name="topic.fill" value="#000000"/>
+  <preference name="topic.text" value="#FFFFFF"/>
+  <preference name="topic.border" value="LINE,TWO,#FFFFFF"/>
+  <preference name="topic.fillColors" value="#FFFFFF,#000000,#FFD400,#00E5FF,#FF4FD8,#7CFF4F"/>
+  <preference name="topic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.shape" value="LINE"/>
+  <preference name="subtopic.fill" value="#000000"/>
+  <preference name="subtopic.text" value="#FFFFFF"/>
+  <preference name="subtopic.border" value="NONE,TWO,#000000"/>
+  <preference name="subtopic.fillColors" value="#FFFFFF,#000000,#FFD400,#00E5FF,#FF4FD8,#7CFF4F"/>
+  <preference name="subtopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+</mindmapview>
