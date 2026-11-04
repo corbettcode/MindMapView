@@ -173,7 +173,6 @@ fun PreferencesDialog(
         title = "Preferences"
         , state = dialogState
         , onCloseRequest = onDismiss
-        , isResizable = false
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             // The settings scroll where the window is too small for them, and the buttons stay at the bottom.
