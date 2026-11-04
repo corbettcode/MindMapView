@@ -899,6 +899,10 @@ private fun MindMapScreen(
     LaunchedEffect(preferences.topicNoteDisplays) { state.topicNoteDisplays = preferences.topicNoteDisplays }
     LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
     LaunchedEffect(preferences.topicStyles) { state.topicStyles = preferences.topicStyles }
+    // A new arrow link starts in the first of the colors offered for one, which a theme sets to one of its own.
+    LaunchedEffect(preferences.arrowLinkColors) {
+        state.newArrowLinkColor = preferences.arrowLinkColors.firstOrNull() ?: ArrowLink.DEFAULT_COLOR
+    }
     // The map's preferences are kept with its theme, so undoing or redoing a change of theme gives back those that
     // went with the theme it goes back to.
     val mapPreferences = preferences.mapValues()

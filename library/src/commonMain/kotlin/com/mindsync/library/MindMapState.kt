@@ -987,8 +987,14 @@ class MindMapState(
     }
 
     /**
-     * Adds an arrow link from one node to another and returns it, or the one there already is between
-     * them. Returns null when the two are not different nodes of the tree.
+     * The color a new arrow link is drawn in, by [addArrowLink] or a drag with Ctrl held. A link that is pasted
+     * keeps the color it had.
+     */
+    var newArrowLinkColor: Color = ArrowLink.DEFAULT_COLOR
+
+    /**
+     * Adds an arrow link from one node to another, in [newArrowLinkColor], and returns it, or the one there already
+     * is between them. Returns null when the two are not different nodes of the tree.
      */
     fun addArrowLink(
         sourceId: String
@@ -996,7 +1002,7 @@ class MindMapState(
     ): ArrowLink? {
         if (sourceId == targetId || sourceId !in tree.nodes || targetId !in tree.nodes) return null
         tree.arrowLinks.firstOrNull { it.sourceId == sourceId && it.targetId == targetId }?.let { return it }
-        val link = ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId)
+        val link = ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId, color = newArrowLinkColor)
         recordChange { tree.addArrowLink(link) }
         invalidate()
         return link
@@ -1497,7 +1503,14 @@ class MindMapState(
             val link = tree.arrowLinks.firstOrNull { it.sourceId == selectedNode.id && it.targetId == attachedNode.id }
             recordChange {
                 if (link == null) {
-                    tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), selectedNode.id, attachedNode.id))
+                    tree.addArrowLink(
+                        ArrowLink(
+                            IdGenerator.makeRandomNodeId()
+                            , selectedNode.id
+                            , attachedNode.id
+                            , color = newArrowLinkColor
+                        )
+                    )
                 }
                 else {
                     tree.removeArrowLink(link.id)
