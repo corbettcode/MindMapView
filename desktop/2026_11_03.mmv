@@ -1,30 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mindmapview version="1" theme="contrast">
+  <rootposition x="554.0" y="203.0"/>
   <node id="root" color="#ff336770" textColor="#ff000000" text="🌱 root">
-    <node id="a5b0baca-b87c-4f35-a92f-6a721b062401" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 1&lt;/p&gt;">
-      <node id="0dad10c6-fe58-4fef-84d6-52f714da858c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 1&lt;/p&gt;"/>
-      <node id="317e50b1-7dc8-4580-86f2-0a0441b0ff06" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 2&lt;/p&gt;"/>
-      <node id="2ffc159a-5a27-4d23-be5e-124c33431024" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 3&lt;/p&gt;"/>
+    <node id="ac804c6e-2727-4a5c-9b10-d6443c5ec8d5" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 1&lt;/p&gt;">
+      <node id="d44dd053-bda2-450d-b397-65f0f54323a3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 1&lt;/p&gt;"/>
+      <node id="56510acf-54c4-4f13-a212-80790937cf38" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 2&lt;/p&gt;">
+        <node id="f585d63c-2af4-4454-a5f9-1645980da4cd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 3&lt;/p&gt;"/>
+        <node id="fb9bfc2f-838c-403c-85d4-33a921d7cb10" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Subtopic 4&lt;/p&gt;"/>
+      </node>
     </node>
-    <node id="2cc55689-0105-4879-b30f-8cd7630a14de" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 2&lt;/p&gt;"/>
+    <node id="1d34cb84-0545-46f9-8ec0-913713493045" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 2&lt;/p&gt;"/>
+    <node id="bd7d20a2-b51b-430e-96b9-d0b3fabd6a97" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 3&lt;/p&gt;"/>
+    <node id="245ae141-85eb-41af-9d7d-d9ec1d2bc951" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Topic 4&lt;/p&gt;"/>
   </node>
   <preference name="arrowLinkColors" value="#FFD400,#00E5FF,#FF4FD8,#7CFF4F,#FFFFFF"/>
-  <preference name="nodeFont" value="INTER"/>
-  <preference name="noteDisplay" value="INLINE"/>
-  <preference name="attributeDisplay" value="INLINE"/>
   <preference name="backgroundColor" value=""/>
+  <preference name="rootTopic.font" value="INTER"/>
+  <preference name="rootTopic.noteDisplay" value="INLINE"/>
+  <preference name="rootTopic.attributeDisplay" value="INLINE"/>
   <preference name="rootTopic.shape" value="RECTANGLE"/>
   <preference name="rootTopic.fill" value="#FFFFFF"/>
   <preference name="rootTopic.text" value="#000000"/>
   <preference name="rootTopic.border" value="NONE,TWO,#000000"/>
   <preference name="rootTopic.fillColors" value="#FFFFFF,#000000,#FFD400,#00E5FF,#FF4FD8,#7CFF4F"/>
   <preference name="rootTopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="topic.font" value="INTER"/>
+  <preference name="topic.noteDisplay" value="INLINE"/>
+  <preference name="topic.attributeDisplay" value="INLINE"/>
   <preference name="topic.shape" value="RECTANGLE"/>
   <preference name="topic.fill" value="#000000"/>
   <preference name="topic.text" value="#FFFFFF"/>
   <preference name="topic.border" value="LINE,TWO,#FFFFFF"/>
   <preference name="topic.fillColors" value="#FFFFFF,#000000,#FFD400,#00E5FF,#FF4FD8,#7CFF4F"/>
   <preference name="topic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.font" value="INTER"/>
+  <preference name="subtopic.noteDisplay" value="INLINE"/>
+  <preference name="subtopic.attributeDisplay" value="INLINE"/>
   <preference name="subtopic.shape" value="LINE"/>
   <preference name="subtopic.fill" value="#000000"/>
   <preference name="subtopic.text" value="#FFFFFF"/>
