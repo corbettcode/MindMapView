@@ -40,6 +40,7 @@ import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
@@ -77,8 +78,8 @@ private const val ARROW_LINK_MENU_LABEL_LENGTH = 30
 
 // The description a new node starts out with is this and the number of the node. Maps made before it had an
 // underscore have "node " and a number, which are counted as well.
-private const val NEW_NODE_DESCRIPTION = "node_"
-private val NUMBERED_DESCRIPTION = Regex("node[ _](\\d+)")
+// The number of a new node's text, as "Topic 3" or "Subtopic 4" has it, or "node_3" in a map made before those.
+private val NUMBERED_DESCRIPTION = Regex("(?:node[ _]|(?:Root Topic|Topic|Subtopic) )(\\d+)")
 val LINK_DIALOG_FIELD_WIDTH = 400.dp
 
 // The links the app opens. A map may come from elsewhere, so its links are not trusted to start any program.
@@ -1141,6 +1142,13 @@ private fun MindMapScreen(
 
         AnimatedDialog(value = operation) { currentOperation ->
             val nodeNumber = remember(currentOperation) { nextNodeNumber(state.tree, createdNodeCount) }
+            // Kept from when the dialog opened, as an added node is selected while the dialog closes.
+            val editedKind = remember(currentOperation) {
+                selectedNode?.let { node ->
+                    if (currentOperation is Operation.Update) state.tree.topicKindOf(node.id)
+                    else state.tree.childTopicKindOf(node.id)
+                } ?: TopicKind.TOPIC
+            }
             val newNodeStyle = remember(currentOperation) {
                 (currentOperation as? Operation.Add)?.let { add ->
                     selectedNode?.let {
@@ -1156,10 +1164,12 @@ private fun MindMapScreen(
                     else state.tree.childLevelStyleOf(node.id)
                 }
                 EditNodeDialog(
-                    title = if (currentOperation is Operation.Update) "Edit node" else "Add node",
+                    // The node is named for its level: the root topic, a topic or a subtopic.
+                    title = if (currentOperation is Operation.Update) "Edit ${editedKind.label}"
+                    else "Add ${editedKind.label}",
                     description =
                         if (currentOperation is Operation.Update) selectedNode?.description.orEmpty()
-                        else NEW_NODE_DESCRIPTION + nodeNumber,
+                        else "${editedKind.label} $nodeNumber",
                     // The description of a new node is only a start, so typing replaces it.
                     isDescriptionSelected = currentOperation is Operation.Add,
                     note = if (currentOperation is Operation.Update) selectedNode?.note.orEmpty() else "",
@@ -1269,7 +1279,7 @@ private fun MindMapScreen(
 // The number of the node that is added next: one more than the nodes there are and the nodes that were
 // added, some of which may have been removed since. A map that was opened may hold numbered nodes of
 // removed ones too, so the highest number in it counts as well.
-private fun nextNodeNumber(
+internal fun nextNodeNumber(
     tree: Tree<*>,
     createdNodeCount: Int,
 ): Int {

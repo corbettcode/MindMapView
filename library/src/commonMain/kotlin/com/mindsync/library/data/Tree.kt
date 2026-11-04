@@ -7,6 +7,7 @@ import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.ExceptionMessage
@@ -209,8 +210,14 @@ class Tree<T> {
      */
     fun levelOf(id: String): Int = generateSequence(getNode(id).parentId) { getNode(it).parentId }.count()
 
+    /** Returns what the node with [id] is by its level: the root topic, a topic or a subtopic. */
+    fun topicKindOf(id: String): TopicKind = TopicKind.ofLevel(levelOf(id))
+
+    /** Returns what a node added to the node with [parentId] is by its level: a topic or a subtopic. */
+    fun childTopicKindOf(parentId: String): TopicKind = TopicKind.ofLevel(levelOf(parentId) + 1)
+
     /** Returns how the theme draws the nodes of the level a node is on: the root, a main topic or a subtopic. */
-    fun levelStyleOf(id: String): LevelStyle = levelStyle(levelOf(id))
+    fun levelStyleOf(id: String): LevelStyle = levelStyle(topicKindOf(id))
 
     // Maps saved before the colors a node starts with were changed still hold the earlier ones, which were
     // never chosen.
@@ -220,13 +227,13 @@ class Tree<T> {
     }
 
     /** Returns how the theme draws a node added to the node with [parentId]. */
-    fun childLevelStyleOf(parentId: String): LevelStyle = levelStyle(levelOf(parentId) + 1)
+    fun childLevelStyleOf(parentId: String): LevelStyle = levelStyle(childTopicKindOf(parentId))
 
-    // The theme draws the root on level 0, the main topics on level 1, and the subtopics on every level below.
-    private fun levelStyle(level: Int): LevelStyle = when (level) {
-        0 -> theme.root
-        1 -> theme.mainTopic
-        else -> theme.subtopic
+    // A theme's main topics are the topics, on level 1.
+    private fun levelStyle(kind: TopicKind): LevelStyle = when (kind) {
+        TopicKind.ROOT_TOPIC -> theme.root
+        TopicKind.TOPIC -> theme.mainTopic
+        TopicKind.SUBTOPIC -> theme.subtopic
     }
 
     /** Returns the fill a node starts with, which follows the theme for as long as it is not changed. */
