@@ -286,7 +286,21 @@ class MindMapState(
             animateTreeChange()
         }
 
-    private val history = UndoHistory<TreeSnapshot>()
+    // A step of the history: the map as it was, and what the app kept with its theme then.
+    private class Step(
+        val tree: TreeSnapshot
+        , val themeLook: Any?
+    )
+
+    private val history = UndoHistory<Step>()
+
+    /**
+     * What the app keeps along with the map's theme, such as the preferences a theme sets, for an undo or redo that
+     * changes the theme to give back with it. The library only keeps it: an undo or redo that goes to another theme
+     * sets it to what it was with that theme, and one that keeps the theme leaves it as it is. Setting it is no
+     * change to the map.
+     */
+    var themeLook: Any? by mutableStateOf(null)
 
     // The history is no state of its own, so reading the tick is what tells a reader of a change.
     private var historyTick by mutableIntStateOf(0)
@@ -349,25 +363,33 @@ class MindMapState(
     private inline fun recordChange(change: () -> Unit) {
         if (isRecording) return change()
         val before = tree.snapshot()
+        val lookBefore = themeLook
         isRecording = true
         try {
             change()
         }
         finally {
             isRecording = false
-            if (!before.hasSameContentAs(tree.snapshot())) record(before)
+            if (!before.hasSameContentAs(tree.snapshot())) record(before, lookBefore)
         }
     }
 
-    private fun record(before: TreeSnapshot) {
-        history.record(before)
+    private fun record(
+        before: TreeSnapshot
+        , lookBefore: Any? = themeLook
+    ) {
+        history.record(Step(before, lookBefore))
         historyTick++
     }
 
-    private fun restore(step: (current: TreeSnapshot) -> TreeSnapshot?) {
-        val snapshot = step(tree.snapshot()) ?: return
+    private fun restore(step: (current: Step) -> Step?) {
+        val restored = step(Step(tree.snapshot(), themeLook)) ?: return
+        val snapshot = restored.tree
         historyTick++
         treeChangeJob?.cancel()
+        // What the app keeps with the theme only comes back along with the theme, so a change of it since that
+        // was no change of the theme is kept.
+        if (snapshot.theme != tree.theme) themeLook = restored.themeLook
         tree.restore(snapshot)
         val selectedIds = selectedNodes.map { it.id }.filter { it in tree.nodes }
         otherSelectedIds = selectedIds.dropLast(1)

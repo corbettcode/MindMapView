@@ -899,6 +899,15 @@ private fun MindMapScreen(
     LaunchedEffect(preferences.topicNoteDisplays) { state.topicNoteDisplays = preferences.topicNoteDisplays }
     LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
     LaunchedEffect(preferences.topicStyles) { state.topicStyles = preferences.topicStyles }
+    // The map's preferences are kept with its theme, so undoing or redoing a change of theme gives back those that
+    // went with the theme it goes back to.
+    val mapPreferences = preferences.mapValues()
+    LaunchedEffect(mapPreferences) { state.themeLook = mapPreferences }
+    LaunchedEffect(state.themeLook) {
+        @Suppress("UNCHECKED_CAST")
+        val kept = state.themeLook as? Map<String, String> ?: return@LaunchedEffect
+        if (kept != mapPreferences) onPreferencesChange(preferences.withMapValues(kept))
+    }
     // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
     val noteMarkerNode = state.noteMarkerNode
     val isNotePopupShown = noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
