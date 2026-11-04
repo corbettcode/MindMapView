@@ -125,3 +125,10 @@ compose.desktop {
         }
     }
 }
+
+// A test compares the Keyboard Shortcuts dialog with the user manual, so the tests run again when the manual changes.
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("docs/user-manual/user-manual.html"))
+        .withPropertyName("userManual")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
