@@ -761,30 +761,46 @@
 
 <section id="preferences">
     <h2>16. Preferences</h2>
-    <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> to change:</p>
+    <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> or press <kbd>Ctrl+,</kbd> to change:</p>
     <table>
         <tr><th>Setting</th><th>Choices</th></tr>
-        <tr><td>Map theme</td><td>The look of the open map and of new maps (see <a href="#themes">Map themes</a>). It opens on the open map's theme; choosing another changes that map and the theme new maps start in.</td></tr>
-        <tr><td>New node shape</td><td>The shape of the first child added to a node. Later children copy their last sibling.</td></tr>
-        <tr><td>Classic font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of maps in the Classic theme. Other themes have their own font.</td></tr>
-        <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
-        <tr><td>Fill colors</td><td>The fill colors offered in the edit dialog. Choosing another map theme replaces them with that theme's colors.</td></tr>
-        <tr><td>Text colors</td><td>The text colors offered in the edit dialog. Choosing another map theme replaces them with that theme's colors.</td></tr>
-        <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu. Click <b>Arrow link colors</b> to open and close its section.</td></tr>
+        <tr><td>Map theme</td><td>The look of the open map and of new maps (see <a href="#themes">Map themes</a>). It opens on the open map's theme; choosing another changes that map and the theme new maps start in, and replaces the settings below that the theme has with its own.</td></tr>
+        <tr><td>Background color</td><td>The color the map is drawn on. <b>Reset</b> goes back to the theme's background.</td></tr>
+        <tr><td>Root Topic, Topic, Subtopic</td><td>How each kind of node is drawn and added (see below).</td></tr>
+        <tr><td>Text font</td><td>Default, Inter, Lora, Nunito, Caveat or JetBrains Mono, for the text of the nodes.</td></tr>
+        <tr><td>Arrow link colors</td><td>The colors offered in an arrow link's menu.</td></tr>
         <tr><td>Notes</td><td>Flyover, Inline or Hidden: how a node's note is shown (section <a href="#notes">7</a>).</td></tr>
         <tr><td>Attributes</td><td>Inline, Flyover or Hidden: how a node's attributes are shown (section <a href="#attributes">9</a>).</td></tr>
+        <tr><td>Ask before removing a node</td><td>Whether removing a node asks you to confirm.</td></tr>
     </table>
     <p>
-        For each list of colors, pick a color with the color picker or type its <b>Hex</b> code, then click
-        <b>Add</b>. Select a color and click <b>Remove</b> to take it off the list, or click <b>Reset</b> to go
-        back to the original colors, which for fill and text colors are those of the chosen map theme.
+        The color settings and each kind of node have a section of their own. Click its title to open or close it.
+    </p>
+    <h3>Root Topic, Topic and Subtopic</h3>
+    <p>
+        The root is the <b>Root Topic</b>, its children are <b>Topics</b>, and every node below them is a
+        <b>Subtopic</b>. Each of the three has:
+    </p>
+    <table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr><td>Shape</td><td>The shape a node of this kind is added in, when it is the first child of its parent. Later children copy their last sibling. The root is always an oval, so the Root Topic has no shape.</td></tr>
+        <tr><td>Fill and Text</td><td>The colors nodes of this kind are drawn in, unless a node has been given colors of its own. The empty circle leaves each node in the color of its shape, as the Classic theme does. The other circles are the colors offered in the edit dialog for a node of this kind.</td></tr>
+        <tr><td>Border</td><td>The border nodes of this kind are drawn with, unless a node has a border of its own.</td></tr>
+    </table>
+    <p>
+        Click a color in the Fill or Text row, then change it with the color picker or type its <b>Hex</b> code.
+        <b>Add</b> puts the color among those offered in the edit dialog, and <b>Remove</b> takes it out.
+        <b>Reset</b> goes back to the map theme's settings for that kind of node. The Arrow link colors work the
+        same way.
     </p>
     <p>
-        Map theme, New node shape, Classic font, Notes and Attributes are each chosen from a drop-down list. Click
-        <b>Save &amp; Close</b> to keep your changes, or <b>Cancel</b> to drop them.
+        Click <b>Save &amp; Close</b> to keep your changes, or <b>Cancel</b> to drop them.
     </p>
     <p>
-        Preferences belong to you, not to a map: they apply to every map you open.
+        A map is saved with the preferences of how it looks: the background, the three kinds of node, the font,
+        the arrow link colors and how notes and attributes are shown. Opening a map brings them back. A map saved by
+        an earlier version takes those of its theme. Whether to ask before removing a node is yours alone, for
+        every map.
     </p>
 </section>
 

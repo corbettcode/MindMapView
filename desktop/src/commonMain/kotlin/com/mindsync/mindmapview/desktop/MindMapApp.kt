@@ -499,7 +499,12 @@ internal class MindMapApp(
                 state.pasteNode()
                 return@launch
             }
-            val style = newNodeStyle(state.tree, parent, state.layoutSide, defaultShape = preferences.newNodeShape)
+            val style = newNodeStyle(
+                state.tree
+                , parent
+                , state.layoutSide
+                , defaultShape = preferences.topicOf(state.tree.childTopicKindOf(parent.id)).shape
+            )
             state.addNodes(nodes, style.shape, style.color, style.textColor, border = style.border)
         }
     }
@@ -880,6 +885,7 @@ private fun MindMapScreen(
     }
     LaunchedEffect(preferences.noteDisplay) { state.noteDisplay = preferences.noteDisplay }
     LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
+    LaunchedEffect(preferences.topicStyles) { state.topicStyles = preferences.topicStyles }
     // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
     val noteMarkerNode = state.noteMarkerNode
     val isNotePopupShown = noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
@@ -1152,7 +1158,13 @@ private fun MindMapScreen(
             val newNodeStyle = remember(currentOperation) {
                 (currentOperation as? Operation.Add)?.let { add ->
                     selectedNode?.let {
-                        newNodeStyle(state.tree, it, add.side ?: state.layoutSide, add.shape, preferences.newNodeShape)
+                        newNodeStyle(
+                            state.tree
+                            , it
+                            , add.side ?: state.layoutSide
+                            , add.shape
+                            , preferences.topicOf(editedKind).shape
+                        )
                     }
                 }
             }
@@ -1204,8 +1216,8 @@ private fun MindMapScreen(
                         Operation.Update -> selectedNode?.let { state.tree.attributeDisplayOf(it.id) }
                     },
                     defaultAttributeDisplay = attributeDisplayFor(state.theme, preferences.attributeDisplay),
-                    nodeColors = preferences.nodeColors,
-                    textColors = preferences.textColors,
+                    nodeColors = preferences.topicOf(editedKind).fillColors,
+                    textColors = preferences.topicOf(editedKind).textColors,
                     rootColor = selectedNode
                         ?.takeIf { it.parentId == null }
                         ?.let { state.tree.defaultFillOf(it) },
@@ -1235,7 +1247,7 @@ private fun MindMapScreen(
                             is Operation.Add -> state.groupChanges {
                                 state.addNode(
                                     description,
-                                    shape ?: preferences.newNodeShape,
+                                    shape ?: preferences.topicOf(editedKind).shape,
                                     color,
                                     textColor,
                                     currentOperation.side ?: state.layoutSide,

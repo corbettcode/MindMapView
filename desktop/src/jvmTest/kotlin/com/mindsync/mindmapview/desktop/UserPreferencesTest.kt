@@ -1,10 +1,16 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
+import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,9 +32,17 @@ class UserPreferencesTest {
             , attributeDisplay = AttributeDisplay.FLYOVER
             , backgroundColor = Color(0xFF101820)
             , isRemoveConfirmed = false
-            , newNodeShape = NodeShape.entries.last()
-            , nodeColors = listOf(Color(0xFF123456), Color.White)
-            , textColors = listOf(Color(0xFFABCDEF))
+            , subtopic = TopicPreferences(
+                shape = NodeShape.entries.last()
+                , style = LevelStyle(
+                    fill = Color(0xFF445566)
+                    , text = null
+                    , border = NodeBorder(NodeBorderStyle.LINE, NodeLineWidth.FOUR, Color(0xFF778899))
+                )
+                , fillColors = listOf(Color(0xFF123456), Color.White)
+                , textColors = listOf(Color(0xFFABCDEF))
+            )
+            , rootTopic = TopicPreferences(style = LevelStyle(fill = null, text = Color(0xFF010203)))
         )
         assertEquals(changed, store().update(changed))
         assertEquals(changed, store().preferences)
@@ -47,7 +61,32 @@ class UserPreferencesTest {
     @Test
     fun noNodeColorsAreTheDefaultNodeColors() {
         stored[UserPreferencesStore.NODE_COLORS] = ""
-        assertEquals(DEFAULT_NODE_COLORS, store().preferences.nodeColors)
+        assertEquals(DEFAULT_NODE_COLORS, store().preferences.topic.fillColors)
+    }
+
+    @Test
+    fun shapeAndColorsKeptBeforeEachTopicHadItsOwnAreThoseOfEveryTopic() {
+        stored[UserPreferencesStore.NEW_NODE_SHAPE] = NodeShape.OVAL.name
+        stored[UserPreferencesStore.NODE_COLORS] = "#123456"
+        stored[UserPreferencesStore.TEXT_COLORS] = "#654321"
+
+        val preferences = store().preferences
+
+        TopicKind.entries.forEach { kind ->
+            assertEquals(NodeShape.OVAL, preferences.topicOf(kind).shape)
+            assertEquals(listOf(Color(0xFF123456)), preferences.topicOf(kind).fillColors)
+            assertEquals(listOf(Color(0xFF654321)), preferences.topicOf(kind).textColors)
+        }
+    }
+
+    @Test
+    fun preferencesKeptBeforeTopicStylesTakeThoseOfTheirTheme() {
+        stored[UserPreferencesStore.MAP_THEME] = "ocean"
+
+        val ocean = MapThemes.byId("ocean")
+        assertEquals(ocean.root, store().preferences.rootTopic.style)
+        assertEquals(ocean.mainTopic, store().preferences.topic.style)
+        assertEquals(ocean.subtopic, store().preferences.subtopic.style)
     }
 
     @Test

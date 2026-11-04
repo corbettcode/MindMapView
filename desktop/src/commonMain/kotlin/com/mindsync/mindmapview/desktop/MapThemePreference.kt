@@ -4,6 +4,8 @@ import com.mindsync.library.MindMapState
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.TopicKind
+import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
 /** Returns an empty map in the theme new maps start in. */
@@ -28,8 +30,9 @@ internal fun submitPreferences(
 }
 
 /**
- * Returns these preferences with what [theme] sets in place of their own: its colors, its background, and its
- * font, ways of showing attributes and notes, and shape of a new node where it has them. The theme new maps start in stays as it was.
+ * Returns these preferences with what [theme] sets in place of their own: its colors, its background, the style
+ * of each kind of topic, and its font, ways of showing attributes and notes, and shape of a new node where it has
+ * them. The theme new maps start in stays as it was.
  */
 internal fun UserPreferences.withTheme(
     theme: MapTheme
@@ -37,18 +40,30 @@ internal fun UserPreferences.withTheme(
     arrowLinkColors = themeArrowLinkColors(theme)
     , attributeDisplay = theme.attributeDisplay ?: attributeDisplay
     , backgroundColor = null
-    , nodeColors = themeFillColors(theme)
-    , newNodeShape = theme.newNodeShape ?: newNodeShape
     , nodeFont = nodeFontFor(theme, nodeFont)
     , noteDisplay = theme.noteDisplay ?: noteDisplay
+    , rootTopic = rootTopic.withTheme(theme, TopicKind.ROOT_TOPIC)
+    , subtopic = subtopic.withTheme(theme, TopicKind.SUBTOPIC)
+    , topic = topic.withTheme(theme, TopicKind.TOPIC)
+)
+
+/** Returns these preferences of a kind of topic with what [theme] sets for the nodes of [kind]. */
+internal fun TopicPreferences.withTheme(
+    theme: MapTheme
+    , kind: TopicKind
+): TopicPreferences = copy(
+    shape = theme.newNodeShape ?: shape
+    , style = theme.levelStyleOf(kind)
+    , fillColors = themeFillColors(theme)
     , textColors = themeTextColors(theme)
 )
 
 /**
  * Returns the preferences to keep once [tree] is opened with the [saved] preferences of its file: those it was
- * saved with, or, for a file that has none, those of its theme, as when the theme is chosen.
+ * saved with, and those of its theme, as when the theme is chosen, for any it was not saved with, as a file saved
+ * before maps kept them, or before each kind of topic had its own, was not.
  */
 internal fun UserPreferences.openedWith(
     tree: Tree<*>
     , saved: Map<String, String>?
-): UserPreferences = saved?.let { withMapValues(it) } ?: withTheme(tree.theme)
+): UserPreferences = withTheme(tree.theme).let { themed -> saved?.let { themed.withMapValues(it) } ?: themed }

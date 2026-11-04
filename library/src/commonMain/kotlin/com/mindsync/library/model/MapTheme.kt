@@ -78,6 +78,15 @@ data class MapTheme(
 ) {
     /** Whether the background is dark, for what is drawn on it to be light. */
     val isDark: Boolean get() = isDarkBackground(background)
+
+    /** Returns how this theme draws a node of [kind]. Its main topics are the topics, on level 1. */
+    fun levelStyleOf(
+        kind: TopicKind
+    ): LevelStyle = when (kind) {
+        TopicKind.ROOT_TOPIC -> root
+        TopicKind.TOPIC -> mainTopic
+        TopicKind.SUBTOPIC -> subtopic
+    }
 }
 
 /** The themes that come with the library, [CLASSIC] first. */

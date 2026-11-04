@@ -7,7 +7,10 @@ import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.MapThemes
+import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
+import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,11 +24,14 @@ class MapFilePreferencesTest {
         , emojiTones = mapOf("👍" to "👍🏽")
         , isRemoveConfirmed = false
         , mapThemeId = "night"
-        , newNodeShape = NodeShape.entries.last()
-        , nodeColors = listOf(Color(0xFF123456))
         , nodeFont = NodeFont.CAVEAT
         , noteDisplay = NoteDisplay.INLINE
-        , textColors = listOf(Color(0xFFABCDEF))
+        , topic = TopicPreferences(
+            shape = NodeShape.entries.last()
+            , style = LevelStyle(fill = Color(0xFF445566), text = Color(0xFF000000))
+            , fillColors = listOf(Color(0xFF123456))
+            , textColors = listOf(Color(0xFFABCDEF))
+        )
     )
 
     private fun tree(themeId: String = "classic"): Tree<Any> = Tree<Any>().apply { theme = MapThemes.byId(themeId) }
@@ -68,6 +74,24 @@ class MapFilePreferencesTest {
     }
 
     @Test
+    fun mapSavedBeforeEachTopicHadItsOwnTakesItsThemesStyles() {
+        val ocean = MapThemes.byId("ocean")
+        val content = MindMapViewFile.write(
+            tree("ocean")
+            , preferences = mapOf(
+                UserPreferencesStore.NODE_COLORS to "#123456"
+                , UserPreferencesStore.NOTE_DISPLAY to "INLINE"
+            )
+        )
+
+        val opened = UserPreferences().openedWith(tree("ocean"), readMapPreferences("a.mmv", content))
+
+        assertEquals(ocean.mainTopic, opened.topic.style)
+        assertEquals(listOf(Color(0xFF123456)), opened.subtopic.fillColors)
+        assertEquals(NoteDisplay.INLINE, opened.noteDisplay)
+    }
+
+    @Test
     fun freeMindMapHasNoPreferences() {
         assertNull(readMapPreferences("a.mm", FreeMind.write(tree())))
     }
@@ -78,11 +102,15 @@ class MapFilePreferencesTest {
 
         val chosen = saved.withTheme(ocean)
 
-        assertEquals(themeFillColors(ocean), chosen.nodeColors)
-        assertEquals(themeTextColors(ocean), chosen.textColors)
+        TopicKind.entries.forEach { kind ->
+            assertEquals(ocean.levelStyleOf(kind), chosen.topicOf(kind).style)
+            assertEquals(themeFillColors(ocean), chosen.topicOf(kind).fillColors)
+            assertEquals(themeTextColors(ocean), chosen.topicOf(kind).textColors)
+        }
         assertEquals(themeArrowLinkColors(ocean), chosen.arrowLinkColors)
         assertNull(chosen.backgroundColor)
-        assertEquals(ocean.newNodeShape, chosen.newNodeShape)
+        assertEquals(ocean.newNodeShape, chosen.topic.shape)
+        assertEquals(ocean.newNodeShape, chosen.subtopic.shape)
         assertEquals(ocean.noteDisplay, chosen.noteDisplay)
         // Ocean has no font or way of showing attributes of its own, so those stay.
         assertEquals(NodeFont.CAVEAT, chosen.nodeFont)
@@ -93,7 +121,7 @@ class MapFilePreferencesTest {
     fun classicLeavesTheShapeAndNoteDisplayAsTheyAre() {
         val chosen = saved.withTheme(MapThemes.CLASSIC)
 
-        assertEquals(saved.newNodeShape, chosen.newNodeShape)
+        assertEquals(saved.topic.shape, chosen.topic.shape)
         assertEquals(saved.noteDisplay, chosen.noteDisplay)
     }
 }

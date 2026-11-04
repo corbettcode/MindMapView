@@ -42,6 +42,12 @@ class Tree<T> {
     /** The look of the map, which the nodes follow where they have no colors or border of their own. */
     var theme: MapTheme = MapThemes.CLASSIC
 
+    /**
+     * How the app draws each kind of topic, in place of the theme's style for its level. A kind without one is
+     * drawn as the theme draws it. It is the app's, not the map's, so it is not saved with the map nor undone.
+     */
+    var topicStyles: Map<TopicKind, LevelStyle> = emptyMap()
+
     private val _arrowLinks = mutableListOf<ArrowLink>()
 
     /** The arrow links between the nodes of the tree, in the order they are drawn. */
@@ -229,12 +235,7 @@ class Tree<T> {
     /** Returns how the theme draws a node added to the node with [parentId]. */
     fun childLevelStyleOf(parentId: String): LevelStyle = levelStyle(childTopicKindOf(parentId))
 
-    // A theme's main topics are the topics, on level 1.
-    private fun levelStyle(kind: TopicKind): LevelStyle = when (kind) {
-        TopicKind.ROOT_TOPIC -> theme.root
-        TopicKind.TOPIC -> theme.mainTopic
-        TopicKind.SUBTOPIC -> theme.subtopic
-    }
+    private fun levelStyle(kind: TopicKind): LevelStyle = topicStyles[kind] ?: theme.levelStyleOf(kind)
 
     /** Returns the fill a node starts with, which follows the theme for as long as it is not changed. */
     fun defaultFillOf(node: NodeData<*>): Color =

@@ -43,9 +43,11 @@ import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.isDarkBackground
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.NodeGenerator
@@ -355,6 +357,7 @@ class MindMapState(
     fun setTree(tree: Tree<*>) {
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         otherSelectedIds = emptyList()
+        tree.topicStyles = topicStyles
         mindMapManager.setTree(tree)
         history.clear()
         savedSnapshot = tree.snapshot()
@@ -859,6 +862,18 @@ class MindMapState(
     /** Whether the map is drawn on a dark [background], for what is drawn on it to be light. */
     val isDark: Boolean
         get() = isDarkBackground(background)
+
+    /**
+     * How the app draws each kind of topic, in place of the theme's style for its level, as [Tree.topicStyles]. It
+     * is kept for a map that is opened or started after it, and a change of it is not undone.
+     */
+    var topicStyles: Map<TopicKind, LevelStyle> = emptyMap()
+        set(value) {
+            if (value == field) return
+            field = value
+            tree.topicStyles = value
+            invalidate()
+        }
 
     /** Gives the map another look, as one change. The colors and borders nodes were given by hand stay. */
     fun setTheme(theme: MapTheme) {

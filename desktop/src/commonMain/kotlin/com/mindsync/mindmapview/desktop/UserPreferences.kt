@@ -2,11 +2,18 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.mindsync.library.data.NodeBorder
+import com.mindsync.library.data.NodeBorderStyle
+import com.mindsync.library.data.NodeLineWidth
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.emoji.EmojiCatalog
 import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
+import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
+import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
 /**
@@ -26,7 +33,9 @@ class UserPreferencesStore(
     read: (String) -> String?,
     private val write: (String, String) -> Unit,
 ) {
-    var preferences: UserPreferences = readUserPreferences(read, UserPreferences())
+    // Preferences kept before there were topic styles take those of the theme new maps start in.
+    var preferences: UserPreferences =
+        readUserPreferences(read, UserPreferences().withTheme(MapThemes.byId(read(MAP_THEME))))
         private set
 
     fun update(newPreferences: UserPreferences): UserPreferences {
@@ -36,10 +45,7 @@ class UserPreferencesStore(
     }
 
     companion object {
-        const val NEW_NODE_SHAPE = "newNodeShape"
         const val IS_REMOVE_CONFIRMED = "isRemoveConfirmed"
-        const val NODE_COLORS = "nodeColors"
-        const val TEXT_COLORS = "textColors"
         const val ARROW_LINK_COLORS = "arrowLinkColors"
         const val EMOJI_TONES = "emojiTones"
         const val NODE_FONT = "nodeFont"
@@ -48,21 +54,50 @@ class UserPreferencesStore(
         const val MAP_THEME = "mapTheme"
         const val BACKGROUND_COLOR = "backgroundColor"
 
+        // One shape and lists of colors for every kind of topic, as kept before each kind had its own. They are
+        // still read, for the kinds that have none of their own.
+        const val NEW_NODE_SHAPE = "newNodeShape"
+        const val NODE_COLORS = "nodeColors"
+        const val TEXT_COLORS = "textColors"
+
+        /** The name a preference of the topics of [kind] is kept under, as `topic.fill`. */
+        fun topicKey(
+            kind: TopicKind
+            , name: String
+        ): String = "${topicPrefix(kind)}.$name"
+
+        const val SHAPE = "shape"
+        const val FILL = "fill"
+        const val TEXT = "text"
+        const val BORDER = "border"
+        const val FILL_COLORS = "fillColors"
+        const val TOPIC_TEXT_COLORS = "textColors"
+
+        private fun topicPrefix(
+            kind: TopicKind
+        ): String = when (kind) {
+            TopicKind.ROOT_TOPIC -> "rootTopic"
+            TopicKind.TOPIC -> "topic"
+            TopicKind.SUBTOPIC -> "subtopic"
+        }
+
         /**
          * The names of the preferences of how a map looks and is added to, which a map file keeps. Whether a
          * removal is asked about and the emoji tones are the app's way of working, whatever the map, and the map
          * keeps its theme of its own.
          */
-        val MAP_PREFERENCES = setOf(
+        val MAP_PREFERENCES: Set<String> = setOf(
             ARROW_LINK_COLORS
             , ATTRIBUTE_DISPLAY
             , BACKGROUND_COLOR
-            , NEW_NODE_SHAPE
-            , NODE_COLORS
             , NODE_FONT
             , NOTE_DISPLAY
-            , TEXT_COLORS
-        )
+        ) + TopicKind.entries.flatMap { kind ->
+            listOf(SHAPE, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS).map { topicKey(kind, it) }
+        }
+
+        // What a map file saved before each kind of topic had its own preferences keeps, read for all of them.
+        internal val LEGACY_MAP_PREFERENCES = setOf(NEW_NODE_SHAPE, NODE_COLORS, TEXT_COLORS)
     }
 }
 
@@ -74,30 +109,48 @@ internal fun readUserPreferences(
     read: (String) -> String?
     , defaults: UserPreferences
 ): UserPreferences = with(UserPreferencesStore) {
+    val topics = TopicKind.entries.associateWith { kind -> readTopic(read, kind, defaults.topicOf(kind)) }
     UserPreferences(
         arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
             ?: defaults.arrowLinkColors
         , attributeDisplay = AttributeDisplay.entries.firstOrNull { it.name == read(ATTRIBUTE_DISPLAY) }
             ?: defaults.attributeDisplay
         // No color is kept as none, for the map to be drawn on its theme's background.
-        , backgroundColor = read(BACKGROUND_COLOR).let { text ->
-            if (text?.isEmpty() == true) null else text?.let(::parseHexColor) ?: defaults.backgroundColor
-        }
+        , backgroundColor = readOptionalColor(read(BACKGROUND_COLOR), defaults.backgroundColor)
         , emojiTones = read(EMOJI_TONES)?.let(::parseEmojiTones)
             ?: defaults.emojiTones
         , isRemoveConfirmed = read(IS_REMOVE_CONFIRMED)?.toBooleanStrictOrNull()
             ?: defaults.isRemoveConfirmed
         , mapThemeId = read(MAP_THEME)
             ?: defaults.mapThemeId
-        , newNodeShape = NodeShape.entries.firstOrNull { it.name == read(NEW_NODE_SHAPE) }
-            ?: defaults.newNodeShape
-        , nodeColors = read(NODE_COLORS)?.let(::parseColorList)
-            ?: defaults.nodeColors
         , nodeFont = NodeFont.entries.firstOrNull { it.name == read(NODE_FONT) }
             ?: defaults.nodeFont
         , noteDisplay = NoteDisplay.entries.firstOrNull { it.name == read(NOTE_DISPLAY) }
             ?: defaults.noteDisplay
-        , textColors = read(TEXT_COLORS)?.let(::parseColorList)
+        , rootTopic = topics.getValue(TopicKind.ROOT_TOPIC)
+        , subtopic = topics.getValue(TopicKind.SUBTOPIC)
+        , topic = topics.getValue(TopicKind.TOPIC)
+    )
+}
+
+// A kind of topic without a shape or colors of its own takes the one shape and lists kept for all of them before.
+private fun readTopic(
+    read: (String) -> String?
+    , kind: TopicKind
+    , defaults: TopicPreferences
+): TopicPreferences = with(UserPreferencesStore) {
+    val key = { name: String -> topicKey(kind, name) }
+    TopicPreferences(
+        shape = NodeShape.entries.firstOrNull { it.name == (read(key(SHAPE)) ?: read(NEW_NODE_SHAPE)) }
+            ?: defaults.shape
+        , style = LevelStyle(
+            fill = readOptionalColor(read(key(FILL)), defaults.style.fill)
+            , text = readOptionalColor(read(key(TEXT)), defaults.style.text)
+            , border = read(key(BORDER))?.let(::parseBorder) ?: defaults.style.border
+        )
+        , fillColors = (read(key(FILL_COLORS)) ?: read(NODE_COLORS))?.let(::parseColorList)
+            ?: defaults.fillColors
+        , textColors = (read(key(TOPIC_TEXT_COLORS)) ?: read(TEXT_COLORS))?.let(::parseColorList)
             ?: defaults.textColors
     )
 }
@@ -105,10 +158,7 @@ internal fun readUserPreferences(
 /** Returns the value of each of the preferences, by its name, as [readUserPreferences] reads them. */
 internal fun UserPreferences.values(): Map<String, String> = with(UserPreferencesStore) {
     mapOf(
-        NEW_NODE_SHAPE to newNodeShape.name
-        , IS_REMOVE_CONFIRMED to isRemoveConfirmed.toString()
-        , NODE_COLORS to nodeColors.joinToString(",") { it.toHex() }
-        , TEXT_COLORS to textColors.joinToString(",") { it.toHex() }
+        IS_REMOVE_CONFIRMED to isRemoveConfirmed.toString()
         , ARROW_LINK_COLORS to arrowLinkColors.joinToString(",") { it.toHex() }
         , EMOJI_TONES to emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" }
         , NODE_FONT to nodeFont.name
@@ -116,7 +166,17 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
         , ATTRIBUTE_DISPLAY to attributeDisplay.name
         , MAP_THEME to mapThemeId
         , BACKGROUND_COLOR to backgroundColor?.toHex().orEmpty()
-    )
+    ) + TopicKind.entries.flatMap { kind ->
+        val topic = topicOf(kind)
+        listOf(
+            topicKey(kind, SHAPE) to topic.shape.name
+            , topicKey(kind, FILL) to topic.style.fill?.toHex().orEmpty()
+            , topicKey(kind, TEXT) to topic.style.text?.toHex().orEmpty()
+            , topicKey(kind, BORDER) to topic.style.border.toText()
+            , topicKey(kind, FILL_COLORS) to topic.fillColors.joinToString(",") { it.toHex() }
+            , topicKey(kind, TOPIC_TEXT_COLORS) to topic.textColors.joinToString(",") { it.toHex() }
+        )
+    }
 }
 
 /** Returns the values of the preferences a map file keeps, by their names. */
@@ -130,7 +190,11 @@ internal fun UserPreferences.mapValues(): Map<String, String> =
 internal fun UserPreferences.withMapValues(
     values: Map<String, String>
 ): UserPreferences = readUserPreferences(
-    read = { name -> values[name]?.takeIf { name in UserPreferencesStore.MAP_PREFERENCES } }
+    read = { name ->
+        values[name]?.takeIf {
+            name in UserPreferencesStore.MAP_PREFERENCES || name in UserPreferencesStore.LEGACY_MAP_PREFERENCES
+        }
+    }
     , defaults = this
 )
 
@@ -159,3 +223,28 @@ private fun parseColorList(
 ): List<Color>? = text.split(",")
     .map { parseHexColor(it) ?: return null }
     .takeIf { it.isNotEmpty() }
+
+// An empty value is kept for no color, and one that is not known is the default.
+private fun readOptionalColor(
+    text: String?
+    , default: Color?
+): Color? = when {
+    text == null -> default
+    text.isEmpty() -> null
+    else -> parseHexColor(text) ?: default
+}
+
+// A border is kept as its style, width and color, as `LINE,TWO,#000000`.
+private fun NodeBorder.toText(): String = "${style.name},${width.name},${color.toHex()}"
+
+private fun parseBorder(
+    text: String
+): NodeBorder? {
+    val parts = text.split(",")
+    if (parts.size != 3) return null
+    return NodeBorder(
+        style = NodeBorderStyle.entries.firstOrNull { it.name == parts[0] } ?: return null
+        , width = NodeLineWidth.entries.firstOrNull { it.name == parts[1] } ?: return null
+        , color = parseHexColor(parts[2]) ?: return null
+    )
+}

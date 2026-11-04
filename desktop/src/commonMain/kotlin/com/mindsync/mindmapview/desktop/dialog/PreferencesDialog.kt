@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,14 +36,17 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TopicKind
 import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
+import com.mindsync.mindmapview.desktop.component.BorderSettings
 import com.mindsync.mindmapview.desktop.component.COLOR_EDITOR_BUTTON_WIDTH
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
 import com.mindsync.mindmapview.desktop.component.ColorEditor
@@ -53,8 +57,6 @@ import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
 import com.mindsync.mindmapview.desktop.themeArrowLinkColors
-import com.mindsync.mindmapview.desktop.themeFillColors
-import com.mindsync.mindmapview.desktop.themeTextColors
 import com.mindsync.mindmapview.desktop.withTheme
 
 // Wide enough for the longest of the picker labels, so the pickers line up.
@@ -73,11 +75,11 @@ private val PREFERENCES_LABEL_WIDTH = 128.dp
  * @property emojiTones The mapping of base emojis to their chosen skin tones.
  * @property isRemoveConfirmed Whether the removal of elements requires confirmation.
  * @property mapThemeId The identifier of the theme applied to new maps or the last selected theme.
- * @property newNodeShape The default shape applied to newly created nodes in the mind map.
  * @property nodeFont The font used to render text inside nodes.
- * @property nodeColors The colors available for filling nodes during creation or editing.
  * @property noteDisplay The mode of displaying notes associated with nodes in the mind map.
- * @property textColors The colors available for text within nodes during creation or editing.
+ * @property rootTopic How the root topic is drawn, and the colors offered for it.
+ * @property subtopic How the subtopics are drawn and added, and the colors offered for them.
+ * @property topic How the topics are drawn and added, and the colors offered for them.
  */
 data class UserPreferences(
     // The colors offered for an arrow link.
@@ -88,18 +90,56 @@ data class UserPreferences(
     , val backgroundColor: Color? = null
     // The skin tone chosen for an emoji, keyed by the base emoji it is a tone of.
     , val emojiTones: Map<String, String> = emptyMap()
-    // The shape of a node that is added to a parent without children, which has no last child to look like.
     , val isRemoveConfirmed: Boolean = true
     // The id of the theme new maps start in, which is also the one last chosen for an open map.
     , val mapThemeId: String = MapThemes.CLASSIC.id
-    , val newNodeShape: NodeShape = NodeShape.RECTANGLE
-    // The fill colors offered when a node is added or edited.
-    , val nodeColors: List<Color> = DEFAULT_NODE_COLORS
     // The font node text is drawn in.
     , val nodeFont: NodeFont = NodeFont.DEFAULT
     // How the note of a node is shown.
     , val noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
-    // The text colors offered when a node is added or edited.
+    , val rootTopic: TopicPreferences = TopicPreferences()
+    , val subtopic: TopicPreferences = TopicPreferences()
+    , val topic: TopicPreferences = TopicPreferences()
+) {
+    /** Returns the preferences of the nodes of [kind]. */
+    fun topicOf(
+        kind: TopicKind
+    ): TopicPreferences = when (kind) {
+        TopicKind.ROOT_TOPIC -> rootTopic
+        TopicKind.TOPIC -> topic
+        TopicKind.SUBTOPIC -> subtopic
+    }
+
+    /** Returns these preferences with [preferences] for the nodes of [kind]. */
+    fun withTopic(
+        kind: TopicKind
+        , preferences: TopicPreferences
+    ): UserPreferences = when (kind) {
+        TopicKind.ROOT_TOPIC -> copy(rootTopic = preferences)
+        TopicKind.TOPIC -> copy(topic = preferences)
+        TopicKind.SUBTOPIC -> copy(subtopic = preferences)
+    }
+
+    /** How each kind of topic is drawn, in place of the theme's style for its level. */
+    val topicStyles: Map<TopicKind, LevelStyle>
+        get() = TopicKind.entries.associateWith { topicOf(it).style }
+}
+
+/**
+ * What the user chose for one kind of topic: how its nodes are drawn where they have no colors or border of their
+ * own, the shape one is added in, and the colors offered for one when it is added or edited.
+ *
+ * @property shape The shape a node of this kind is added in, where it has no sibling to look like. The root stays
+ * the oval it is.
+ * @property style The fill, text color and border nodes of this kind are drawn in. A null fill or text color
+ * leaves each node in the color of its shape, as the Classic theme does.
+ * @property fillColors The fill colors offered for a node of this kind.
+ * @property textColors The text colors offered for a node of this kind.
+ */
+data class TopicPreferences(
+    val shape: NodeShape = NodeShape.RECTANGLE
+    , val style: LevelStyle = LevelStyle(fill = null, text = null)
+    , val fillColors: List<Color> = DEFAULT_NODE_COLORS
     , val textColors: List<Color> = DEFAULT_TEXT_COLORS
 )
 
@@ -113,7 +153,7 @@ fun PreferencesDialog(
     var edited by remember { mutableStateOf(preferences) }
     // The color sections are closed to start with, so the other settings are seen at a glance.
     var isBackgroundColorOpen by remember { mutableStateOf(false) }
-    var isNodeColorsOpen by remember { mutableStateOf(false) }
+    var openTopics by remember { mutableStateOf(emptySet<TopicKind>()) }
     var isArrowLinkColorsOpen by remember { mutableStateOf(false) }
     // Each font's name is drawn in that font once it has loaded.
     var fontFamilies by remember { mutableStateOf<Map<NodeFont, FontFamily>>(emptyMap()) }
@@ -164,14 +204,25 @@ fun PreferencesDialog(
                             )
                         }
                     }
-                    DropdownPicker(
-                        label = "Node shape"
-                        , choices = NodeShape.entries
-                        , choiceLabel = { it.label }
-                        , selectedChoice = edited.newNodeShape
-                        , onSelect = { edited = edited.copy(newNodeShape = it) }
-                        , labelWidth = PREFERENCES_LABEL_WIDTH
-                    )
+                    // Each kind of topic is set apart, as a theme draws each in a style of its own.
+                    TopicKind.entries.forEach { kind ->
+                        CollapsibleSection(
+                            title = kind.label
+                            , isOpen = kind in openTopics
+                            , onToggle = {
+                                openTopics = if (kind in openTopics) openTopics - kind else openTopics + kind
+                            }
+                        ) {
+                            Box(modifier = Modifier.padding(12.dp)) {
+                                TopicEditor(
+                                    kind = kind
+                                    , topic = edited.topicOf(kind)
+                                    , themed = edited.topicOf(kind).withTheme(MapThemes.byId(edited.mapThemeId), kind)
+                                    , onChange = { edited = edited.withTopic(kind, it) }
+                                )
+                            }
+                        }
+                    }
                     DropdownPicker(
                         label = "Text font"
                         , choices = NodeFont.entries
@@ -181,30 +232,6 @@ fun PreferencesDialog(
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                         , choiceFontFamily = { fontFamilies[it] }
                     )
-                    CollapsibleSection(
-                        title = "Node colors"
-                        , isOpen = isNodeColorsOpen
-                        , onToggle = { isNodeColorsOpen = !isNodeColorsOpen }
-                    ) {
-                        Box(modifier = Modifier.padding(12.dp)) {
-                            ColorListsEditor(
-                                listOf(
-                                    EditableColors(
-                                        label = "Fill colors"
-                                        , colors = edited.nodeColors
-                                        , defaults = themeFillColors(MapThemes.byId(edited.mapThemeId))
-                                        , onChange = { edited = edited.copy(nodeColors = it) }
-                                    )
-                                    , EditableColors(
-                                        label = "Text colors"
-                                        , colors = edited.textColors
-                                        , defaults = themeTextColors(MapThemes.byId(edited.mapThemeId))
-                                        , onChange = { edited = edited.copy(textColors = it) }
-                                    )
-                                )
-                            )
-                        }
-                    }
                     CollapsibleSection(
                         title = "Arrow link colors"
                         , isOpen = isArrowLinkColorsOpen
@@ -420,5 +447,114 @@ private fun BackgroundColorEditor(
                 Text("Reset")
             }
         }
+    }
+}
+
+// The swatch for no color of the topic's own, which leaves each node in the color of its shape.
+private val SHAPE_COLOR = Color.Transparent
+
+/**
+ * Lets the user choose how the nodes of [kind] are drawn and added: their shape, but for the root, which stays an
+ * oval, their fill and text colors, from the colors offered for them or any other with the color picker, the colors
+ * offered, and their border. Reset goes back to what the theme sets, [themed].
+ */
+@Composable
+private fun TopicEditor(
+    kind: TopicKind
+    , topic: TopicPreferences
+    , themed: TopicPreferences
+    , onChange: (TopicPreferences) -> Unit
+) {
+    // Which row of colors the color picker changes: the text's, or the fill's.
+    var isTextEdited by remember { mutableStateOf(false) }
+    val style = topic.style
+    val fill = style.fill ?: SHAPE_COLOR
+    val text = style.text ?: SHAPE_COLOR
+    val setFill = { color: Color ->
+        onChange(topic.copy(style = style.copy(fill = color.takeIf { it != SHAPE_COLOR })))
+    }
+    val setText = { color: Color ->
+        onChange(topic.copy(style = style.copy(text = color.takeIf { it != SHAPE_COLOR })))
+    }
+    val edited = if (isTextEdited) text else fill
+    val offered = if (isTextEdited) topic.textColors else topic.fillColors
+    val setOffered = { colors: List<Color> ->
+        onChange(if (isTextEdited) topic.copy(textColors = colors) else topic.copy(fillColors = colors))
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (kind != TopicKind.ROOT_TOPIC) {
+            DropdownPicker(
+                label = "Shape"
+                , choices = NodeShape.entries
+                , choiceLabel = { it.label }
+                , selectedChoice = topic.shape
+                , onSelect = { onChange(topic.copy(shape = it)) }
+                , labelWidth = PREFERENCES_LABEL_WIDTH
+            )
+        }
+        // The colors offered come after the topic's own, which is offered as well where it is not one of them.
+        ColorPicker(
+            label = "Fill"
+            , colors = (listOf(SHAPE_COLOR) + topic.fillColors + fill).distinct()
+            // Only the row the color picker changes shows its color as chosen.
+            , selectedColor = if (isTextEdited) Color.Unspecified else fill
+            , onSelect = {
+                isTextEdited = false
+                setFill(it)
+            }
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+        )
+        ColorPicker(
+            label = "Text"
+            , colors = (listOf(SHAPE_COLOR) + topic.textColors + text).distinct()
+            , selectedColor = if (isTextEdited) text else Color.Unspecified
+            , onSelect = {
+                isTextEdited = true
+                setText(it)
+            }
+            , labelWidth = PREFERENCES_LABEL_WIDTH
+        )
+        ColorEditor(
+            color = edited
+            , onColorChange = { if (isTextEdited) setText(it) else setFill(it) }
+            , modifier = Modifier.padding(start = PREFERENCES_LABEL_WIDTH + 8.dp)
+        ) {
+            // The color chosen is added to the colors offered for a node of this kind, or taken out of them.
+            OutlinedButton(
+                onClick = { setOffered(offered + edited) }
+                , enabled = edited != SHAPE_COLOR && edited !in offered
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Add")
+            }
+            // A picker needs a color to offer, so the last one of a list stays.
+            OutlinedButton(
+                onClick = { setOffered(offered - edited) }
+                , enabled = edited in offered && offered.size > 1
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Remove")
+            }
+            OutlinedButton(
+                onClick = { onChange(themed) }
+                , enabled = topic != themed
+                , modifier = Modifier.width(COLOR_EDITOR_BUTTON_WIDTH)
+            ) {
+                Text("Reset")
+            }
+        }
+        Text(
+            "The empty circle leaves each node in the color of its shape. Add and Remove change the colors offered "
+                + "when a node is added or edited."
+            , style = MaterialTheme.typography.labelSmall
+        )
+        HorizontalDivider()
+        Text("Border", style = MaterialTheme.typography.titleSmall)
+        BorderSettings(
+            border = style.border
+            , colors = (topic.fillColors + topic.textColors + style.border.color).distinct()
+            , onChange = { onChange(topic.copy(style = style.copy(border = it))) }
+        )
     }
 }
