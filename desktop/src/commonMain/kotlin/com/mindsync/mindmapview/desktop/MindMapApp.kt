@@ -831,6 +831,7 @@ private fun MindMapScreen(
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
     var isPreferencesOpen by remember { mutableStateOf(false) }
     var isReadmeOpen by remember { mutableStateOf(false) }
+    var isShortcutsOpen by remember { mutableStateOf(false) }
     var isAboutOpen by remember { mutableStateOf(false) }
     // A node that is removed without being confirmed is removed at once.
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
@@ -840,7 +841,7 @@ private fun MindMapScreen(
     // The attributes of the node whose attribute icon the pointer is on, once it has stayed there.
     var attributePopup by remember { mutableStateOf<AttributePopupContent?>(null) }
     val isDialogOpen =
-        operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen
+        operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen || isShortcutsOpen
             || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
     val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
@@ -967,6 +968,7 @@ private fun MindMapScreen(
                     ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
                     HelpMenu(
                         onUserManual = onUserManual
+                        , onShortcuts = { isShortcutsOpen = true }
                         , onReadme = { isReadmeOpen = true }
                         , onAbout = { isAboutOpen = true }
                     )
@@ -1127,6 +1129,10 @@ private fun MindMapScreen(
 
         AnimatedDialog(isOpen = isReadmeOpen) {
             ReadmeDialog(onDismiss = { isReadmeOpen = false })
+        }
+
+        AnimatedDialog(isOpen = isShortcutsOpen) {
+            KeyboardShortcutsDialog(onDismiss = { isShortcutsOpen = false })
         }
 
         AnimatedDialog(isOpen = isAboutOpen) {

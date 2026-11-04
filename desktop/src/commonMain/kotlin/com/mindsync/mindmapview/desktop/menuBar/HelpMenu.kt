@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 @Composable
 fun HelpMenu(
     onUserManual: () -> Unit
+    , onShortcuts: () -> Unit
     , onReadme: () -> Unit
     , onAbout: () -> Unit
 ) {
@@ -32,6 +33,13 @@ fun HelpMenu(
                 , onClick = {
                     expanded = false
                     onUserManual()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Keyboard Shortcuts") }
+                , onClick = {
+                    expanded = false
+                    onShortcuts()
                 }
             )
             DropdownMenuItem(
