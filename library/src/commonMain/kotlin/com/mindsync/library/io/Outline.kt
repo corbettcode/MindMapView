@@ -20,12 +20,17 @@ data class OutlineItem(
 object Outline {
     /**
      * Returns the mind map of [root]: a node for each item, below the node of the item it is in. A folded item
-     * is a folded node, unless it is the root or has no children.
+     * is a folded node, unless it is the root or has no children. The children of the root are [topicShape] and the
+     * nodes below them [subtopicShape], as nodes added by hand are.
      */
-    fun toTree(root: OutlineItem): Tree<Any> {
+    fun toTree(
+        root: OutlineItem
+        , topicShape: NodeShape = NodeShape.RECTANGLE
+        , subtopicShape: NodeShape = topicShape
+    ): Tree<Any> {
         val tree = Tree<Any>()
         val rootNode = tree.getRootNode()
-        val children = root.children.map { addNode(tree, it, rootNode.id) }
+        val children = root.children.map { addNode(tree, it, rootNode.id, topicShape, subtopicShape) }
         tree.setRootNode(
             rootNode.copy(
                 description = RichText.fromPlainText(root.title)
@@ -40,10 +45,11 @@ object Outline {
         tree: Tree<Any>
         , item: OutlineItem
         , parentId: String
+        , shape: NodeShape
+        , subtopicShape: NodeShape
     ): String {
         val id = IdGenerator.makeRandomNodeId()
-        val children = item.children.map { addNode(tree, it, id) }
-        val shape = NodeShape.RECTANGLE
+        val children = item.children.map { addNode(tree, it, id, subtopicShape, subtopicShape) }
         tree.setNode(
             id
             , unplacedNode(

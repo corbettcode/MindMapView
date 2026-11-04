@@ -1,5 +1,7 @@
 package com.mindsync.library
 
+import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.shape
 import com.mindsync.library.io.Outline
 import com.mindsync.library.io.OutlineItem
 import com.mindsync.library.util.RichText
@@ -52,5 +54,18 @@ class OutlineTest {
         assertTrue(tree.isFolded(folded))
         assertFalse(tree.isFolded(empty))
         assertFalse(tree.isFolded(root.id))
+    }
+
+    @Test
+    fun topicsAndSubtopicsTakeTheirOwnShapes() {
+        val tree = Outline.toTree(
+            OutlineItem("root", children = listOf(OutlineItem("topic", children = listOf(OutlineItem("subtopic")))))
+            , topicShape = NodeShape.RECTANGLE
+            , subtopicShape = NodeShape.LINE
+        )
+
+        val topic = tree.getNode(tree.getRootNode().children.single())
+        assertEquals(NodeShape.RECTANGLE, topic.shape)
+        assertEquals(NodeShape.LINE, tree.getNode(topic.children.single()).shape)
     }
 }

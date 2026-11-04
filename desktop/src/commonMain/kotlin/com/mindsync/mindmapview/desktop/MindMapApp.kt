@@ -351,7 +351,13 @@ internal class MindMapApp(
         val chooseFolder = platform.chooseFolder ?: return
         try {
             val folder = chooseFolder() ?: return
-            state.replaceTree(Outline.toTree(folder))
+            state.replaceTree(
+                Outline.toTree(
+                    folder
+                    , topicShape = preferences.topic.shape
+                    , subtopicShape = preferences.subtopic.shape
+                )
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
