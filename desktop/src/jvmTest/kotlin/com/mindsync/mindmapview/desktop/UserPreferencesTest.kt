@@ -80,6 +80,17 @@ class UserPreferencesTest {
     }
 
     @Test
+    fun shapeKeptBeforeEachTopicHadItsOwnGivesWayToTheThemesShapeForAKind() {
+        stored[UserPreferencesStore.MAP_THEME] = "contrast"
+        stored[UserPreferencesStore.NEW_NODE_SHAPE] = NodeShape.OVAL.name
+
+        val preferences = store().preferences
+
+        assertEquals(NodeShape.RECTANGLE, preferences.topic.shape)
+        assertEquals(NodeShape.LINE, preferences.subtopic.shape)
+    }
+
+    @Test
     fun preferencesKeptBeforeTopicStylesTakeThoseOfTheirTheme() {
         stored[UserPreferencesStore.MAP_THEME] = "ocean"
 

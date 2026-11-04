@@ -66,4 +66,6 @@ internal fun TopicPreferences.withTheme(
 internal fun UserPreferences.openedWith(
     tree: Tree<*>
     , saved: Map<String, String>?
-): UserPreferences = withTheme(tree.theme).let { themed -> saved?.let { themed.withMapValues(it) } ?: themed }
+): UserPreferences = withTheme(tree.theme).let { themed ->
+    saved?.let { themed.withMapValues(it, tree.theme) } ?: themed
+}

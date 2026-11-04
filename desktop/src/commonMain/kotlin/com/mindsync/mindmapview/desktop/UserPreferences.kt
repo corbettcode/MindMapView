@@ -35,7 +35,9 @@ class UserPreferencesStore(
 ) {
     // Preferences kept before there were topic styles take those of the theme new maps start in.
     var preferences: UserPreferences =
-        readUserPreferences(read, UserPreferences().withTheme(MapThemes.byId(read(MAP_THEME))))
+        MapThemes.byId(read(MAP_THEME)).let { theme ->
+            readUserPreferences(read, UserPreferences().withTheme(theme), theme)
+        }
         private set
 
     fun update(newPreferences: UserPreferences): UserPreferences {
@@ -103,13 +105,17 @@ class UserPreferencesStore(
 
 /**
  * Returns the preferences [read] returns the values of, by their names. A value that is missing, or that is no
- * longer known, as one of a later version of the app may be, is the one in [defaults].
+ * longer known, as one of a later version of the app may be, is the one in [defaults]. The one shape kept for
+ * every kind of topic before each had its own is not taken for a kind [theme] has a shape of its own for.
  */
 internal fun readUserPreferences(
     read: (String) -> String?
     , defaults: UserPreferences
+    , theme: MapTheme? = null
 ): UserPreferences = with(UserPreferencesStore) {
-    val topics = TopicKind.entries.associateWith { kind -> readTopic(read, kind, defaults.topicOf(kind)) }
+    val topics = TopicKind.entries.associateWith { kind ->
+        readTopic(read, kind, defaults.topicOf(kind), isThemeShaped = theme?.newNodeShapeOf(kind) != null)
+    }
     UserPreferences(
         arrowLinkColors = read(ARROW_LINK_COLORS)?.let(::parseColorList)
             ?: defaults.arrowLinkColors
@@ -133,15 +139,19 @@ internal fun readUserPreferences(
     )
 }
 
-// A kind of topic without a shape or colors of its own takes the one shape and lists kept for all of them before.
+// A kind of topic without a shape or colors of its own takes the one shape and lists kept for all of them before,
+// but for a shape the theme has for the kind, [isThemeShaped], which is kept: the one shape was the theme's
+// for all kinds, or one chosen before the theme had a shape for each.
 private fun readTopic(
     read: (String) -> String?
     , kind: TopicKind
     , defaults: TopicPreferences
+    , isThemeShaped: Boolean
 ): TopicPreferences = with(UserPreferencesStore) {
     val key = { name: String -> topicKey(kind, name) }
+    val shapeName = read(key(SHAPE)) ?: read(NEW_NODE_SHAPE).takeUnless { isThemeShaped }
     TopicPreferences(
-        shape = NodeShape.entries.firstOrNull { it.name == (read(key(SHAPE)) ?: read(NEW_NODE_SHAPE)) }
+        shape = NodeShape.entries.firstOrNull { it.name == shapeName }
             ?: defaults.shape
         , style = LevelStyle(
             fill = readOptionalColor(read(key(FILL)), defaults.style.fill)
@@ -184,11 +194,12 @@ internal fun UserPreferences.mapValues(): Map<String, String> =
     values().filterKeys { it in UserPreferencesStore.MAP_PREFERENCES }
 
 /**
- * Returns these preferences with those a map file keeps taken from [values], by their names. The others, and
- * any that is missing or not known, stay as they are.
+ * Returns these preferences with those a map file keeps taken from [values], by their names, for a map in
+ * [theme]. The others, and any that is missing or not known, stay as they are.
  */
 internal fun UserPreferences.withMapValues(
     values: Map<String, String>
+    , theme: MapTheme? = null
 ): UserPreferences = readUserPreferences(
     read = { name ->
         values[name]?.takeIf {
@@ -196,6 +207,7 @@ internal fun UserPreferences.withMapValues(
         }
     }
     , defaults = this
+    , theme = theme
 )
 
 private val HEX_COLOR = Regex("#?([0-9A-Fa-f]{6})")
