@@ -202,15 +202,15 @@ class Tree<T> {
         return levelStyleOf(id).border
     }
 
+    /**
+     * Returns the level of the node with [id]: 0 for the root, 1 for a child of the root, 2 for a child of one of
+     * those, and so on, one more for each node it is below. It follows where the node is, so a node that is moved
+     * is on the level of where it goes.
+     */
+    fun levelOf(id: String): Int = generateSequence(getNode(id).parentId) { getNode(it).parentId }.count()
+
     /** Returns how the theme draws the nodes of the level a node is on: the root, a main topic or a subtopic. */
-    fun levelStyleOf(id: String): LevelStyle {
-        val parentId = getNode(id).parentId
-        return when {
-            parentId == null -> theme.root
-            getNode(parentId).parentId == null -> theme.mainTopic
-            else -> theme.subtopic
-        }
-    }
+    fun levelStyleOf(id: String): LevelStyle = levelStyle(levelOf(id))
 
     // Maps saved before the colors a node starts with were changed still hold the earlier ones, which were
     // never chosen.
@@ -220,8 +220,14 @@ class Tree<T> {
     }
 
     /** Returns how the theme draws a node added to the node with [parentId]. */
-    fun childLevelStyleOf(parentId: String): LevelStyle =
-        if (getNode(parentId).parentId == null) theme.mainTopic else theme.subtopic
+    fun childLevelStyleOf(parentId: String): LevelStyle = levelStyle(levelOf(parentId) + 1)
+
+    // The theme draws the root on level 0, the main topics on level 1, and the subtopics on every level below.
+    private fun levelStyle(level: Int): LevelStyle = when (level) {
+        0 -> theme.root
+        1 -> theme.mainTopic
+        else -> theme.subtopic
+    }
 
     /** Returns the fill a node starts with, which follows the theme for as long as it is not changed. */
     fun defaultFillOf(node: NodeData<*>): Color =
