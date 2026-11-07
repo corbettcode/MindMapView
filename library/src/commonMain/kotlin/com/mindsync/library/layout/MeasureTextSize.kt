@@ -150,6 +150,18 @@ class MeasureTextSize(
         }
     }
 
+    /** Sizes the node [id] alone to its content, as [traverseTextHead] sizes all of them. */
+    fun measureNode(
+        tree: Tree<*>
+        , id: String
+        , attributeDisplay: AttributeDisplay = AttributeDisplay.INLINE
+        , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
+    ) {
+        val node = tree.nodes[id] ?: return
+        val content = measureContent(tree, node, attributeDisplay, noteDisplay)
+        tree.setNode(id, changeSize(node, content.width, content.height))
+    }
+
     private fun changeSize(
         nodeData: NodeData<*>,
         width: Float,

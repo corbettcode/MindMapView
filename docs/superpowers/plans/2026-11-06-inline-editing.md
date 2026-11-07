@@ -86,9 +86,9 @@ Escape cancels, Ctrl+B / Ctrl+I / Ctrl+U toggle bold, italic and underline. A pr
 - [ ] `val textEditNodeId: String?` (observable): the node being edited, or null.
 - [ ] `fun startTextEdit(text: String? = null)`: starts editing the selected node. `text` replaces its text, for
   type-to-edit. It snapshots the tree first, unless a session is already open.
-- [ ] `fun addNodeForTextEdit(...)` and `addSiblingForTextEdit(...)`, or an `isTextEdited` flag on `addNode` and
-  `addSiblingNode`: start the session **before** the add, so the snapshot has no new node. Mark the session
-  `isNewNode`.
+- [ ] `fun addNodeForTextEdit(add: MindMapState.() -> Unit)`: snapshots, runs `add` (for example
+  `{ addSiblingNode(...) }`) without recording, selects the added node and opens the session on it, so the add and
+  the typing are one step. Built this way so `addNode` and `addSiblingNode` need no flag.
 - [ ] `fun previewText(html: String)`: sets the description without recording, re-measures that node, and runs
   `arrangeTree()` with no animation.
 - [ ] `fun commitTextEdit()`: an empty text cancels. Otherwise it records one `Step(before)` if the content changed

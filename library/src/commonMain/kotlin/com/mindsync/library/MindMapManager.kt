@@ -78,6 +78,16 @@ class MindMapManager {
         update(node)
     }
 
+    // Typing changes one node at a time, so only that node is measured again, not all of the tree.
+    fun updateText(
+        id: String
+        , description: String
+    ) {
+        val node = tree.nodes[id] ?: return
+        tree.updateNode(id, description, node.children, node.path.centerX, node.path.centerY)
+        measureTextSize?.measureNode(tree, id, attributeDisplay, noteDisplay)
+    }
+
     // Unlike a node that is detached to be attached elsewhere, a removed node takes its arrow links along.
     fun removeNode(node: NodeData<*>) {
         this.tree.removeArrowLinksOfBranch(node.id)

@@ -96,6 +96,19 @@ object RichText {
     /** Returns [html] without its images. */
     fun withoutImages(html: String): String = html.replace(IMAGE, "")
 
+    /**
+     * Whether [first] and [second] are the same text in the same styles. An editor writes its own HTML for the
+     * text it was given, as `<p>` around plain text, which is no change of the text.
+     */
+    fun isSameText(
+        first: String
+        , second: String
+    ): Boolean = first == second
+        || RichTextState().setHtml(first).toHtml() == RichTextState().setHtml(second).toHtml()
+
+    /** Whether [html] shows nothing: no text but white space, and no image. */
+    fun isBlank(html: String): Boolean = imageSources(html).isEmpty() && parse(html).text.isBlank()
+
     /** Returns [text] as rich text that shows it as it is, its line breaks included. */
     fun fromPlainText(text: String): String {
         return text

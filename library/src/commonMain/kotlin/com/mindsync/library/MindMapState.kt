@@ -77,6 +77,7 @@ class MindMapState(
     private var density = Density(1f)
     private var viewportSize = Size.Zero
     private var addNode: NodeData<*>? = null
+    private var textEdit: TextEdit? = null
     private var copiedBranch: CopiedBranch? by mutableStateOf(null)
     // The nodes that are selected besides selectedNode, in the order they were selected.
     private var otherSelectedIds by mutableStateOf(listOf<String>())
@@ -331,10 +332,16 @@ class MindMapState(
      * Puts the map back as it was before the last change to it. The selected nodes that are still there stay
      * selected.
      */
-    fun undo() = restore { history.undo(it) }
+    fun undo() {
+        commitTextEdit()
+        restore { history.undo(it) }
+    }
 
     /** Makes the last change that was undone again. */
-    fun redo() = restore { history.redo(it) }
+    fun redo() {
+        commitTextEdit()
+        restore { history.redo(it) }
+    }
 
     // The map as it was when it was saved last, or shown when it was not saved since.
     private var savedSnapshot: TreeSnapshot? = null
@@ -362,6 +369,8 @@ class MindMapState(
     // A change within another one is part of it, so only the outermost one is recorded.
     private inline fun recordChange(change: () -> Unit) {
         if (isRecording) return change()
+        // The text being typed is a change of its own, which comes before this one.
+        commitTextEdit()
         val before = tree.snapshot()
         val lookBefore = themeLook
         isRecording = true
@@ -409,6 +418,8 @@ class MindMapState(
      * before it, and is forgotten.
      */
     fun setTree(tree: Tree<*>) {
+        // The node being edited is in the tree that goes, as is what it was before.
+        closeTextEdit()
         if (mindMapManager.getSelectedNode()?.id !in tree.nodes) mindMapManager.setSelectedNode(null)
         otherSelectedIds = emptyList()
         tree.topicStyles = topicStyles
@@ -564,6 +575,7 @@ class MindMapState(
 
     /** Selects the node alone, or no node when it is null. */
     fun select(node: NodeData<*>?) {
+        if (node?.id != textEditNodeId) commitTextEdit()
         otherSelectedIds = emptyList()
         rangeAnchorId = node?.id
         mindMapManager.setSelectedNode(node)
@@ -902,6 +914,98 @@ class MindMapState(
                 animateTreeChange()
             }
         }
+    }
+
+    /**
+     * The node whose text is being typed, from [startTextEdit] or [addNodeForTextEdit] until [commitTextEdit] or
+     * [cancelTextEdit], or null while none is. Its text changes with [previewText] as it is typed.
+     */
+    var textEditNodeId: String? by mutableStateOf(null)
+        private set
+
+    /**
+     * Starts typing the text of the selected node. [text] replaces its text at once, for an edit started by typing
+     * a character. While it is edited each [previewText] shows the text in the node; all of the typing is one change,
+     * made by [commitTextEdit]. Selecting another node, undoing or making another change commits it first.
+     */
+    fun startTextEdit(text: String? = null) {
+        val node = mindMapManager.getSelectedNode() ?: return
+        if (textEditNodeId != node.id) {
+            commitTextEdit()
+            textEdit = TextEdit(node.id, tree.snapshot(), themeLook, node.description, selectedIdBefore = null)
+            textEditNodeId = node.id
+        }
+        text?.let { previewText(it) }
+    }
+
+    /**
+     * Makes the node that [add] adds, as [addNode] or [addSiblingNode] does, the selected node and starts typing its
+     * text. Adding it and typing its text are one change, so [cancelTextEdit] takes it away again and [undo] takes
+     * away both.
+     */
+    fun addNodeForTextEdit(add: MindMapState.() -> Unit) {
+        commitTextEdit()
+        val selectedIdBefore = mindMapManager.getSelectedNode()?.id ?: return
+        val before = tree.snapshot()
+        val lookBefore = themeLook
+        val addedBefore = addNode
+        isRecording = true
+        try {
+            add()
+        }
+        finally {
+            isRecording = false
+        }
+        val added = addNode?.takeIf { it !== addedBefore }?.let { tree.nodes[it.id] }
+        if (added == null) {
+            if (!before.hasSameContentAs(tree.snapshot())) record(before, lookBefore)
+            return
+        }
+        select(added)
+        textEdit = TextEdit(added.id, before, lookBefore, originalText = null, selectedIdBefore)
+        textEditNodeId = added.id
+    }
+
+    /** Shows [html] as the text of the node being edited, without making it a change of its own. */
+    fun previewText(html: String) {
+        val id = textEditNodeId ?: return
+        mindMapManager.updateText(id, html)
+        // The animation puts back the text the nodes had when it started, so it starts again with the new text.
+        animateTreeChange()
+    }
+
+    /**
+     * Ends typing the text, as one change that [undo] undoes, with the node added for it if there is one. Text that
+     * shows nothing ends it as [cancelTextEdit] does, so an added node goes and another keeps the text it had.
+     */
+    fun commitTextEdit() {
+        val edit = textEdit ?: return
+        val node = tree.nodes[edit.nodeId]
+        if (node == null || RichText.isBlank(node.description)) return cancelTextEdit()
+        closeTextEdit()
+        val originalText = edit.originalText
+        if (originalText != null && RichText.isSameText(node.description, originalText)) {
+            mindMapManager.updateText(node.id, originalText)
+        }
+        if (!edit.before.hasSameContentAs(tree.snapshot())) record(edit.before, edit.lookBefore)
+        animateTreeChange()
+    }
+
+    /** Ends typing the text and puts the map back as it was before, without the node added for it if there is one. */
+    fun cancelTextEdit() {
+        val edit = textEdit ?: return
+        closeTextEdit()
+        treeChangeJob?.cancel()
+        tree.restore(edit.before)
+        mindMapManager.setTree(tree)
+        edit.selectedIdBefore?.let { mindMapManager.setSelectedNode(tree.nodes[it]) }
+        historyTick++
+        animateTreeChange()
+    }
+
+    private fun closeTextEdit() {
+        textEdit = null
+        textEditNodeId = null
     }
 
     fun editNodeColor(color: Color) {
@@ -1790,4 +1894,14 @@ private class ArrowLinkDrag(
     , val endInclination: Offset
     , val grabbed: Offset
     , val t: Float
+)
+
+// A node's text being typed: the map as it was before, and what to put back when the typing is cancelled.
+// A node added to be typed into has no original text, and the node that was selected before it is selected again.
+private class TextEdit(
+    val nodeId: String
+    , val before: TreeSnapshot
+    , val lookBefore: Any?
+    , val originalText: String?
+    , val selectedIdBefore: String?
 )
