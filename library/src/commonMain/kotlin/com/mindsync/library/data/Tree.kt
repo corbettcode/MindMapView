@@ -426,6 +426,11 @@ class Tree<T> {
             ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
     }
 
+    /**
+     * Adds a node with the id [targetId] as a child of [parentId]. It goes at [index] among the parent's children,
+     * counted over all of the root's sides, or after the last of them when [index] is null. An index past either
+     * end puts it at that end.
+     */
     fun addNode(
         targetId: String,
         parentId: String?,
@@ -435,6 +440,7 @@ class Tree<T> {
         textColor: Color = shape.defaultTextColor,
         side: LayoutSide = LayoutSide.RIGHT,
         note: String = "",
+        index: Int? = null,
     ) {
         if (_nodes[targetId] != null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_DUPLICATED_NODE.message)
         if (parentId == null) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
@@ -464,7 +470,7 @@ class Tree<T> {
                 ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message,
             )
         val newChildren = parentNode.children.toMutableList()
-        newChildren.add(targetId)
+        newChildren.add(index?.coerceIn(0, newChildren.size) ?: newChildren.size, targetId)
         val newParent = when (parentNode) {
             is CircleNodeData -> parentNode.copy(children = newChildren)
             is RectangleNodeData -> parentNode.copy(children = newChildren)
