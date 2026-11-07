@@ -38,6 +38,7 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
@@ -1097,6 +1098,50 @@ class MindMapState(
     private fun closeTextEdit() {
         textEdit = null
         textEditNodeId = null
+    }
+
+    /** Gives the selected nodes [priority], from 1, the highest, to 9, or none when it is null, as one change. */
+    fun setPriority(priority: Int?) {
+        require(priority == null || priority in NodeTask.PRIORITIES) { "A priority is one of 1 to 9, not $priority" }
+        editTasks(selectedNodes.map { it.id }) { it.copy(priority = priority) }
+    }
+
+    /** Gives the selected nodes [progress], or none when it is null, as one change. */
+    fun setProgress(progress: TaskProgress?) {
+        editTasks(selectedNodes.map { it.id }) { it.copy(progress = progress) }
+    }
+
+    /**
+     * Marks the selected nodes done, as one change, or not started when all of them are done already, as a checkbox
+     * of several items is ticked or cleared.
+     */
+    fun toggleDone() {
+        val ids = selectedNodes.map { it.id }
+        val isAllDone = ids.isNotEmpty() && ids.all { tree.taskOf(it).progress == TaskProgress.DONE }
+        val progress = if (isAllDone) TaskProgress.NOT_STARTED else TaskProgress.DONE
+        editTasks(ids) { it.copy(progress = progress) }
+    }
+
+    /**
+     * Takes the progress of the node one step on, as a click on its progress does, and from done back to not
+     * started, as one change. A node without progress is not started.
+     */
+    fun stepProgress(id: String) {
+        if (id !in tree.nodes) return
+        editTasks(listOf(id)) { it.copy(progress = it.progress?.next ?: TaskProgress.NOT_STARTED) }
+    }
+
+    // What a node holds of a task is drawn in it, which makes it larger or smaller, so the tree is measured again.
+    private fun editTasks(
+        ids: List<String>
+        , change: (NodeTask) -> NodeTask
+    ) {
+        if (ids.isEmpty()) return
+        recordChange {
+            ids.forEach { id -> tree.setTask(id, change(tree.taskOf(id))) }
+            mindMapManager.update(tree)
+            animateTreeChange()
+        }
     }
 
     fun editNodeColor(color: Color) {

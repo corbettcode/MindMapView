@@ -85,11 +85,15 @@ filter.
 
 **Files:** `MindMapState.kt`, test `NodeTaskStateTest.kt`
 
-- [ ] `setPriority(priority: Int?)`, `setProgress(progress: TaskProgress?)`, `toggleDone()` and
-  `stepProgress(id)` (for the badge click). Each applies to all selected nodes, the root included, as one change.
-- [ ] `toggleDone()` with a mixed selection makes all Done unless all already are, in which case it makes them all
-  Not started, as checkboxes in lists do.
-- [ ] Tests: several nodes in one step; undo; toggle with mixed selections; nothing selected.
+- [x] `setPriority(priority: Int?)` (a priority outside 1–9 throws before changing anything), `setProgress(progress:
+  TaskProgress?)`, `toggleDone()` and `stepProgress(id)` for the badge click. Each applies to all selected nodes, the
+  root included, as one change, and keeps the rest of each node's task. A shared `editTasks` re-measures the tree and
+  animates it, since badges change node sizes from A3 on.
+- [x] `toggleDone()` makes all the selected nodes Done unless all already are, in which case it makes them all Not
+  started. `stepProgress` gives a node without progress Not started, and does nothing for a node that isn't there.
+- [x] Tests (9): several nodes in one step, with the rest of the task kept, then undo; taking a priority away; an
+  invalid priority; the root; toggling with a mixed selection; stepping round, then undo; a missing node; nothing
+  selected; setting a value a node already has records no change.
 
 ### Task A3: Badges
 
