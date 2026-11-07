@@ -34,6 +34,7 @@ class Tree<T> {
 
     private val nodeLines = mutableMapOf<String, NodeLine>()
     private val nodeBorders = mutableMapOf<String, NodeBorder>()
+    private val nodeTasks = mutableMapOf<String, NodeTask>()
     private val nodeNoteDisplays = mutableMapOf<String, NoteDisplay>()
     private val nodeAttributeDisplays = mutableMapOf<String, AttributeDisplay>()
 
@@ -172,6 +173,18 @@ class Tree<T> {
     ) {
         getNode(id)
         if (border.isNone) nodeBorders.remove(id) else nodeBorders[id] = border
+    }
+
+    /** Returns what the node holds of a task, which is empty when it is no task. */
+    fun taskOf(id: String): NodeTask = nodeTasks[id] ?: NodeTask()
+
+    /** Gives the node what it holds of a task; an empty one makes it no task. */
+    fun setTask(
+        id: String
+        , task: NodeTask
+    ) {
+        getNode(id)
+        if (task.isEmpty) nodeTasks.remove(id) else nodeTasks[id] = task
     }
 
     /** Returns how the node's note is shown when it was given a way of its own, or null when it follows the map. */
@@ -506,6 +519,7 @@ class Tree<T> {
         , nodeAttributes = nodeAttributes.toMap()
         , nodeLines = nodeLines.toMap()
         , nodeBorders = nodeBorders.toMap()
+        , nodeTasks = nodeTasks.toMap()
         , nodeNoteDisplays = nodeNoteDisplays.toMap()
         , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
@@ -528,6 +542,8 @@ class Tree<T> {
         nodeLines.putAll(snapshot.nodeLines)
         nodeBorders.clear()
         nodeBorders.putAll(snapshot.nodeBorders)
+        nodeTasks.clear()
+        nodeTasks.putAll(snapshot.nodeTasks)
         nodeNoteDisplays.clear()
         nodeNoteDisplays.putAll(snapshot.nodeNoteDisplays)
         nodeAttributeDisplays.clear()

@@ -31,6 +31,7 @@ import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
@@ -763,6 +764,7 @@ class MindMapState(
         , attributes = tree.attributesOf(node.id)
         , line = tree.lineOf(node.id)
         , border = tree.borderOf(node.id)
+        , task = tree.taskOf(node.id)
         , noteDisplay = tree.noteDisplayOf(node.id)
         , attributeDisplay = tree.attributeDisplayOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
@@ -788,6 +790,7 @@ class MindMapState(
                 tree.setAttributes(id, branch.attributes)
                 tree.setLine(id, branch.line)
                 tree.setBorder(id, branch.border)
+                tree.setTask(id, branch.task)
                 tree.setNoteDisplay(id, branch.noteDisplay)
                 tree.setAttributeDisplay(id, branch.attributeDisplay)
                 pastedIds[node.id] = id
@@ -2011,6 +2014,7 @@ private class CopiedNode(
     , val attributes: List<NodeAttribute>
     , val line: NodeLine
     , val border: NodeBorder
+    , val task: NodeTask
     , val noteDisplay: NoteDisplay?
     , val attributeDisplay: AttributeDisplay?
     , val children: List<CopiedNode>

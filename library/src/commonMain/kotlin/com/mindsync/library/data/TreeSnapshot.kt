@@ -19,6 +19,7 @@ import com.mindsync.library.model.NoteDisplay
  * with individual nodes.
  * @property nodeLines The map of node IDs to the line settings they have of their own.
  * @property nodeBorders The map of node IDs to the borders they have; a node without one has none.
+ * @property nodeTasks The map of node IDs to what they hold of a task; a node without one is no task.
  * @property nodeNoteDisplays The map of node IDs to the way of showing their note they have of their own.
  * @property nodeAttributeDisplays The map of node IDs to the way of showing their attributes they have of their own.
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
@@ -37,6 +38,7 @@ internal class TreeSnapshot(
     , val nodeAttributes: Map<String, List<NodeAttribute>>
     , val nodeLines: Map<String, NodeLine>
     , val nodeBorders: Map<String, NodeBorder>
+    , val nodeTasks: Map<String, NodeTask>
     , val nodeNoteDisplays: Map<String, NoteDisplay>
     , val nodeAttributeDisplays: Map<String, AttributeDisplay>
     , val foldedIds: Set<String>
@@ -58,6 +60,7 @@ internal class TreeSnapshot(
             && nodeAttributes == other.nodeAttributes
             && nodeLines == other.nodeLines
             && nodeBorders == other.nodeBorders
+            && nodeTasks == other.nodeTasks
             && nodeNoteDisplays == other.nodeNoteDisplays
             && nodeAttributeDisplays == other.nodeAttributeDisplays
             && foldedIds == other.foldedIds
