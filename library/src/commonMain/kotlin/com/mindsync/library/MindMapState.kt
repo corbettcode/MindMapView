@@ -539,6 +539,51 @@ class MindMapState(
         }
     }
 
+    /**
+     * Adds a summary of the selected nodes: a node with [description] that is about them and the siblings between
+     * them, drawn past them with a bracket to them in place of a line from their parent, as one change. A summary is
+     * about children of one node, and under the root about those on one side of it, so there is one for each group
+     * of the selected nodes with the same parent and side. The root and summaries are about no summary. Each is added
+     * right after the last of its siblings. The selected node stays selected, and [getAddNode] returns the summary
+     * added last.
+     */
+    fun addSummaryNode(
+        description: String
+        , shape: NodeShape = NodeShape.RECTANGLE
+        , color: Color = shape.defaultColor
+        , textColor: Color = shape.defaultTextColor
+        , line: NodeLine = NodeLine()
+        , border: NodeBorder = NodeBorder()
+    ) {
+        val rootId = tree.getRootNode().id
+        val groups = selectedBranches
+            .filter { it.parentId != null && !tree.isSummary(it.id) }
+            .groupBy { node -> node.parentId!! to tree.sideOf(node.id).takeIf { node.parentId == rootId } }
+        if (groups.isEmpty()) return
+        recordChange {
+            groups.forEach { (key, nodes) ->
+                val (parentId, side) = key
+                val parent = tree.getNode(parentId)
+                val ids = nodes.map { it.id }.toSet()
+                val index = parent.children.indexOfLast { it in ids } + 1
+                addChild(
+                    parent
+                    , description
+                    , shape
+                    , color
+                    , textColor
+                    , side ?: LayoutSide.RIGHT
+                    , note = ""
+                    , line = line
+                    , border = border
+                    , index = index
+                )
+                addNode?.let { tree.setSummary(it.id, ids) }
+            }
+            animateTreeChange()
+        }
+    }
+
     private fun addChild(
         parent: NodeData<*>
         , description: String
@@ -686,7 +731,8 @@ class MindMapState(
      * Copies the selected nodes and the nodes below them, with their attributes, the arrow links between
      * them and the boundaries within them, as they are now: a node that is changed or removed afterwards is pasted
      * as it was when it was copied. An arrow link to or from a node that was not copied is left out, as it has no
-     * end to paste, and so is a boundary around the selected nodes themselves, as they are pasted elsewhere.
+     * end to paste, and so is a boundary around the selected nodes themselves, as they are pasted elsewhere. A summary
+     * is pasted as a summary when its siblings are copied with it, and otherwise as an ordinary node.
      */
     fun copyNode() {
         val branches = selectedBranches
@@ -697,6 +743,7 @@ class MindMapState(
             branches.map { copyBranch(it) }
             , tree.arrowLinks.filter { it.sourceId in ids && it.targetId in ids }
             , tree.boundaries.filter { it.parentId in ids }
+            , tree.summaries.filter { (summaryId, childIds) -> summaryId in ids && childIds.all { it in ids } }
         )
     }
 
@@ -755,6 +802,9 @@ class MindMapState(
                         , targetId = pastedIds.getValue(link.targetId)
                     )
                 )
+            }
+            copied.summaries.forEach { (summaryId, childIds) ->
+                tree.setSummary(pastedIds.getValue(summaryId), childIds.map { pastedIds.getValue(it) }.toSet())
             }
             copied.boundaries.forEach { boundary ->
                 tree.addBoundary(
@@ -1951,6 +2001,8 @@ private class CopiedBranch(
     val roots: List<CopiedNode>
     , val arrowLinks: List<ArrowLink>
     , val boundaries: List<Boundary>
+    // The siblings each summary is about, by its id, for the summaries that were copied with their siblings.
+    , val summaries: Map<String, List<String>>
 )
 
 // A copied node, which is pasted with the nodes below it and the attributes and line settings of each of them.

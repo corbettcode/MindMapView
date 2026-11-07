@@ -204,11 +204,14 @@ tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 
 **Files:** `MindMapState.kt`, test `SummaryStateTest.kt`
 
-- [ ] `addSummaryNode(description, shape, ...)`: for each group of selected siblings, inserts a node right after
-  the group's last node, flags it, and records one step. It works inside `addNodeForTextEdit`, so the app can open it
-  for typing.
-- [ ] Copying a branch keeps the summaries inside it. Copying a summary topic on its own pastes an ordinary topic.
-- [ ] Tests: the position, one undo step, typing it with `addNodeForTextEdit` then Escape, copy and paste.
+- [x] `addSummaryNode(description, shape, color, textColor, line, border)` adds one summary for each group of
+  selected siblings, grouped by parent and, under the root, by side. Each goes right after the last node of its
+  group, all as one step. The root and existing summaries are skipped. As with `addNode`, the selection stays and
+  `getAddNode()` is the summary added last, so `addNodeForTextEdit { addSummaryNode("Summary") }` opens it for typing.
+- [x] Copying a branch keeps the summaries whose siblings were copied with them. A summary copied on its own pastes as
+  an ordinary topic.
+- [x] Tests (7): the position and range; grouping by parent and side; the root and summaries get none; one undo step;
+  typing it, then Escape or Enter; copy and paste of a branch; copy and paste of a summary alone.
 
 ### Task B3: Laying out summaries
 
