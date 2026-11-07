@@ -304,6 +304,69 @@ class XMindTest {
         assertEquals(setOf(listOf("B", "C")), tree.boundaryTexts())
     }
 
+    private fun Tree<Any>.summaryTexts(): Map<String, List<String>> =
+        summaries.entries.associate { (id, childIds) ->
+            getNode(id).description to childIds.map { getNode(it).description }
+        }
+
+    @Test
+    fun summariesOfXMindComeRightAfterTheTopicsTheyAreAbout() {
+        val content = """
+            [{ "title": "s", "rootTopic": {
+              "id": "r", "title": "Root",
+              "summaries": [{ "id": "m1", "range": "(0,1)", "topicId": "sum" }],
+              "children": {
+                "attached": [
+                  { "id": "a", "title": "A",
+                    "summaries": [{ "id": "m2", "range": "(1,9)", "topicId": "inner" }],
+                    "children": {
+                      "attached": [{ "id": "a1", "title": "A1" }, { "id": "a2", "title": "A2" }],
+                      "summary": [{ "id": "inner", "title": "Inner" }]
+                    } },
+                  { "id": "b", "title": "B" },
+                  { "id": "c", "title": "C" }
+                ],
+                "summary": [{ "id": "sum", "title": "Sum" }]
+              }
+            } }]
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "map")
+
+        assertEquals("Root\n  A\n    A1\n    A2\n    Inner\n  B\n  Sum\n  C\n", tree.outline())
+        assertEquals(mapOf("Sum" to listOf("A", "B"), "Inner" to listOf("A2")), tree.summaryTexts())
+    }
+
+    @Test
+    fun summariesOfXMind8AreKept() {
+        val content = """
+            <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
+              <sheet id="s1">
+                <topic id="root">
+                  <title>Root</title>
+                  <children>
+                    <topics type="attached">
+                      <topic id="a"><title>A</title></topic>
+                      <topic id="b"><title>B</title></topic>
+                      <topic id="c"><title>C</title></topic>
+                    </topics>
+                    <topics type="summary"><topic id="sum"><title>Sum</title></topic></topics>
+                  </children>
+                  <summaries>
+                    <summary id="m" range="(1,2)" topic-id="sum"/>
+                    <summary id="x" range="(0,0)" topic-id="missing"/>
+                  </summaries>
+                </topic>
+              </sheet>
+            </xmap-content>
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.xml" to content), title = "map")
+
+        assertEquals("Root\n  A\n  B\n  C\n  Sum\n", tree.outline())
+        assertEquals(mapOf("Sum" to listOf("B", "C")), tree.summaryTexts())
+    }
+
     @Test
     fun refusesWhatIsNotAnXMindMap() {
         assertFailsWith<IllegalArgumentException> { XMind.read("# Markdown".encodeToByteArray(), title = "x") }

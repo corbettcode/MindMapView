@@ -50,6 +50,14 @@ import kotlin.math.roundToInt
  * nothing around several nodes, so a boundary around several is written as a cloud around each of them, and each
  * cloud is read as a boundary of its own. A cloud's color is the color it is filled with, which is pale; a pale
  * one is read as a boundary in the color of its branch, and a darker one as a boundary in that color.
+ *
+ * A summary is kept as Freeplane keeps one, which FreeMind shows as an ordinary node: a `<hook NAME="SummaryNode"/>`
+ * on a sibling written right after those it is about. Freeplane takes a summary to be about the siblings on its
+ * side back to the summary before it, or to the first of them; where the group begins later, an empty node with a
+ * `<hook NAME="FirstGroupNode"/>` is written before it, which Freeplane hides. Freeplane's groups do not overlap,
+ * so of summaries that would, the first is kept and the others are written as ordinary nodes. When a map is read,
+ * the empty nodes are left out, a summary whose text is in a node of its own below it is read as that node, and a
+ * summary of summaries, which this library has not, is read as an ordinary node.
  */
 object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
@@ -63,6 +71,8 @@ object FreeMind {
     // FreeMind fills a cloud with its color, and its default one is a pale gray, which would hardly show as the line
     // of a boundary.
     private const val PALE_CLOUD_LUMINANCE = 0.8f
+    private const val SUMMARY_HOOK = "SummaryNode"
+    private const val FIRST_GROUP_HOOK = "FirstGroupNode"
 
     fun write(tree: Tree<*>): String = buildString {
         append("<map version=\"1.0.1\">\n")
@@ -76,7 +86,7 @@ object FreeMind {
         tree.boundaries.forEach { boundary ->
             tree.boundaryChildIds(boundary).forEach { clouds.getOrPut(it) { boundary } }
         }
-        writeNode(tree, tree.getRootNode(), depth = 0, arrowLinks, clouds)
+        writeNode(tree, tree.getRootNode(), depth = 0, arrowLinks, clouds, isSummary = false)
         append("</map>\n")
     }
 
@@ -98,11 +108,13 @@ object FreeMind {
         rootElement.readArrowLinks(root.id, arrowLinks)
         // A node is only in the tree once the nodes above it are, so the clouds are added once all nodes are too.
         val clouds = mutableListOf<Boundary>()
-        val children = rootElement.childNodes().map { element ->
-            readNode(tree, element, root.id, usedIds, arrowLinks, clouds).also { id ->
+        // A summary is about siblings that are only all in the tree once the whole tree is.
+        val summaries = mutableListOf<Pair<String, Set<String>>>()
+        val children = readChildren(tree, rootElement, root.id, usedIds, arrowLinks, clouds, summaries, isRoot = true)
+            .map { (element, id) ->
                 if (element.attributes["POSITION"] == "left") leftChildren.add(id)
+                id
             }
-        }
         tree.setRootNode(
             root.copy(
                 children = children,
@@ -124,6 +136,13 @@ object FreeMind {
                 tree.addArrowLink(if (usedArrowLinkIds.add(link.id)) link else link.copy(id = IdGenerator.makeRandomNodeId()))
             }
         clouds.forEach { tree.addBoundary(it) }
+        summaries.forEach { (summaryId, childIds) ->
+            try {
+                tree.setSummary(summaryId, childIds)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
         return tree
     }
 
@@ -133,6 +152,7 @@ object FreeMind {
         depth: Int,
         arrowLinks: Map<String, List<ArrowLink>>,
         clouds: Map<String, Boundary>,
+        isSummary: Boolean,
     ) {
         val indent = "  ".repeat(depth)
         val plainText = plainTextOrNull(node.description)
@@ -168,6 +188,7 @@ object FreeMind {
             line.width?.let { append(" WIDTH=\"").append(it.label).append('"') }
             append("/>\n")
         }
+        if (isSummary) append(indent).append("  <hook NAME=\"").append(SUMMARY_HOOK).append("\"/>\n")
         clouds[node.id]?.let { cloud ->
             append(indent).append("  <cloud")
             cloud.color?.let { append(" COLOR=\"").append(it.toHex()).append('"') }
@@ -187,7 +208,19 @@ object FreeMind {
             link.endInclination?.let { append(" ENDINCLINATION=\"").append(it.toFreeMind()).append('"') }
             append("/>\n")
         }
-        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1, arrowLinks, clouds) }
+        writtenChildren(tree, node).forEach { child ->
+            when (child) {
+                is WrittenChild.Node ->
+                    writeNode(tree, tree.getNode(child.id), depth + 1, arrowLinks, clouds, child.isSummary)
+                is WrittenChild.GroupStart -> {
+                    append(indent).append("  <node ID=\"").append(escapeXml(child.firstId)).append("_group\" TEXT=\"\"")
+                    if (depth == 0) append(" POSITION=\"").append(child.side.name.lowercase()).append('"')
+                    append(">\n")
+                    append(indent).append("    <hook NAME=\"").append(FIRST_GROUP_HOOK).append("\"/>\n")
+                    append(indent).append("  </node>\n")
+                }
+            }
+        }
         append(indent).append("</node>\n")
     }
 
@@ -198,6 +231,7 @@ object FreeMind {
         usedIds: MutableSet<String>,
         arrowLinks: MutableList<ArrowLink>,
         clouds: MutableList<Boundary>,
+        summaries: MutableList<Pair<String, Set<String>>>,
     ): String {
         val id = element.attributes["ID"]?.takeIf { it.isNotEmpty() && usedIds.add(it) }
             ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
@@ -207,7 +241,8 @@ object FreeMind {
             clouds.add(Boundary(IdGenerator.makeRandomNodeId(), parentId, setOf(id), color, BoundaryStyle.SOLID))
         }
         val shape = element.shapeAttribute()?.shape() ?: NodeShape.RECTANGLE
-        val children = element.childNodes().map { readNode(tree, it, id, usedIds, arrowLinks, clouds) }
+        val children = readChildren(tree, element, id, usedIds, arrowLinks, clouds, summaries, isRoot = false)
+            .map { it.second }
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
         val description = element.description()
@@ -220,6 +255,151 @@ object FreeMind {
         tree.setFolded(id, element.attributes["FOLDED"] == "true")
         return id
     }
+
+    // A child as it is written: a node of the tree, or an empty node that marks where a group of siblings a
+    // summary is about begins.
+    private sealed interface WrittenChild {
+        class Node(val id: String, val isSummary: Boolean) : WrittenChild
+        // Its id is made from that of the first node of its group, so a map is written the same each time.
+        class GroupStart(val side: LayoutSide, val firstId: String) : WrittenChild
+    }
+
+    // The children of the node in the order Freeplane takes its summaries from: each summary right after the
+    // siblings it is about, with the start of a group marked where it is not the start of the siblings on its side
+    // nor right after another summary. Freeplane has a left and a right of the root, on which the children of the
+    // root's sides are written together, side by side, so no side splits a group of another.
+    private fun writtenChildren(
+        tree: Tree<*>
+        , node: NodeData<*>
+    ): List<WrittenChild> {
+        val children = node.children
+        if (children.none { tree.isSummary(it) }) return children.map { WrittenChild.Node(it, isSummary = false) }
+        val sequences =
+            if (node.parentId == null) {
+                children
+                    .groupBy { tree.sideOf(it).horizontal }
+                    .map { (side, ids) -> side to ids.sortedBy { tree.sideOf(it).ordinal } }
+            }
+            else {
+                listOf(LayoutSide.RIGHT to children)
+            }
+        return sequences.flatMap { (side, ids) -> writtenSequence(tree, side, ids) }
+    }
+
+    private fun writtenSequence(
+        tree: Tree<*>
+        , side: LayoutSide
+        , ids: List<String>
+    ): List<WrittenChild> {
+        val plainIds = ids.filterNot { tree.isSummary(it) }
+        val keptRanges = mutableListOf<Pair<String, List<String>>>()
+        val coveredIds = mutableSetOf<String>()
+        ids
+            .filter { tree.isSummary(it) }
+            .map { it to tree.summaryChildIds(it) }
+            .sortedBy { (_, range) -> plainIds.indexOf(range.first()) }
+            .forEach { (summaryId, range) ->
+                if (range.none { it in coveredIds }) {
+                    keptRanges.add(summaryId to range)
+                    coveredIds.addAll(range)
+                }
+            }
+        val summaryAfter = keptRanges.associate { (summaryId, range) -> range.last() to summaryId }
+        val groupStarts = keptRanges.map { (_, range) -> range.first() }.toSet()
+        val written = mutableListOf<WrittenChild>()
+        var isAfterSummary = true
+        plainIds.forEach { id ->
+            if (id in groupStarts && !isAfterSummary) written.add(WrittenChild.GroupStart(side, id))
+            written.add(WrittenChild.Node(id, isSummary = false))
+            isAfterSummary = false
+            summaryAfter[id]?.let {
+                written.add(WrittenChild.Node(it, isSummary = true))
+                isAfterSummary = true
+            }
+        }
+        // The summaries written as ordinary nodes go last, past every group, so no summary is about them.
+        val keptIds = keptRanges.map { it.first }.toSet()
+        ids
+            .filter { tree.isSummary(it) && it !in keptIds }
+            .forEach { written.add(WrittenChild.Node(it, isSummary = false)) }
+        return written
+    }
+
+    // Reads the child nodes of [parent], and the summaries among them, as Freeplane takes them. Returns each node
+    // read with the element it was read from; the empty nodes that mark where a group begins are not read.
+    private fun readChildren(
+        tree: Tree<Any>,
+        parent: XmlElement,
+        parentId: String,
+        usedIds: MutableSet<String>,
+        arrowLinks: MutableList<ArrowLink>,
+        clouds: MutableList<Boundary>,
+        summaries: MutableList<Pair<String, Set<String>>>,
+        isRoot: Boolean,
+    ): List<Pair<XmlElement, String>> {
+        val elements = parent.childNodes()
+        val ids = elements.associateWith { element ->
+            if (element.isGroupStart()) return@associateWith null
+            val textElement =
+                if (element.hasHook(SUMMARY_HOOK) && element.isEmptyText()) element.childNodes().lastOrNull() else null
+            if (textElement == null) {
+                readNode(tree, element, parentId, usedIds, arrowLinks, clouds, summaries)
+            }
+            else {
+                // Freeplane may keep a summary's text in a node below an empty one, which it shows in its place.
+                readNode(tree, textElement, parentId, usedIds, arrowLinks, clouds, summaries).also { id ->
+                    element.childNodes().dropLast(1).forEach { other ->
+                        tree.attachNode(readNode(tree, other, id, usedIds, arrowLinks, clouds, summaries), id)
+                    }
+                }
+            }
+        }
+        val sides = if (isRoot) elements.groupBy { it.attributes["POSITION"] == "left" }.values else listOf(elements)
+        sides.forEach { side -> summaries.addAll(summariesOf(side, ids)) }
+        return elements.mapNotNull { element -> ids[element]?.let { element to it } }
+    }
+
+    // The summaries of one side of a node's children, as Freeplane's SummaryLevels finds them. A summary right after
+    // other summaries is a summary of them, which this library has not, so only those of nodes are kept.
+    private fun summariesOf(
+        elements: List<XmlElement>
+        , ids: Map<XmlElement, String?>
+    ): List<Pair<String, Set<String>>> {
+        val levels = IntArray(elements.size)
+        var level = 0
+        var isSummaryAnItem = false
+        elements.forEachIndexed { index, element ->
+            val isItem = !element.hasHook(SUMMARY_HOOK) || isSummaryAnItem
+            if (isItem) {
+                if (level > 0) isSummaryAnItem = true
+                level = 0
+                if (!element.isGroupStart()) isSummaryAnItem = false
+            }
+            else {
+                level++
+            }
+            levels[index] = level
+        }
+        return elements.indices.filter { levels[it] == 1 }.mapNotNull { summaryIndex ->
+            val summaryId = ids[elements[summaryIndex]] ?: return@mapNotNull null
+            val childIds = mutableSetOf<String>()
+            for (index in summaryIndex - 1 downTo 0) {
+                if (levels[index] >= 1 || elements[index].hasHook(FIRST_GROUP_HOOK)) break
+                ids[elements[index]]?.let { childIds.add(it) }
+            }
+            childIds.takeIf { it.isNotEmpty() }?.let { summaryId to it }
+        }
+    }
+
+    private fun XmlElement.hasHook(name: String): Boolean =
+        children.any { it.name == "hook" && it.attributes["NAME"] == name }
+
+    private fun XmlElement.isEmptyText(): Boolean = attributes["TEXT"].isNullOrEmpty()
+        && children.none { it.name == "richcontent" && it.attributes["TYPE"] == "NODE" }
+
+    // Freeplane hides an empty node that marks the start of a group, which is there for nothing else.
+    private fun XmlElement.isGroupStart(): Boolean =
+        hasHook(FIRST_GROUP_HOOK) && isEmptyText() && childNodes().isEmpty()
 
     private fun NodeData<*>.shape(): NodeShape = when (this) {
         is CircleNodeData -> NodeShape.CIRCLE

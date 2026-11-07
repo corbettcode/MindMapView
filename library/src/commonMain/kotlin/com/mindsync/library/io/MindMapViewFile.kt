@@ -33,7 +33,8 @@ import kotlin.io.encoding.Base64
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
  * order, then the `<arrowlink>` elements, then the `<boundary>` elements, then the `<preference>` elements, and then
- * the `<image>` elements. A boundary's `children` are the ids of the children it is around, separated by spaces.
+ * the `<image>` elements. A boundary's `children` are the ids of the children it is around, separated by spaces, as
+ * are the ids of the siblings a summary node is about in its `summaryOf`.
  * A node's text and note are the HTML they are kept as. Where the other nodes are is not stored: a map that was read
  * needs to be arranged, as one read with [FreeMind] does.
  *
@@ -192,6 +193,17 @@ object MindMapViewFile {
                 )
             )
         }
+        // A summary is about siblings that are only all in the tree once the whole tree is.
+        rootElement.descendantNodes().forEach { element ->
+            val summaryOf = element.attributes["summaryOf"]?.takeIf { it.isNotBlank() } ?: return@forEach
+            val summaryId = fileIds[element.attributes["id"]] ?: return@forEach
+            val childIds = summaryOf.split(' ').mapNotNull { fileIds[it] }.toSet()
+            try {
+                tree.setSummary(summaryId, childIds)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
         map.children.filter { it.name == "boundary" }.forEach { element ->
             val parentId = fileIds[element.attributes["parent"]] ?: return@forEach
             val childIds = element.attributes["children"]
@@ -242,6 +254,7 @@ object MindMapViewFile {
         if (node.parentId != null) attribute("shape", node.shape.name.lowercase())
         if (node.parentId == tree.getRootNode().id) attribute("side", tree.sideOf(node.id).name.lowercase())
         if (tree.isFolded(node.id)) attribute("folded", "true")
+        tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
         attribute("color", node.color.toHex())
         attribute("textColor", node.textColor.toHex())
         attribute("text", node.description)
@@ -330,6 +343,9 @@ object MindMapViewFile {
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    private fun XmlElement.descendantNodes(): List<XmlElement> =
+        childNodes().flatMap { listOf(it) + it.descendantNodes() }
 
     private fun XmlElement.noteDisplay(): NoteDisplay? =
         NoteDisplay.entries.firstOrNull { it.name.equals(attributes["noteDisplay"], ignoreCase = true) }

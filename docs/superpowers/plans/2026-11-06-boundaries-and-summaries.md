@@ -255,16 +255,34 @@ test `SummaryDrawTest.kt`
 
 ### Task B5: Summaries in files
 
-**Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/XMind.kt`, tests
+**Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/XMind.kt`, tests `SummaryFilesTest.kt` (common) and
+`XMindTest.kt` (JVM)
 
-- [ ] `.mmv`: `summary-first="<id>"` on a summary topic's `<node>`.
-- [ ] Freeplane: before writing code, check the exact form against a map saved by Freeplane 1.11. Freeplane marks
-  the summary node with `<hook NAME="SummaryNode"/>` and the first node of its group with
-  `<hook NAME="FirstGroupNode"/>`. Read both; write both. FreeMind itself ignores them and shows an ordinary topic.
-- [ ] XMind JSON (`summaries: [{range, topicId}]` with `children.summary`) and XML (`<summaries>` with
-  `<topics type="summary">`): put each summary topic right after its range and flag it, instead of adding it at the
-  end as today.
-- [ ] HTML, OPML and Markdown: a summary is an ordinary item after its range. Add a test so that stays true.
+- [x] `.mmv`: `summaryOf="<ids>"` on a summary's `<node>`, its covered sibling ids separated by spaces. A summary of
+  siblings that aren't in the file reads as an ordinary topic.
+- [x] Freeplane, checked against its 1.11.x source (`SummaryNode`, `SummaryLevels.summarizedNodes`,
+  `PersistentNodeHook`):
+  - A summary is a sibling with `<hook NAME="SummaryNode"/>`.
+  - It covers the plain siblings on its side back to the previous summary, or to a `<hook NAME="FirstGroupNode"/>`
+    sibling (which is not covered), or to the first child.
+  - Freeplane may keep a summary's text in a child of an empty hooked node.
+  - Freeplane has summaries of summaries (levels); this library doesn't.
+- [x] Writing (the user chose "Freeplane-exact"):
+  - Children are written so each summary comes right after its group.
+  - An empty `FirstGroupNode` marker node goes before a group only when it doesn't start the side's siblings or
+    follow another summary. FreeMind 1.0 shows the marker as an empty topic.
+  - Root sides are written one after the other, with the six sides grouped within left and right.
+  - Overlapping summaries can't be expressed, so the first is kept and the others are written as ordinary topics after
+    all groups.
+- [x] Reading:
+  - Freeplane's levels and `summarizedNodes` rule are reproduced; level-2+ summaries become ordinary topics.
+  - Empty markers are dropped. A visible `FirstGroupNode` node is kept but not covered.
+  - An empty-wrapper summary is read as its last child, and the wrapper's other children go below it.
+- [x] XMind JSON (`summaries: [{range, topicId}]` with `children.summary`) and XML (`<summaries>` with
+  `<topics type="summary">`): each summary topic is moved right after its range and flagged. A range past the attached
+  topics is cut short, and a summary whose topic is missing is skipped.
+- [x] HTML, OPML and Markdown: a summary is an ordinary item after its range (tested).
+- [x] Tests: 11 in `SummaryFilesTest`, 2 more in `XMindTest`.
 
 ### Task B6: Summaries in the app
 

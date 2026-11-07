@@ -14,7 +14,8 @@ import com.mindsync.library.util.RichText
  * and before.
  *
  * Each topic becomes a node, with its title as the node's text and its notes as the node's note. Attached
- * topics come first among a topic's children, followed by its floating topics, summaries and callouts. A
+ * topics come first among a topic's children, followed by its floating topics and callouts; a summary topic comes
+ * right after the attached topics it is about, and is a summary of them. A
  * map with one sheet has that sheet's central topic as its root. A map with several sheets gets a root named
  * after its title, with each sheet's central topic as a branch.
  *
@@ -88,6 +89,8 @@ object XMind {
         // The attached children each boundary is around, by their places among them, or null for one that is around
         // the topic itself.
         , val boundaries: List<IntRange?> = emptyList()
+        // The attached children each summary is about, by their places among them, and the id of its topic.
+        , val summaries: List<Pair<IntRange, String>> = emptyList()
     )
 
     private class Sheet(
@@ -153,6 +156,14 @@ object XMind {
             .orEmpty()
             .filterIsInstance<Map<*, *>>()
             .mapNotNull { boundaryRange(it.string("range")) }
+        val summaries = (topic["summaries"] as? List<*>)
+            .orEmpty()
+            .filterIsInstance<Map<*, *>>()
+            .mapNotNull { summary ->
+                val range = boundaryRange(summary.string("range"))?.range ?: return@mapNotNull null
+                val topicId = summary.string("topicId") ?: return@mapNotNull null
+                range to topicId
+            }
         return Topic(
             id = topic.string("id")
             , title = topic.string("title").orEmpty()
@@ -172,6 +183,7 @@ object XMind {
             , children = children
             , attachedCount = attachedCount
             , boundaries = boundaries.map { it.range }
+            , summaries = summaries
         )
     }
 
@@ -232,6 +244,15 @@ object XMind {
             .orEmpty()
             .filter { it.name == "boundary" }
             .mapNotNull { boundaryRange(it.attributes["range"]) }
+        val summaries = topic.child("summaries")
+            ?.children
+            .orEmpty()
+            .filter { it.name == "summary" }
+            .mapNotNull { summary ->
+                val range = boundaryRange(summary.attributes["range"])?.range ?: return@mapNotNull null
+                val topicId = summary.attributes["topic-id"] ?: return@mapNotNull null
+                range to topicId
+            }
         return Topic(
             id = topic.attributes["id"]
             , title = topic.child("title")?.text.orEmpty()
@@ -245,6 +266,7 @@ object XMind {
             , children = children
             , attachedCount = attachedCount
             , boundaries = boundaries.map { it.range }
+            , summaries = summaries
         )
     }
 
@@ -278,8 +300,10 @@ object XMind {
             ?: sheets.map { sheet -> sheet.root.takeIf { it.title.isNotBlank() } ?: sheet.root.copy(title = sheet.title) }
         // A node is only in the tree once the nodes above it are, so the boundaries are added once all nodes are.
         val boundaries = mutableListOf<Boundary>()
-        val children = branches.map { addNode(tree, it, root.id, nodeIds, boundaries) }
-        rootTopic?.let { boundaries.addAll(rangeBoundaries(it, root.id, children)) }
+        val summaries = mutableListOf<Pair<String, Set<String>>>()
+        val branchIds = branches.map { addNode(tree, it, root.id, nodeIds, boundaries, summaries) }
+        rootTopic?.let { boundaries.addAll(rangeBoundaries(it, root.id, branchIds)) }
+        val children = rootTopic?.let { placeSummaries(it, branchIds, nodeIds, summaries) } ?: branchIds
         tree.setRootNode(
             root.copy(
                 children = children
@@ -296,7 +320,36 @@ object XMind {
             if (sourceId != targetId) tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId))
         }
         boundaries.forEach { tree.addBoundary(it) }
+        summaries.forEach { (summaryId, childIds) ->
+            try {
+                tree.setSummary(summaryId, childIds)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
         return tree
+    }
+
+    // Puts each summary topic right after the attached children it is about, which it is a summary of once the tree
+    // is whole, and returns the children in that order.
+    private fun placeSummaries(
+        topic: Topic
+        , childIds: List<String>
+        , nodeIds: Map<String, String>
+        , summaries: MutableList<Pair<String, Set<String>>>
+    ): List<String> {
+        if (topic.summaries.isEmpty()) return childIds
+        val attachedIds = childIds.take(topic.attachedCount)
+        val ordered = childIds.toMutableList()
+        topic.summaries.forEach { (range, topicId) ->
+            val summaryId = nodeIds[topicId]?.takeIf { it in ordered && it !in attachedIds } ?: return@forEach
+            val coveredIds = attachedIds.filterIndexed { index, _ -> index in range }
+            if (coveredIds.isEmpty()) return@forEach
+            ordered.remove(summaryId)
+            ordered.add(ordered.indexOf(coveredIds.last()) + 1, summaryId)
+            summaries.add(summaryId to coveredIds.toSet())
+        }
+        return ordered
     }
 
     // The boundaries around ranges of the attached children of a topic, whose nodes are [childIds]. A range past
@@ -319,11 +372,13 @@ object XMind {
         , parentId: String
         , nodeIds: MutableMap<String, String>
         , boundaries: MutableList<Boundary>
+        , summaries: MutableList<Pair<String, Set<String>>>
     ): String {
         val id = IdGenerator.makeRandomNodeId()
         topic.id?.let { nodeIds[it] = id }
-        val children = topic.children.map { addNode(tree, it, id, nodeIds, boundaries) }
-        boundaries.addAll(rangeBoundaries(topic, id, children))
+        val childIds = topic.children.map { addNode(tree, it, id, nodeIds, boundaries, summaries) }
+        boundaries.addAll(rangeBoundaries(topic, id, childIds))
+        val children = placeSummaries(topic, childIds, nodeIds, summaries)
         if (null in topic.boundaries) boundaries.add(Boundary(IdGenerator.makeRandomNodeId(), parentId, setOf(id)))
         val shape = shape(topic.style["shape-class"]) ?: NodeShape.RECTANGLE
         val node = unplacedNode(
