@@ -932,7 +932,14 @@ class MindMapState(
         val node = mindMapManager.getSelectedNode() ?: return
         if (textEditNodeId != node.id) {
             commitTextEdit()
-            textEdit = TextEdit(node.id, tree.snapshot(), themeLook, node.description, selectedIdBefore = null)
+            textEdit = TextEdit(
+                node.id
+                , tree.snapshot()
+                , themeLook
+                , node.description
+                , selectedIdBefore = null
+                , isStartedByTyping = text != null
+            )
             textEditNodeId = node.id
         }
         text?.let { previewText(it) }
@@ -962,9 +969,19 @@ class MindMapState(
             return
         }
         select(added)
-        textEdit = TextEdit(added.id, before, lookBefore, originalText = null, selectedIdBefore)
+        textEdit = TextEdit(
+            added.id
+            , before
+            , lookBefore
+            , originalText = null
+            , selectedIdBefore
+            , isStartedByTyping = false
+        )
         textEditNodeId = added.id
     }
+
+    // Typing that started with a character goes on after it; otherwise the text is selected, for typing to replace.
+    internal val isTextEditStartedByTyping: Boolean get() = textEdit?.isStartedByTyping == true
 
     /** Shows [html] as the text of the node being edited, without making it a change of its own. */
     fun previewText(html: String) {
@@ -1904,4 +1921,5 @@ private class TextEdit(
     , val lookBefore: Any?
     , val originalText: String?
     , val selectedIdBefore: String?
+    , val isStartedByTyping: Boolean
 )

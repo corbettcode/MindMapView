@@ -116,8 +116,11 @@ existing tests use it; otherwise a check of the text rectangle as plain math)
 - [ ] Handle Ctrl+B / I / U in the editor with `toggleSpanStyle`. Enter, Tab and Escape are left to the app (Task 5),
   so library users choose them. Without an app handler, `MindMap` commits on Enter and cancels on Escape.
 - [ ] A press on the map outside the editor commits before it does anything else.
-- [ ] Find how `MeasureTextSize` wraps long text. If the node has a maximum width, the editor wraps at the same
-  width, or the caret drifts from the drawn text.
+- [ ] Known limits, to check by eye in Task 7: the editor doesn't apply the app's emoji font, and it reads a
+  text's own sizes (Small, Large) as CSS pixels rather than as a scale of the node's text. Only text with emoji or
+  its own size may show slightly differently while it is typed.
+- [x] Find how `MeasureTextSize` wraps long text. It doesn't: text is measured with no width limit, so the editor
+  sizes itself to its text, unbounded.
 
 ### Task 5: Keys and gestures in the app
 

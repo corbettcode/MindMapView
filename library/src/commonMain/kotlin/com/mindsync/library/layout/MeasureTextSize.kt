@@ -51,6 +51,9 @@ class MeasureTextSize(
         topicFontFamilies[kind]?.let { textStyle.copy(fontFamily = it) } ?: textStyle
     }
 
+    /** The style the text of a node of [kind] is measured and drawn in. */
+    fun textStyleOf(kind: TopicKind): TextStyle = topicTextStyles.getValue(kind)
+
     // The attributes are plain text on one line each, a little smaller than the text of the node.
     private fun attributeTextStyle(style: TextStyle) =
         style.copy(fontSize = style.fontSize * ATTRIBUTE_TEXT_SCALE, textAlign = TextAlign.Start)

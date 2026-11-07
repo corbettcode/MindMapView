@@ -1,6 +1,7 @@
 package com.mindsync.library
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
@@ -218,211 +219,225 @@ fun MindMap(
         onDispose { state.detach() }
     }
 
-    Canvas(
-        modifier = modifier
-            .clipToBounds()
-            .onSizeChanged { state.onSizeChanged(it.toSize()) }
-            // An arrow link is dragged to bend it and right clicked for its menu, so the pointer shows it can be,
-            // and keeps showing it while the link is held. A node and the map show it while they are dragged.
-            .pointerHoverIcon(
-                if (state.isArrowLinkHovered || isArrowLinkPressed || isNodeDragged || isMapDragged) PointerIcon.Hand
-                else PointerIcon.Default
-            )
-            .pointerInput(state) {
-                var lastClickedNodeId: String? = null
-                var lastClickTime = 0L
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val foldMarkerNode = state.findFoldMarker(down.position)
-                    if (foldMarkerNode != null) {
-                        down.consume()
-                        lastClickedNodeId = null
-                        waitForUpOrCancellation()?.let { up ->
-                            up.consume()
-                            state.onFoldMarkerClick(foldMarkerNode)
-                        }
-                        return@awaitEachGesture
-                    }
-                    val addButton =
-                        if (currentOnAddChildClick != null) state.findAddButton(down.position) else null
-                    if (addButton != null) {
-                        down.consume()
-                        lastClickedNodeId = null
-                        waitForUpOrCancellation()?.let { up ->
-                            up.consume()
-                            state.onAddButtonClick(addButton.first)
-                            currentOnAddChildClick?.invoke(addButton.first, addButton.second)
-                        }
-                        return@awaitEachGesture
-                    }
-                    // With Shift held down a click selects a range of nodes. With Ctrl it adds the node to the
-                    // selected nodes and centers it, or takes it out of them, unless it is a drag or a click on a link.
-                    val isRange = currentEvent.keyboardModifiers.isShiftPressed
-                    val isCtrl = currentEvent.keyboardModifiers.isCtrlPressed
-                    val selectionChange = when {
-                        isRange -> SelectionChange.RANGE
-                        isCtrl -> SelectionChange.LATER
-                        else -> SelectionChange.SELECT
-                    }
-                    val touchedNode = state.onTouchDown(down.position, selectionChange)
-                    currentOnNodeClick(touchedNode)
-                    if (touchedNode != null && isRange) {
-                        down.consume()
-                        lastClickedNodeId = null
-                        waitForUpOrCancellation()?.consume()
-                    }
-                    else if (touchedNode == null) {
-                        lastClickedNodeId = null
-                        // Away from the nodes, a drag that starts on an arrow link reshapes it instead of panning.
-                        val draggedLink = state.findArrowLink(down.position)
-                        if (draggedLink != null) {
-                            down.consume()
-                            isArrowLinkPressed = true
-                            try {
-                                val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                                if (dragStart != null) {
-                                    state.onArrowLinkDragStart(draggedLink, down.position)
-                                    state.onArrowLinkDrag(dragStart.position)
-                                    drag(dragStart.id) { change ->
-                                        state.onArrowLinkDrag(change.position)
-                                        change.consume()
-                                    }
-                                    state.onArrowLinkDrop()
-                                }
-                            } finally {
-                                isArrowLinkPressed = false
-                            }
-                        }
-                        else {
-                            try {
-                                do {
-                                    val event = awaitPointerEvent()
-                                    state.onTransform(event.calculatePan(), event.calculateZoom())
-                                    event.changes.forEach { change ->
-                                        if (change.positionChanged()) {
-                                            isMapDragged = true
-                                            change.consume()
-                                        }
-                                    }
-                                } while (event.changes.any { it.pressed })
-                            } finally {
-                                isMapDragged = false
-                            }
-                        }
+    // The text being typed is edited in a text field over the map, where the node's own text would be.
+    Box(modifier = modifier.clipToBounds()) {
+        Canvas(
+            modifier = Modifier
+                .matchParentSize()
+                .onSizeChanged { state.onSizeChanged(it.toSize()) }
+                // An arrow link is dragged to bend it and right clicked for its menu, so the pointer shows it can be,
+                // and keeps showing it while the link is held. A node and the map show it while they are dragged.
+                .pointerHoverIcon(
+                    if (state.isArrowLinkHovered || isArrowLinkPressed || isNodeDragged || isMapDragged) {
+                        PointerIcon.Hand
                     }
                     else {
-                        down.consume()
-                        // With Ctrl held down a drag links the node to the one it is dropped on instead of moving it.
-                        val isLinkDrag = isCtrl
-                        val onDrag: (Offset) -> Unit = if (isLinkDrag) state::onLinkDrag else state::onNodeDrag
-                        val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                        val link = if (dragStart == null) state.findLink(down.position) else null
-                        if (isCtrl) {
-                            if (dragStart == null && link == null) {
-                                state.toggleSelected(touchedNode.id)
-                                if (state.selectedNode?.id == touchedNode.id) state.centerNode(touchedNode.id)
-                            }
-                            else state.select(touchedNode)
-                        }
-                        if (dragStart != null) {
-                            isNodeDragged = true
-                            try {
-                                onDrag(dragStart.position)
-                                drag(dragStart.id) { change ->
-                                    onDrag(change.position)
-                                    change.consume()
-                                }
-                            } finally {
-                                isNodeDragged = false
-                            }
-                        }
-                        if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
-                        link?.let { (node, url) -> currentOnLinkClick(node, url) }
-                        // A second click on the same node shortly after the first is a double click; a drag is not a
-                        // click, nor is one that changes which nodes are selected.
-                        val isSecondClick = !isCtrl && lastClickedNodeId == touchedNode.id &&
-                            down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis
-                        if (dragStart != null || isSecondClick || isCtrl) {
+                        PointerIcon.Default
+                    }
+                )
+                .pointerInput(state) {
+                    var lastClickedNodeId: String? = null
+                    var lastClickTime = 0L
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        // A press anywhere on the map but in the text being typed ends the typing.
+                        state.commitTextEdit()
+                        val foldMarkerNode = state.findFoldMarker(down.position)
+                        if (foldMarkerNode != null) {
+                            down.consume()
                             lastClickedNodeId = null
+                            waitForUpOrCancellation()?.let { up ->
+                                up.consume()
+                                state.onFoldMarkerClick(foldMarkerNode)
+                            }
+                            return@awaitEachGesture
+                        }
+                        val addButton =
+                            if (currentOnAddChildClick != null) state.findAddButton(down.position) else null
+                        if (addButton != null) {
+                            down.consume()
+                            lastClickedNodeId = null
+                            waitForUpOrCancellation()?.let { up ->
+                                up.consume()
+                                state.onAddButtonClick(addButton.first)
+                                currentOnAddChildClick?.invoke(addButton.first, addButton.second)
+                            }
+                            return@awaitEachGesture
+                        }
+                        // With Shift held down a click selects a range of nodes. With Ctrl it adds the node to the
+                        // selected nodes and centers it, or takes it out of them, unless it is a drag or a click on
+                        // a link.
+                        val isRange = currentEvent.keyboardModifiers.isShiftPressed
+                        val isCtrl = currentEvent.keyboardModifiers.isCtrlPressed
+                        val selectionChange = when {
+                            isRange -> SelectionChange.RANGE
+                            isCtrl -> SelectionChange.LATER
+                            else -> SelectionChange.SELECT
+                        }
+                        val touchedNode = state.onTouchDown(down.position, selectionChange)
+                        currentOnNodeClick(touchedNode)
+                        if (touchedNode != null && isRange) {
+                            down.consume()
+                            lastClickedNodeId = null
+                            waitForUpOrCancellation()?.consume()
+                        }
+                        else if (touchedNode == null) {
+                            lastClickedNodeId = null
+                            // Away from the nodes, a drag that starts on an arrow link reshapes it instead of panning.
+                            val draggedLink = state.findArrowLink(down.position)
+                            if (draggedLink != null) {
+                                down.consume()
+                                isArrowLinkPressed = true
+                                try {
+                                    val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ ->
+                                        change.consume()
+                                    }
+                                    if (dragStart != null) {
+                                        state.onArrowLinkDragStart(draggedLink, down.position)
+                                        state.onArrowLinkDrag(dragStart.position)
+                                        drag(dragStart.id) { change ->
+                                            state.onArrowLinkDrag(change.position)
+                                            change.consume()
+                                        }
+                                        state.onArrowLinkDrop()
+                                    }
+                                } finally {
+                                    isArrowLinkPressed = false
+                                }
+                            }
+                            else {
+                                try {
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        state.onTransform(event.calculatePan(), event.calculateZoom())
+                                        event.changes.forEach { change ->
+                                            if (change.positionChanged()) {
+                                                isMapDragged = true
+                                                change.consume()
+                                            }
+                                        }
+                                    } while (event.changes.any { it.pressed })
+                                } finally {
+                                    isMapDragged = false
+                                }
+                            }
                         }
                         else {
-                            lastClickedNodeId = touchedNode.id
-                            lastClickTime = currentEvent.changes.firstOrNull()?.uptimeMillis ?: down.uptimeMillis
-                        }
-                        if (dragStart == null && isSecondClick) {
-                            currentOnNodeDoubleClick(state.selectedNode ?: touchedNode)
+                            down.consume()
+                            // With Ctrl held down a drag links the node to the one it is dropped on instead of moving
+                            // it.
+                            val isLinkDrag = isCtrl
+                            val onDrag: (Offset) -> Unit = if (isLinkDrag) state::onLinkDrag else state::onNodeDrag
+                            val dragStart = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                            val link = if (dragStart == null) state.findLink(down.position) else null
+                            if (isCtrl) {
+                                if (dragStart == null && link == null) {
+                                    state.toggleSelected(touchedNode.id)
+                                    if (state.selectedNode?.id == touchedNode.id) state.centerNode(touchedNode.id)
+                                }
+                                else state.select(touchedNode)
+                            }
+                            if (dragStart != null) {
+                                isNodeDragged = true
+                                try {
+                                    onDrag(dragStart.position)
+                                    drag(dragStart.id) { change ->
+                                        onDrag(change.position)
+                                        change.consume()
+                                    }
+                                } finally {
+                                    isNodeDragged = false
+                                }
+                            }
+                            if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
+                            link?.let { (node, url) -> currentOnLinkClick(node, url) }
+                            // A second click on the same node shortly after the first is a double click; a drag is
+                            // not a click, nor is one that changes which nodes are selected.
+                            val isSecondClick = !isCtrl && lastClickedNodeId == touchedNode.id &&
+                                down.uptimeMillis - lastClickTime <= viewConfiguration.doubleTapTimeoutMillis
+                            if (dragStart != null || isSecondClick || isCtrl) {
+                                lastClickedNodeId = null
+                            }
+                            else {
+                                lastClickedNodeId = touchedNode.id
+                                lastClickTime = currentEvent.changes.firstOrNull()?.uptimeMillis ?: down.uptimeMillis
+                            }
+                            if (dragStart == null && isSecondClick) {
+                                currentOnNodeDoubleClick(state.selectedNode ?: touchedNode)
+                            }
                         }
                     }
                 }
-            }
-            .pointerInput(state) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        when (event.type) {
-                            PointerEventType.Move, PointerEventType.Enter ->
-                                state.onHover(event.changes.firstOrNull()?.takeIf { !it.pressed }?.position)
-                            PointerEventType.Press -> state.onHover(null)
-                            PointerEventType.Exit -> state.onPointerExit()
-                        }
-                        // The gestures above only follow the primary button, so the secondary one is seen here.
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
-                            val change = event.changes.firstOrNull()
-                            val node = change?.let { state.findNodeAt(it.position) }
-                            val link = change?.takeIf { node == null }?.let { state.findArrowLink(it.position) }
-                            if (change != null && node != null) {
-                                change.consume()
-                                state.onNodeMenuClick(node)
-                                currentOnNodeMenu(state.selectedNode ?: node, change.position)
+                .pointerInput(state) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            when (event.type) {
+                                PointerEventType.Move, PointerEventType.Enter ->
+                                    state.onHover(event.changes.firstOrNull()?.takeIf { !it.pressed }?.position)
+                                PointerEventType.Press -> state.onHover(null)
+                                PointerEventType.Exit -> state.onPointerExit()
                             }
-                            else if (change != null && link != null) {
-                                change.consume()
-                                currentOnArrowLinkMenu(link, change.position)
+                            // The gestures above only follow the primary button, so the secondary one is seen here.
+                            if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                                val change = event.changes.firstOrNull()
+                                val node = change?.let { state.findNodeAt(it.position) }
+                                val link = change?.takeIf { node == null }?.let { state.findArrowLink(it.position) }
+                                if (change != null && node != null) {
+                                    change.consume()
+                                    state.onNodeMenuClick(node)
+                                    currentOnNodeMenu(state.selectedNode ?: node, change.position)
+                                }
+                                else if (change != null && link != null) {
+                                    change.consume()
+                                    currentOnArrowLinkMenu(link, change.position)
+                                }
                             }
-                        }
-                        if (event.type == PointerEventType.Scroll) {
-                            val scrollY = event.changes.fold(0f) { sum, change -> sum + change.scrollDelta.y }
-                            if (scrollY != 0f) {
-                                state.onTransform(
-                                    Offset.Zero,
-                                    if (scrollY < 0f) SCROLL_ZOOM_STEP else 1f / SCROLL_ZOOM_STEP,
-                                )
-                                event.changes.forEach { it.consume() }
+                            if (event.type == PointerEventType.Scroll) {
+                                val scrollY = event.changes.fold(0f) { sum, change -> sum + change.scrollDelta.y }
+                                if (scrollY != 0f) {
+                                    state.onTransform(
+                                        Offset.Zero,
+                                        if (scrollY < 0f) SCROLL_ZOOM_STEP else 1f / SCROLL_ZOOM_STEP,
+                                    )
+                                    event.changes.forEach { it.consume() }
+                                }
                             }
                         }
                     }
+                },
+        ) {
+            state.drawTick
+            val theme = state.tree.theme
+            drawRect(state.background)
+            val measure = state.mindMapManager.getMeasureTextSize() ?: return@Canvas
+            val lineColor = theme.lineColor
+            // The icon is drawn on a line, so it takes the background's side of light and dark.
+            val addIconColor = if (state.isDark) Color.Black else Color.White
+            withTransform({
+                translate(state.currentPoint.x, state.currentPoint.y)
+                scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
+            }) {
+                drawAttachedNode(state, drawInfo)
+                drawMap(state, drawInfo, measure, lineColor, hiddenTextId = state.textEditNodeId) {
+                    if (onAddChildClick != null) drawAddButtons(state, drawInfo, lineColor, addIconColor)
                 }
-            },
-    ) {
-        state.drawTick
-        val theme = state.tree.theme
-        drawRect(state.background)
-        val measure = state.mindMapManager.getMeasureTextSize() ?: return@Canvas
-        val lineColor = theme.lineColor
-        // The icon is drawn on a line, so it takes the background's side of light and dark.
-        val addIconColor = if (state.isDark) Color.Black else Color.White
-        withTransform({
-            translate(state.currentPoint.x, state.currentPoint.y)
-            scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
-        }) {
-            drawAttachedNode(state, drawInfo)
-            drawMap(state, drawInfo, measure, lineColor) {
-                if (onAddChildClick != null) drawAddButtons(state, drawInfo, lineColor, addIconColor)
-            }
-            drawLinkDrag(state)
+                drawLinkDrag(state)
 
-            state.selectedNodes.filter { state.tree.isVisible(it.id) }.forEach { selectedNode ->
-                NodeDrawerFactory(
-                    selectedNode
-                    , drawInfo
-                    , this
-                )
-                .createStrokeNode()
-                .drawNode(this)
-                // The markers sit on the node's edge, so they are drawn again to stay above the border.
-                drawMarkers(state, selectedNode, drawInfo)
+                state.selectedNodes.filter { state.tree.isVisible(it.id) }.forEach { selectedNode ->
+                    NodeDrawerFactory(
+                        selectedNode
+                        , drawInfo
+                        , this
+                    )
+                    .createStrokeNode()
+                    .drawNode(this)
+                    // The markers sit on the node's edge, so they are drawn again to stay above the border.
+                    drawMarkers(state, selectedNode, drawInfo)
+                }
             }
         }
+        NodeTextEditor(state, measureTextSize)
     }
 }
 
@@ -436,13 +451,14 @@ internal fun DrawScope.drawMap(
     , drawInfo: DrawInfo
     , measureTextSize: MeasureTextSize
     , lineColor: Color
+    , hiddenTextId: String? = null
     , underNodes: DrawScope.() -> Unit = {}
 ) {
     drawLines(state, drawInfo, lineColor)
     drawArrowLinks(state)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor)
-    drawTree(state, drawInfo, measureTextSize, lineColor)
+    drawTree(state, drawInfo, measureTextSize, lineColor, hiddenTextId)
 }
 
 private fun DrawScope.drawTree(
@@ -450,6 +466,7 @@ private fun DrawScope.drawTree(
     drawInfo: DrawInfo,
     measureTextSize: MeasureTextSize,
     lineColor: Color,
+    hiddenTextId: String?,
 ) {
     // A line node is drawn as its own line goes on from the one to its parent, in the same color and width.
     val lines = mutableMapOf<String, ResolvedLine>()
@@ -467,7 +484,9 @@ private fun DrawScope.drawTree(
         if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
         val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
-        if (content.isTextShown) translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        if (content.isTextShown && node.id != hiddenTextId) {
+            translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        }
         drawNodeImages(node, content)
         content.note?.let { note ->
             val centerX = node.path.centerX.toPx(this)
