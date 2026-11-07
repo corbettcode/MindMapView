@@ -92,11 +92,13 @@ nothing structural; summaries second.
 
 **Files:** `MindMapState.kt`, test `BoundaryStateTest.kt`
 
-- [ ] `addBoundary()`: one boundary for each group of `selectedBranches` by parent and side, all as one step. The
-  root alone gets none.
-- [ ] `updateBoundary(id, ...)` and `removeBoundary(id)`, one step each.
-- [ ] Copying a branch carries the boundaries inside it, and pasting gives them new ids.
-- [ ] Tests: grouping, one undo step, the root, copy and paste.
+- [x] `addBoundary()`: one boundary for each group of `selectedBranches` by parent and side, all as one step, and
+  returns the ones added. The root alone gets none.
+- [x] `updateBoundary(boundary)` and `removeBoundary(id)`, one step each, and an observable `state.boundaries`.
+- [x] Copying a branch carries the boundaries inside it (those whose parent was copied), and pasting gives them new
+  ids. A boundary around the copied nodes themselves is not pasted, as they are pasted under another parent.
+- [x] Tests (10): grouping by parent and side, the root, nothing selected, one undo step, update and remove, updating
+  a removed one, copy and paste, cut.
 
 ### Task A3: Where a boundary is
 

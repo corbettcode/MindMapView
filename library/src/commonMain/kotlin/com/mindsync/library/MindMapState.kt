@@ -24,6 +24,7 @@ import com.mindsync.library.command.RemoveNodeCommand
 import com.mindsync.library.command.UpdateNodeCommand
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeBorder
@@ -162,6 +163,14 @@ class MindMapState(
             // The tree is no state of its own, so reading the tick is what tells a reader of a change.
             drawTick
             return tree.arrowLinks
+        }
+
+    /** The boundaries of the tree, in the order they are drawn. */
+    val boundaries: List<Boundary>
+        get() {
+            // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+            drawTick
+            return tree.boundaries
         }
 
     /**
@@ -673,9 +682,10 @@ class MindMapState(
     val hasCopiedNode: Boolean get() = copiedBranch != null
 
     /**
-     * Copies the selected nodes and the nodes below them, with their attributes and the arrow links between
-     * them, as they are now: a node that is changed or removed afterwards is pasted as it was when it was
-     * copied. An arrow link to or from a node that was not copied is left out, as it has no end to paste.
+     * Copies the selected nodes and the nodes below them, with their attributes, the arrow links between
+     * them and the boundaries within them, as they are now: a node that is changed or removed afterwards is pasted
+     * as it was when it was copied. An arrow link to or from a node that was not copied is left out, as it has no
+     * end to paste, and so is a boundary around the selected nodes themselves, as they are pasted elsewhere.
      */
     fun copyNode() {
         val branches = selectedBranches
@@ -685,6 +695,7 @@ class MindMapState(
         copiedBranch = CopiedBranch(
             branches.map { copyBranch(it) }
             , tree.arrowLinks.filter { it.sourceId in ids && it.targetId in ids }
+            , tree.boundaries.filter { it.parentId in ids }
         )
     }
 
@@ -741,6 +752,15 @@ class MindMapState(
                         id = IdGenerator.makeRandomNodeId()
                         , sourceId = pastedIds.getValue(link.sourceId)
                         , targetId = pastedIds.getValue(link.targetId)
+                    )
+                )
+            }
+            copied.boundaries.forEach { boundary ->
+                tree.addBoundary(
+                    boundary.copy(
+                        id = IdGenerator.makeRandomNodeId()
+                        , parentId = pastedIds.getValue(boundary.parentId)
+                        , childIds = boundary.childIds.map { pastedIds.getValue(it) }.toSet()
                     )
                 )
             }
@@ -1205,6 +1225,44 @@ class MindMapState(
         recordChange {
             tree.removeArrowLink(id)
             invalidate()
+        }
+    }
+
+    /**
+     * Adds a boundary around the selected nodes and the nodes below them, as one change, and returns the boundaries
+     * added. A boundary is around children of one node, and under the root around those on one side of it, so
+     * there is one for each group of the selected nodes with the same parent and side. The root is in none.
+     */
+    fun addBoundary(): List<Boundary> {
+        val rootId = tree.getRootNode().id
+        val groups = selectedBranches
+            .filter { it.parentId != null }
+            .groupBy { node -> node.parentId to tree.sideOf(node.id).takeIf { node.parentId == rootId } }
+        if (groups.isEmpty()) return emptyList()
+        val added = groups.map { (key, nodes) ->
+            Boundary(IdGenerator.makeRandomNodeId(), key.first!!, nodes.map { it.id }.toSet())
+        }
+        recordChange {
+            added.forEach { tree.addBoundary(it) }
+            animateTreeChange()
+        }
+        val ids = added.map { it.id }.toSet()
+        return tree.boundaries.filter { it.id in ids }
+    }
+
+    /** Replaces the boundary with the id of [boundary], to change its children, color, line or fill. */
+    fun updateBoundary(boundary: Boundary) {
+        recordChange {
+            if (tree.boundaries.none { it.id == boundary.id }) return
+            tree.addBoundary(boundary)
+            animateTreeChange()
+        }
+    }
+
+    fun removeBoundary(id: String) {
+        recordChange {
+            tree.removeBoundary(id)
+            animateTreeChange()
         }
     }
 
@@ -1885,6 +1943,7 @@ internal enum class SelectionChange {
 private class CopiedBranch(
     val roots: List<CopiedNode>
     , val arrowLinks: List<ArrowLink>
+    , val boundaries: List<Boundary>
 )
 
 // A copied node, which is pasted with the nodes below it and the attributes and line settings of each of them.
