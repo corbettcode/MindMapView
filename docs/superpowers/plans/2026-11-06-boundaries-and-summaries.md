@@ -125,18 +125,20 @@ nothing structural; summaries second.
 
 ### Task A5: Drawing and the boundary menu
 
-**Files:** `MindMap.kt`, `MindMapState.kt` (hit test), test in `NodeTextEditorTest`-style compose test
-`BoundaryDrawTest.kt`
+**Files:** `MindMap.kt`, `MindMapState.kt`, `MapImage.kt`, `layout/BoundaryGeometry.kt`, test `BoundaryDrawTest.kt`
 
-- [ ] `exportBounds` (in `MapImage.kt`) adds the boundary rectangles, or the PNG, SVG and PDF exports clip the
+- [x] `exportBounds` (in `MapImage.kt`) adds the boundary rectangles, so the PNG, SVG and PDF exports don't clip the
   outlines of boundaries at the map's edge.
-- [ ] `drawBoundaries` comes first in `drawMap`, behind the lines. It draws a rounded rectangle (corner radius 12 dp)
-  filled at 12% when `isFilled`, with a 1.5 dp outline, dashed or solid, in `color ?: rootLineColor(branch)`.
-- [ ] `state.boundaryAt(point)`: the innermost boundary under the point, unless there is a node there. A
-  `MindMap(onBoundaryMenu = { boundary, position -> })` parameter is called on a right click, as `onArrowLinkMenu`
-  is. A left click or drag on it still pans the map.
-- [ ] Tests: a PNG export of a map with a boundary has the outline's color at its edge; a right click inside it calls
-  `onBoundaryMenu`; a right click on a node inside it calls `onNodeMenu`.
+- [x] `drawBoundaries` comes first in `drawMap`, behind the lines, each boundary before those within it
+  (`drawnBoundaries`). It draws a rounded rectangle (corner radius 12 dp), filled at 12% when `isFilled`, with a
+  1.5 dp outline, dashed (6 dp dash, 4 dp gap) or solid. The colour is `color`, or else the colour of the line into
+  the boundary's first child, which is its branch's colour.
+- [x] `state.findBoundary(position)` gives the innermost boundary at a point. `MindMap(onBoundaryMenu = { boundary,
+  position -> })` is called on a right click where there is neither a node nor an arrow link. A left click or drag
+  there still pans the map.
+- [x] Tests (7): the outline's colour is in a PNG export; the fill is there when filled and gone when not; the
+  export's bounds hold the whole outline; a right click in the padding asks for the boundary's menu; a right click on
+  a node inside asks for the node's menu; the innermost boundary is found; a folded parent draws none.
 
 ### Task A6: Boundaries in files
 

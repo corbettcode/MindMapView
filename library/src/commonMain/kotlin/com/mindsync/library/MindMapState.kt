@@ -41,6 +41,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.drawnBoundaries
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
@@ -1592,6 +1593,12 @@ class MindMapState(
         return tree.arrowLinks.lastOrNull { link ->
             density.arrowLinkCurve(tree, link)?.let { it.distanceTo(point) <= reach } == true
         }
+    }
+
+    // The boundary drawn last at the position, which is the innermost there, as each is drawn before those within it.
+    internal fun findBoundary(position: Offset): Boundary? {
+        val point = toTreePoint(position)
+        return density.drawnBoundaries(tree).lastOrNull { (_, rect) -> rect.contains(point) }?.first
     }
 
     // The text of a node is drawn centered on the node, above its attributes when they are shown, so that

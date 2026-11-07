@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.mindsync.library.data.Tree
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.drawnBoundaries
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.toPx
@@ -67,7 +68,8 @@ internal fun DrawScope.drawExportedMap(
     }
 }
 
-// What the nodes that are shown and their arrow links take up, in the pixels of the tree, with room around them.
+// What the nodes that are shown, their arrow links and their boundaries take up, in the pixels of the tree, with
+// room around them.
 // A curve stays within its control points, so they are what an arrow link takes up at most.
 internal fun Density.exportBounds(tree: Tree<*>): Rect {
     var bounds = Rect.Zero
@@ -85,6 +87,7 @@ internal fun Density.exportBounds(tree: Tree<*>): Rect {
         val curve = arrowLinkCurve(tree, link) ?: return@forEach
         listOf(curve.start, curve.startControl, curve.endControl, curve.end).forEach { add(Rect(it, it)) }
     }
+    drawnBoundaries(tree).forEach { (_, rect) -> add(rect) }
     return bounds.inflate(IMAGE_MARGIN.toPx(this))
 }
 

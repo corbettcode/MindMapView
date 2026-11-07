@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -57,6 +58,8 @@ import androidx.compose.ui.unit.toSize
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
+import com.mindsync.library.data.Boundary
+import com.mindsync.library.data.BoundaryStyle
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLineStyle
@@ -69,6 +72,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.drawnBoundaries
 import com.mindsync.library.layout.NodeContent
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.TopicKind
@@ -90,6 +94,12 @@ import kotlin.math.sqrt
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
 private const val SCROLL_ZOOM_STEP = 1.1f
 private const val TEXT_CACHE_SIZE = 64
+// A boundary is filled with its color this much, so the nodes in it stay easy to read.
+private const val BOUNDARY_FILL_ALPHA = 0.12f
+private val BOUNDARY_CORNER_RADIUS = 12.dp
+private val BOUNDARY_LINE_WIDTH = 1.5.dp
+private val BOUNDARY_DASH = 6.dp
+private val BOUNDARY_DASH_GAP = 4.dp
 private const val ADD_BUTTON_ARM_RATIO = 0.5f
 private const val ADD_BUTTON_STROKE_RATIO = 0.25f
 
@@ -148,6 +158,11 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * button, where there is no node, calls [onArrowLinkMenu] with the link and the position of the click, for
  * showing a menu there.
  *
+ * The boundaries of the tree are drawn behind its lines and nodes, each one behind those within it. A click with
+ * the secondary mouse button inside one, where there is neither a node nor an arrow link, calls [onBoundaryMenu]
+ * with the innermost boundary there and the position of the click. A drag inside one moves the map, as a drag on
+ * empty space does.
+ *
  * The attributes of a node are drawn as a table below its text when they are shown inline, by
  * [MindMapState.attributeDisplayOf], and
  * its note as a paragraph between the two when it is shown inline, by [MindMapState.noteDisplayOf], in place of
@@ -186,6 +201,7 @@ fun MindMap(
     , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onArrowLinkMenu: (link: ArrowLink, position: Offset) -> Unit = { _, _ -> }
+    , onBoundaryMenu: (boundary: Boundary, position: Offset) -> Unit = { _, _ -> }
     , onNodeMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
     , onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit = { _, _, _, _ -> }
 ) {
@@ -207,6 +223,7 @@ fun MindMap(
     val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnArrowLinkMenu by rememberUpdatedState(onArrowLinkMenu)
+    val currentOnBoundaryMenu by rememberUpdatedState(onBoundaryMenu)
     val currentOnNodeMenu by rememberUpdatedState(onNodeMenu)
     val currentOnNodeLink by rememberUpdatedState(onNodeLink)
 
@@ -383,6 +400,9 @@ fun MindMap(
                                 val change = event.changes.firstOrNull()
                                 val node = change?.let { state.findNodeAt(it.position) }
                                 val link = change?.takeIf { node == null }?.let { state.findArrowLink(it.position) }
+                                val boundary = change
+                                    ?.takeIf { node == null && link == null }
+                                    ?.let { state.findBoundary(it.position) }
                                 if (change != null && node != null) {
                                     change.consume()
                                     state.onNodeMenuClick(node)
@@ -391,6 +411,10 @@ fun MindMap(
                                 else if (change != null && link != null) {
                                     change.consume()
                                     currentOnArrowLinkMenu(link, change.position)
+                                }
+                                else if (change != null && boundary != null) {
+                                    change.consume()
+                                    currentOnBoundaryMenu(boundary, change.position)
                                 }
                             }
                             if (event.type == PointerEventType.Scroll) {
@@ -454,11 +478,45 @@ internal fun DrawScope.drawMap(
     , hiddenTextId: String? = null
     , underNodes: DrawScope.() -> Unit = {}
 ) {
+    drawBoundaries(state, drawInfo, lineColor)
     drawLines(state, drawInfo, lineColor)
     drawArrowLinks(state)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor)
     drawTree(state, drawInfo, measureTextSize, lineColor, hiddenTextId)
+}
+
+// A boundary is in the color of the line to the first of its children, which is that of its branch, unless it has a
+// color of its own.
+private fun DrawScope.drawBoundaries(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+) {
+    val boundaries = drawnBoundaries(state.tree)
+    if (boundaries.isEmpty()) return
+    val lineColors = mutableMapOf<String, Color>()
+    forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line -> lineColors[node.id] = line.color }
+    val corner = CornerRadius(BOUNDARY_CORNER_RADIUS.toPx())
+    val strokeWidth = BOUNDARY_LINE_WIDTH.toPx()
+    val dashes = PathEffect.dashPathEffect(floatArrayOf(BOUNDARY_DASH.toPx(), BOUNDARY_DASH_GAP.toPx()))
+    boundaries.forEach { (boundary, rect) ->
+        val firstChildId = state.tree.boundaryChildIds(boundary).first()
+        val color = boundary.color ?: lineColors[firstChildId] ?: lineColor
+        if (boundary.isFilled) {
+            drawRoundRect(color.copy(alpha = color.alpha * BOUNDARY_FILL_ALPHA), rect.topLeft, rect.size, corner)
+        }
+        drawRoundRect(
+            color = color
+            , topLeft = rect.topLeft
+            , size = rect.size
+            , cornerRadius = corner
+            , style = Stroke(
+                width = strokeWidth
+                , pathEffect = if (boundary.style == BoundaryStyle.DASHED) dashes else null
+            )
+        )
+    }
 }
 
 private fun DrawScope.drawTree(
