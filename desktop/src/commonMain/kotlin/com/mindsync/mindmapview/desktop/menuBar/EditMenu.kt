@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.util.RichTextLink
 import com.mindsync.mindmapview.desktop.LINK_MENU_MAX_WIDTH
+import com.mindsync.mindmapview.desktop.NEW_NODE_ITEMS
+import com.mindsync.mindmapview.desktop.NewNodePlace
 import com.mindsync.mindmapview.desktop.label
 import kotlin.collections.forEach
 
@@ -30,7 +32,10 @@ import kotlin.collections.forEach
  * @param onRedo Callback function invoked when the "Redo" action is selected.
  * @param enabled Determines whether the general actions in the menu are enabled.
  * @param onAdd Callback function invoked when an item is added. Receives the `NodeShape` of the item to be added.
- * @param onEdit Callback function invoked when the "Edit" action is selected.
+ * @param onAddNodeToType Callback function invoked when "Add Child" or an "Add Sibling" action is selected. Receives
+ * where the node goes, to type its text on the map.
+ * @param onEditText Callback function invoked when the "Edit Text" action is selected.
+ * @param onEdit Callback function invoked when the "Edit..." action is selected.
  * @param removeEnabled Determines whether the "Remove" action is enabled.
  * @param onRemove Callback function invoked when the "Remove" action is selected.
  * @param onCut Callback function invoked when the "Cut" action is selected.
@@ -55,6 +60,8 @@ fun EditMenu(
     , onRedo: () -> Unit
     , enabled: Boolean
     , onAdd: (NodeShape) -> Unit
+    , onAddNodeToType: (NewNodePlace) -> Unit
+    , onEditText: () -> Unit
     , onEdit: () -> Unit
     , removeEnabled: Boolean
     , onRemove: () -> Unit
@@ -109,6 +116,17 @@ fun EditMenu(
 
             HorizontalDivider()
 
+            NEW_NODE_ITEMS.forEach { (text, shortcut, place) ->
+                DropdownMenuItem(
+                    text = { Text(text) }
+                    , trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) }
+                    , onClick = {
+                        expanded = false
+                        onAddNodeToType(place)
+                    }
+                    , enabled = enabled
+                )
+            }
             Box {
                 DropdownMenuItem(
                     text = { Text("Add") }
@@ -133,7 +151,17 @@ fun EditMenu(
                 }
             }
             DropdownMenuItem(
-                text = { Text("Edit") }
+                text = { Text("Edit Text") }
+                , trailingIcon = { Text("F2", style = MaterialTheme.typography.labelMedium) }
+                , onClick = {
+                    expanded = false
+                    onEditText()
+                }
+                , enabled = enabled
+            )
+            DropdownMenuItem(
+                text = { Text("Edit...") }
+                , trailingIcon = { Text("Alt+Enter", style = MaterialTheme.typography.labelMedium) }
                 , onClick = {
                     expanded = false
                     onEdit()

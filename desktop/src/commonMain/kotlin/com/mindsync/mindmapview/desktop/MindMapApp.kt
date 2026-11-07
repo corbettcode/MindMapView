@@ -188,6 +188,8 @@ internal class MindMapApp(
         private set
     // How many nodes were added to the mind map since it was started or opened.
     private var createdNodeCount by mutableStateOf(emptyMap<TopicKind, Int>())
+    // The node added to be typed into, with its kind and number, which only count once its typing is ended with it.
+    private var typedNewNode: Triple<String, TopicKind, Int>? = null
     // The text to find, which is kept when the find bar is closed for F3 to find it again.
     private var findText by mutableStateOf("")
     private var isFindOpen by mutableStateOf(false)
@@ -517,6 +519,87 @@ internal class MindMapApp(
         }
     }
 
+    /**
+     * Adds a node at [place] from the selected node and starts typing its text, as Tab and Enter do. It is named
+     * and styled as the Add dialog names and styles it, and its text is selected for typing to replace it.
+     */
+    private fun addNodeToType(place: NewNodePlace) {
+        val selected = state.selectedNode ?: return
+        // The root has no siblings, so a sibling of it is a child of it.
+        val parent = selected.parentId
+            ?.takeIf { place != NewNodePlace.CHILD }
+            ?.let { state.tree.getNode(it) }
+            ?: selected
+        // A sibling of a child of the root is on its side, and a child of the root on the side new ones go to.
+        val isRootSibling = parent.parentId == null && parent.id != selected.id
+        val side = if (isRootSibling) state.tree.sideOf(selected.id) else state.layoutSide
+        val kind = state.tree.childTopicKindOf(parent.id)
+        val number = nextNodeNumber(state.tree, kind, createdNodeCount[kind] ?: 0)
+        val style = newNodeStyle(state.tree, parent, side, defaultShape = preferences.topicOf(kind).shape)
+        val text = "${kind.label} $number"
+        arrowLinkSourceId = null
+        state.addNodeForTextEdit {
+            if (place == NewNodePlace.CHILD) {
+                addNode(text, style.shape, style.color, style.textColor, side, border = style.border)
+            }
+            else {
+                addSiblingNode(
+                    text
+                    , style.shape
+                    , style.color
+                    , style.textColor
+                    , isAbove = place == NewNodePlace.SIBLING_ABOVE
+                    , side = side
+                    , border = style.border
+                )
+            }
+        }
+        typedNewNode = state.textEditNodeId?.let { Triple(it, kind, number) }
+    }
+
+    // A node added to be typed into counts once its typing ends with it there, not when it is cancelled.
+    private fun onTextEditEnd() {
+        val (id, kind, number) = typedNewNode ?: return
+        if (state.textEditNodeId == id) return
+        typedNewNode = null
+        if (id in state.tree.nodes) createdNodeCount = createdNodeCount + (kind to number)
+    }
+
+    // Returns whether the key was taken, or null when the other keys of the app are to have it.
+    private fun onInlineEditKey(event: KeyEvent): Boolean? {
+        val isEditing = state.textEditNodeId != null
+        val canAct = !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null
+        if (!isEditing && !canAct) return null
+        val action = inlineKeyAction(
+            key = event.key
+            , codePoint = event.utf16CodePoint
+            , isShift = event.isShiftPressed
+            , isCtrl = event.isCtrlPressed
+            , isAlt = event.isAltPressed
+            , isMeta = event.isMetaPressed
+            , isEditing = isEditing
+            , hasSelectedNode = state.selectedNode != null
+        )
+        when (action) {
+            null -> return if (isEditing) false else null
+            is InlineKeyAction.AddNode -> addNodeToType(action.place)
+            InlineKeyAction.EditText -> state.startTextEdit()
+            is InlineKeyAction.TypeText -> state.startTextEdit(action.text)
+            InlineKeyAction.OpenEditDialog -> editNodeRequest++
+            InlineKeyAction.Commit -> state.commitTextEdit()
+            InlineKeyAction.CommitAndAddChild -> {
+                state.commitTextEdit()
+                addNodeToType(NewNodePlace.CHILD)
+            }
+            InlineKeyAction.Cancel -> state.cancelTextEdit()
+            InlineKeyAction.CommitAndGoOn -> {
+                state.commitTextEdit()
+                return null
+            }
+        }
+        return true
+    }
+
     private fun onSaveChoice(choice: SaveChoice) {
         val action = afterSaveChoice
         afterSaveChoice = null
@@ -524,6 +607,7 @@ internal class MindMapApp(
     }
 
     fun onPreviewKeyEvent(event: KeyEvent): Boolean {
+        if (event.type == KeyEventType.KeyDown) onInlineEditKey(event)?.let { return it }
         return when {
             event.type != KeyEventType.KeyDown -> false
             event.isAltPressed && event.key == Key.F -> {
@@ -557,12 +641,6 @@ internal class MindMapApp(
             !isDialogOpen && !isFindFocused && error == null && !event.isCtrlPressed && !event.isAltPressed &&
                 state.selectedNode != null && event.isPlus() -> {
                 addChildRequest++
-                true
-            }
-            !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null && !event.isCtrlPressed &&
-                !event.isAltPressed && !event.isShiftPressed && state.selectedNode != null &&
-                (event.key == Key.Enter || event.key == Key.NumPadEnter) -> {
-                editNodeRequest++
                 true
             }
             // The File menu goes through its items with the arrow keys while it is open.
@@ -685,6 +763,11 @@ internal class MindMapApp(
             val families = topicFonts.values.distinct().associateWith { loadNodeFontFamily(it) }
             topicFontFamilies = topicFonts.mapValues { (_, font) -> families[font] }
         }
+        // A dialog, the find bar or the File menu is about the map as it is, so the text being typed is ended.
+        LaunchedEffect(isDialogOpen, isFindOpen, fileMenuExpanded) {
+            if (isDialogOpen || isFindOpen || fileMenuExpanded) state.commitTextEdit()
+        }
+        LaunchedEffect(state.textEditNodeId) { onTextEditEnd() }
         CompositionLocalProvider(LocalEmojiFontFamily provides emojiFontFamily) {
             Screen(onMapPress)
         }
@@ -734,6 +817,7 @@ internal class MindMapApp(
             onCopy = ::copyNodeToClipboard,
             isPasteEnabled = { state.hasCopiedNode || platform.clipboard.hasText() },
             onPaste = ::pasteFromClipboard,
+            onAddNodeToType = ::addNodeToType,
             onMapPress = onMapPress,
             findBar = {
                 if (isFindOpen) {
@@ -836,6 +920,8 @@ private fun MindMapScreen(
     onCopy: () -> Unit,
     isPasteEnabled: () -> Boolean,
     onPaste: () -> Unit,
+    // Adds a node and starts typing its text on the map, as Tab and Enter do.
+    onAddNodeToType: (NewNodePlace) -> Unit,
     onMapPress: () -> Unit,
     findBar: @Composable () -> Unit,
 ) {
@@ -981,6 +1067,8 @@ private fun MindMapScreen(
                             onRedo = { state.redo() },
                             enabled = selectedNode != null,
                             onAdd = { operation = Operation.Add(it) },
+                            onAddNodeToType = onAddNodeToType,
+                            onEditText = { state.startTextEdit() },
                             onEdit = { operation = Operation.Update },
                             removeEnabled = state.selectedBranches.isRemovable(),
                             onRemove = removeNode,
@@ -1045,7 +1133,8 @@ private fun MindMapScreen(
                                 onArrowLinkSourceIdChange(null)
                             }
                         }
-                        , onNodeDoubleClick = { operation = Operation.Update }
+                        // As in XMind, the text is typed on the map; the dialog has the rest of the node.
+                        , onNodeDoubleClick = { state.startTextEdit() }
                         , onAddChildClick = { _, side -> addChild(side) }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
                         , onNodeMenu = { node, position ->
@@ -1087,6 +1176,8 @@ private fun MindMapScreen(
                                 // The root is on neither side of itself, so it is not moved.
                                 side = if (node.parentId == null) null else state.tree.sideOf(nodeId),
                                 onEdit = { operation = Operation.Update },
+                                onEditText = { state.startTextEdit() },
+                                onAddNodeToType = onAddNodeToType,
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
@@ -1376,6 +1467,8 @@ private fun NodeMenu(
     position: Offset,
     side: LayoutSide?,
     onEdit: () -> Unit,
+    onEditText: () -> Unit,
+    onAddNodeToType: (NewNodePlace) -> Unit,
     onLink: () -> Unit,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
@@ -1391,8 +1484,27 @@ private fun NodeMenu(
 ) {
     Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
         DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+            NEW_NODE_ITEMS.forEach { (text, shortcut, place) ->
+                DropdownMenuItem(
+                    text = { Text(text) },
+                    trailingIcon = { Text(shortcut, style = MaterialTheme.typography.labelMedium) },
+                    onClick = {
+                        onDismiss()
+                        onAddNodeToType(place)
+                    },
+                )
+            }
             DropdownMenuItem(
-                text = { Text("Edit") },
+                text = { Text("Edit Text") },
+                trailingIcon = { Text("F2", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    onDismiss()
+                    onEditText()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Edit...") },
+                trailingIcon = { Text("Alt+Enter", style = MaterialTheme.typography.labelMedium) },
                 onClick = {
                     onDismiss()
                     onEdit()

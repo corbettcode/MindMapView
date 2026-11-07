@@ -127,6 +127,9 @@ existing tests use it; otherwise a check of the text rectangle as plain math)
 **Files:** `desktop/.../MindMapApp.kt`, `menuBar/EditMenu.kt`, new `desktop/.../InlineEditKeys.kt` + test
 `desktop/src/jvmTest/.../InlineEditKeysTest.kt`
 
+- [x] End-to-end: `InlineEditAppTest` drives the real `MindMapApp` with a fake `AppPlatform`. It covers Tab, Enter,
+  Shift+Enter, F2, Escape, undo, Alt+Enter, and keys going to the text while it is typed. Test key presses carry no
+  character, so type-to-edit is only unit-tested (`InlineEditKeysTest`) and checked by hand in Task 7.
 - [ ] Pull the key mapping into a pure function, `inlineKeyAction(key, isShift, isCtrl, isAlt, codePoint,
   isEditing): InlineKeyAction?`, so the whole Decisions table is unit-tested without a window.
 - [ ] In `onPreviewKeyEvent`, before every other case: while `state.textEditNodeId != null`, handle only Enter
