@@ -524,6 +524,8 @@ internal class MindMapApp(
      * and styled as the Add dialog names and styles it, and its text is selected for typing to replace it.
      */
     private fun addNodeToType(place: NewNodePlace) {
+        // With no node selected, the node is added to the root, which a map starts from.
+        if (state.selectedNode == null) state.select(state.tree.getRootNode())
         val selected = state.selectedNode ?: return
         // The root has no siblings, so a sibling of it is a child of it.
         val parent = selected.parentId
@@ -596,6 +598,7 @@ internal class MindMapApp(
                 state.commitTextEdit()
                 return null
             }
+            InlineKeyAction.Ignore -> {}
         }
         return true
     }

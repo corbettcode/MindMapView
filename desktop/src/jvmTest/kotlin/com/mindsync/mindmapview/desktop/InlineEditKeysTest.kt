@@ -57,16 +57,32 @@ class InlineEditKeysTest {
         assertNull(action(Key.C, codePoint = 'c'.code, isCtrl = true))
         assertNull(action(Key.F, codePoint = 'f'.code, isAlt = true))
         assertNull(action(Key.C, codePoint = 'c'.code, isMeta = true))
-        assertNull(action(Key.Tab, isCtrl = true))
-        assertNull(action(Key.Tab, isShift = true))
         assertNull(action(Key.Enter, isCtrl = true))
     }
 
     @Test
-    fun withNoNodeSelectedNoKeyActs() {
-        assertNull(action(Key.Tab, hasSelectedNode = false))
-        assertNull(action(Key.Enter, hasSelectedNode = false))
+    fun withNoNodeSelectedTabAndEnterAddAChildOfTheRoot() {
+        assertEquals(InlineKeyAction.AddNode(NewNodePlace.CHILD), action(Key.Tab, hasSelectedNode = false))
+        assertEquals(InlineKeyAction.AddNode(NewNodePlace.CHILD), action(Key.Enter, hasSelectedNode = false))
+        assertNull(action(Key.Enter, isShift = true, hasSelectedNode = false))
+        assertNull(action(Key.F2, hasSelectedNode = false))
         assertNull(action(Key.Q, codePoint = 'q'.code, hasSelectedNode = false))
+    }
+
+    @Test
+    fun tabNeverTakesTheFocusOffTheMap() {
+        listOf(true, false).forEach { isEditing ->
+            listOf(true, false).forEach { hasSelectedNode ->
+                assertEquals(
+                    InlineKeyAction.Ignore
+                    , action(Key.Tab, isShift = true, isEditing = isEditing, hasSelectedNode = hasSelectedNode)
+                )
+                assertEquals(
+                    InlineKeyAction.Ignore
+                    , action(Key.Tab, isCtrl = true, isEditing = isEditing, hasSelectedNode = hasSelectedNode)
+                )
+            }
+        }
     }
 
     @Test

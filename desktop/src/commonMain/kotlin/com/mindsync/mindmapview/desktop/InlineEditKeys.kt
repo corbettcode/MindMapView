@@ -41,12 +41,19 @@ sealed interface InlineKeyAction {
 
     /** Ends the typing, then lets the key do what it does: save, open, find, the File menu... */
     data object CommitAndGoOn : InlineKeyAction
+
+    /** Does nothing, so the key does nothing else either, as a Tab that would take the focus off the map. */
+    data object Ignore : InlineKeyAction
 }
 
 /**
  * Returns what a key pressed down does for typing the text of a node, or null when it does something else, or
  * nothing. While a node's text [isEditing], every key that is not an action goes to the text field. Otherwise
- * [hasSelectedNode] tells whether there is a node for the key to act on.
+ * [hasSelectedNode] tells whether there is a node for the key to act on. With none, Tab and Enter add a child of the
+ * root, as the root is the node a map starts from.
+ *
+ * Tab would move the focus from the map to the menus, so on the map it is always taken, whatever else is pressed with
+ * it.
  */
 fun inlineKeyAction(
     key: Key
@@ -64,14 +71,16 @@ fun inlineKeyAction(
         return when {
             isEnter && isPlain && !isShift -> InlineKeyAction.Commit
             key == Key.Tab && isPlain && !isShift -> InlineKeyAction.CommitAndAddChild
+            key == Key.Tab -> InlineKeyAction.Ignore
             key == Key.Escape -> InlineKeyAction.Cancel
             isCtrl && key in GOING_ON_CTRL_KEYS || isAlt && key == Key.F -> InlineKeyAction.CommitAndGoOn
             else -> null
         }
     }
-    if (!hasSelectedNode) return null
     return when {
         key == Key.Tab && isPlain && !isShift -> InlineKeyAction.AddNode(NewNodePlace.CHILD)
+        key == Key.Tab -> InlineKeyAction.Ignore
+        !hasSelectedNode -> if (isEnter && isPlain && !isShift) InlineKeyAction.AddNode(NewNodePlace.CHILD) else null
         isEnter && isPlain -> InlineKeyAction.AddNode(
             if (isShift) NewNodePlace.SIBLING_ABOVE else NewNodePlace.SIBLING_BELOW
         )

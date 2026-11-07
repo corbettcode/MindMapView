@@ -14,6 +14,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -62,8 +63,8 @@ class InlineEditAppTest {
     // for the window takes it back whenever no text field has it.
     private val focusRequester = FocusRequester()
 
-    // The app with its keys taken as the window takes them, and its root selected.
-    private fun ComposeUiTest.shownApp(): MindMapApp {
+    // The app with its keys taken as the window takes them, and its root selected unless [isRootSelected] is false.
+    private fun ComposeUiTest.shownApp(isRootSelected: Boolean = true): MindMapApp {
         lateinit var app: MindMapApp
         setContent {
             val scope = rememberCoroutineScope()
@@ -81,7 +82,7 @@ class InlineEditAppTest {
         }
         waitForIdle()
         runOnIdle { focusRequester.requestFocus() }
-        app.state.select(app.state.tree.getRootNode())
+        if (isRootSelected) app.state.select(app.state.tree.getRootNode())
         waitForIdle()
         return app
     }
@@ -130,6 +131,32 @@ class InlineEditAppTest {
         assertEquals(listOf("Ideas", "Plans"), state.childTexts(rootId))
         val plans = state.tree.getNode(rootId).children[1]
         assertEquals(listOf("Step one"), state.childTexts(plans))
+    }
+
+    // As the app starts, no node is selected, and Tab would take the focus to the menus.
+    @Test
+    fun tabWithNoNodeSelectedAddsAChildOfTheRoot() = runComposeUiTest {
+        val app = shownApp(isRootSelected = false)
+        val state = app.state
+        val rootId = state.tree.getRootNode().id
+
+        press(Key.Tab)
+        type("Ideas")
+        press(Key.Enter)
+
+        assertEquals(listOf("Ideas"), state.childTexts(rootId))
+    }
+
+    @Test
+    fun shiftTabWhileTypingKeepsTheTyping() = runComposeUiTest {
+        val app = shownApp()
+        press(Key.Tab)
+        val id = app.state.textEditNodeId
+
+        press(Key.Tab, modifier = Key.ShiftLeft)
+
+        assertEquals(id, app.state.textEditNodeId)
+        onNodeWithTag(NODE_TEXT_EDITOR_TAG).assertIsFocused()
     }
 
     @Test
