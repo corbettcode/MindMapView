@@ -73,6 +73,7 @@ import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.drawnBoundaries
+import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.TopicKind
@@ -480,10 +481,43 @@ internal fun DrawScope.drawMap(
 ) {
     drawBoundaries(state, drawInfo, lineColor)
     drawLines(state, drawInfo, lineColor)
+    drawSummaryBrackets(state, drawInfo, lineColor)
     drawArrowLinks(state)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor)
     drawTree(state, drawInfo, measureTextSize, lineColor, hiddenTextId)
+}
+
+// A bracket is drawn as a line to the summary would be, in the color and width of the summary's branch: from the
+// top of the siblings it is about to the bottom, curling into a point that faces the summary, with a line from there.
+private fun DrawScope.drawSummaryBrackets(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+) {
+    val tree = state.tree
+    val summaryIds = tree.summaries.keys
+    if (summaryIds.isEmpty()) return
+    val lines = mutableMapOf<String, ResolvedLine>()
+    forEachNodeWithLine(tree, drawInfo, lineColor) { node, line -> if (node.id in summaryIds) lines[node.id] = line }
+    val path = Path()
+    lines.forEach { (summaryId, line) ->
+        val bracket = summaryBracket(tree, summaryId) ?: return@forEach
+        val halfWidth = (bracket.pointX - bracket.backX) / 2
+        val middleX = bracket.backX + halfWidth
+        val curl = minOf(abs(halfWidth), (bracket.bottom - bracket.top) / 4)
+        path.reset()
+        path.moveTo(bracket.backX, bracket.top)
+        path.cubicTo(middleX, bracket.top, middleX, bracket.top, middleX, bracket.top + curl)
+        path.lineTo(middleX, bracket.pointY - curl)
+        path.cubicTo(middleX, bracket.pointY, middleX, bracket.pointY, bracket.pointX, bracket.pointY)
+        path.cubicTo(middleX, bracket.pointY, middleX, bracket.pointY, middleX, bracket.pointY + curl)
+        path.lineTo(middleX, bracket.bottom - curl)
+        path.cubicTo(middleX, bracket.bottom, middleX, bracket.bottom, bracket.backX, bracket.bottom)
+        path.moveTo(bracket.pointX, bracket.pointY)
+        path.lineTo(bracket.nodeX, bracket.pointY)
+        drawPath(path, line.color, style = Stroke(width = line.width.toPx(this), cap = StrokeCap.Round))
+    }
 }
 
 // A boundary is in the color of the line to the first of its children, which is that of its branch, unless it has a
@@ -860,6 +894,8 @@ private fun DrawScope.drawLines(
 
     forEachNodeWithLine(tree, drawInfo, lineColor) { toNode, line ->
         val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLine
+        // A summary is joined to the siblings it is about by its bracket, not to its parent by a line.
+        if (tree.isSummary(toNode.id)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val isRightSide = !side.isLeft

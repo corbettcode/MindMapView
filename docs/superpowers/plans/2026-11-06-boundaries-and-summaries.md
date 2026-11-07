@@ -239,13 +239,19 @@ tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 
 ### Task B4: Drawing summaries
 
-**Files:** `MindMap.kt` (`drawLines`, a new `drawSummaryBrackets`), `NodeLines.kt`, test `SummaryDrawTest.kt`
+**Files:** `MindMap.kt` (`drawLines`, new `drawSummaryBrackets`), `layout/SummaryGeometry.kt` (`summaryBracket`),
+test `SummaryDrawTest.kt`
 
-- [ ] `forEachNodeWithLine` skips summary topics, so no line runs from the parent.
-- [ ] Draw a curly bracket from the top to the bottom of the range's extent, its point toward the summary topic,
-  with a short line from the point to the topic, in the branch's line color and width.
-- [ ] Folding the parent hides the bracket. Folding the summary hides its children only.
-- [ ] Tests: the bracket's color in a PNG export at the expected x; no parent line to the summary.
+- [x] `drawLines` skips summary topics, so no line runs from the parent. Lines from a summary to its own children
+  are drawn as usual.
+- [x] `drawSummaryBrackets`, drawn right after the lines in `drawMap` (so exports have it too), draws a curly bracket
+  from the top to the bottom of the shown nodes of the range, 8 dp past their outermost edge. Its point faces the
+  summary, at the summary's height (kept clear of the bracket's ends), with a straight line from the point to the
+  summary's near edge. It uses the colour, width and round caps of the summary's own resolved line, so it follows the
+  branch colour and any line setting the summary has.
+- [x] Folding the parent hides the bracket. Folding the summary hides only its children.
+- [x] Tests (4): the bracket and its line are in the summary's line colour in a PNG export; no line from the parent
+  (confirmed to fail without the skip); the bracket geometry on both sides; nothing drawn when the parent is folded.
 
 ### Task B5: Summaries in files
 
