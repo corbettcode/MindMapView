@@ -43,7 +43,11 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.TASK_BADGE_SIZE
+import com.mindsync.library.layout.TaskBadge
 import com.mindsync.library.layout.drawnBoundaries
+import com.mindsync.library.layout.taskBadgeCenters
+import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
@@ -1693,6 +1697,26 @@ class MindMapState(
         }
     }
 
+    /**
+     * Returns the id of the node whose progress badge is at [position], or null when none is. Of nodes on top of each
+     * other, the one drawn last is on top.
+     */
+    internal fun findProgressBadge(position: Offset): String? {
+        val measureTextSize = mindMapManager.getMeasureTextSize() ?: return null
+        val point = toTreePoint(position)
+        val radius = with(density) { TASK_BADGE_SIZE.toPx() } / 2
+        var found: String? = null
+        tree.doVisiblePreorderTraversal { node ->
+            val badges = taskBadges(tree.taskOf(node.id))
+            val index = badges.indexOfFirst { it is TaskBadge.Progress }
+            if (index < 0) return@doVisiblePreorderTraversal
+            val content = measureTextSize.measureContent(tree, node, attributeDisplay, noteDisplay)
+            val center = density.taskBadgeCenters(node, content, badges.size)[index]
+            if ((point - center).getDistance() <= radius) found = node.id
+        }
+        return found
+    }
+
     // The boundary drawn last at the position, which is the innermost there, as each is drawn before those within it.
     internal fun findBoundary(position: Offset): Boundary? {
         val point = toTreePoint(position)
@@ -1709,7 +1733,8 @@ class MindMapState(
         val layout = content.text
         val center = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density))
         val textPoint =
-            point - center + Offset(layout.size.width / 2f, layout.size.height / 2f + content.textRise)
+            point - center +
+                Offset(layout.size.width / 2f - content.textShiftX, layout.size.height / 2f + content.textRise)
         // The offset is that of the nearest gap between two characters, so the point is in one of the two.
         val gap = layout.getOffsetForPosition(textPoint)
         val text = layout.layoutInput.text

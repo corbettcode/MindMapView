@@ -68,11 +68,18 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.TASK_BADGE_SIZE
+import com.mindsync.library.layout.TaskBadge
 import com.mindsync.library.layout.drawnBoundaries
+import com.mindsync.library.layout.priorityColor
+import com.mindsync.library.layout.priorityNumberColor
+import com.mindsync.library.layout.taskBadgeCenters
+import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
 import com.mindsync.library.model.DrawInfo
@@ -95,6 +102,7 @@ import kotlin.math.sqrt
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
 private const val SCROLL_ZOOM_STEP = 1.1f
 private const val TEXT_CACHE_SIZE = 64
+private val TASK_BADGE_STROKE = 1.5.dp
 // A boundary is filled with its color this much, so the nodes in it stay easy to read.
 private const val BOUNDARY_FILL_ALPHA = 0.12f
 private val BOUNDARY_CORNER_RADIUS = 12.dp
@@ -260,6 +268,17 @@ fun MindMap(
                         val down = awaitFirstDown(requireUnconsumed = false)
                         // A press anywhere on the map but in the text being typed ends the typing.
                         state.commitTextEdit()
+                        // A click on a node's progress takes it a step on, rather than selecting or dragging the node.
+                        val progressNodeId = state.findProgressBadge(down.position)
+                        if (progressNodeId != null) {
+                            down.consume()
+                            lastClickedNodeId = null
+                            waitForUpOrCancellation()?.let { up ->
+                                up.consume()
+                                state.stepProgress(progressNodeId)
+                            }
+                            return@awaitEachGesture
+                        }
                         val foldMarkerNode = state.findFoldMarker(down.position)
                         if (foldMarkerNode != null) {
                             down.consume()
@@ -577,8 +596,9 @@ private fun DrawScope.drawTree(
         val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
         // The drawer centers the text on the node, which the note and attributes below it share with the text.
         if (content.isTextShown && node.id != hiddenTextId) {
-            translate(top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+            translate(left = content.textShiftX, top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
         }
+        drawTaskBadges(state, node, content, measureTextSize)
         drawNodeImages(node, content)
         content.note?.let { note ->
             val centerX = node.path.centerX.toPx(this)
@@ -595,6 +615,59 @@ private fun DrawScope.drawTree(
         }
         content.table?.let { drawAttributeTable(node, it, content.tableTop) }
         drawMarkers(state, node, drawInfo)
+    }
+}
+
+// A priority is a disc of its color with its number on it. Progress is a ring that fills like a clock as it goes,
+// and a full disc with a tick when done, in the color of the node's text, so it can be read on the node.
+private fun DrawScope.drawTaskBadges(
+    state: MindMapState
+    , node: NodeData<*>
+    , content: NodeContent
+    , measureTextSize: MeasureTextSize
+) {
+    val badges = taskBadges(state.tree.taskOf(node.id))
+    if (badges.isEmpty()) return
+    val radius = TASK_BADGE_SIZE.toPx() / 2
+    val strokeWidth = TASK_BADGE_STROKE.toPx()
+    // A line node has no fill, so the tick is in the color behind it.
+    val tickColor = if (node is LineNodeData) state.background else node.color
+    badges.zip(taskBadgeCenters(node, content, badges.size)).forEach { (badge, center) ->
+        when (badge) {
+            is TaskBadge.Priority -> {
+                drawCircle(priorityColor(badge.priority), radius, center)
+                val number = measureTextSize.badgeNumber(badge.priority)
+                drawText(
+                    number
+                    , priorityNumberColor(badge.priority)
+                    , center - Offset(number.size.width / 2f, number.size.height / 2f)
+                )
+            }
+            is TaskBadge.Progress -> when (badge.progress) {
+                TaskProgress.DONE -> {
+                    drawCircle(node.textColor, radius, center)
+                    val tick = Path().apply {
+                        moveTo(center.x - radius * 0.45f, center.y)
+                        lineTo(center.x - radius * 0.1f, center.y + radius * 0.35f)
+                        lineTo(center.x + radius * 0.5f, center.y - radius * 0.35f)
+                    }
+                    drawPath(tick, tickColor, style = Stroke(strokeWidth * 1.4f, cap = StrokeCap.Round))
+                }
+                else -> {
+                    drawCircle(node.textColor, radius - strokeWidth / 2, center, style = Stroke(strokeWidth))
+                    if (badge.progress.percent > 0) {
+                        drawArc(
+                            color = node.textColor
+                            , startAngle = -90f
+                            , sweepAngle = 360f * badge.progress.percent / 100
+                            , useCenter = true
+                            , topLeft = center - Offset(radius, radius)
+                            , size = Size(radius * 2, radius * 2)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

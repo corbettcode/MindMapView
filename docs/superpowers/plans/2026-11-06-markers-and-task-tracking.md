@@ -97,20 +97,24 @@ filter.
 
 ### Task A3: Badges
 
-**Files:** `layout/MeasureTextSize.kt` (`NodeContent` gains the badges' width), `MindMap.kt` (drawing), new
-`TaskBadges.kt` (geometry and colours), `NodeTextEditor.kt`, `MindMapState.kt` (`findLink`, hit test), test
-`TaskBadgeTest.kt`
+**Files:** `layout/MeasureTextSize.kt` (`NodeContent`), `MindMap.kt` (drawing, the badge click), new
+`layout/TaskBadges.kt` (sizes, positions, colours), `NodeTextEditor.kt`, `MindMapState.kt` (`findLink`,
+`findProgressBadge`), test `TaskBadgeTest.kt`
 
-- [ ] `NodeContent` gets `badgesWidth` (badge size 14 dp, gap 4 dp, then 6 dp before the text), included in `width`.
-  The text, note and attribute table keep their own positions, so only the first line shifts.
-- [ ] Draw the priority circle with its number, and the progress ring or tick, left of the text, vertically centred on
-  the first line. Colours: a fixed priority palette checked for contrast on light and dark backgrounds, plus the
-  node's text colour for the progress ring.
-- [ ] `NodeTextEditor` and `findLink` shift by `badgesWidth`.
-- [ ] `state.findProgressBadge(position)`, and a click on it calls `stepProgress` instead of selecting or starting a
-  drag.
-- [ ] Tests: a node with badges is wider by exactly `badgesWidth`; the badge colours are in a PNG export; a click on
-  the progress badge steps it and one on the text doesn't; the inline editor is over the text, not the badges.
+- [x] `NodeContent` gets `badgesWidth` (14 dp badges, 4 dp apart, 6 dp before the text), `badgesLeft` and `textShiftX`
+  (half the badges' width). The text line is as high as the higher of the text and a badge, and is there with badges
+  but no text. The note, images and attribute table keep their positions.
+- [x] Drawing:
+  - Priority is a disc of its colour with a bold number: red, orange, yellow (with a black number), green, blue, then
+    grey for 6–9.
+  - Progress is a ring in the node's text colour that fills clockwise by quarters, and a full disc with a tick in the
+    node's fill (the background, for line nodes) when Done.
+- [x] The text, the inline editor and `findLink` all shift by `textShiftX`.
+- [x] `state.findProgressBadge(position)`. A press on it is handled before fold rings and add buttons, and steps the
+  progress on release, without selecting or dragging.
+- [x] Tests (6): wider by exactly the badges' width; the priority colour in a PNG export; a click on the progress badge
+  steps it and selects nothing; a click on the text selects; the inline editor is over the shifted text; a link is
+  found at the right end of the shifted text (confirmed to fail without the `findLink` fix).
 
 ### Task A4: Priority and progress in files
 

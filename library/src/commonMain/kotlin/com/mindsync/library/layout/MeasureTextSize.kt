@@ -6,6 +6,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -49,6 +50,14 @@ class MeasureTextSize(
 
     private val topicTextStyles: Map<TopicKind, TextStyle> = TopicKind.entries.associateWith { kind ->
         topicFontFamilies[kind]?.let { textStyle.copy(fontFamily = it) } ?: textStyle
+    }
+
+    private val badgeNumbers = mutableMapOf<Int, TextLayoutResult>()
+
+    /** Returns the number of a priority as it is drawn on its badge. */
+    fun badgeNumber(priority: Int): TextLayoutResult = badgeNumbers.getOrPut(priority) {
+        val size = with(density) { (TASK_BADGE_SIZE * BADGE_NUMBER_SCALE).toSp() }
+        textMeasurer.measure(priority.toString(), TextStyle(fontSize = size, fontWeight = FontWeight.Bold))
     }
 
     /** The style the text of a node of [kind] is measured and drawn in. */
@@ -115,6 +124,8 @@ class MeasureTextSize(
             , noteGap = with(density) { NOTE_GAP.dp.toPx() }
             , images = images
             , imageGap = with(density) { IMAGE_GAP.dp.toPx() }
+            , badgesWidth = with(density) { taskBadgesWidth(taskBadges(tree.taskOf(node.id)).size) }
+            , badgeHeight = with(density) { TASK_BADGE_SIZE.toPx() }
         )
     }
 
@@ -256,6 +267,8 @@ class MeasureTextSize(
         private const val ATTRIBUTE_CELL_PADDING_X = 5f
         private const val ATTRIBUTE_CELL_PADDING_Y = 2f
         private const val NOTE_TEXT_SCALE = 0.85f
+        // The number of a priority fills most of its badge.
+        private const val BADGE_NUMBER_SCALE = 0.72f
         private const val NOTE_MAX_WIDTH = 240f
         // Room for the line between the text and the note, with space on either side of it.
         private const val NOTE_GAP = 12f
@@ -279,11 +292,29 @@ class NodeContent(
     // Drawn above the text, one below the other.
     , val images: List<NodeImage> = emptyList()
     , imageGap: Float = 0f
+    // The badges of the node's task are in front of its text, on its line, and as high as [badgeHeight].
+    , val badgesWidth: Float = 0f
+    , badgeHeight: Float = 0f
 ) {
     // A text of only images has no line of text below them.
     val isTextShown: Boolean = images.isEmpty() || text.layoutInput.text.text.isNotBlank()
 
-    private val textHeight: Float = if (isTextShown) text.size.height.toFloat() else 0f
+    private val shownTextWidth: Float = if (isTextShown) text.size.width.toFloat() else 0f
+
+    // The line of the text holds the badges too, so it is as high as the higher of them, and is there with
+    // badges and no text.
+    private val isLineShown: Boolean = isTextShown || badgesWidth > 0f
+
+    private val textHeight: Float = maxOf(
+        if (isTextShown) text.size.height.toFloat() else 0f
+        , if (badgesWidth > 0f) badgeHeight else 0f
+    )
+
+    /** How far right of the center of the node the center of the text is, to make room for the badges before it. */
+    val textShiftX: Float = badgesWidth / 2
+
+    /** How far right of the center of the node the left of the first badge is; the badges are left of the text. */
+    val badgesLeft: Float = -(shownTextWidth + badgesWidth) / 2
 
     /** How far below the top of the content each image is. */
     val imageTops: List<Float> = images.runningFold(0f) { top, image -> top + image.height + imageGap }.dropLast(1)
@@ -292,10 +323,10 @@ class NodeContent(
         if (images.isEmpty()) 0f else images.sumOf { it.height.toDouble() }.toFloat() + imageGap * (images.size - 1)
 
     // The text is below the images, with a gap between them.
-    private val textTop: Float = if (images.isNotEmpty() && isTextShown) imagesHeight + imageGap else imagesHeight
+    private val textTop: Float = if (images.isNotEmpty() && isLineShown) imagesHeight + imageGap else imagesHeight
 
     val width: Float = maxOf(
-        if (isTextShown) text.size.width.toFloat() else 0f
+        shownTextWidth + badgesWidth
         , note?.size?.width?.toFloat() ?: 0f
         , table?.width ?: 0f
         , images.maxOfOrNull { it.width } ?: 0f

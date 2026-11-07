@@ -88,7 +88,7 @@ internal fun NodeTextEditor(
                         val content =
                             measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
                         val center = Offset(
-                            node.path.centerX.toPx(density)
+                            node.path.centerX.toPx(density) + content.textShiftX
                             , node.path.centerY.toPx(density) - content.textRise
                         ) * state.scaleFactor + state.currentPoint
                         placeable.placeWithLayer(
