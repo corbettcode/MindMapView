@@ -104,9 +104,11 @@ nothing structural; summaries second.
 
 **Files:** new `library/.../layout/BoundaryGeometry.kt`, test `BoundaryGeometryTest.kt`
 
-- [ ] `boundaryRect(tree, boundary)` is the union of the shown nodes of the range's subtrees (what is folded is left
-  out), plus the rectangles of the boundaries nested inside them, with 10 dp of padding.
-- [ ] Tests: one node; a subtree; a folded subtree; nested boundaries strictly inside each other; on the left side.
+- [x] `Density.boundaryRect(tree, boundary)`, in the tree's pixels, is the union of the shown nodes of the range's
+  subtrees (what is folded is left out), plus the rectangles of the boundaries nested inside them, with 10 dp of
+  padding (`BOUNDARY_PADDING`). It is null when the parent is folded or hidden in a folded node.
+- [x] Tests (8): one node; a subtree; the children between; a folded child; a folded parent; a hidden parent; nested
+  boundaries strictly inside each other; on the left side.
 
 ### Task A4: Room for boundaries
 
@@ -122,6 +124,8 @@ nothing structural; summaries second.
 **Files:** `MindMap.kt`, `MindMapState.kt` (hit test), test in `NodeTextEditorTest`-style compose test
 `BoundaryDrawTest.kt`
 
+- [ ] `exportBounds` (in `MapImage.kt`) adds the boundary rectangles, or the PNG, SVG and PDF exports clip the
+  outlines of boundaries at the map's edge.
 - [ ] `drawBoundaries` comes first in `drawMap`, behind the lines. It draws a rounded rectangle (corner radius 12 dp)
   filled at 12% when `isFilled`, with a 1.5 dp outline, dashed or solid, in `color ?: rootLineColor(branch)`.
 - [ ] `state.boundaryAt(point)`: the innermost boundary under the point, unless there is a node there. A
