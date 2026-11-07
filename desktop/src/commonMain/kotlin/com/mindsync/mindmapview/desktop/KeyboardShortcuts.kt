@@ -1,8 +1,8 @@
 package com.mindsync.mindmapview.desktop
 
 /**
- * A command and the [keys] that do it. Where [isPair], the first keys do the first of the two things the
- * [command] names and the second keys the other, as for next and previous; otherwise any of the keys do it.
+ * A command and the [keys] that do it. Where [isPair], each of the keys does the one of the things the [command]
+ * names in the same place, as for next and previous; otherwise any of the keys do it.
  */
 data class KeyboardShortcut(
     val keys: List<String>
@@ -31,8 +31,13 @@ val KEYBOARD_SHORTCUTS = listOf(
     , KeyboardShortcutGroup(
         "Editing"
         , listOf(
-            KeyboardShortcut(listOf("+"), "Add a child to the selected node")
-            , KeyboardShortcut(listOf("Enter"), "Edit the selected node")
+            KeyboardShortcut(listOf("Tab"), "Add a child and type its text")
+            , KeyboardShortcut(listOf("Enter"), "Add a sibling below and type its text")
+            , KeyboardShortcut(listOf("Shift+Enter"), "Add a sibling above and type its text")
+            , KeyboardShortcut(listOf("F2"), "Type the text of the selected node")
+            , KeyboardShortcut(listOf("Any letter"), "Type the text of the selected node, starting with that letter")
+            , KeyboardShortcut(listOf("Alt+Enter"), "Edit the selected node in the edit dialog")
+            , KeyboardShortcut(listOf("+"), "Add a child in the edit dialog")
             , KeyboardShortcut(listOf("Ctrl+Z"), "Undo")
             , KeyboardShortcut(listOf("Ctrl+Y", "Ctrl+Shift+Z"), "Redo")
             , KeyboardShortcut(listOf("Ctrl+X"), "Cut")
@@ -46,6 +51,16 @@ val KEYBOARD_SHORTCUTS = listOf(
                 , isPair = true
             )
             , KeyboardShortcut(listOf("Ctrl+,"), "Open the Preferences")
+        )
+    )
+    , KeyboardShortcutGroup(
+        "While typing on the map"
+        , listOf(
+            KeyboardShortcut(listOf("Enter"), "Finish typing")
+            , KeyboardShortcut(listOf("Tab"), "Finish typing and add a child")
+            , KeyboardShortcut(listOf("Esc"), "Cancel: a new node goes, and a node's old text comes back")
+            , KeyboardShortcut(listOf("Shift+Enter"), "A new line")
+            , KeyboardShortcut(listOf("Ctrl+B", "Ctrl+I", "Ctrl+U"), "Bold / italic / underline", isPair = true)
         )
     )
     , KeyboardShortcutGroup(

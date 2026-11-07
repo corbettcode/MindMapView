@@ -252,8 +252,43 @@
 <section id="nodes">
     <h2>3. Adding, editing and removing nodes</h2>
 
+    <h3>Typing a map</h3>
+    <p>
+        The quickest way to build a map is with the keyboard alone. You type each node's text straight on the map,
+        with no dialog:
+    </p>
+    <table>
+        <tr><th>Keys</th><th>What it does</th></tr>
+        <tr><td><kbd>Tab</kbd></td><td>Adds a child of the selected node.</td></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Adds a sibling just below the selected node. On the root, which has no siblings, it adds a child.</td></tr>
+        <tr><td><kbd>Shift+Enter</kbd></td><td>Adds a sibling just above the selected node.</td></tr>
+    </table>
+    <p>
+        The new node's text, such as <i>Topic 3</i>, is selected, so what you type replaces it. While you type, the
+        node grows to fit the text:
+    </p>
+    <ul>
+        <li><kbd>Enter</kbd> finishes. Press <kbd>Enter</kbd> again for the next sibling.</li>
+        <li><kbd>Tab</kbd> finishes and adds a child of the node you just typed.</li>
+        <li><kbd>Esc</kbd> cancels, and the new node goes.</li>
+        <li><kbd>Shift+Enter</kbd> starts a new line in the text.</li>
+        <li><kbd>Ctrl+B</kbd>, <kbd>Ctrl+I</kbd> and <kbd>Ctrl+U</kbd> make the selected text bold, italic or underlined.</li>
+    </ul>
+    <p>
+        To change the text of a node that is already there, press <kbd>F2</kbd> or double-click the node. You can
+        also just start typing: a letter replaces the selected node's text. Clicking anywhere else on the map also
+        finishes typing. Adding a node and typing its text is one change, which <kbd>Ctrl+Z</kbd> undoes all at once.
+    </p>
+    <p>
+        For everything else about a node (its shape, colors, note, attributes and so on), use the edit dialog,
+        described below.
+    </p>
+
     <h3>Adding a node</h3>
-    <p>A new node is always added as a child of the selected node. There are three ways to add one:</p>
+    <p>
+        Besides <kbd>Tab</kbd> and <kbd>Enter</kbd>, there are three ways to add a child of the selected node in the
+        Add dialog:
+    </p>
     <ul>
         <li>
             Click the <b>+ button</b> on a node. It appears on the selected node and on the node under the mouse
@@ -267,7 +302,7 @@
     </ul>
     <p>
         A node is named for its level in the map: the root is the <b>Root Topic</b>, a child of the root is a
-        <b>Topic</b>, and a node below a topic is a <b>Subtopic</b>, however deep it is. Each way opens the
+        <b>Topic</b>, and a node below a topic is a <b>Subtopic</b>, however deep it is. These three ways open the
         <b>Add Topic</b> or <b>Add Subtopic</b> dialog, where you give the node its text and style. A new node starts
         with the text <i>Topic 1</i>, <i>Topic 2</i> and so on, or <i>Subtopic 1</i>, <i>Subtopic 2</i> and so
         on: topics and subtopics are each counted on their own. It takes the shape, colors and border of the last
@@ -285,9 +320,10 @@
 
     <h3>Editing a node</h3>
     <p>
-        <b>Double-click</b> a node, choose <span class="menu">Edit &rsaquo; Edit</span>, or right-click the node and
-        choose <span class="menu">Edit</span>. The <b>Edit Root Topic</b>, <b>Edit Topic</b> or
-        <b>Edit Subtopic</b> dialog has these parts, from top to bottom:
+        To change only the text, type it on the map (see <a href="#nodes">Typing a map</a> above). For the rest of
+        the node, press <kbd>Alt+Enter</kbd>, choose <span class="menu">Edit &rsaquo; Edit...</span>, or
+        right-click the node and choose <span class="menu">Edit...</span>. The <b>Edit Root Topic</b>,
+        <b>Edit Topic</b> or <b>Edit Subtopic</b> dialog has these parts, from top to bottom:
     </p>
     <table>
         <tr><th>Part</th><th>What it does</th></tr>
@@ -321,7 +357,9 @@
     <h3>Undo and redo</h3>
     <p>
         <kbd>Ctrl+Z</kbd> undoes the last change and <kbd>Ctrl+Y</kbd> (or <kbd>Ctrl+Shift+Z</kbd>) redoes it. Adding,
-        editing, removing, moving, pasting, folding and arrow links can all be undone. Selecting nodes, zooming and
+        editing, removing, moving, pasting, folding and arrow links can all be undone. Typing a node's text on the
+        map is one change, however much you type, and so is adding a node with <kbd>Tab</kbd> or <kbd>Enter</kbd>
+        and typing its text. Selecting nodes, zooming and
         moving the view are not changes, so they are not undone.
     </p>
 </section>
@@ -847,8 +885,13 @@
     <h3>Editing</h3>
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
-        <tr><td><kbd>+</kbd></td><td>Add a child to the selected node</td></tr>
-        <tr><td><kbd>Enter</kbd></td><td>Edit the selected node</td></tr>
+        <tr><td><kbd>Tab</kbd></td><td>Add a child and type its text</td></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Add a sibling below and type its text</td></tr>
+        <tr><td><kbd>Shift+Enter</kbd></td><td>Add a sibling above and type its text</td></tr>
+        <tr><td><kbd>F2</kbd></td><td>Type the text of the selected node</td></tr>
+        <tr><td>Any letter</td><td>Type the text of the selected node, starting with that letter</td></tr>
+        <tr><td><kbd>Alt+Enter</kbd></td><td>Edit the selected node in the edit dialog</td></tr>
+        <tr><td><kbd>+</kbd></td><td>Add a child in the edit dialog</td></tr>
         <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td></tr>
         <tr><td><kbd>Ctrl+Y</kbd>, <kbd>Ctrl+Shift+Z</kbd></td><td>Redo</td></tr>
         <tr><td><kbd>Ctrl+X</kbd></td><td>Cut</td></tr>
@@ -859,6 +902,15 @@
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>
+    </table>
+    <h3>While typing on the map</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Finish typing</td></tr>
+        <tr><td><kbd>Tab</kbd></td><td>Finish typing and add a child</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Cancel: a new node goes, and a node's old text comes back</td></tr>
+        <tr><td><kbd>Shift+Enter</kbd></td><td>A new line</td></tr>
+        <tr><td><kbd>Ctrl+B</kbd> / <kbd>Ctrl+I</kbd> / <kbd>Ctrl+U</kbd></td><td>Bold / italic / underline</td></tr>
     </table>
     <h3>In the edit dialog</h3>
     <table>
@@ -890,7 +942,7 @@
     <h3>Mouse</h3>
     <table>
         <tr><th>Action</th><th>Result</th></tr>
-        <tr><td>Double-click a node</td><td>Edit it</td></tr>
+        <tr><td>Double-click a node</td><td>Type its text</td></tr>
         <tr><td>Right-click a node</td><td>Its menu</td></tr>
         <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>
         <tr><td>Drag a node onto another</td><td>Re-attach it</td></tr>
