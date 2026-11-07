@@ -1039,6 +1039,8 @@ private fun MindMapScreen(
             }
         }
     }
+    // The date changes while a map is left open overnight, which coming back to the window catches.
+    LaunchedEffect(state, windowInfo.isWindowFocused) { state.today = today() }
     LaunchedEffect(preferences.topicNoteDisplays) { state.topicNoteDisplays = preferences.topicNoteDisplays }
     LaunchedEffect(preferences.backgroundColor) { state.backgroundColor = preferences.backgroundColor }
     LaunchedEffect(preferences.topicStyles) { state.topicStyles = preferences.topicStyles }
@@ -1207,6 +1209,7 @@ private fun MindMapScreen(
                         }
                         // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
                         , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
+                        , dateLabel = { dueLabel(it, state.today) }
                     )
 
                     // The two popups would be on top of each other by the pointer, so the attributes win.
@@ -1466,6 +1469,7 @@ private fun MindMapScreen(
                     } else {
                         NodeTask()
                     },
+                    today = state.today,
                     attributes = if (currentOperation is Operation.Update) {
                         selectedNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
                     } else {

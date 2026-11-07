@@ -1,6 +1,8 @@
 package com.mindsync.library
 
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.FreeMind
@@ -128,5 +130,72 @@ class TaskFilesTest {
 
         assertTrue("""[P1]</span> <span class="task">[50%]</span> <span class="node">A""" in content, content)
         assertTrue("""[Done]</span> <span class="node">B""" in content, content)
+    }
+
+    // "c" starts on the first and is due on the last of November, and "b" is only due.
+    private fun datedTree(): Tree<Any> = tree().apply {
+        setTask("c", NodeTask(start = TaskDate(2026, 11, 1), due = TaskDate(2026, 11, 30)))
+        setTask("b", taskOf("b").copy(due = TaskDate(2027, 1, 15)))
+    }
+
+    @Test
+    fun datesAreKeptInAMindMapViewFile() {
+        val content = MindMapViewFile.write(datedTree())
+
+        assertTrue("""start="2026-11-01" due="2026-11-30"""" in content, content)
+        val read = MindMapViewFile.read(content)
+        assertEquals(NodeTask(start = TaskDate(2026, 11, 1), due = TaskDate(2026, 11, 30)), read.taskNamed("C"))
+        assertEquals(NodeTask(progress = TaskProgress.DONE, due = TaskDate(2027, 1, 15)), read.taskNamed("B"))
+    }
+
+    @Test
+    fun datesThatAreNoDaysAreLeftOutOfAMindMapViewFile() {
+        val content = """
+            <mindmapview version="1">
+              <node id="r" text="root">
+                <node id="a" text="A" start="2026-02-30" due="soon" priority="2"/>
+              </node>
+            </mindmapview>
+        """.trimIndent()
+
+        assertEquals(NodeTask(priority = 2), MindMapViewFile.read(content).taskNamed("A"))
+    }
+
+    @Test
+    fun datesAreAttributesInFreeMindKeptApartFromTheNodesOwn() {
+        val tree = datedTree()
+        tree.setAttributes("c", listOf(NodeAttribute("owner", "Sam")))
+
+        val content = FreeMind.write(tree)
+
+        assertTrue("""<attribute NAME="start" VALUE="2026-11-01"/>""" in content, content)
+        assertTrue("""<attribute NAME="due" VALUE="2026-11-30"/>""" in content, content)
+        val read = FreeMind.read(content)
+        assertEquals(NodeTask(start = TaskDate(2026, 11, 1), due = TaskDate(2026, 11, 30)), read.taskNamed("C"))
+        val c = read.nodes.values.single { RichText.parse(it.description).text == "C" }
+        assertEquals(listOf(NodeAttribute("owner", "Sam")), read.attributesOf(c.id))
+    }
+
+    @Test
+    fun attributeNamedDueThatIsNoDateStaysAnAttributeInFreeMind() {
+        val content = """
+            <map version="freeplane 1.11.1">
+              <node ID="r" TEXT="root">
+                <node ID="a" TEXT="A"><attribute NAME="due" VALUE="next week"/></node>
+              </node>
+            </map>
+        """.trimIndent()
+
+        val read = FreeMind.read(content)
+
+        assertTrue(read.taskNamed("A").isEmpty)
+        assertEquals(listOf(NodeAttribute("due", "next week")), read.attributesOf("a"))
+    }
+
+    @Test
+    fun datesAreAttributesInAnOpmlOutline() {
+        val content = Opml.write(datedTree())
+
+        assertTrue("""_start="2026-11-01" _due="2026-11-30"""" in content, content)
     }
 }

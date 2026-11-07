@@ -7,6 +7,7 @@ import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.BoundaryStyle
 import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
@@ -261,6 +262,8 @@ object MindMapViewFile {
         val task = tree.taskOf(node.id)
         task.priority?.let { attribute("priority", it.toString()) }
         task.progress?.let { attribute("progress", it.name.lowercase()) }
+        task.start?.let { attribute("start", it.toIsoString()) }
+        task.due?.let { attribute("due", it.toIsoString()) }
         attribute("color", node.color.toHex())
         attribute("textColor", node.textColor.toHex())
         attribute("text", node.description)
@@ -351,10 +354,12 @@ object MindMapViewFile {
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
 
-    // A priority or progress that is not one this library has is left out, rather than the map not being read.
+    // A priority, progress or date that is not one this library has is left out, rather than the map not being read.
     private fun XmlElement.task(): NodeTask = NodeTask(
         priority = attributes["priority"]?.toIntOrNull()?.takeIf { it in NodeTask.PRIORITIES }
         , progress = TaskProgress.entries.firstOrNull { it.name.lowercase() == attributes["progress"] }
+        , start = attributes["start"]?.let { TaskDate.parse(it) }
+        , due = attributes["due"]?.let { TaskDate.parse(it) }
     )
 
     private fun XmlElement.descendantNodes(): List<XmlElement> =

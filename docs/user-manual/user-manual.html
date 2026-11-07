@@ -371,9 +371,17 @@
         </li>
     </ul>
     <p>
+        A task can also have a <b>start</b> and a <b>due</b> date, which the <b>Task</b> section of the edit dialog
+        sets: click a date to pick another in a calendar, or <b>Clear</b> it there. A start after the due date is
+        refused. The due date is written below the node's text, as &ldquo;Due 30 Nov&rdquo;, with the year when it
+        is not this year. It turns <b>red</b> when the task is overdue: due before today and not done. The start date
+        shows only in the dialog.
+    </p>
+    <p>
         Tasks are saved in MindMapView files. In a FreeMind map they are FreeMind's number icons and Freeplane's
-        progress icons; in Markdown, a node in a list is a task list item, <code>- [ ]</code> or <code>- [x]</code>;
-        and the priority and task markers of an XMind map are read as tasks.
+        progress icons, with the dates as <code>start</code> and <code>due</code> attributes; in Markdown, a node in
+        a list is a task list item, <code>- [ ]</code> or <code>- [x]</code>, without its dates; an OPML outline
+        has them all as attributes; and the priority and task markers of an XMind map are read as tasks.
     </p>
 
     <h3>Undo and redo</h3>

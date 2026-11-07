@@ -8,13 +8,14 @@ import com.mindsync.library.util.RichText
  * Writes a tree as an OPML 2.0 outline, which outliners such as Workflowy, OmniOutliner and Logseq read. The root
  * is the one outline at the top, with every node below it, those hidden in a folded node too. The text of a node is
  * written without its formatting, its note as plain text in `_note`, and its attributes as attributes of its
- * outline, with names made valid in XML and kept apart from the names OPML uses. A task's priority and its progress,
- * in percent, are in `_priority` and `_progress`. An outline has no arrow links nor boundaries, so they are left out.
+ * outline, with names made valid in XML and kept apart from the names OPML uses. A task's priority, its progress in
+ * percent, and its start and due dates as `YYYY-MM-DD` are in `_priority`, `_progress`, `_start` and `_due`.
+ * An outline has no arrow links nor boundaries, so they are left out.
  */
 object Opml {
     const val EXTENSION = "opml"
 
-    private val RESERVED_NAMES = setOf("text", "_note", "type", "_priority", "_progress")
+    private val RESERVED_NAMES = setOf("text", "_note", "type", "_priority", "_progress", "_start", "_due")
     private val INVALID_NAME_CHARACTER = Regex("""[^A-Za-z0-9_.-]""")
 
     fun write(tree: Tree<*>): String = buildString {
@@ -60,6 +61,8 @@ object Opml {
         val task = tree.taskOf(node.id)
         task.priority?.let { attributes.add("_priority" to it.toString()) }
         task.progress?.let { attributes.add("_progress" to it.percent.toString()) }
+        task.start?.let { attributes.add("_start" to it.toIsoString()) }
+        task.due?.let { attributes.add("_due" to it.toIsoString()) }
         val usedNames = attributes.map { it.first }.toMutableSet()
         tree.attributesOf(node.id).forEach { attribute ->
             val name = uniqueName(validName(attribute.name), usedNames)

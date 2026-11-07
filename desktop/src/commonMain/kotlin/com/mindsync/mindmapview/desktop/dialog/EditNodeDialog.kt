@@ -56,6 +56,7 @@ import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
@@ -76,6 +77,7 @@ import com.mindsync.mindmapview.desktop.component.ColorEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
+import com.mindsync.mindmapview.desktop.component.TaskDateField
 import com.mindsync.mindmapview.desktop.menuBar.label
 import com.mindsync.mindmapview.desktop.component.attributeRowsOf
 import com.mindsync.mindmapview.desktop.component.attributesToKeep
@@ -162,8 +164,10 @@ fun EditNodeDialog(
     , themeFill: Color?
     , themeText: Color?
     , themeLineNodeText: Color?
-    // What the node holds of a task, of which the dialog changes the priority and the progress and keeps the rest.
+    // What the node holds of a task, all of which the dialog changes.
     , task: NodeTask
+    // The date it is, to open the date pickers on and to leave the year out of dates in it.
+    , today: TaskDate?
     , attributes: List<NodeAttribute>
     // The names other nodes have attributes of, to add one of at a click.
     , knownAttributeNames: List<String>
@@ -232,6 +236,20 @@ fun EditNodeDialog(
     var selectedNoteDisplay by remember { mutableStateOf(noteDisplay) }
     var selectedAttributeDisplay by remember { mutableStateOf(attributeDisplay) }
     var selectedTask by remember { mutableStateOf(task) }
+    var taskDateError by remember { mutableStateOf<String?>(null) }
+
+    // A start after the due date is refused here, where it is picked, so what is saved is always a task.
+    fun pickDates(
+        start: TaskDate?
+        , due: TaskDate?
+    ) {
+        if (start != null && due != null && start > due) {
+            taskDateError = "The start can't be after the due date."
+            return
+        }
+        taskDateError = null
+        selectedTask = selectedTask.copy(start = start, due = due)
+    }
     // Closed unless the node is a task, so the dialog fits on a small screen.
     var isTaskOpen by remember { mutableStateOf(!task.isEmpty) }
     // Closed unless the node has colors of its own, so the dialog fits on a small screen.
@@ -479,6 +497,25 @@ fun EditNodeDialog(
                                 , selectedChoice = selectedTask.progress
                                 , onSelect = { selectedTask = selectedTask.copy(progress = it) }
                             )
+                            TaskDateField(
+                                label = "Start"
+                                , date = selectedTask.start
+                                , today = today
+                                , onDateChange = { pickDates(it, selectedTask.due) }
+                            )
+                            TaskDateField(
+                                label = "Due"
+                                , date = selectedTask.due
+                                , today = today
+                                , onDateChange = { pickDates(selectedTask.start, it) }
+                            )
+                            taskDateError?.let { error ->
+                                Text(
+                                    error
+                                    , color = MaterialTheme.colorScheme.error
+                                    , style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     }
 

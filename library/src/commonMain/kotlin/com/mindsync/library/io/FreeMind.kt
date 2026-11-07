@@ -12,6 +12,7 @@ import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.BoundaryStyle
 import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
@@ -56,6 +57,8 @@ import kotlin.math.roundToInt
  * A task's priority is kept as FreeMind's own number icon, `<icon BUILTIN="full-1"/>` to `full-9`, and its progress
  * as Freeplane's `0%` to `100%` icons, with FreeMind's `button_ok` after `100%` when it is done, as Freeplane writes
  * them. Freeplane's `unchecked` and `checked` icons are read as not started and done. Other icons are left out.
+ * Its start and due dates are kept as the shape is, in `<attribute NAME="start">` and `due` children written after it,
+ * as `YYYY-MM-DD`; of those, the first of each name that holds such a date is read as the date.
  *
  * A summary is kept as Freeplane keeps one, which FreeMind shows as an ordinary node: a `<hook NAME="SummaryNode"/>`
  * on a sibling written right after those it is about. Freeplane takes a summary to be about the siblings on its
@@ -67,6 +70,8 @@ import kotlin.math.roundToInt
  */
 object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
+    private const val START_ATTRIBUTE = "start"
+    private const val DUE_ATTRIBUTE = "due"
     private const val ARROW = "Default"
     private const val NO_ARROW = "None"
     private const val DASHES = "7 7"
@@ -187,6 +192,10 @@ object FreeMind {
         }
         append(indent).append("  <attribute NAME=\"").append(SHAPE_ATTRIBUTE).append("\" VALUE=\"")
         append(node.shape().name.lowercase()).append("\"/>\n")
+        val task = tree.taskOf(node.id)
+        listOf(START_ATTRIBUTE to task.start, DUE_ATTRIBUTE to task.due).forEach { (name, date) ->
+            if (date != null) append(indent).append("  <attribute NAME=\"$name\" VALUE=\"${date.toIsoString()}\"/>\n")
+        }
         tree.attributesOf(node.id).forEach { attribute ->
             append(indent).append("  <attribute NAME=\"").append(escapeXml(attribute.name)).append("\" VALUE=\"")
             append(escapeXml(attribute.value)).append("\"/>\n")
@@ -425,7 +434,19 @@ object FreeMind {
                 else -> TaskProgress.entries.firstOrNull { "${it.percent}%" == icon }
             }
         }.maxOrNull()
-        return NodeTask(priority = priority, progress = progress)
+        return NodeTask(
+            priority = priority
+            , progress = progress
+            , start = dateAttribute(START_ATTRIBUTE)?.dateValue()
+            , due = dateAttribute(DUE_ATTRIBUTE)?.dateValue()
+        )
+    }
+
+    private fun XmlElement.dateValue(): TaskDate? = TaskDate.parse(attributes["VALUE"].orEmpty())
+
+    // The attribute that holds the date [name] of the node's task, which is none of the node's own attributes.
+    private fun XmlElement.dateAttribute(name: String): XmlElement? = children.firstOrNull {
+        it.name == "attribute" && it.attributes["NAME"] == name && it.dateValue() != null
     }
 
     private fun XmlElement.hasHook(name: String): Boolean =
@@ -461,9 +482,13 @@ object FreeMind {
     }
 
     private fun XmlElement.nodeAttributes(): List<NodeAttribute> {
-        val shapeAttribute = shapeAttribute()
+        val taskAttributes = listOfNotNull(
+            shapeAttribute()
+            , dateAttribute(START_ATTRIBUTE)
+            , dateAttribute(DUE_ATTRIBUTE)
+        )
         return children
-            .filter { it.name == "attribute" && it !== shapeAttribute }
+            .filter { it.name == "attribute" && taskAttributes.none { task -> task === it } }
             .map { NodeAttribute(it.attributes["NAME"].orEmpty(), it.attributes["VALUE"].orEmpty()) }
     }
 

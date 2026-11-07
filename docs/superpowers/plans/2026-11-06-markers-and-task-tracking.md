@@ -176,18 +176,25 @@ manual and PDF, `README.md`, test `TaskAppTest.kt`
 
 ### Task B2: Dates in files and the app
 
-**Files:** `io/*`, `desktop/.../AppPlatform.kt` (an `expect`/platform `today()`), `dialog/EditNodeDialog.kt`, docs,
-tests
+**Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/Opml.kt`, new `desktop/.../TaskDates.kt` (`expect fun
+today()`, `shortDate`, `dueLabel`, date picker millis) with `.jvm` and `.wasmJs` actuals, new
+`component/TaskDateField.kt`, `dialog/EditNodeDialog.kt`, `MindMapApp.kt`, manual and PDF, `README.md`, tests
+`TaskFilesTest.kt`, `TaskDatesTest.kt`, `TaskAppTest.kt`
 
-- [ ] `.mmv`: `start="2026-11-01" due="2026-11-30"`. FreeMind: `<attribute NAME="start">` and `due`, kept apart from
-  the node's own attributes as `shape` is. XMind: check its task info extension (start, due) against a file saved by
-  XMind before reading it; if it can't be confirmed, leave XMind dates out. OPML: `_start` and `_due`. Markdown: none.
-- [ ] Platform `today()`: on desktop `java.time.LocalDate.now()`, in the browser the JS `Date`. The app refreshes
-  `state.today` when it starts and when its window regains focus, so a map left open overnight updates.
-- [ ] The dialog's Task section gets start and due fields, each a Material3 `DatePicker` in a popup with a Clear
-  button. The dialog refuses a start after the due date, with a message.
-- [ ] The app formats the label as "Due 30 Nov", or "Due 30 Nov 2027" in another year.
-- [ ] Docs and tests.
+- [x] `.mmv`: `start="2026-11-01" due="2026-11-30"`; a date that is no day is left out. FreeMind: `<attribute
+  NAME="start">` and `due` after `shape`; the first of each name holding a date is read as it, and one that holds no
+  date stays an attribute of the node. OPML: `_start` and `_due`. Markdown: none. XMind: left out, as no file saved
+  by XMind with task dates was at hand to check its format against (a follow-up).
+- [x] Platform `today()`: on desktop `java.time.LocalDate.now()`, in the browser the JS `Date`. The app sets
+  `state.today` when it starts and whenever its window gains or loses focus, so a map left open overnight updates.
+- [x] The dialog's Task section has Start and Due fields, each a button that opens a Material3 `DatePickerDialog`
+  with OK, Clear and Cancel. A start after the due date is refused where it is picked, with a message in the
+  section, so the dialog never saves one.
+- [x] The app writes the label "Due 30 Nov", or "Due 30 Nov 2027" in another year, or when today isn't known.
+- [x] Manual (Tasks section) and PDF, README. Tests (8): `.mmv` dates kept, bad dates left out, FreeMind
+  attributes kept apart from the node's own, a FreeMind `due` that is no date stays an attribute, OPML; the label
+  and the picker's millis against `java.time` (years 1 to 9999); the app sets today and writes "Due 9 Mar". The
+  date pickers are in the dialog's own window, which the tests can't reach, so they need a check by eye.
 
 ---
 
@@ -227,4 +234,5 @@ test `FilterBarTest.kt`
 - A Gantt/timeline view.
 - Sorting siblings by priority or due date.
 - Exporting the filtered view.
+- XMind task dates, once a file saved by XMind with them confirms its format.
 - Custom marker sets: XMind's flags, stars and people stay emoji in the text, as today.

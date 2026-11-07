@@ -29,6 +29,7 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.MindMapState
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.NODE_TEXT_EDITOR_TAG
 import com.mindsync.library.util.RichText
@@ -179,5 +180,23 @@ class TaskAppTest {
         waitForIdle()
 
         assertEquals(TaskProgress.DONE, state.taskOf("Two").progress)
+    }
+
+    @Test
+    fun todayIsSetAndTheDueDateIsWrittenShort() = runComposeUiTest {
+        val app = shownApp()
+        val state = app.state
+        val today = today()
+        assertEquals(today, state.today)
+
+        state.selectTopics("Two")
+        state.setDates(null, TaskDate(today.year, 3, 9))
+        state.animateTreeChange()
+        waitForIdle()
+
+        val node = state.tree.getNode(state.idOf("Two"))
+        val content = state.mindMapManager.getMeasureTextSize()!!
+            .measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
+        assertEquals("Due 9 Mar", content.dueLabel?.layoutInput?.text?.text)
     }
 }
