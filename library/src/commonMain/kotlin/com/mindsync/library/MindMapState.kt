@@ -457,41 +457,104 @@ class MindMapState(
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
-                val addNode: NodeData<*> = when (shape) {
-                    NodeShape.CIRCLE ->
-                        NodeGenerator.makeNode(CircleNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                    NodeShape.RECTANGLE ->
-                        NodeGenerator.makeNode(RectangleNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                    NodeShape.SQUARE ->
-                        NodeGenerator.makeNode(SquareNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                    NodeShape.LINE ->
-                        NodeGenerator.makeNode(LineNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                    NodeShape.STADIUM ->
-                        NodeGenerator.makeNode(StadiumNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                    NodeShape.OVAL ->
-                        NodeGenerator.makeNode(OvalNodeData::class, description, node.id)
-                            .copy(color = color, textColor = textColor, note = note)
-                }
-                this.addNode = addNode
                 // Only the root has a set of children for each side; below it a child is on the side of its parent.
                 val addSide = if (node.parentId == null) side else tree.sideOf(node.id)
-                val addNodeCommand = AddNodeCommand(mindMapManager, addNode, addSide)
-                addNodeCommand.execute()
-                tree.setLine(addNode.id, line)
-                tree.setBorder(addNode.id, border)
-                if (noteDisplay != null || attributeDisplay != null) {
-                    tree.setNoteDisplay(addNode.id, noteDisplay)
-                    tree.setAttributeDisplay(addNode.id, attributeDisplay)
-                    // A note or attributes shown in the node make it larger, which it was not measured with.
-                    mindMapManager.update(tree)
-                }
+                addChild(
+                    node
+                    , description
+                    , shape
+                    , color
+                    , textColor
+                    , addSide
+                    , note
+                    , line
+                    , border
+                    , noteDisplay
+                    , attributeDisplay
+                )
             }
             animateTreeChange()
+        }
+    }
+
+    /**
+     * Adds a node next to the selected node, as a child of the same parent on the same side of the root: right
+     * after it, or right before it when [isAbove]. The root has no siblings, so for the root a child is added on
+     * [side], as [addNode] adds it. The selected node stays selected, and [getAddNode] returns the added one.
+     */
+    fun addSiblingNode(
+        description: String
+        , shape: NodeShape = NodeShape.RECTANGLE
+        , color: Color = shape.defaultColor
+        , textColor: Color = shape.defaultTextColor
+        , isAbove: Boolean = false
+        , side: LayoutSide = layoutSide
+        , note: String = ""
+        , line: NodeLine = NodeLine()
+        , border: NodeBorder = NodeBorder()
+    ) {
+        val node = mindMapManager.getSelectedNode() ?: return
+        val parentId = node.parentId
+        if (parentId == null) {
+            addNode(description, shape, color, textColor, side, note, line, border)
+            return
+        }
+        recordChange {
+            val parent = tree.getNode(parentId)
+            val index = parent.children.indexOf(node.id) + if (isAbove) 0 else 1
+            addChild(
+                parent
+                , description
+                , shape
+                , color
+                , textColor
+                , tree.sideOf(node.id)
+                , note
+                , line
+                , border
+                , index = index
+            )
+            animateTreeChange()
+        }
+    }
+
+    private fun addChild(
+        parent: NodeData<*>
+        , description: String
+        , shape: NodeShape
+        , color: Color
+        , textColor: Color
+        , side: LayoutSide
+        , note: String
+        , line: NodeLine
+        , border: NodeBorder
+        , noteDisplay: NoteDisplay? = null
+        , attributeDisplay: AttributeDisplay? = null
+        , index: Int? = null
+    ) {
+        val addNode: NodeData<*> = when (shape) {
+            NodeShape.CIRCLE -> NodeGenerator.makeNode(CircleNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+            NodeShape.RECTANGLE -> NodeGenerator.makeNode(RectangleNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+            NodeShape.SQUARE -> NodeGenerator.makeNode(SquareNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+            NodeShape.LINE -> NodeGenerator.makeNode(LineNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+            NodeShape.STADIUM -> NodeGenerator.makeNode(StadiumNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+            NodeShape.OVAL -> NodeGenerator.makeNode(OvalNodeData::class, description, parent.id)
+                .copy(color = color, textColor = textColor, note = note)
+        }
+        this.addNode = addNode
+        AddNodeCommand(mindMapManager, addNode, side, index).execute()
+        tree.setLine(addNode.id, line)
+        tree.setBorder(addNode.id, border)
+        if (noteDisplay != null || attributeDisplay != null) {
+            tree.setNoteDisplay(addNode.id, noteDisplay)
+            tree.setAttributeDisplay(addNode.id, attributeDisplay)
+            // A note or attributes shown in the node make it larger, which it was not measured with.
+            mindMapManager.update(tree)
         }
     }
 

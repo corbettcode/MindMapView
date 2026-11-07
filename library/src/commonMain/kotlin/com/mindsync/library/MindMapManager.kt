@@ -62,8 +62,19 @@ class MindMapManager {
         node: NodeData<*>
         , description: String
         , side: LayoutSide = LayoutSide.RIGHT
+        , index: Int? = null
     ) {
-        this.tree.addNode(node.id, node.parentId, description, node.shape, node.color, node.textColor, side, node.note)
+        this.tree.addNode(
+            node.id
+            , node.parentId
+            , description
+            , node.shape
+            , node.color
+            , node.textColor
+            , side
+            , node.note
+            , index
+        )
         update(node)
     }
 

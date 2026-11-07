@@ -1,10 +1,16 @@
 package com.mindsync.library
 
+import androidx.compose.ui.graphics.Color
+import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class SiblingInsertTest {
     private fun tree(): Tree<Any> = Tree<Any>(Dp(0f), Dp(0f)).apply {
@@ -13,7 +19,7 @@ class SiblingInsertTest {
         addNode("c", "a", "C")
     }
 
-    private fun Tree<Any>.childrenOf(id: String) = getNode(id).children
+    private fun Tree<*>.childrenOf(id: String) = getNode(id).children
 
     @Test
     fun nodeWithoutAnIndexGoesAfterTheLastChild() {
@@ -56,5 +62,111 @@ class SiblingInsertTest {
         assertEquals(LayoutSide.UPPER_LEFT, tree.sideOf("f"))
         assertEquals(LayoutSide.UPPER_LEFT, tree.sideOf("e"))
         assertEquals(LayoutSide.RIGHT, tree.sideOf("a"))
+    }
+
+    // The root with "a" on the right, "b" and "c" below it, and "e" and "g" on the upper left.
+    private fun state(): MindMapState {
+        val tree = tree().apply {
+            addNode("e", getRootNode().id, "E", side = LayoutSide.UPPER_LEFT)
+            addNode("g", getRootNode().id, "G", side = LayoutSide.UPPER_LEFT)
+        }
+        return MindMapState(tree).apply { setTree(tree) }
+    }
+
+    private fun MindMapState.selectNode(id: String) = select(tree.getNode(id))
+
+    private fun MindMapState.addedId(): String = getAddNode()!!.id
+
+    @Test
+    fun siblingGoesRightAfterTheSelectedNode() {
+        val state = state()
+        state.selectNode("b")
+
+        state.addSiblingNode("D")
+
+        assertEquals(listOf("b", state.addedId(), "c"), state.tree.childrenOf("a"))
+        assertEquals("D", state.tree.getNode(state.addedId()).description)
+    }
+
+    @Test
+    fun siblingAboveGoesRightBeforeTheSelectedNode() {
+        val state = state()
+        state.selectNode("c")
+
+        state.addSiblingNode("D", isAbove = true)
+
+        assertEquals(listOf("b", state.addedId(), "c"), state.tree.childrenOf("a"))
+    }
+
+    @Test
+    fun siblingOfAChildOfTheRootIsOnItsSide() {
+        val state = state()
+        state.selectNode("e")
+
+        state.addSiblingNode("F", side = LayoutSide.LOWER_RIGHT)
+
+        val rootId = state.tree.getRootNode().id
+        assertEquals(listOf("a", "e", state.addedId(), "g"), state.tree.childrenOf(rootId))
+        assertEquals(LayoutSide.UPPER_LEFT, state.tree.sideOf(state.addedId()))
+    }
+
+    @Test
+    fun siblingOfTheRootIsAChildOnTheSideGiven() {
+        val state = state()
+        val rootId = state.tree.getRootNode().id
+        state.select(state.tree.getRootNode())
+
+        state.addSiblingNode("H", side = LayoutSide.LOWER_LEFT)
+
+        assertEquals(state.addedId(), state.tree.childrenOf(rootId).last())
+        assertEquals(LayoutSide.LOWER_LEFT, state.tree.sideOf(state.addedId()))
+    }
+
+    @Test
+    fun siblingTakesTheShapeAndColorsGiven() {
+        val state = state()
+        state.selectNode("b")
+
+        state.addSiblingNode("D", NodeShape.OVAL, color = Color.Red, textColor = Color.Blue)
+
+        val added = state.tree.getNode(state.addedId())
+        assertIs<OvalNodeData>(added)
+        assertEquals(Color.Red, added.color)
+        assertEquals(Color.Blue, added.textColor)
+    }
+
+    @Test
+    fun selectedNodeStaysSelected() {
+        val state = state()
+        state.selectNode("b")
+
+        state.addSiblingNode("D")
+
+        assertEquals("b", state.selectedNode?.id)
+    }
+
+    @Test
+    fun addingASiblingIsOneStepToUndo() {
+        val state = state()
+        state.selectNode("b")
+        assertFalse(state.canUndo)
+
+        state.addSiblingNode("D")
+        assertTrue(state.canUndo)
+        state.undo()
+
+        assertEquals(listOf("b", "c"), state.tree.childrenOf("a"))
+        assertFalse(state.canUndo)
+    }
+
+    @Test
+    fun withNothingSelectedNoSiblingIsAdded() {
+        val state = state()
+        state.select(null)
+
+        state.addSiblingNode("D")
+
+        assertFalse(state.canUndo)
+        assertEquals(listOf("b", "c"), state.tree.childrenOf("a"))
     }
 }

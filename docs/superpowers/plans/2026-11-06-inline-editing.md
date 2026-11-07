@@ -73,7 +73,8 @@ Escape cancels, Ctrl+B / Ctrl+I / Ctrl+U toggle bold, italic and underline. A pr
 
 - [ ] `MindMapState.addSiblingNode(description, shape, color, textColor, isAbove = false, note, line, border)`: adds
   under the selected node's parent, right after it (or before it with `isAbove`), on its side. For the root it adds a
-  child on `layoutSide`, as `addNode` does. It selects the new node, records one step and animates.
+  child on `side` (default `layoutSide`), as `addNode` does. It records one step and animates. As with `addNode`,
+  the selected node stays selected and `getAddNode()` returns the new one. Task 5 selects it to edit.
 - [ ] Share the node-building `when (shape)` in `addNode` with it instead of copying it a third time.
 - [ ] Tests: the order of siblings below and above, a child of the root on UPPER_LEFT stays on UPPER_LEFT, the root
   case, one undo step.

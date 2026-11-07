@@ -17,6 +17,7 @@ class AddNodeCommand(
     private val mindMapManager: MindMapManager,
     private val addNode: NodeData<*>,
     private val side: LayoutSide = LayoutSide.RIGHT,
+    private val index: Int? = null,
 ) : MindMapCommand {
     override fun execute() {
         val parent = mindMapManager.getTree().getNode(addNode.parentId)
@@ -39,6 +40,6 @@ class AddNodeCommand(
             is StadiumNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
             is OvalNodeData -> addNode.copy(path = addNode.path.copy(centerX = centerX, centerY = parentY))
         }
-        mindMapManager.addNode(updatedNode, addNode.description, side)
+        mindMapManager.addNode(updatedNode, addNode.description, side, index)
     }
 }
