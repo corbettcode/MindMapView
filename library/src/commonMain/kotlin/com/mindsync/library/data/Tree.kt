@@ -65,6 +65,16 @@ class Tree<T> {
     /** The arrow links between the nodes of the tree, in the order they are drawn. */
     val arrowLinks: List<ArrowLink> get() = _arrowLinks.toList()
 
+    private val _boundaries = mutableListOf<Boundary>()
+
+    // A boundary is read through the tree as it is now, so no change of the tree can leave one around nodes that
+    // are not its parent's children.
+    /**
+     * The boundaries of the tree, in the order they are drawn, each with only those of its children that are
+     * still its parent's on its side. Those with none left are not among them.
+     */
+    val boundaries: List<Boundary> get() = _boundaries.mapNotNull(::current)
+
     constructor() : this(Dp(0f), Dp(0f)) {
         isRootPlaced = false
         isRootCentered = true
@@ -338,6 +348,68 @@ class Tree<T> {
     }
 
     /**
+     * Adds a boundary, in place of the one with its id when there is one. Its parent has to be a node of the
+     * tree with at least one of its [Boundary.childIds] among its children. It is kept around all of the children
+     * from the first to the last of them, so it stays around those between when one at either end goes.
+     */
+    fun addBoundary(boundary: Boundary) {
+        val found = current(boundary)
+            ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        val current = found.copy(childIds = boundaryChildIds(found).toSet())
+        val index = _boundaries.indexOfFirst { it.id == boundary.id }
+        if (index == -1) _boundaries.add(current) else _boundaries[index] = current
+    }
+
+    fun removeBoundary(id: String) {
+        _boundaries.removeAll { it.id == id }
+    }
+
+    /**
+     * Returns the children of the boundary's parent it is around, in order: from the first to the last of its
+     * children, with those between them, on the side of the root its first child is on.
+     */
+    fun boundaryChildIds(boundary: Boundary): List<String> {
+        val current = current(boundary) ?: return emptyList()
+        val siblings = siblingsOnSide(current.parentId, current.childIds)
+        val first = siblings.indexOfFirst { it in current.childIds }
+        val last = siblings.indexOfLast { it in current.childIds }
+        return siblings.subList(first, last + 1)
+    }
+
+    // The boundary with only the children that are still its parent's, on the side of its first one, or null when
+    // none are.
+    private fun current(boundary: Boundary): Boundary? {
+        val parent = _nodes[boundary.parentId]?.takeIf { isInTree(it.id) } ?: return null
+        val childIds = siblingsOnSide(parent.id, boundary.childIds).filter { it in boundary.childIds }.toSet()
+        return when {
+            childIds.isEmpty() -> null
+            childIds == boundary.childIds -> boundary
+            else -> boundary.copy(childIds = childIds)
+        }
+    }
+
+    // A removed node stays among the nodes, but is no longer a child of its parent, or is below one that is not.
+    private fun isInTree(id: String): Boolean {
+        var node = _nodes[id] ?: return false
+        while (true) {
+            val parent = _nodes[node.parentId ?: return node.id == ROOT_ID] ?: return false
+            if (node.id !in parent.children) return false
+            node = parent
+        }
+    }
+
+    // The children of the parent, or under the root only those on the side of the first of [childIds] there is.
+    private fun siblingsOnSide(
+        parentId: String
+        , childIds: Set<String>
+    ): List<String> {
+        val children = _nodes[parentId]?.children.orEmpty()
+        if (parentId != ROOT_ID) return children
+        val side = children.firstOrNull { it in childIds }?.let(::sideOf) ?: return emptyList()
+        return children.filter { sideOf(it) == side }
+    }
+
+    /**
      * Removes the arrow links from and to the node and the nodes below it.
      */
     fun removeArrowLinksOfBranch(id: String) {
@@ -357,6 +429,7 @@ class Tree<T> {
         , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
+        , boundaries = boundaries
         , theme = theme
         , isRootPlaced = isRootPlaced
         , isRootCentered = isRootCentered
@@ -381,6 +454,8 @@ class Tree<T> {
         foldedIds.addAll(snapshot.foldedIds)
         _arrowLinks.clear()
         _arrowLinks.addAll(snapshot.arrowLinks)
+        _boundaries.clear()
+        _boundaries.addAll(snapshot.boundaries)
         theme = snapshot.theme
         isRootPlaced = snapshot.isRootPlaced
         isRootCentered = snapshot.isRootCentered
