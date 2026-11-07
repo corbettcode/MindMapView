@@ -16,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.util.RichTextLink
 import com.mindsync.mindmapview.desktop.LINK_MENU_MAX_WIDTH
 import com.mindsync.mindmapview.desktop.NEW_NODE_ITEMS
@@ -50,6 +52,10 @@ import kotlin.collections.forEach
  * @param onAddArrowLink Callback function invoked when the "Add Arrow Link" action is selected.
  * @param onAddBoundary Callback function invoked when the "Add Boundary" action is selected.
  * @param onAddSummary Callback function invoked when the "Add Summary" action is selected.
+ * @param task Function that provides the task of the selected node, read when the Task menu opens.
+ * @param onPriority Callback function invoked when a priority, or none, is chosen in the Task menu.
+ * @param onProgress Callback function invoked when a progress, or none, is chosen in the Task menu.
+ * @param onToggleDone Callback function invoked when "Toggle Done" is chosen in the Task menu.
  * @param onEditAttributes Callback function invoked when the "Attributes..." action is selected.
  * @param onPreferences Callback function invoked when the "Preferences..." action is selected.
  * @param onFind Callback function invoked when the "Find..." action is selected.
@@ -79,6 +85,10 @@ fun EditMenu(
     , onAddArrowLink: () -> Unit
     , onAddBoundary: () -> Unit
     , onAddSummary: () -> Unit
+    , task: () -> NodeTask
+    , onPriority: (Int?) -> Unit
+    , onProgress: (TaskProgress?) -> Unit
+    , onToggleDone: () -> Unit
     , onEditAttributes: () -> Unit
     , onPreferences: () -> Unit
     , onFind: () -> Unit
@@ -269,6 +279,14 @@ fun EditMenu(
                     onAddBoundary()
                 }
                 , enabled = enabled
+            )
+            TaskSubmenu(
+                task = task()
+                , enabled = enabled
+                , onPriority = onPriority
+                , onProgress = onProgress
+                , onToggleDone = onToggleDone
+                , onClose = { expanded = false }
             )
             DropdownMenuItem(
                 text = { Text("Add Summary") }

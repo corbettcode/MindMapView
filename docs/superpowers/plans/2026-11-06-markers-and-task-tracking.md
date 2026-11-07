@@ -138,16 +138,21 @@ filter.
 
 ### Task A5: Priority and progress in the app
 
-**Files:** `MindMapApp.kt`, `menuBar/EditMenu.kt`, `dialog/EditNodeDialog.kt`, `KeyboardShortcuts.kt`, manual and
-PDF, `README.md`, test `TaskAppTest.kt`
+**Files:** `MindMapApp.kt`, `menuBar/EditMenu.kt`, new `menuBar/TaskMenu.kt` (`TaskSubmenu` and
+`TaskProgress.label`), `dialog/EditNodeDialog.kt`, `MindMapState.kt` (`editNodeTask`), `KeyboardShortcuts.kt`,
+manual and PDF, `README.md`, test `TaskAppTest.kt`
 
-- [ ] Keys: Ctrl+1…9 and Ctrl+0, Ctrl+D. Like Ctrl+B, they act only outside typing. Check that none clashes with the
-  text field's own keys while typing (Ctrl+D doesn't in compose-rich-editor; confirm).
-- [ ] Edit › Task submenu: Priority ▸ (None, 1–9), Progress ▸ (None, the five steps), Toggle Done. The same in the node
-  menu.
-- [ ] The edit dialog gets a **Task** section with priority and progress dropdowns; phase B adds the dates.
-- [ ] Shortcuts, a manual section "Tasks", the PDF, and the README.
-- [ ] App tests: Ctrl+2 on two topics, then undo; Ctrl+D twice; the dialog sets progress.
+- [x] Keys: Ctrl+1…9 (top row or number pad) set the priority, Ctrl+0 removes it, and Ctrl+D toggles Done. They act
+  only outside typing; while typing, the text field gets them first, which is tested.
+- [x] `TaskSubmenu`, shared by Edit › Task and the node menu's Task: No Priority and Priority 1–9 (with their keys),
+  No Progress and the five steps, Toggle Done (Ctrl+D), with a tick at the current values.
+- [x] The edit dialog has a **Task** section with Priority and Progress pickers, open when the node has a task, before
+  Border. Its submit passes the task; `state.editNodeTask(id, task)` applies it, also to a node just added, as one
+  step that re-measures. Dates are kept as they are until phase B.
+- [x] Shortcuts, a "Tasks" section in the manual's chapter 3, the shortcut and mouse tables, the PDF, and the README.
+- [x] App tests (6): Ctrl+2 on two topics then undo; Ctrl+NumPad7 then Ctrl+0; Ctrl+D twice; Ctrl+5 while typing sets
+  nothing; Edit › Task › Priority 3; the node menu's Task › Toggle Done. The edit dialog is a window of its own that
+  the test framework can't reach, so its Task section needs a check by eye.
 
 ---
 

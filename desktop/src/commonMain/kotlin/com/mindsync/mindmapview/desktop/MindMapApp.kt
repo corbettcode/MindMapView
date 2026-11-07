@@ -54,6 +54,7 @@ import com.mindsync.mindmapview.desktop.dialog.*
 import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.ToolMenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
+import com.mindsync.mindmapview.desktop.menuBar.TaskSubmenu
 import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichTextState
@@ -720,6 +721,16 @@ internal class MindMapApp(
                 arrowLinkSourceId = state.selectedNode?.id
                 true
             }
+            // XMind's keys for a priority; Ctrl+0 takes it away. While a node's text is typed, the text field has
+            // them first.
+            !isDialogOpen && !isFindFocused && error == null && event.key.digit() != null -> {
+                state.setPriority(event.key.digit()?.takeIf { it > 0 })
+                true
+            }
+            !isDialogOpen && !isFindFocused && error == null && event.key == Key.D -> {
+                state.toggleDone()
+                true
+            }
             // XMind's key for a summary.
             !isDialogOpen && !isFindFocused && error == null && event.key == Key.RightBracket -> {
                 addSummaryToType()
@@ -1136,6 +1147,10 @@ private fun MindMapScreen(
                             onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                             onAddBoundary = { state.addBoundary() },
                             onAddSummary = onAddSummary,
+                            task = { selectedNode?.let { state.tree.taskOf(it.id) } ?: NodeTask() },
+                            onPriority = { state.setPriority(it) },
+                            onProgress = { state.setProgress(it) },
+                            onToggleDone = { state.toggleDone() },
                             onEditAttributes = { onAttributesEditRequestedChange(true) },
                             onPreferences = { isPreferencesOpen = true },
                             onFind = onFind,
@@ -1231,6 +1246,10 @@ private fun MindMapScreen(
                                 // The root is in no boundary.
                                 onAddBoundary = if (node.parentId == null) null else ({ state.addBoundary() }),
                                 // A summary is of siblings, which the root has none of, and of no summary.
+                                task = state.tree.taskOf(nodeId),
+                                onPriority = { state.setPriority(it) },
+                                onProgress = { state.setProgress(it) },
+                                onToggleDone = { state.toggleDone() },
                                 onAddSummary = onAddSummary.takeIf {
                                     node.parentId != null && !state.tree.isSummary(nodeId)
                                 },
@@ -1442,6 +1461,11 @@ private fun MindMapScreen(
                             else preferences.emojiTones + (base to variant)
                         onPreferencesChange(preferences.copy(emojiTones = emojiTones))
                     },
+                    task = if (currentOperation is Operation.Update) {
+                        selectedNode?.let { state.tree.taskOf(it.id) } ?: NodeTask()
+                    } else {
+                        NodeTask()
+                    },
                     attributes = if (currentOperation is Operation.Update) {
                         selectedNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
                     } else {
@@ -1449,7 +1473,8 @@ private fun MindMapScreen(
                     },
                     knownAttributeNames = remember(currentOperation) { attributeNames(state.tree) },
                     isAttributesOpenOnStart = isEditForAttributes,
-                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay, attributeDisplay ->
+                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay,
+                        attributeDisplay, task ->
                         when (currentOperation) {
                             is Operation.Add -> state.groupChanges {
                                 state.addNode(
@@ -1464,7 +1489,10 @@ private fun MindMapScreen(
                                     noteDisplay,
                                     attributeDisplay,
                                 )
-                                state.getAddNode()?.let { state.tree.setAttributes(it.id, attributes) }
+                                state.getAddNode()?.let {
+                                    state.tree.setAttributes(it.id, attributes)
+                                    state.editNodeTask(it.id, task)
+                                }
                                 onCreatedNodeCountChange(createdNodeCount + (editedKind to nodeNumber))
                             }
                             Operation.Update -> state.groupChanges {
@@ -1478,6 +1506,7 @@ private fun MindMapScreen(
                                 state.editNodeNoteDisplay(noteDisplay)
                                 state.editNodeAttributeDisplay(attributeDisplay)
                                 state.editNodeAttributes(attributes)
+                                selectedNode?.let { state.editNodeTask(it.id, task) }
                             }
                         }
                     },
@@ -1539,6 +1568,10 @@ private fun NodeMenu(
     onLink: () -> Unit,
     onAddBoundary: (() -> Unit)?,
     onAddSummary: (() -> Unit)?,
+    task: NodeTask,
+    onPriority: (Int?) -> Unit,
+    onProgress: (TaskProgress?) -> Unit,
+    onToggleDone: () -> Unit,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -1596,6 +1629,14 @@ private fun NodeMenu(
                     },
                 )
             }
+            TaskSubmenu(
+                task = task,
+                enabled = true,
+                onPriority = onPriority,
+                onProgress = onProgress,
+                onToggleDone = onToggleDone,
+                onClose = onDismiss,
+            )
             onAddSummary?.let { addSummary ->
                 DropdownMenuItem(
                     text = { Text("Add Summary") },
@@ -1977,6 +2018,18 @@ fun RichTextState.setSize(size: RichTextSize) {
     removeSpanStyle(SpanStyle(fontSize = currentSpanStyle.fontSize))
     if (size != RichTextSize.NORMAL) addSpanStyle(size.spanStyle)
 }
+
+private val DIGIT_KEYS = listOf(
+    Key.Zero, Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six, Key.Seven, Key.Eight, Key.Nine
+)
+private val NUM_PAD_DIGIT_KEYS = listOf(
+    Key.NumPad0, Key.NumPad1, Key.NumPad2, Key.NumPad3, Key.NumPad4, Key.NumPad5, Key.NumPad6, Key.NumPad7
+    , Key.NumPad8, Key.NumPad9
+)
+
+// The digit a key types, from the row above the letters or the number pad.
+private fun Key.digit(): Int? =
+    (DIGIT_KEYS.indexOf(this).takeIf { it >= 0 } ?: NUM_PAD_DIGIT_KEYS.indexOf(this)).takeIf { it >= 0 }
 
 private fun KeyEvent.isPlus(): Boolean = key == Key.Plus || key == Key.NumPadAdd || utf16CodePoint == '+'.code
 

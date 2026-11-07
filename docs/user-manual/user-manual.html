@@ -355,6 +355,27 @@
         first, unless you turned that off in Preferences. The root cannot be removed.
     </p>
 
+    <h3>Tasks</h3>
+    <p>
+        A node can be a task, with a <b>priority</b> from 1, the highest, to 9, and a <b>progress</b>: Not Started,
+        25%, 50%, 75% or Done. They are drawn as badges in front of its text: the priority as a colored disc with its
+        number, and the progress as a ring that fills as it goes, with a tick when it is done.
+    </p>
+    <ul>
+        <li><kbd>Ctrl+1</kbd> to <kbd>Ctrl+9</kbd> give the selected nodes that priority, and <kbd>Ctrl+0</kbd> takes it away.</li>
+        <li><kbd>Ctrl+D</kbd> marks the selected nodes done, or not started when all of them are done already.</li>
+        <li>Click a node's progress to take it a step on, from Not Started to Done and round again.</li>
+        <li>
+            <span class="menu">Edit &rsaquo; Task</span> and the <span class="menu">Task</span> item of a node's
+            right-click menu have all of these, and the <b>Task</b> section of the edit dialog sets them too.
+        </li>
+    </ul>
+    <p>
+        Tasks are saved in MindMapView files. In a FreeMind map they are FreeMind's number icons and Freeplane's
+        progress icons; in Markdown, a node in a list is a task list item, <code>- [ ]</code> or <code>- [x]</code>;
+        and the priority and task markers of an XMind map are read as tasks.
+    </p>
+
     <h3>Undo and redo</h3>
     <p>
         <kbd>Ctrl+Z</kbd> undoes the last change and <kbd>Ctrl+Y</kbd> (or <kbd>Ctrl+Shift+Z</kbd>) redoes it. Adding,
@@ -949,6 +970,9 @@
         <tr><td><kbd>Ctrl+L</kbd></td><td>Add an arrow link from the selected node</td></tr>
         <tr><td><kbd>Ctrl+B</kbd></td><td>Add a boundary around the selected nodes</td></tr>
         <tr><td><kbd>Ctrl+]</kbd></td><td>Add a summary of the selected nodes and type its text</td></tr>
+        <tr><td><kbd>Ctrl+1…9</kbd></td><td>Give the selected nodes priority 1 to 9</td></tr>
+        <tr><td><kbd>Ctrl+0</kbd></td><td>Take the priority away</td></tr>
+        <tr><td><kbd>Ctrl+D</kbd></td><td>Mark the selected nodes done, or not started</td></tr>
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>
@@ -996,6 +1020,7 @@
         <tr><td>Right-click a node</td><td>Its menu</td></tr>
         <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>
         <tr><td>Right-click inside a boundary</td><td>Its menu</td></tr>
+        <tr><td>Click a node's progress</td><td>Take it a step on</td></tr>
         <tr><td>Drag a node onto another</td><td>Re-attach it</td></tr>
         <tr><td><kbd>Ctrl</kbd> + drag a node onto another</td><td>Add or remove an arrow link</td></tr>
         <tr><td>Drag an arrow link</td><td>Bend it</td></tr>

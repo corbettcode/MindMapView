@@ -1135,6 +1135,15 @@ class MindMapState(
         editTasks(listOf(id)) { it.copy(progress = it.progress?.next ?: TaskProgress.NOT_STARTED) }
     }
 
+    /** Gives the node [id] [task] in place of what it held of a task, as one change, as an edit dialog does. */
+    fun editNodeTask(
+        id: String
+        , task: NodeTask
+    ) {
+        if (id !in tree.nodes) return
+        editTasks(listOf(id)) { task }
+    }
+
     // What a node holds of a task is drawn in it, which makes it larger or smaller, so the tree is measured again.
     private fun editTasks(
         ids: List<String>

@@ -55,6 +55,8 @@ import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.NoteDisplay
@@ -74,6 +76,7 @@ import com.mindsync.mindmapview.desktop.component.ColorEditor
 import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.component.DropdownPicker
+import com.mindsync.mindmapview.desktop.menuBar.label
 import com.mindsync.mindmapview.desktop.component.attributeRowsOf
 import com.mindsync.mindmapview.desktop.component.attributesToKeep
 import com.mindsync.mindmapview.desktop.component.BorderSettings
@@ -159,6 +162,8 @@ fun EditNodeDialog(
     , themeFill: Color?
     , themeText: Color?
     , themeLineNodeText: Color?
+    // What the node holds of a task, of which the dialog changes the priority and the progress and keeps the rest.
+    , task: NodeTask
     , attributes: List<NodeAttribute>
     // The names other nodes have attributes of, to add one of at a click.
     , knownAttributeNames: List<String>
@@ -178,6 +183,7 @@ fun EditNodeDialog(
         , attributes: List<NodeAttribute>
         , noteDisplay: NoteDisplay?
         , attributeDisplay: AttributeDisplay?
+        , task: NodeTask
     ) -> Unit
     , onDismiss: () -> Unit
     , onAddAnother: (() -> Unit)? = null
@@ -225,6 +231,9 @@ fun EditNodeDialog(
     var isTextColorEdited by remember { mutableStateOf(false) }
     var selectedNoteDisplay by remember { mutableStateOf(noteDisplay) }
     var selectedAttributeDisplay by remember { mutableStateOf(attributeDisplay) }
+    var selectedTask by remember { mutableStateOf(task) }
+    // Closed unless the node is a task, so the dialog fits on a small screen.
+    var isTaskOpen by remember { mutableStateOf(!task.isEmpty) }
     // Closed unless the node has colors of its own, so the dialog fits on a small screen.
     var isColorsOpen by remember {
         mutableStateOf(
@@ -282,6 +291,7 @@ fun EditNodeDialog(
             , attributesToKeep(attributeRows)
             , selectedNoteDisplay
             , selectedAttributeDisplay
+            , selectedTask
         )
     }
 
@@ -442,6 +452,32 @@ fun EditNodeDialog(
                             Text(
                                 "The first color of each row follows the map's theme."
                                 , style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+
+                    CollapsibleSection(
+                        title = "Task"
+                        , isOpen = isTaskOpen
+                        , onToggle = { isTaskOpen = !isTaskOpen }
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            , modifier = Modifier.padding(12.dp)
+                        ) {
+                            DropdownPicker(
+                                label = "Priority"
+                                , choices = listOf(null) + NodeTask.PRIORITIES.toList()
+                                , choiceLabel = { it?.toString() ?: "None" }
+                                , selectedChoice = selectedTask.priority
+                                , onSelect = { selectedTask = selectedTask.copy(priority = it) }
+                            )
+                            DropdownPicker(
+                                label = "Progress"
+                                , choices = listOf(null) + TaskProgress.entries
+                                , choiceLabel = { it?.label ?: "None" }
+                                , selectedChoice = selectedTask.progress
+                                , onSelect = { selectedTask = selectedTask.copy(progress = it) }
                             )
                         }
                     }

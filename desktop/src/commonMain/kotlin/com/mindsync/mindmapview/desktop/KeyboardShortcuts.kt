@@ -47,6 +47,9 @@ val KEYBOARD_SHORTCUTS = listOf(
             , KeyboardShortcut(listOf("Ctrl+L"), "Add an arrow link from the selected node")
             , KeyboardShortcut(listOf("Ctrl+B"), "Add a boundary around the selected nodes")
             , KeyboardShortcut(listOf("Ctrl+]"), "Add a summary of the selected nodes and type its text")
+            , KeyboardShortcut(listOf("Ctrl+1…9"), "Give the selected nodes priority 1 to 9")
+            , KeyboardShortcut(listOf("Ctrl+0"), "Take the priority away")
+            , KeyboardShortcut(listOf("Ctrl+D"), "Mark the selected nodes done, or not started")
             , KeyboardShortcut(
                 listOf("Ctrl+M", "Ctrl+Shift+M")
                 , "Move the branch clockwise / counterclockwise around the root"
