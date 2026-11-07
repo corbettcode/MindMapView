@@ -22,6 +22,11 @@ import kotlin.math.tan
  * children of the root that are on its own side. Those on a slanted side are stacked around a point out along
  * the line of that side, and kept clear of those straight out to the same side. The nodes below a folded node
  * are hidden: they take no room and are left where they are.
+ *
+ * A summary is not stacked with its siblings: it is centered on the siblings it is about, past the furthest out of
+ * them and the nodes below them, with room for its bracket, and its own children go out from it. A summary taller
+ * than its siblings takes the room it needs above and below them. Of summaries about the same siblings, the one
+ * about more of them is further out.
  */
 open class MindMapLayoutManager(val side: LayoutSide) {
     protected val horizontalSpacing = Dp(50f)
@@ -73,8 +78,11 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         var startY = centerY - (childHeightSum / 2)
 
         val childIds = childrenOnSide(currentNodeData, tree)
-        val gaps = boundaryGaps(childIds, tree)
-        childIds.forEachIndexed { index, childId ->
+        val stackedIds = childIds.filterNot { tree.isSummary(it) }
+        val gaps = stackGaps(stackedIds, childIds, tree)
+        // Where each of the stacked children and the nodes below it are, from top to bottom, for the summaries.
+        val slots = mutableMapOf<String, Pair<Dp, Dp>>()
+        stackedIds.forEachIndexed { index, childId ->
             val child = tree.getNode(childId)
             val childHeight = measureChildHeight(child, tree)
             val (gapAbove, gapBelow) = gaps[index]
@@ -85,8 +93,52 @@ open class MindMapLayoutManager(val side: LayoutSide) {
 
             tree.setNode(childId, newChild)
             arrangeChildren(newChild, tree)
+            slots[childId] = startY to startY + childHeight
             startY += childHeight + gapBelow + verticalSpacing
         }
+        arrangeSummaries(childIds - stackedIds.toSet(), slots, tree)
+    }
+
+    // Each summary goes past the siblings it is about and the summaries about some of them that are already placed,
+    // so those about fewer go first, nearer to them.
+    private fun arrangeSummaries(
+        summaryIds: List<String>
+        , slots: Map<String, Pair<Dp, Dp>>
+        , tree: Tree<*>
+    ) {
+        val placed = mutableListOf<Pair<String, Set<String>>>()
+        summaryIds
+            .map { it to tree.summaryChildIds(it).filter { id -> id in slots }.toSet() }
+            .filter { (_, rangeIds) -> rangeIds.isNotEmpty() }
+            .sortedBy { (_, rangeIds) -> rangeIds.size }
+            .forEach { (summaryId, rangeIds) ->
+                val top = rangeIds.minOf { slots.getValue(it).first.dpVal }
+                val bottom = rangeIds.maxOf { slots.getValue(it).second.dpVal }
+                val passedIds = rangeIds + placed.filter { (_, ids) -> ids.any { it in rangeIds } }.map { it.first }
+                val edge = passedIds
+                    .map { outerEdge(tree.getNode(it), tree).dpVal }
+                    .let { edges -> if (side.isLeft) edges.min() else edges.max() }
+                val summary = tree.getNode(summaryId)
+                val offset = Dp(SUMMARY_OFFSET.value) + halfWidth(summary)
+                val centerX = if (side.isLeft) Dp(edge) - offset else Dp(edge) + offset
+                val newSummary = moveNode(summary, centerX, Dp((top + bottom) / 2))
+                tree.setNode(summaryId, newSummary)
+                arrangeChildren(newSummary, tree)
+                placed.add(summaryId to rangeIds)
+            }
+    }
+
+    // How far out to this side the node and the shown nodes below it reach, as they are placed now.
+    private fun outerEdge(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): Dp {
+        val ownEdge = if (side.isLeft) node.path.centerX - halfWidth(node) else node.path.centerX + halfWidth(node)
+        return tree.visibleChildren(node)
+            .map { outerEdge(tree.getNode(it), tree) }
+            .fold(ownEdge) { edge, other ->
+                if (side.isLeft == (other.dpVal < edge.dpVal)) other else edge
+            }
     }
 
     /** Returns how far the root and the nodes on this side of it reach above the center of the root. */
@@ -126,11 +178,31 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         , tree: Tree<*>
     ): Dp {
         var leftMost = centerX - halfWidth(node)
-        childrenOnSide(node, tree).forEach { childId ->
+        val childIds = childrenOnSide(node, tree)
+        val childLeftMosts = mutableMapOf<String, Dp>()
+        childIds.filterNot { tree.isSummary(it) }.forEach { childId ->
             val child = tree.getNode(childId)
-            val childLeftMost = leftMost(child, childCenterX(centerX, node, child, tree), tree)
-            if (childLeftMost.dpVal < leftMost.dpVal) leftMost = childLeftMost
+            childLeftMosts[childId] = leftMost(child, childCenterX(centerX, node, child, tree), tree)
         }
+        // On a left side, a summary is further left than the siblings it is about: where [arrangeSummaries] puts it.
+        if (side.isLeft) {
+            val placed = mutableListOf<Pair<String, Set<String>>>()
+            childIds
+                .filter { tree.isSummary(it) }
+                .map { it to tree.summaryChildIds(it).filter { id -> id in childLeftMosts }.toSet() }
+                .filter { (_, rangeIds) -> rangeIds.isNotEmpty() }
+                .sortedBy { (_, rangeIds) -> rangeIds.size }
+                .forEach { (summaryId, rangeIds) ->
+                    val passedIds =
+                        rangeIds + placed.filter { (_, ids) -> ids.any { it in rangeIds } }.map { it.first }
+                    val edge = passedIds.minOf { childLeftMosts.getValue(it).dpVal }
+                    val summary = tree.getNode(summaryId)
+                    val summaryCenterX = Dp(edge) - Dp(SUMMARY_OFFSET.value) - halfWidth(summary)
+                    childLeftMosts[summaryId] = leftMost(summary, summaryCenterX, tree)
+                    placed.add(summaryId to rangeIds)
+                }
+        }
+        childLeftMosts.values.forEach { if (it.dpVal < leftMost.dpVal) leftMost = it }
         return leftMost
     }
 
@@ -251,19 +323,50 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         tree: Tree<*>,
     ): Dp = measureHeight(childrenOnSide(nodeData, tree), tree)
 
+    // Summaries are not stacked, but take room above and below the siblings they are about when they need it.
     private fun measureHeight(
         ids: List<String>
         , tree: Tree<*>
     ): Dp {
+        val stackedIds = ids.filterNot { tree.isSummary(it) }
         var heightSum = Dp(0f)
-        if (ids.isNotEmpty()) {
-            ids.forEach { childId ->
+        if (stackedIds.isNotEmpty()) {
+            stackedIds.forEach { childId ->
                 heightSum += measureChildHeight(tree.getNode(childId), tree)
             }
-            heightSum += verticalSpacing * (ids.size - 1)
-            boundaryGaps(ids, tree).forEach { (above, below) -> heightSum += above + below }
+            heightSum += verticalSpacing * (stackedIds.size - 1)
+            stackGaps(stackedIds, ids, tree).forEach { (above, below) -> heightSum += above + below }
         }
         return heightSum
+    }
+
+    // The room each of the stacked children takes above and below it, for boundaries and for summaries of [allIds].
+    private fun stackGaps(
+        stackedIds: List<String>
+        , allIds: List<String>
+        , tree: Tree<*>
+    ): List<Pair<Dp, Dp>> {
+        val boundaryGaps = boundaryGaps(stackedIds, tree)
+        val summaryIds = allIds.filter { tree.isSummary(it) }
+        if (summaryIds.isEmpty()) return boundaryGaps
+        val above = boundaryGaps.map { it.first.dpVal }.toMutableList()
+        val below = boundaryGaps.map { it.second.dpVal }.toMutableList()
+        val indexes = stackedIds.withIndex().associate { (index, id) -> id to index }
+        summaryIds.forEach { summaryId ->
+            val covered = tree.summaryChildIds(summaryId).mapNotNull { indexes[it] }
+            if (covered.isEmpty()) return@forEach
+            val first = covered.min()
+            val last = covered.max()
+            val rangeHeight = (first..last)
+                .sumOf { measureChildHeight(tree.getNode(stackedIds[it]), tree).dpVal.toDouble() }
+                .toFloat() + verticalSpacing.dpVal * (last - first)
+            val excess = measureChildHeight(tree.getNode(summaryId), tree).dpVal - rangeHeight
+            if (excess > 0f) {
+                above[first] += excess / 2
+                below[last] += excess / 2
+            }
+        }
+        return stackedIds.indices.map { Dp(above[it]) to Dp(below[it]) }
     }
 
     // The room each of the children takes above and below it for the boundaries that start or end at it, as a

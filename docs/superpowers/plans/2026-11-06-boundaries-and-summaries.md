@@ -215,18 +215,27 @@ tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 
 ### Task B3: Laying out summaries
 
-**Files:** `layout/MindMapLayoutManager.kt`, test `SummaryLayoutTest.kt`
+**Files:** `layout/MindMapLayoutManager.kt`, new `layout/SummaryGeometry.kt` (the shared distances), test
+`SummaryLayoutTest.kt`
 
-- [ ] `arrangeChildren` stacks only the non-summary children. Then each summary goes past its range:
-  - It is centered on the range's top-to-bottom extent.
-  - Its x is past the outermost edge of the range's subtrees, plus a 20 dp bracket and 24 dp of space.
-  - Its own children are arranged outward from it.
-- [ ] Height measures take the larger of the range's height and the summary subtree's height, so a tall summary
-  pushes the next siblings down instead of overlapping them.
-- [ ] Include summary subtrees in `reachAbove`, `reachBelow`, `leftMost` and `fittedRoot`, so the map stays on
-  screen.
-- [ ] Tests: the summary is past the range's deepest node and centered on the range, mirrored on the left side and on
-  a slanted root side; a tall summary pushes the next sibling down; a map without summaries lays out as before.
+- [x] `arrangeChildren` stacks only the non-summary children and remembers each one's slot. `arrangeSummaries` then
+  places each summary:
+  - centered on the slots of its range;
+  - past the outermost edge of the range's placed subtrees plus `SUMMARY_OFFSET` (8 dp gap + 12 dp bracket + 24 dp
+    space), mirrored on left sides;
+  - with its own children arranged outward from it.
+  Summaries about fewer siblings go first. A later summary whose range overlaps one already placed goes past that one
+  too, so overlapping summaries don't sit on each other.
+- [x] `measureHeight` stacks only non-summaries. `stackGaps` adds the boundary gaps, plus half of any excess of a
+  summary's subtree height over its range's height above the first and below the last of the range. A tall summary
+  therefore pushes its neighbours away.
+- [x] `leftMost` (which keeps a left side on the map) mirrors the summary placement on left sides.
+  `reachAbove`/`reachBelow` already go through the height measures.
+- [x] Tests (9): past the furthest node of the range and the nodes below it; centered; not stacked; the left side
+  mirrored; a tall summary makes room; overlapping summaries go further out; a left side stays on the map; a slanted
+  root side; unchanged without summaries.
+- Known cost: at a level with summaries, `stackGaps` measures the range's branches again. With summaries at many
+  nested levels this compounds; memoizing heights for one `arrangeTree` would fix it if large maps feel slow.
 
 ### Task B4: Drawing summaries
 
