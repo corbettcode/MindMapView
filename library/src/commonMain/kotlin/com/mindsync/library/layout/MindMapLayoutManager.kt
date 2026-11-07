@@ -72,16 +72,20 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         val centerY = currentNodeData.path.centerY + childrenCenterOffsetY(currentNodeData, tree)
         var startY = centerY - (childHeightSum / 2)
 
-        childrenOnSide(currentNodeData, tree).forEach { childId ->
+        val childIds = childrenOnSide(currentNodeData, tree)
+        val gaps = boundaryGaps(childIds, tree)
+        childIds.forEachIndexed { index, childId ->
             val child = tree.getNode(childId)
             val childHeight = measureChildHeight(child, tree)
+            val (gapAbove, gapBelow) = gaps[index]
+            startY += gapAbove
             val newX = childCenterX(currentNodeData.path.centerX, currentNodeData, child, tree)
             val newY = startY + (childHeight / 2)
             val newChild = moveNode(child, newX, newY)
 
             tree.setNode(childId, newChild)
             arrangeChildren(newChild, tree)
-            startY += childHeight + verticalSpacing
+            startY += childHeight + gapBelow + verticalSpacing
         }
     }
 
@@ -257,8 +261,33 @@ open class MindMapLayoutManager(val side: LayoutSide) {
                 heightSum += measureChildHeight(tree.getNode(childId), tree)
             }
             heightSum += verticalSpacing * (ids.size - 1)
+            boundaryGaps(ids, tree).forEach { (above, below) -> heightSum += above + below }
         }
         return heightSum
+    }
+
+    // The room each of the children takes above and below it for the boundaries that start or end at it, as a
+    // boundary is drawn that far outside the nodes it is around. With it, a boundary is as far from the nodes and
+    // boundaries next to it as nodes are from each other, however many boundaries are within each other.
+    private fun boundaryGaps(
+        ids: List<String>
+        , tree: Tree<*>
+    ): List<Pair<Dp, Dp>> {
+        val noGaps = ids.map { Dp(0f) to Dp(0f) }
+        val parentId = ids.firstOrNull()?.let { tree.getNode(it).parentId } ?: return noGaps
+        val boundaries = tree.boundaries.filter { it.parentId == parentId }
+        if (boundaries.isEmpty()) return noGaps
+        val above = IntArray(ids.size)
+        val below = IntArray(ids.size)
+        val indexes = ids.withIndex().associate { (index, id) -> id to index }
+        boundaries.forEach { boundary ->
+            val covered = tree.boundaryChildIds(boundary).mapNotNull { indexes[it] }
+            if (covered.isEmpty()) return@forEach
+            above[covered.min()]++
+            below[covered.max()]++
+        }
+        val gap = Dp(BOUNDARY_PADDING.value)
+        return ids.indices.map { gap * above[it] to gap * below[it] }
     }
 
     private var rightMost = Float.MIN_VALUE

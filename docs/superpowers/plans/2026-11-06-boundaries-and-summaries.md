@@ -112,12 +112,16 @@ nothing structural; summaries second.
 
 ### Task A4: Room for boundaries
 
-**Files:** `layout/MindMapLayoutManager.kt`, test in `BoundaryGeometryTest.kt`
+**Files:** `layout/MindMapLayoutManager.kt`, test `BoundaryLayoutTest.kt`
 
-- [ ] In `arrangeChildren` and the height measures, add a 12 dp gap before the first and after the last sibling of
-  each boundary, for each boundary level that starts or ends there, so neighbouring outlines never touch.
-- [ ] Tests: two neighbouring siblings with boundaries don't overlap; a map without boundaries is laid out exactly as
-  before. Snapshot the positions of `desktop/feature_tour.mmv` before and after.
+- [x] In `arrangeChildren` and `measureHeight`, add `BOUNDARY_PADDING` (10 dp, not the 12 dp first planned) above the
+  first and below the last sibling of each boundary, once for each boundary that starts or ends there. Since the gap
+  equals the padding the outline is drawn at, an outline is exactly the sibling spacing (50 dp) from the next node
+  or outline, however deeply boundaries are nested. A map without boundaries takes no gaps, so it is laid out
+  exactly as before.
+- [x] Tests (6): siblings without boundaries are 50 dp apart; one boundary moves its neighbours by its padding; the
+  outlines of neighbours are 50 dp apart; three nested boundaries stay clear of the next branch's boundary; a
+  boundary under the root moves the root's other children on that side; the siblings stay centered on their parent.
 
 ### Task A5: Drawing and the boundary menu
 
