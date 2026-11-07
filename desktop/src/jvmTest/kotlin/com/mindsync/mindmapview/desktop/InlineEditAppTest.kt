@@ -8,7 +8,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -26,7 +25,6 @@ import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.MindMapState
 import com.mindsync.library.NODE_TEXT_EDITOR_TAG
-import com.mindsync.library.io.OutlineItem
 import com.mindsync.library.util.RichText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,29 +34,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class InlineEditAppTest {
-    private class TestPlatform : AppPlatform {
-        override val files: MapFiles = object : MapFiles {
-            override fun isSavedTo(document: MapDocument) = false
-            override suspend fun chooseToOpen(current: MapDocument?, extensions: List<String>): MapDocument? = null
-            override suspend fun chooseToSave(current: MapDocument?, newName: String): MapDocument? = null
-            override suspend fun chooseToExport(current: MapDocument?, extension: String): MapDocument? = null
-            override suspend fun read(document: MapDocument): String = ""
-            override suspend fun readBytes(document: MapDocument): ByteArray = ByteArray(0)
-            override suspend fun write(document: MapDocument, content: ByteArray) {}
-        }
-        override val clipboard: SystemClipboard = object : SystemClipboard {
-            override suspend fun setText(text: String) = true
-            override suspend fun text(): String? = null
-            override fun hasText() = false
-        }
-        override val preferencesStore = UserPreferencesStore(read = { null }, write = { _, _ -> })
-        override val recentMaps: RecentMaps? = null
-        override fun encodePng(image: ImageBitmap) = ByteArray(0)
-        override val pdfFromSvg: (suspend (svg: String) -> ByteArray)? = null
-        override val chooseFolder: (suspend () -> OutlineItem?)? = null
-        override suspend fun openUserManual() {}
-    }
-
     // The window takes every key whatever has the focus. Here the keys go to what has it, so the box that stands
     // for the window takes it back whenever no text field has it.
     private val focusRequester = FocusRequester()

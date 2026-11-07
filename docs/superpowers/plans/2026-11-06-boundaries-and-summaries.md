@@ -163,15 +163,17 @@ tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 ### Task A7: Boundaries in the app
 
 **Files:** `MindMapApp.kt`, `menuBar/EditMenu.kt`, `KeyboardShortcuts.kt`, the user manual and its PDF,
-`README.md`, test `BoundaryAppTest.kt`
+`README.md`, tests `BoundaryAppTest.kt` and the shared `TestPlatform.kt`
 
-- [ ] Edit › Add Boundary and the node menu's Add Boundary, with Ctrl+B, which acts only outside typing, as
-  `inlineKeyAction` already leaves Ctrl+B to the text field while typing.
-- [ ] A boundary menu at the right-clicked point, built like the arrow link menu, with Color (the arrow link color
-  row), Line (Solid / Dashed), Fill, and Remove.
-- [ ] Shortcuts dialog and manual (a "Boundaries" section in chapter 5, *Arranging the map*), regenerate the PDF, and
-  update the README.
-- [ ] App test: Ctrl+B on two selected siblings, then undo; the menu changes the color.
+- [x] Edit › Add Boundary and the node menu's Add Boundary (not on the root), with Ctrl+B. While a node's text is
+  typed, the text field gets Ctrl+B first, so it makes the text bold instead.
+- [x] A boundary menu at the right-clicked point, built like the arrow link menu: Solid / Dashed, Filled, Branch
+  Color (ticked while it has no colour of its own), Color (the arrow link colour row), and Remove Boundary.
+- [x] Shortcuts dialog and manual (a "Boundaries" section at the end of chapter 5, *Arranging the map*, plus the
+  shortcut and mouse tables), the PDF regenerated, and the README updated.
+- [x] App tests (3): Ctrl+B around two selected topics (the one between is covered too), then undo; Ctrl+B while
+  typing makes the text bold and adds no boundary; the menu makes a boundary solid, then removes it. The fake
+  platform moved to `TestPlatform.kt` for both app tests, and the app's map has the test tag `MIND_MAP_TAG`.
 
 ---
 

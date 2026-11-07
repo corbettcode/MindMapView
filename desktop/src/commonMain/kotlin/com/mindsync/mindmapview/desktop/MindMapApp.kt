@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontFamily
@@ -699,6 +700,12 @@ internal class MindMapApp(
                 arrowLinkSourceId = state.selectedNode?.id
                 true
             }
+            // XMind's key for a boundary. While a node's text is typed, Ctrl+B makes it bold instead, as the text
+            // field has the key before this.
+            !isDialogOpen && !isFindFocused && error == null && event.key == Key.B -> {
+                state.addBoundary()
+                true
+            }
             // A dialog may have text of its own to copy and paste, and to select all of.
             !isDialogOpen && !isFindFocused && error == null && event.key == Key.A -> {
                 state.selectAll()
@@ -848,6 +855,9 @@ internal class MindMapApp(
     }
 }
 
+/** The test tag of the mind map in the app. */
+internal const val MIND_MAP_TAG = "mindMap"
+
 // FreeMind's own keys for folding.
 class FoldCommand(
     val label: String,
@@ -934,6 +944,8 @@ private fun MindMapScreen(
     var isEditForAttributes by remember { mutableStateOf(false) }
     // The arrow link its menu is open for, and where in the mind map it was asked for.
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    // The boundary its menu is open for, and where in the mind map it was asked for.
+    var boundaryMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     // The node its menu is open for, and where in the mind map it was asked for.
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
@@ -952,7 +964,7 @@ private fun MindMapScreen(
         operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen || isShortcutsOpen
             || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
-    val isMenuOpen = nodeMenu != null || arrowLinkMenu != null
+    val isMenuOpen = nodeMenu != null || arrowLinkMenu != null || boundaryMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
 
     // As a click on a '+' button of the node does. Of the root's buttons, that of the side new children go to.
@@ -1091,6 +1103,7 @@ private fun MindMapScreen(
                             },
                             onOpenLink = openLink,
                             onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
+                            onAddBoundary = { state.addBoundary() },
                             onEditAttributes = { onAttributesEditRequestedChange(true) },
                             onPreferences = { isPreferencesOpen = true },
                             onFind = onFind,
@@ -1126,7 +1139,7 @@ private fun MindMapScreen(
                 ) {
                     MindMap(
                         state = state
-                        , modifier = Modifier.fillMaxSize()
+                        , modifier = Modifier.fillMaxSize().testTag(MIND_MAP_TAG)
                         , topicFontFamilies = topicFontFamilies
                         , emojiFontFamily = LocalEmojiFontFamily.current
                         // While an arrow link is being added, the next click chooses the node it leads to, or none.
@@ -1140,6 +1153,7 @@ private fun MindMapScreen(
                         , onNodeDoubleClick = { state.startTextEdit() }
                         , onAddChildClick = { _, side -> addChild(side) }
                         , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
+                        , onBoundaryMenu = { boundary, position -> boundaryMenu = boundary.id to position }
                         , onNodeMenu = { node, position ->
                             onArrowLinkSourceIdChange(null)
                             nodeMenu = node.id to position
@@ -1182,6 +1196,8 @@ private fun MindMapScreen(
                                 onEditText = { state.startTextEdit() },
                                 onAddNodeToType = onAddNodeToType,
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
+                                // The root is in no boundary.
+                                onAddBoundary = if (node.parentId == null) null else ({ state.addBoundary() }),
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
@@ -1197,6 +1213,18 @@ private fun MindMapScreen(
                                 isRemovable = state.selectedBranches.isRemovable(),
                                 onRemove = removeNode,
                                 onDismiss = { nodeMenu = null },
+                            )
+                        }
+                    }
+                    boundaryMenu?.let { (boundaryId, position) ->
+                        state.boundaries.firstOrNull { it.id == boundaryId }?.let { boundary ->
+                            BoundaryMenu(
+                                boundary = boundary,
+                                position = position,
+                                onChange = { state.updateBoundary(it) },
+                                onRemove = { state.removeBoundary(boundary.id) },
+                                colors = preferences.arrowLinkColors,
+                                onDismiss = { boundaryMenu = null },
                             )
                         }
                     }
@@ -1473,6 +1501,7 @@ private fun NodeMenu(
     onEditText: () -> Unit,
     onAddNodeToType: (NewNodePlace) -> Unit,
     onLink: () -> Unit,
+    onAddBoundary: (() -> Unit)?,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -1520,6 +1549,16 @@ private fun NodeMenu(
                     onLink()
                 },
             )
+            onAddBoundary?.let { addBoundary ->
+                DropdownMenuItem(
+                    text = { Text("Add Boundary") },
+                    trailingIcon = { Text("Ctrl+B", style = MaterialTheme.typography.labelMedium) },
+                    onClick = {
+                        onDismiss()
+                        addBoundary()
+                    },
+                )
+            }
             DropdownMenuItem(
                 text = { Text("Center") },
                 onClick = {
@@ -1685,6 +1724,67 @@ private fun ArrowLinkMenu(
         }
     }
 }
+
+// The menu of a boundary, which floats where it was clicked. Each of its items closes it.
+@Composable
+private fun BoundaryMenu(
+    boundary: Boundary,
+    position: Offset,
+    onChange: (Boundary) -> Unit,
+    onRemove: () -> Unit,
+    colors: List<Color>,
+    onDismiss: () -> Unit,
+) {
+    fun change(changed: Boundary) {
+        onDismiss()
+        onChange(changed)
+    }
+    Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
+        DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+            BoundaryStyle.entries.forEach { style ->
+                DropdownMenuItem(
+                    text = { Text(style.label) },
+                    trailingIcon = { if (style == boundary.style) Text("\u2713") },
+                    onClick = { change(boundary.copy(style = style)) },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text("Filled") },
+                trailingIcon = { if (boundary.isFilled) Text("\u2713") },
+                onClick = { change(boundary.copy(isFilled = !boundary.isFilled)) },
+            )
+            HorizontalDivider()
+            // Without a color of its own, a boundary is in the color of its branch, which the theme gives it.
+            DropdownMenuItem(
+                text = { Text("Branch Color") },
+                trailingIcon = { if (boundary.color == null) Text("\u2713") },
+                onClick = { change(boundary.copy(color = null)) },
+            )
+            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                ColorPicker(
+                    label = "Color",
+                    colors = remember(boundary.color, colors) { (colors + listOfNotNull(boundary.color)).distinct() },
+                    selectedColor = boundary.color ?: Color.Unspecified,
+                    onSelect = { change(boundary.copy(color = it)) },
+                )
+            }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Remove Boundary") },
+                onClick = {
+                    onDismiss()
+                    onRemove()
+                },
+            )
+        }
+    }
+}
+
+private val BoundaryStyle.label: String
+    get() = when (this) {
+        BoundaryStyle.SOLID -> "Solid"
+        BoundaryStyle.DASHED -> "Dashed"
+    }
 
 // The names of the attributes of all nodes of the map: an attribute is given to a node, but its name is
 // one of the map.

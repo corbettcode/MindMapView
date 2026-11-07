@@ -435,6 +435,29 @@
             stays in the middle of the window.
         </li>
     </ul>
+
+    <h3>Boundaries</h3>
+    <p>
+        A boundary is an outline around one or more sibling nodes and everything below them, to show they belong
+        together. Select the nodes and press <kbd>Ctrl+B</kbd>, or choose <span class="menu">Edit &rsaquo; Add
+        Boundary</span>, or right-click a node and choose <span class="menu">Add Boundary</span>. Nodes with different
+        parents each get a boundary of their own, and the root is never in one.
+    </p>
+    <p>
+        A boundary is around its nodes and those between them, so a node you add between them is inside it too. When
+        all of its nodes are removed or moved away, it goes. It is drawn dashed and lightly filled, in the color of its
+        branch, with room left around it so it never touches the nodes next to it.
+    </p>
+    <p>
+        Right-click inside a boundary, away from its nodes, for its menu: <b>Solid</b> or <b>Dashed</b>,
+        <b>Filled</b>, <b>Branch Color</b> or a color of its own, and <b>Remove Boundary</b>. Dragging inside a
+        boundary moves the map, as dragging empty space does.
+    </p>
+    <p>
+        Boundaries are saved in MindMapView files and exported in images, SVG drawings and PDF documents. In a
+        FreeMind map, a boundary is a cloud around each of its nodes, as FreeMind has a cloud around one node only.
+        Boundaries of an imported XMind map are kept, without their titles.
+    </p>
 </section>
 
 <section id="text">
@@ -900,6 +923,7 @@
         <tr><td><kbd>Ctrl+V</kbd></td><td>Paste</td></tr>
         <tr><td><kbd>Alt+F9</kbd></td><td>Edit attributes</td></tr>
         <tr><td><kbd>Ctrl+L</kbd></td><td>Add an arrow link from the selected node</td></tr>
+        <tr><td><kbd>Ctrl+B</kbd></td><td>Add a boundary around the selected nodes</td></tr>
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>
@@ -946,6 +970,7 @@
         <tr><td>Double-click a node</td><td>Type its text</td></tr>
         <tr><td>Right-click a node</td><td>Its menu</td></tr>
         <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>
+        <tr><td>Right-click inside a boundary</td><td>Its menu</td></tr>
         <tr><td>Drag a node onto another</td><td>Re-attach it</td></tr>
         <tr><td><kbd>Ctrl</kbd> + drag a node onto another</td><td>Add or remove an arrow link</td></tr>
         <tr><td>Drag an arrow link</td><td>Bend it</td></tr>

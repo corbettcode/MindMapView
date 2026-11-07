@@ -45,6 +45,7 @@ val KEYBOARD_SHORTCUTS = listOf(
             , KeyboardShortcut(listOf("Ctrl+V"), "Paste")
             , KeyboardShortcut(listOf("Alt+F9"), "Edit attributes")
             , KeyboardShortcut(listOf("Ctrl+L"), "Add an arrow link from the selected node")
+            , KeyboardShortcut(listOf("Ctrl+B"), "Add a boundary around the selected nodes")
             , KeyboardShortcut(
                 listOf("Ctrl+M", "Ctrl+Shift+M")
                 , "Move the branch clockwise / counterclockwise around the root"
