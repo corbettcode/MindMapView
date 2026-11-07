@@ -56,6 +56,8 @@ import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.isDarkBackground
 import com.mindsync.library.model.NoteDisplay
+import com.mindsync.library.model.TaskFilter
+import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.model.TopicKind
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
@@ -1154,6 +1156,48 @@ class MindMapState(
         val today = today ?: return false
         val due = task.due ?: return false
         return due < today && task.progress != TaskProgress.DONE
+    }
+
+    private var mapTaskFilter by mutableStateOf<TaskFilter?>(null)
+
+    /**
+     * The filter the nodes are shown through, or null for none. A node that does not match it is drawn faded, with
+     * its line, unless a node below it matches, so the way to each match stays solid; nothing is hidden, so the map
+     * does not move. A folded node with a match hidden below it has a dot in its fold ring. Exports are drawn
+     * without it. It is how the map is looked at, not part of the map, so it is not undone.
+     */
+    var taskFilter: TaskFilter?
+        get() = mapTaskFilter
+        set(value) {
+            if (value == mapTaskFilter) return
+            mapTaskFilter = value
+            drawTick++
+        }
+
+    /** Returns whether the node [id] matches [taskFilter], which every node does while there is none. */
+    fun matchesTaskFilter(id: String): Boolean {
+        // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+        drawTick
+        val filter = taskFilter ?: return true
+        return id in tree.nodes && filter.matches(tree.taskOf(id), today)
+    }
+
+    // The nodes drawn faded by [taskFilter], and the folded nodes with a match hidden below them. A node is solid when
+    // it or a node below it matches, which one walk from the leaves up finds.
+    internal fun taskFilterView(): TaskFilterView {
+        val filter = taskFilter ?: return TaskFilterView.NONE
+        val today = today
+        val fadedIds = mutableSetOf<String>()
+        val hiddenMatchIds = mutableSetOf<String>()
+        fun isSolid(node: NodeData<*>): Boolean {
+            val isBelowSolid = node.children.map { isSolid(tree.getNode(it)) }.any { it }
+            val isSolid = isBelowSolid || filter.matches(tree.taskOf(node.id), today)
+            if (!isSolid) fadedIds.add(node.id)
+            if (isBelowSolid && tree.isFolded(node.id)) hiddenMatchIds.add(node.id)
+            return isSolid
+        }
+        isSolid(tree.getRootNode())
+        return TaskFilterView(fadedIds, hiddenMatchIds)
     }
 
     /**

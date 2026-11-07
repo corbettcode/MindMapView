@@ -25,12 +25,14 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
@@ -81,6 +83,7 @@ import com.mindsync.library.layout.priorityColor
 import com.mindsync.library.layout.priorityNumberColor
 import com.mindsync.library.layout.taskBadgeCenters
 import com.mindsync.library.layout.OVERDUE_COLOR
+import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
@@ -473,7 +476,14 @@ fun MindMap(
                 scale(state.scaleFactor, state.scaleFactor, Offset.Zero)
             }) {
                 drawAttachedNode(state, drawInfo)
-                drawMap(state, drawInfo, measure, lineColor, hiddenTextId = state.textEditNodeId) {
+                drawMap(
+                    state
+                    , drawInfo
+                    , measure
+                    , lineColor
+                    , hiddenTextId = state.textEditNodeId
+                    , filterView = state.taskFilterView()
+                ) {
                     if (onAddChildClick != null) drawAddButtons(state, drawInfo, lineColor, addIconColor)
                 }
                 drawLinkDrag(state)
@@ -498,7 +508,8 @@ fun MindMap(
 /**
  * Draws the mind map itself, in the pixels of the tree: its lines, its arrow links, its fold markers and its nodes.
  * The arrow links are behind the nodes, as a click where both are goes to the node. What is drawn over the lines
- * and under the nodes, as the buttons that add a child, is [underNodes].
+ * and under the nodes, as the buttons that add a child, is [underNodes]. The nodes [filterView] fades are drawn
+ * faded, with their lines; an export passes none.
  */
 internal fun DrawScope.drawMap(
     state: MindMapState
@@ -506,15 +517,43 @@ internal fun DrawScope.drawMap(
     , measureTextSize: MeasureTextSize
     , lineColor: Color
     , hiddenTextId: String? = null
+    , filterView: TaskFilterView = TaskFilterView.NONE
     , underNodes: DrawScope.() -> Unit = {}
 ) {
+    val fadedIds = filterView.fadedIds
     drawBoundaries(state, drawInfo, lineColor)
-    drawLines(state, drawInfo, lineColor)
-    drawSummaryBrackets(state, drawInfo, lineColor)
-    drawArrowLinks(state)
+    drawLines(state, drawInfo, lineColor, fadedIds)
+    drawSummaryBrackets(state, drawInfo, lineColor, fadedIds)
+    drawArrowLinks(state, fadedIds)
     underNodes()
-    drawFoldMarkers(state, drawInfo, lineColor)
-    drawTree(state, drawInfo, measureTextSize, lineColor, hiddenTextId)
+    drawFoldMarkers(state, drawInfo, lineColor, filterView)
+    drawTree(state, drawInfo, measureTextSize, lineColor, hiddenTextId, fadedIds)
+}
+
+// How opaque what a filter of tasks fades is drawn.
+private const val FADED_ALPHA = 0.3f
+
+// Room beyond a node's box for what is drawn on its edges, as its note and attribute markers.
+private val FADED_NODE_MARGIN = Dp(16f)
+
+private fun Color.fadedIf(isFaded: Boolean): Color = if (isFaded) copy(alpha = alpha * FADED_ALPHA) else this
+
+// A faded node is drawn whole in a layer that is then laid down faded, so its parts don't show through each other.
+private inline fun DrawScope.drawFadedIf(
+    isFaded: Boolean
+    , node: NodeData<*>
+    , draw: DrawScope.() -> Unit
+) {
+    if (!isFaded) {
+        draw()
+        return
+    }
+    val center = Offset(node.path.centerX.toPx(this), node.path.centerY.toPx(this))
+    val margin = FADED_NODE_MARGIN.toPx(this)
+    val half = Offset(halfWidth(node).toPx(this) + margin, halfHeight(node).toPx(this) + margin)
+    drawIntoCanvas { it.saveLayer(Rect(center - half, center + half), Paint().apply { alpha = FADED_ALPHA }) }
+    draw()
+    drawIntoCanvas { it.restore() }
 }
 
 // A bracket is drawn as a line to the summary would be, in the color and width of the summary's branch: from the
@@ -523,6 +562,7 @@ private fun DrawScope.drawSummaryBrackets(
     state: MindMapState
     , drawInfo: DrawInfo
     , lineColor: Color
+    , fadedIds: Set<String>
 ) {
     val tree = state.tree
     val summaryIds = tree.summaries.keys
@@ -545,7 +585,11 @@ private fun DrawScope.drawSummaryBrackets(
         path.cubicTo(middleX, bracket.bottom, middleX, bracket.bottom, bracket.backX, bracket.bottom)
         path.moveTo(bracket.pointX, bracket.pointY)
         path.lineTo(bracket.nodeX, bracket.pointY)
-        drawPath(path, line.color, style = Stroke(width = line.width.toPx(this), cap = StrokeCap.Round))
+        drawPath(
+            path
+            , line.color.fadedIf(summaryId in fadedIds)
+            , style = Stroke(width = line.width.toPx(this), cap = StrokeCap.Round)
+        )
     }
 }
 
@@ -588,6 +632,7 @@ private fun DrawScope.drawTree(
     measureTextSize: MeasureTextSize,
     lineColor: Color,
     hiddenTextId: String?,
+    fadedIds: Set<String>,
 ) {
     // A line node is drawn as its own line goes on from the one to its parent, in the same color and width.
     val lines = mutableMapOf<String, ResolvedLine>()
@@ -597,43 +642,55 @@ private fun DrawScope.drawTree(
     state.tree.doVisiblePreorderTraversal { storedNode ->
         // The node in the colors the theme gives it, unless it has colors of its own.
         val node = storedNode.withColors(state.tree.fillOf(storedNode.id), state.tree.textColorOf(storedNode.id))
-        val line = lines[node.id]
-        val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
-        val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
-        nodeDrawer.drawNode(this)
-        val border = state.tree.drawnBorderOf(node.id)
-        if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
-        val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
-        // The drawer centers the text on the node, which the note and attributes below it share with the text.
-        if (content.isTextShown && node.id != hiddenTextId) {
-            translate(left = content.textShiftX, top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+        drawFadedIf(node.id in fadedIds, node) {
+            drawNodeWithContent(state, node, lines[node.id], drawInfo, measureTextSize, hiddenTextId)
         }
-        drawTaskBadges(state, node, content, measureTextSize)
-        content.dueLabel?.let { label ->
-            val color = if (state.isOverdue(node.id)) OVERDUE_COLOR else node.textColor
-            val topLeft = Offset(
-                node.path.centerX.toPx(this) - label.size.width / 2f
-                , node.path.centerY.toPx(this) + content.dueTop
-            )
-            drawText(label, color, topLeft)
-        }
-        drawNodeImages(node, content)
-        content.note?.let { note ->
-            val centerX = node.path.centerX.toPx(this)
-            val centerY = node.path.centerY.toPx(this)
-            // The line spans the text and the note, so it is as wide as the wider of the two.
-            val lineHalfWidth = maxOf(content.text.size.width, note.size.width) / 2f
-            drawLine(
-                node.textColor.copy(alpha = ATTRIBUTE_LINE_ALPHA)
-                , Offset(centerX - lineHalfWidth, centerY + content.noteLineY)
-                , Offset(centerX + lineHalfWidth, centerY + content.noteLineY)
-                , ATTRIBUTE_LINE_WIDTH.toPx(this)
-            )
-            drawText(note, node.textColor, Offset(centerX - note.size.width / 2f, centerY + content.noteTop))
-        }
-        content.table?.let { drawAttributeTable(node, it, content.tableTop) }
-        drawMarkers(state, node, drawInfo)
     }
+}
+
+private fun DrawScope.drawNodeWithContent(
+    state: MindMapState
+    , node: NodeData<*>
+    , line: ResolvedLine?
+    , drawInfo: DrawInfo
+    , measureTextSize: MeasureTextSize
+    , hiddenTextId: String?
+) {
+    val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
+    val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
+    nodeDrawer.drawNode(this)
+    val border = state.tree.drawnBorderOf(node.id)
+    if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)
+    val content = measureTextSize.measureContent(state.tree, node, state.attributeDisplay, state.noteDisplay)
+    // The drawer centers the text on the node, which the note and attributes below it share with the text.
+    if (content.isTextShown && node.id != hiddenTextId) {
+        translate(left = content.textShiftX, top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
+    }
+    drawTaskBadges(state, node, content, measureTextSize)
+    content.dueLabel?.let { label ->
+        val color = if (state.isOverdue(node.id)) OVERDUE_COLOR else node.textColor
+        val topLeft = Offset(
+            node.path.centerX.toPx(this) - label.size.width / 2f
+            , node.path.centerY.toPx(this) + content.dueTop
+        )
+        drawText(label, color, topLeft)
+    }
+    drawNodeImages(node, content)
+    content.note?.let { note ->
+        val centerX = node.path.centerX.toPx(this)
+        val centerY = node.path.centerY.toPx(this)
+        // The line spans the text and the note, so it is as wide as the wider of the two.
+        val lineHalfWidth = maxOf(content.text.size.width, note.size.width) / 2f
+        drawLine(
+            node.textColor.copy(alpha = ATTRIBUTE_LINE_ALPHA)
+            , Offset(centerX - lineHalfWidth, centerY + content.noteLineY)
+            , Offset(centerX + lineHalfWidth, centerY + content.noteLineY)
+            , ATTRIBUTE_LINE_WIDTH.toPx(this)
+        )
+        drawText(note, node.textColor, Offset(centerX - note.size.width / 2f, centerY + content.noteTop))
+    }
+    content.table?.let { drawAttributeTable(node, it, content.tableTop) }
+    drawMarkers(state, node, drawInfo)
 }
 
 // A priority is a disc of its color with its number on it. Progress is a ring that fills like a clock as it goes,
@@ -720,6 +777,7 @@ private fun DrawScope.drawMarkers(
 // A line node has no fill to hide the arrow links behind it, so they are kept out of its box instead.
 private fun DrawScope.drawArrowLinks(
     state: MindMapState
+    , fadedIds: Set<String>
 ) {
     val lineNodeBoxes = Path()
     state.tree.doVisiblePreorderTraversal { node ->
@@ -735,7 +793,7 @@ private fun DrawScope.drawArrowLinks(
         }
     }
     if (lineNodeBoxes.isEmpty) {
-        drawArrowLinkCurves(state)
+        drawArrowLinkCurves(state, fadedIds)
         return
     }
     // The boxes are cut out of a rectangle larger than any map by the even-odd rule, rather than clipped away,
@@ -745,29 +803,32 @@ private fun DrawScope.drawArrowLinks(
         addRect(Rect(-CLIP_EXTENT, -CLIP_EXTENT, CLIP_EXTENT, CLIP_EXTENT))
         addPath(lineNodeBoxes)
     }
-    clipPath(outsideBoxes, ClipOp.Intersect) { drawArrowLinkCurves(state) }
+    clipPath(outsideBoxes, ClipOp.Intersect) { drawArrowLinkCurves(state, fadedIds) }
 }
 
 private const val CLIP_EXTENT = 1_000_000f
 
+// A link is faded when both of the nodes it joins are, as it then leads nowhere the filter keeps.
 private fun DrawScope.drawArrowLinkCurves(
     state: MindMapState
+    , fadedIds: Set<String>
 ) {
     val tree = state.tree
     val path = Path()
 
     tree.arrowLinks.forEach { link ->
         val curve = arrowLinkCurve(tree, link) ?: return@forEach
+        val color = link.color.fadedIf(link.sourceId in fadedIds && link.targetId in fadedIds)
         path.reset()
         path.moveTo(curve.start.x, curve.start.y)
         path.cubicTo(
             curve.startControl.x, curve.startControl.y, curve.endControl.x, curve.endControl.y, curve.end.x, curve.end.y,
         )
-        drawPath(path, link.color, style = arrowLinkStroke(link.lineStyle, link.thickness))
+        drawPath(path, color, style = arrowLinkStroke(link.lineStyle, link.thickness))
         // A head grows with the line, but by less, so a thin line still has a head that is easy to see.
         val headScale = (link.thickness.width.dpVal + ARROW_LINK_WIDTH.dpVal) / (2 * ARROW_LINK_WIDTH.dpVal)
-        if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, link.color, headScale)
-        if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, link.color, headScale)
+        if (link.hasStartArrow) drawArrowHead(curve.start, curve.startControl, curve.end, color, headScale)
+        if (link.hasEndArrow) drawArrowHead(curve.end, curve.endControl, curve.start, color, headScale)
     }
 }
 
@@ -978,6 +1039,7 @@ private fun DrawScope.drawLines(
     state: MindMapState
     , drawInfo: DrawInfo
     , lineColor: Color
+    , fadedIds: Set<String>
 ) {
     val tree = state.tree
     val manager = state.mindMapManager
@@ -1018,7 +1080,7 @@ private fun DrawScope.drawLines(
             val isSharp = line.style == NodeLineStyle.SHARP_LINEAR || line.style == NodeLineStyle.SHARP_BEZIER
             drawPath(
                 path = path
-                , color = line.color
+                , color = line.color.fadedIf(toNode.id in fadedIds)
                 , style = if (isSharp) Fill else Stroke(width = width)
             )
         }
@@ -1230,25 +1292,31 @@ private fun DrawScope.drawAddButtons(
 }
 
 // As FreeMind marks a folded node: a small circle where the lines to its hidden children would start.
+// A dot in the ring tells that a filter of tasks matches a node hidden in the folded node.
 private fun DrawScope.drawFoldMarkers(
     state: MindMapState
     , drawInfo: DrawInfo
     , lineColor: Color
+    , filterView: TaskFilterView
 ) {
     val strokeWidth = FOLD_MARKER_WIDTH.toPx(this)
     val radius = ADD_BUTTON_RADIUS.toPx(this) - strokeWidth / 2
 
     forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
         if (state.tree.isFolded(node.id)) {
+            val center = foldMarkerCenter(state.tree, node)
             drawCircle(
-                color = line.color
+                color = line.color.fadedIf(node.id in filterView.fadedIds)
                 , radius = radius
-                , center = foldMarkerCenter(state.tree, node)
+                , center = center
                 , style = Stroke(strokeWidth)
             )
+            if (node.id in filterView.hiddenMatchIds) drawCircle(line.color, radius * HIDDEN_MATCH_DOT_SCALE, center)
         }
     }
 }
+
+private const val HIDDEN_MATCH_DOT_SCALE = 0.45f
 
 // The marker is where the add button of the node is while it is not folded.
 internal fun Density.foldMarkerCenter(

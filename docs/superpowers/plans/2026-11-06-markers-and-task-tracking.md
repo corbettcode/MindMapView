@@ -202,16 +202,21 @@ today()`, `shortDate`, `dueLabel`, date picker millis) with `.jvm` and `.wasmJs`
 
 ### Task C1: Filtering in the library
 
-**Files:** new `library/.../model/TaskFilter.kt`, `MindMapState.kt`, `MindMap.kt`, test `TaskFilterTest.kt`
+**Files:** new `library/.../model/TaskFilter.kt` (`TaskFilter`, `ProgressFilter`, `TaskFilterView`),
+`data/NodeTask.kt` (`TaskDate.toEpochDay`, `plusDays`, `ofEpochDay`, which the desktop's date picker code now uses),
+`MindMapState.kt`, `MindMap.kt`, test `TaskFilterTest.kt`
 
-- [ ] `data class TaskFilter(priorities: Set<Int> = all, progress: Set<ProgressFilter> = all, isOverdueOnly: Boolean =
-  false, dueWithinDays: Int? = null)`. A node matches when it meets every condition it sets. `state.taskFilter:
-  TaskFilter?` is not part of the map and isn't undone.
-- [ ] Draw non-matching nodes, their lines and badges at 30% alpha, unless they are an ancestor of a match. Arrow
-  links between two faded nodes are faded too. Folded branches that hold a match get a small dot on their fold ring,
-  so a hidden match is visible.
-- [ ] `exportImage`/`exportSvg` draw without the filter.
-- [ ] Tests: matching rules, combinations, ancestors kept solid, exports unaffected, a hidden match dot.
+- [x] `data class TaskFilter(priorities: Set<Int>? = null, progress: Set<ProgressFilter>? = null, isOverdueOnly:
+  Boolean = false, dueWithinDays: Int? = null)`: null or false sets no condition, so `TaskFilter()` matches every
+  node; a node matches when it meets every condition set. `NOT_DONE` is a node with any task data that isn't Done.
+  "Due within N days" is due from today to N days on and not Done. `state.taskFilter: TaskFilter?` is not part of
+  the map and isn't undone; `state.matchesTaskFilter(id)`.
+- [x] Non-matching nodes are drawn whole in a layer at 30% alpha, with their lines, fold rings and summary brackets
+  faded too, unless a node below them matches. Arrow links between two faded nodes are faded. A folded node with a
+  match hidden below it gets a dot in its fold ring.
+- [x] `exportImage`/`exportSvg` draw without the filter (`drawMap` takes a `TaskFilterView`, `NONE` by default).
+- [x] Tests (11): the empty filter, priorities, not done / done, overdue, due within days, combinations, day
+  counting, ancestors kept solid, no filter, a hidden match dot, the screen faded but the export unchanged.
 
 ### Task C2: The filter bar
 
