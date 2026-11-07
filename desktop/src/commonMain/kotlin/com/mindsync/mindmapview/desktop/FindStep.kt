@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
+import com.mindsync.library.MindMapState
 import com.mindsync.library.data.Tree
 
 internal enum class FindDirection { NEXT, PREVIOUS }
@@ -39,3 +40,10 @@ internal fun findCountText(matchIds: List<String>, currentId: String?): String {
         else -> "${matchIds.size} matches"
     }
 }
+
+/**
+ * Returns the nodes whose text holds [text], as `MindMapState.findNodes` finds them, that the task filter keeps too,
+ * as those it fades are not what is looked for.
+ */
+internal fun MindMapState.findMatchIds(text: String): List<String> =
+    findNodes(text).map { it.id }.filter { matchesTaskFilter(it) }

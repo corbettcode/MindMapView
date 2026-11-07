@@ -220,14 +220,19 @@ today()`, `shortDate`, `dueLabel`, date picker millis) with `.jvm` and `.wasmJs`
 
 ### Task C2: The filter bar
 
-**Files:** new `desktop/.../FilterBar.kt`, `MindMapApp.kt`, `menuBar/ViewMenu.kt`, `KeyboardShortcuts.kt`, docs,
-test `FilterBarTest.kt`
+**Files:** new `desktop/.../FilterBar.kt`, `FindStep.kt` (`findMatchIds`), `MindMapApp.kt`, `menuBar/ViewMenu.kt`,
+`KeyboardShortcuts.kt`, manual and PDF, `README.md`, test `FilterBarTest.kt`
 
-- [ ] View › Filter… (Ctrl+Shift+F) opens a bar under the menu bar, like the find bar. Its chips are Priority 1 … 9
-  (multi-select), Not done, Done, Overdue, Due in 7 days, then a match count and Clear. Esc closes the bar and clears
-  the filter.
-- [ ] Find (Ctrl+F) and the filter work together: F3 steps only through matches that also pass the filter.
-- [ ] Docs and app tests.
+- [x] View › Filter… (Ctrl+Shift+F) opens a bar under the menu bar (and under the find bar). Its chips are
+  priorities 1 … 9 (any chosen match), Not done, Done, then Overdue or Due in 7 days (one at a time, as no task is
+  both). Only the chips scroll in a narrow window; the match count, Clear and ✕ stay in view. Esc (outside the find
+  field) or ✕ closes the bar and clears the filter.
+- [x] Find (Ctrl+F) and the filter work together: the find bar and F3 go only through matches the filter keeps.
+- [x] Manual ("Filtering by task" in chapter 13, a pointer from Tasks, two shortcut rows), PDF, README. App tests
+  (5): Ctrl+Shift+F and the chips; Overdue and Due in 7 days one or the other; Clear, then Esc; View › Filter…;
+  find going only through the filter's matches. A focused find field keeps the test framework from going idle
+  (with or without a filter, so it predates this), so that test checks `findMatchIds`, which the field and F3 share,
+  rather than typing into the field.
 
 ---
 

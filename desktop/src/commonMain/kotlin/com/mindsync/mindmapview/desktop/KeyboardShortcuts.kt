@@ -86,6 +86,8 @@ val KEYBOARD_SHORTCUTS = listOf(
             , KeyboardShortcut(listOf("Ctrl+Down", "Ctrl+Up"), "Select the next / previous sibling", isPair = true)
             , KeyboardShortcut(listOf("Ctrl+F"), "Find")
             , KeyboardShortcut(listOf("F3", "Shift+F3"), "Find next / previous", isPair = true)
+            , KeyboardShortcut(listOf("Ctrl+Shift+F"), "Filter the nodes by their tasks")
+            , KeyboardShortcut(listOf("Esc"), "Close the filter bar and clear the filter")
         )
     )
     , KeyboardShortcutGroup(

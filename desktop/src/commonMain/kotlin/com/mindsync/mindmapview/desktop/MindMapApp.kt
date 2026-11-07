@@ -199,6 +199,7 @@ internal class MindMapApp(
     private var isFindFocused by mutableStateOf(false)
     // Each change of it has the find bar take the focus, with its text selected.
     private var findFocusRequest by mutableStateOf(0)
+    private var isFilterOpen by mutableStateOf(false)
     // Each change of it adds a child to the selected node, as its '+' button does.
     private var addChildRequest by mutableStateOf(0)
     private var editNodeRequest by mutableStateOf(0)
@@ -421,13 +422,24 @@ internal class MindMapApp(
         findFocusRequest++
     }
 
+    private fun showFilter() {
+        isFilterOpen = true
+    }
+
+    // The filter is how the map is looked at through the bar, so it goes with the bar.
+    private fun closeFilter() {
+        isFilterOpen = false
+        state.taskFilter = null
+    }
+
+    private fun findMatchIds(): List<String> = state.findMatchIds(findText)
+
     // Goes from the selected node to the match in [direction]: a node clicked meanwhile is where it goes on from.
     private fun find(
         direction: FindDirection
         , fromId: String? = state.selectedNode?.id
     ) {
-        val matchIds = state.findNodes(findText).map { it.id }
-        nextMatch(state.tree, matchIds, fromId, direction)?.let { state.goToNode(it) }
+        nextMatch(state.tree, findMatchIds(), fromId, direction)?.let { state.goToNode(it) }
     }
 
     private val fileActions = FileActions(
@@ -648,6 +660,11 @@ internal class MindMapApp(
                 arrowLinkSourceId = null
                 true
             }
+            // The find bar's field takes its own Esc while it has the focus.
+            event.key == Key.Escape && isFilterOpen && !isFindFocused && !isDialogOpen -> {
+                closeFilter()
+                true
+            }
             !isDialogOpen && !isFindFocused && error == null && foldCommand(event) != null -> {
                 foldCommand(event)?.run?.invoke(state)
                 true
@@ -690,6 +707,10 @@ internal class MindMapApp(
             }
             !isDialogOpen && !isFindFocused && error == null && event.key == Key.DirectionUp -> {
                 state.selectSibling(isNext = false)
+                true
+            }
+            !isDialogOpen && error == null && event.isShiftPressed && event.key == Key.F -> {
+                showFilter()
                 true
             }
             !isDialogOpen && error == null && event.key == Key.F -> {
@@ -855,6 +876,7 @@ internal class MindMapApp(
             missingRecentPath = missingRecentPath,
             onMissingRecentChoice = ::onMissingRecentChoice,
             onFind = { showFind() },
+            onFilter = { showFilter() },
             onUserManual = ::openUserManual,
             onImport = { format -> startImport { importMap(format) } },
             onImportFolder = platform.chooseFolder?.let { { startImport(::importFolder) } },
@@ -868,7 +890,7 @@ internal class MindMapApp(
             onMapPress = onMapPress,
             findBar = {
                 if (isFindOpen) {
-                    val matchIds = state.findNodes(findText).map { it.id }
+                    val matchIds = findMatchIds()
                     FindBar(
                         text = findText,
                         onTextChange = {
@@ -885,6 +907,20 @@ internal class MindMapApp(
                             isFindOpen = false
                             isFindFocused = false
                         },
+                    )
+                }
+            },
+            filterBar = {
+                if (isFilterOpen) {
+                    val filter = state.taskFilter
+                    FilterBar(
+                        filter = filter
+                        , onFilterChange = { state.taskFilter = it }
+                        , countText = filterCountText(
+                            filter != null
+                            , state.tree.nodes.keys.count { state.matchesTaskFilter(it) }
+                        )
+                        , onClose = ::closeFilter
                     )
                 }
             },
@@ -964,6 +1000,7 @@ private fun MindMapScreen(
     missingRecentPath: String?,
     onMissingRecentChoice: (isRemoved: Boolean) -> Unit,
     onFind: () -> Unit,
+    onFilter: () -> Unit,
     onUserManual: () -> Unit,
     onImport: (ImportFormat) -> Unit,
     // Null where there are no folders to import, as in a browser.
@@ -979,6 +1016,7 @@ private fun MindMapScreen(
     onAddSummary: () -> Unit,
     onMapPress: () -> Unit,
     findBar: @Composable () -> Unit,
+    filterBar: @Composable () -> Unit,
 ) {
     val selectedNode = state.selectedNode
     var operation by remember { mutableStateOf<Operation?>(null) }
@@ -1162,6 +1200,7 @@ private fun MindMapScreen(
                             isCenterEnabled = state.selectedNode != null,
                             onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
                             onFold = { it.run(state) },
+                            onFilter = onFilter,
                         )
                         ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
                         HelpMenu(
@@ -1180,6 +1219,7 @@ private fun MindMapScreen(
                     )
                 }
                 findBar()
+                filterBar()
 
                 Box(
                     modifier = Modifier

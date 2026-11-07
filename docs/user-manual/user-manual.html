@@ -378,6 +378,10 @@
         shows only in the dialog.
     </p>
     <p>
+        To look at only some of the tasks, such as the overdue ones, use the
+        <a href="#find">filter bar</a> (<kbd>Ctrl+Shift+F</kbd>).
+    </p>
+    <p>
         Tasks are saved in MindMapView files. In a FreeMind map they are FreeMind's number icons and Freeplane's
         progress icons, with the dates as <code>start</code> and <code>due</code> attributes; in Markdown, a node in
         a list is a task list item, <code>- [ ]</code> or <code>- [x]</code>, without its dates; an OPML outline
@@ -755,6 +759,31 @@
         Nodes hidden inside folded nodes are found too: their branch is unfolded to show them. Matches are found
         from the selected node onwards, so clicking a node and pressing <kbd>F3</kbd> carries on from there.
     </p>
+
+    <h3>Filtering by task</h3>
+    <p>
+        Press <kbd>Ctrl+Shift+F</kbd> or choose <span class="menu">View &rsaquo; Filter...</span> to open the filter
+        bar under the menus. Its chips choose which <a href="#nodes">tasks</a> to look at, and every node that doesn't
+        match is drawn <b>faded</b>, with its line. Nothing is hidden and nothing moves, and the nodes on the way to
+        a match stay solid, so you can see where each one is.
+    </p>
+    <ul>
+        <li><b>1</b> to <b>9</b> keep the nodes with any of the priorities chosen.</li>
+        <li><b>Not done</b> keeps the tasks that are not done yet, and <b>Done</b> those that are.</li>
+        <li>
+            <b>Overdue</b> keeps the tasks due before today and not done, and <b>Due in 7 days</b> those due from
+            today to a week on. Only one of the two is chosen at a time.
+        </li>
+        <li>Chips of different kinds all have to match: 1, 2 and Not done keep the top priorities still to do.</li>
+        <li>
+            A folded node with a match hidden inside it has a dot in its fold circle. <b>Clear</b> takes the filter
+            away, and <b>&#x2715;</b> or <kbd>Esc</kbd> closes the bar and clears it.
+        </li>
+    </ul>
+    <p>
+        While a filter is on, <kbd>Ctrl+F</kbd> and <kbd>F3</kbd> find only the nodes it keeps. Images, SVG and PDF
+        exports always show the whole map, unfaded.
+    </p>
 </section>
 
 <section id="files">
@@ -1011,6 +1040,8 @@
         <tr><td><kbd>Ctrl+Down</kbd> / <kbd>Ctrl+Up</kbd></td><td>Select the next / previous sibling</td></tr>
         <tr><td><kbd>Ctrl+F</kbd></td><td>Find</td></tr>
         <tr><td><kbd>F3</kbd> / <kbd>Shift+F3</kbd></td><td>Find next / previous</td></tr>
+        <tr><td><kbd>Ctrl+Shift+F</kbd></td><td>Filter the nodes by their tasks</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Close the filter bar and clear the filter</td></tr>
     </table>
     <h3>View and folding</h3>
     <table>

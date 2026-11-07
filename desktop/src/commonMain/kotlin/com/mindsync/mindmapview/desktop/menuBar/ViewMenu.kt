@@ -21,6 +21,7 @@ fun ViewMenu(
     isCenterEnabled: Boolean,
     onCenter: () -> Unit,
     onFold: (FoldCommand) -> Unit,
+    onFilter: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -43,6 +44,14 @@ fun ViewMenu(
                 onClick = {
                     expanded = false
                     onCenter()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Filter...") },
+                trailingIcon = { Text("Ctrl+Shift+F", style = MaterialTheme.typography.labelMedium) },
+                onClick = {
+                    expanded = false
+                    onFilter()
                 },
             )
             HorizontalDivider()
