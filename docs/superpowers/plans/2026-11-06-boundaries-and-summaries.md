@@ -286,13 +286,18 @@ test `SummaryDrawTest.kt`
 
 ### Task B6: Summaries in the app
 
-**Files:** `MindMapApp.kt`, `menuBar/EditMenu.kt`, `KeyboardShortcuts.kt`, manual and PDF, `README.md`, test
+**Files:** `MindMapApp.kt`, `menuBar/EditMenu.kt`, `KeyboardShortcuts.kt`, the manual and its PDF, `README.md`, test
 `SummaryAppTest.kt`
 
-- [ ] Edit › Add Summary and the node menu's Add Summary, with Ctrl+]. It adds "Summary" and opens it for typing. On
-  it, Tab adds a child and Enter adds an ordinary sibling after it.
-- [ ] Shortcuts, a "Summaries" section in the manual next to Boundaries, the PDF, and the README.
-- [ ] App test: select two siblings, Ctrl+], type, Enter; undo removes it in one step.
+- [x] Edit › Add Summary and the node menu's Add Summary (not on the root nor on a summary), with Ctrl+]. It adds
+  "Summary", styled as a new node of that level (`newNodeStyle`), and opens it for typing with
+  `addNodeForTextEdit`, so Enter keeps it and Escape removes it. On a summary, Tab adds a child and Enter an ordinary
+  sibling after it, as on any node.
+- [x] Shortcuts dialog; a "Summaries" section in the manual after Boundaries, plus the shortcut table; PDF
+  regenerated; README.
+- [x] App tests (4): Ctrl+] on two topics, type, Enter, then undo removes it in one step; Escape removes a new
+  summary; the root gets none; Edit › Add Summary. In the test's 700-pixel window the long Edit menu needs scrolling to
+  reach the item.
 
 ---
 

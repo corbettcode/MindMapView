@@ -560,6 +560,26 @@ internal class MindMapApp(
         typedNewNode = state.textEditNodeId?.let { Triple(it, kind, number) }
     }
 
+    /**
+     * Adds a summary of the selected nodes and starts typing its text, as Ctrl+] does. It is styled as a new node
+     * of its siblings' level is, and its text is selected for typing to replace it.
+     */
+    private fun addSummaryToType() {
+        val selected = state.selectedNode ?: return
+        val parent = selected.parentId?.let { state.tree.getNode(it) } ?: return
+        val kind = state.tree.childTopicKindOf(parent.id)
+        val style = newNodeStyle(
+            state.tree
+            , parent
+            , state.tree.sideOf(selected.id)
+            , defaultShape = preferences.topicOf(kind).shape
+        )
+        arrowLinkSourceId = null
+        state.addNodeForTextEdit {
+            addSummaryNode(SUMMARY_TEXT, style.shape, style.color, style.textColor, border = style.border)
+        }
+    }
+
     // A node added to be typed into counts once its typing ends with it there, not when it is cancelled.
     private fun onTextEditEnd() {
         val (id, kind, number) = typedNewNode ?: return
@@ -700,6 +720,11 @@ internal class MindMapApp(
                 arrowLinkSourceId = state.selectedNode?.id
                 true
             }
+            // XMind's key for a summary.
+            !isDialogOpen && !isFindFocused && error == null && event.key == Key.RightBracket -> {
+                addSummaryToType()
+                true
+            }
             // XMind's key for a boundary. While a node's text is typed, Ctrl+B makes it bold instead, as the text
             // field has the key before this.
             !isDialogOpen && !isFindFocused && error == null && event.key == Key.B -> {
@@ -828,6 +853,7 @@ internal class MindMapApp(
             isPasteEnabled = { state.hasCopiedNode || platform.clipboard.hasText() },
             onPaste = ::pasteFromClipboard,
             onAddNodeToType = ::addNodeToType,
+            onAddSummary = ::addSummaryToType,
             onMapPress = onMapPress,
             findBar = {
                 if (isFindOpen) {
@@ -854,6 +880,9 @@ internal class MindMapApp(
         )
     }
 }
+
+// The text a summary starts with, which is selected for typing to replace it.
+private const val SUMMARY_TEXT = "Summary"
 
 /** The test tag of the mind map in the app. */
 internal const val MIND_MAP_TAG = "mindMap"
@@ -935,6 +964,8 @@ private fun MindMapScreen(
     onPaste: () -> Unit,
     // Adds a node and starts typing its text on the map, as Tab and Enter do.
     onAddNodeToType: (NewNodePlace) -> Unit,
+    // Adds a summary of the selected nodes and starts typing its text, as Ctrl+] does.
+    onAddSummary: () -> Unit,
     onMapPress: () -> Unit,
     findBar: @Composable () -> Unit,
 ) {
@@ -1104,6 +1135,7 @@ private fun MindMapScreen(
                             onOpenLink = openLink,
                             onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                             onAddBoundary = { state.addBoundary() },
+                            onAddSummary = onAddSummary,
                             onEditAttributes = { onAttributesEditRequestedChange(true) },
                             onPreferences = { isPreferencesOpen = true },
                             onFind = onFind,
@@ -1198,6 +1230,10 @@ private fun MindMapScreen(
                                 onLink = { onArrowLinkSourceIdChange(nodeId) },
                                 // The root is in no boundary.
                                 onAddBoundary = if (node.parentId == null) null else ({ state.addBoundary() }),
+                                // A summary is of siblings, which the root has none of, and of no summary.
+                                onAddSummary = onAddSummary.takeIf {
+                                    node.parentId != null && !state.tree.isSummary(nodeId)
+                                },
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
@@ -1502,6 +1538,7 @@ private fun NodeMenu(
     onAddNodeToType: (NewNodePlace) -> Unit,
     onLink: () -> Unit,
     onAddBoundary: (() -> Unit)?,
+    onAddSummary: (() -> Unit)?,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -1556,6 +1593,16 @@ private fun NodeMenu(
                     onClick = {
                         onDismiss()
                         addBoundary()
+                    },
+                )
+            }
+            onAddSummary?.let { addSummary ->
+                DropdownMenuItem(
+                    text = { Text("Add Summary") },
+                    trailingIcon = { Text("Ctrl+]", style = MaterialTheme.typography.labelMedium) },
+                    onClick = {
+                        onDismiss()
+                        addSummary()
                     },
                 )
             }

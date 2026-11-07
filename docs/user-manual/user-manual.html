@@ -458,6 +458,30 @@
         FreeMind map, a boundary is a cloud around each of its nodes, as FreeMind has a cloud around one node only.
         Boundaries of an imported XMind map are kept, without their titles.
     </p>
+
+    <h3>Summaries</h3>
+    <p>
+        A summary sums up some sibling nodes in a node of its own, joined to them by a bracket. Select the nodes and
+        press <kbd>Ctrl+]</kbd>, or choose <span class="menu">Edit &rsaquo; Add Summary</span>, or right-click a node
+        and choose <span class="menu">Add Summary</span>. The summary is added with the text <i>Summary</i> selected,
+        for you to type over (section <a href="#nodes">3</a>): <kbd>Enter</kbd> keeps it and <kbd>Esc</kbd> takes it
+        away again.
+    </p>
+    <p>
+        A summary is drawn past the furthest out of its nodes and the nodes below them, centered on them, with no line
+        from their parent. It is an ordinary node in every other way: it can be edited, styled and given children of
+        its own, and removing it removes its bracket. It is about its nodes and those between them, so a node you add
+        between them is in it too. When all of its nodes are removed or moved away, or it is moved under another
+        node, it is an ordinary node again. A summary sums up nodes, not other summaries.
+    </p>
+    <p>
+        Summaries are saved in MindMapView files and exported in images, SVG drawings and PDF documents, and in
+        outlines and Markdown as an item after the nodes they are about. In a FreeMind map they are kept as Freeplane
+        keeps them; FreeMind itself shows a summary as an ordinary node, and where its nodes do not start the
+        siblings, an empty node before them. Freeplane cannot have summaries about some of the same nodes, so of
+        those, only the first is a summary in a FreeMind map. Summaries of an imported XMind or Freeplane map are
+        kept, but a Freeplane summary of summaries is an ordinary node.
+    </p>
 </section>
 
 <section id="text">
@@ -924,6 +948,7 @@
         <tr><td><kbd>Alt+F9</kbd></td><td>Edit attributes</td></tr>
         <tr><td><kbd>Ctrl+L</kbd></td><td>Add an arrow link from the selected node</td></tr>
         <tr><td><kbd>Ctrl+B</kbd></td><td>Add a boundary around the selected nodes</td></tr>
+        <tr><td><kbd>Ctrl+]</kbd></td><td>Add a summary of the selected nodes and type its text</td></tr>
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>

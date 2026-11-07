@@ -49,6 +49,7 @@ import kotlin.collections.forEach
  * @param onOpenLink Callback function invoked when an "Open Link" action is selected. Receives the URL of the link.
  * @param onAddArrowLink Callback function invoked when the "Add Arrow Link" action is selected.
  * @param onAddBoundary Callback function invoked when the "Add Boundary" action is selected.
+ * @param onAddSummary Callback function invoked when the "Add Summary" action is selected.
  * @param onEditAttributes Callback function invoked when the "Attributes..." action is selected.
  * @param onPreferences Callback function invoked when the "Preferences..." action is selected.
  * @param onFind Callback function invoked when the "Find..." action is selected.
@@ -77,6 +78,7 @@ fun EditMenu(
     , onOpenLink: (String) -> Unit
     , onAddArrowLink: () -> Unit
     , onAddBoundary: () -> Unit
+    , onAddSummary: () -> Unit
     , onEditAttributes: () -> Unit
     , onPreferences: () -> Unit
     , onFind: () -> Unit
@@ -265,6 +267,15 @@ fun EditMenu(
                 , onClick = {
                     expanded = false
                     onAddBoundary()
+                }
+                , enabled = enabled
+            )
+            DropdownMenuItem(
+                text = { Text("Add Summary") }
+                , trailingIcon = { Text("Ctrl+]", style = MaterialTheme.typography.labelMedium) }
+                , onClick = {
+                    expanded = false
+                    onAddSummary()
                 }
                 , enabled = enabled
             )
