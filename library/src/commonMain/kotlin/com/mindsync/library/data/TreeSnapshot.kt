@@ -25,6 +25,7 @@ import com.mindsync.library.model.NoteDisplay
  * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
  * annotations or relationships.
  * @property boundaries The boundaries around groups of children, each with only the children it is still around.
+ * @property summaries The siblings each summary node is about, by its id, for those that are still summaries.
  * @property theme The look of the map.
  * @property isRootPlaced Flag indicating whether the root node has been placed within the layout.
  * @property isRootCentered Flag indicating whether the root node is vertically and horizontally centered in the layout.
@@ -41,6 +42,7 @@ internal class TreeSnapshot(
     , val foldedIds: Set<String>
     , val arrowLinks: List<ArrowLink>
     , val boundaries: List<Boundary>
+    , val summaries: Map<String, Set<String>>
     , val theme: MapTheme
     , val isRootPlaced: Boolean
     , val isRootCentered: Boolean
@@ -61,6 +63,7 @@ internal class TreeSnapshot(
             && foldedIds == other.foldedIds
             && arrowLinks == other.arrowLinks
             && boundaries == other.boundaries
+            && summaries == other.summaries
             && theme == other.theme
 
     private fun NodeData<*>.content(): List<Any?> =

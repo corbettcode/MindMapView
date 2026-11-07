@@ -183,14 +183,22 @@ tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 
 **Files:** `data/Tree.kt`, `data/TreeSnapshot.kt`, test `SummaryTreeTest.kt`
 
-- [ ] `summaryStarts: Map<summaryId, firstChildId>`. Add `isSummary(id)`, and `summaryChildIds(id)`: the siblings
-  from the first one up to the summary, leaving out other summaries, on its side of the root.
-- [ ] `normalizeGroups()` also repairs summaries:
-  - A first node that is gone gives way to the next sibling still before the summary.
-  - A summary with no nodes left before it loses its flag and stays as an ordinary topic.
-  - A summary moved to another parent loses its flag.
-- [ ] Add the flags to the snapshot and to `hasSameContentAs`.
-- [ ] Tests: the range, a summary after a summary, removing the covered nodes, dragging the summary away, and undo.
+- [x] As with boundaries, a summary keeps the **set** of siblings it covers, the whole range when it is made, and is
+  repaired on read. There is no `summaryStarts` map of first children and no `normalizeGroups()`.
+  - `setSummary(summaryId, childIds)` and `removeSummary(summaryId)`.
+  - `isSummary(id)`, `summaryChildIds(id)` (the siblings from first to last, in order, leaving out summaries), and
+    `summaries` (each summary id with its siblings).
+  - The summary's position among its siblings carries no meaning, so reordering them can't break it. `addSummaryNode`
+    (B2) inserts it after its range, so outline exports read naturally.
+- [x] Repairs on read:
+  - A summary covers only siblings on its side of the root, never itself nor another summary.
+  - With none of its siblings left, or once it is moved under another parent, it is an ordinary topic again.
+  - Whether a sibling is a summary is checked one level deep: flagged, and covering a sibling that isn't flagged.
+    That avoids going round in circles, and a former summary can be covered again.
+- [x] Summaries are in the snapshot and in `hasSameContentAs`.
+- [x] Tests (12): the range; a sibling inserted between; removing the first, last and middle; removing all; moving
+  the summary away; removing its parent; one side of the root; no summary of summaries nor of itself; a former
+  summary covered again; invalid summaries; `removeSummary`; snapshot and restore.
 
 ### Task B2: Summaries in the state
 

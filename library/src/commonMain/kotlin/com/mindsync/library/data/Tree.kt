@@ -67,6 +67,9 @@ class Tree<T> {
 
     private val _boundaries = mutableListOf<Boundary>()
 
+    // The siblings each summary is about, by the id of the summary node, as they were when it was made one.
+    private val _summaries = mutableMapOf<String, Set<String>>()
+
     // A boundary is read through the tree as it is now, so no change of the tree can leave one around nodes that
     // are not its parent's children.
     /**
@@ -388,6 +391,84 @@ class Tree<T> {
         }
     }
 
+    /**
+     * Makes the node [summaryId] the summary of some of its siblings, [childIds], and of those between them: a node
+     * drawn past them with a bracket to them, in place of a line from its parent. Under the root they are those on
+     * the side of the summary. A summary is about no summary, nor about itself. It throws when it would be about
+     * none of its siblings.
+     */
+    fun setSummary(
+        summaryId: String
+        , childIds: Set<String>
+    ) {
+        val current = currentSummary(summaryId, childIds)
+            ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        _summaries[summaryId] = summaryRange(summaryId, current).toSet()
+    }
+
+    /** Makes the node an ordinary node again, when it is a summary. */
+    fun removeSummary(summaryId: String) {
+        _summaries.remove(summaryId)
+    }
+
+    // A summary is read through the tree as it is now, as a boundary is: one with none of its siblings left, or
+    // moved under another node, is an ordinary node again.
+    /** The summaries of the tree: the id of each summary node, with the siblings it is about, in order. */
+    val summaries: Map<String, List<String>>
+        get() = _summaries.keys.mapNotNull { id -> summaryChildIds(id).takeIf { it.isNotEmpty() }?.let { id to it } }
+            .toMap()
+
+    /** Whether the node is the summary of some of its siblings. */
+    fun isSummary(id: String): Boolean = summaryChildIds(id).isNotEmpty()
+
+    /**
+     * Returns the siblings the summary is about, in order: from the first to the last of them, with those between
+     * them, but no summaries. It is none for a node that is no summary.
+     */
+    fun summaryChildIds(summaryId: String): List<String> {
+        val childIds = _summaries[summaryId] ?: return emptyList()
+        val current = currentSummary(summaryId, childIds) ?: return emptyList()
+        return summaryRange(summaryId, current)
+    }
+
+    // The siblings of the summary it is still about, on its side of the root, or null when none are.
+    private fun currentSummary(
+        summaryId: String
+        , childIds: Set<String>
+    ): Set<String>? {
+        if (!isInTree(summaryId)) return null
+        val siblings = summarySiblings(summaryId)
+        return siblings.filter { it in childIds }.toSet().takeIf { it.isNotEmpty() }
+    }
+
+    private fun summaryRange(
+        summaryId: String
+        , childIds: Set<String>
+    ): List<String> {
+        val siblings = summarySiblings(summaryId)
+        val first = siblings.indexOfFirst { it in childIds }
+        val last = siblings.indexOfLast { it in childIds }
+        return siblings.subList(first, last + 1)
+    }
+
+    // The siblings a summary may be about: those of its parent's children on its side of the root but itself and
+    // the other summaries.
+    private fun summarySiblings(summaryId: String): List<String> =
+        siblingsOnSideOf(summaryId).filter { it != summaryId && !isFlaggedSummary(it) }
+
+    // Whether the node was made a summary and is about one of its siblings that was not, which is all there is to
+    // tell without going round and round: which of those are summaries depends on which of the others are.
+    private fun isFlaggedSummary(id: String): Boolean {
+        val childIds = _summaries[id] ?: return false
+        return siblingsOnSideOf(id).any { it != id && it in childIds && it !in _summaries }
+    }
+
+    private fun siblingsOnSideOf(id: String): List<String> {
+        val parentId = _nodes[id]?.parentId ?: return emptyList()
+        val children = _nodes[parentId]?.children.orEmpty()
+        return if (parentId == ROOT_ID) children.filter { sideOf(it) == sideOf(id) } else children
+    }
+
     // A removed node stays among the nodes, but is no longer a child of its parent, or is below one that is not.
     private fun isInTree(id: String): Boolean {
         var node = _nodes[id] ?: return false
@@ -430,6 +511,7 @@ class Tree<T> {
         , foldedIds = foldedIds.toSet()
         , arrowLinks = _arrowLinks.toList()
         , boundaries = boundaries
+        , summaries = summaries.mapValues { it.value.toSet() }
         , theme = theme
         , isRootPlaced = isRootPlaced
         , isRootCentered = isRootCentered
@@ -456,6 +538,8 @@ class Tree<T> {
         _arrowLinks.addAll(snapshot.arrowLinks)
         _boundaries.clear()
         _boundaries.addAll(snapshot.boundaries)
+        _summaries.clear()
+        _summaries.putAll(snapshot.summaries)
         theme = snapshot.theme
         isRootPlaced = snapshot.isRootPlaced
         isRootCentered = snapshot.isRootCentered
