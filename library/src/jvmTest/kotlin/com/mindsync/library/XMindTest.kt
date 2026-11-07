@@ -3,12 +3,13 @@ package com.mindsync.library
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.OvalNodeData
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.Inflater
 import com.mindsync.library.io.XMind
 import com.mindsync.library.io.ZipArchive
-import com.mindsync.library.util.DescriptionEmoji
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 import java.util.zip.Deflater
@@ -171,8 +172,9 @@ class XMindTest {
         val site = tree.childrenOf(root)[1]
 
         assertEquals("Root note<br>second line", root.note)
-        assertEquals("<p>1️⃣ ✅ <b>Styled</b></p>", styled.description)
-        assertEquals("1️⃣", DescriptionEmoji.split(styled.description).first)
+        // The priority and task markers are the node's task, and no emojis in its text.
+        assertEquals("<b>Styled</b>", styled.description)
+        assertEquals(NodeTask(priority = 1, progress = TaskProgress.DONE), tree.taskOf(styled.id))
         assertEquals("<div><b>rich</b></div>", styled.note)
         assertEquals(listOf(NodeAttribute("Labels", "one, two")), tree.attributesOf(styled.id))
         assertEquals(Color(0xFF112233), styled.color)
@@ -365,6 +367,30 @@ class XMindTest {
 
         assertEquals("Root\n  A\n  B\n  C\n  Sum\n", tree.outline())
         assertEquals(mapOf("Sum" to listOf("B", "C")), tree.summaryTexts())
+    }
+
+    @Test
+    fun taskMarkersOfXMindAreProgressToTheNearestQuarter() {
+        val markers = listOf(
+            "task-start", "task-oct", "task-quarter", "task-3oct", "task-half", "task-5oct", "task-3quar", "task-7oct"
+            , "task-done", "task-pause"
+        )
+        val topics = markers.joinToString(", ") { """{ "title": "$it", "markers": [{ "markerId": "$it" }] }""" }
+        val content = """[{ "title": "s", "rootTopic": { "title": "Root", "children": { "attached": [$topics] } } }]"""
+
+        val tree = XMind.read(zip("content.json" to content), title = "map")
+
+        val progress = tree.childrenOf(tree.getRootNode()).map { tree.taskOf(it.id).progress }
+        assertEquals(
+            listOf(
+                TaskProgress.NOT_STARTED, TaskProgress.QUARTER, TaskProgress.QUARTER, TaskProgress.HALF
+                , TaskProgress.HALF, TaskProgress.THREE_QUARTERS, TaskProgress.THREE_QUARTERS, TaskProgress.DONE
+                , TaskProgress.DONE, null
+            )
+            , progress
+        )
+        // A paused task is no progress, and stays an emoji.
+        assertTrue(tree.childrenOf(tree.getRootNode()).last().description.startsWith("<p>⏸️"))
     }
 
     @Test

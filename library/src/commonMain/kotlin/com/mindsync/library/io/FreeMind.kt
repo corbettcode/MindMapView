@@ -11,6 +11,8 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.BoundaryStyle
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
@@ -51,6 +53,10 @@ import kotlin.math.roundToInt
  * cloud is read as a boundary of its own. A cloud's color is the color it is filled with, which is pale; a pale
  * one is read as a boundary in the color of its branch, and a darker one as a boundary in that color.
  *
+ * A task's priority is kept as FreeMind's own number icon, `<icon BUILTIN="full-1"/>` to `full-9`, and its progress
+ * as Freeplane's `0%` to `100%` icons, with FreeMind's `button_ok` after `100%` when it is done, as Freeplane writes
+ * them. Freeplane's `unchecked` and `checked` icons are read as not started and done. Other icons are left out.
+ *
  * A summary is kept as Freeplane keeps one, which FreeMind shows as an ordinary node: a `<hook NAME="SummaryNode"/>`
  * on a sibling written right after those it is about. Freeplane takes a summary to be about the siblings on its
  * side back to the summary before it, or to the first of them; where the group begins later, an empty node with a
@@ -72,6 +78,10 @@ object FreeMind {
     // of a boundary.
     private const val PALE_CLOUD_LUMINANCE = 0.8f
     private const val SUMMARY_HOOK = "SummaryNode"
+    private const val PRIORITY_ICON = "full-"
+    private const val DONE_ICON = "button_ok"
+    private const val CHECKED_ICON = "checked"
+    private const val UNCHECKED_ICON = "unchecked"
     private const val FIRST_GROUP_HOOK = "FirstGroupNode"
 
     fun write(tree: Tree<*>): String = buildString {
@@ -126,6 +136,7 @@ object FreeMind {
         )
         tree.setAttributes(root.id, rootElement.nodeAttributes())
         tree.setLine(root.id, rootElement.line())
+        tree.setTask(root.id, rootElement.task())
         leftChildren.forEach { tree.setRootChildSide(it, LayoutSide.LEFT) }
         val usedArrowLinkIds = mutableSetOf<String>()
         arrowLinks
@@ -189,6 +200,9 @@ object FreeMind {
             append("/>\n")
         }
         if (isSummary) append(indent).append("  <hook NAME=\"").append(SUMMARY_HOOK).append("\"/>\n")
+        taskIcons(tree.taskOf(node.id)).forEach { icon ->
+            append(indent).append("  <icon BUILTIN=\"").append(escapeXml(icon)).append("\"/>\n")
+        }
         clouds[node.id]?.let { cloud ->
             append(indent).append("  <cloud")
             cloud.color?.let { append(" COLOR=\"").append(it.toHex()).append('"') }
@@ -253,6 +267,7 @@ object FreeMind {
         tree.setAttributes(id, element.nodeAttributes())
         tree.setLine(id, element.line())
         tree.setFolded(id, element.attributes["FOLDED"] == "true")
+        tree.setTask(id, element.task())
         return id
     }
 
@@ -389,6 +404,28 @@ object FreeMind {
             }
             childIds.takeIf { it.isNotEmpty() }?.let { summaryId to it }
         }
+    }
+
+    private fun taskIcons(task: NodeTask): List<String> = listOfNotNull(
+        task.priority?.let { "$PRIORITY_ICON$it" }
+        , task.progress?.let { "${it.percent}%" }
+        , DONE_ICON.takeIf { task.progress == TaskProgress.DONE }
+    )
+
+    // Of several progress icons, the furthest on is the progress.
+    private fun XmlElement.task(): NodeTask {
+        val icons = children.filter { it.name == "icon" }.mapNotNull { it.attributes["BUILTIN"] }
+        val priority = icons.firstNotNullOfOrNull { icon ->
+            icon.removePrefix(PRIORITY_ICON).takeIf { icon.startsWith(PRIORITY_ICON) }?.toIntOrNull()
+        }?.takeIf { it in NodeTask.PRIORITIES }
+        val progress = icons.mapNotNull { icon ->
+            when (icon) {
+                DONE_ICON, CHECKED_ICON -> TaskProgress.DONE
+                UNCHECKED_ICON -> TaskProgress.NOT_STARTED
+                else -> TaskProgress.entries.firstOrNull { "${it.percent}%" == icon }
+            }
+        }.maxOrNull()
+        return NodeTask(priority = priority, progress = progress)
     }
 
     private fun XmlElement.hasHook(name: String): Boolean =

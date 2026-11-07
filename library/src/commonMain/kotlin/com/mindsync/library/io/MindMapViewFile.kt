@@ -6,6 +6,8 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.BoundaryStyle
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.NodeAttribute
@@ -156,6 +158,7 @@ object MindMapViewFile {
         tree.setBorder(root.id, rootElement.border(tree.getRootNode().textColor))
         tree.setNoteDisplay(root.id, rootElement.noteDisplay())
         tree.setAttributeDisplay(root.id, rootElement.attributeDisplay())
+        tree.setTask(root.id, rootElement.task())
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -255,6 +258,9 @@ object MindMapViewFile {
         if (node.parentId == tree.getRootNode().id) attribute("side", tree.sideOf(node.id).name.lowercase())
         if (tree.isFolded(node.id)) attribute("folded", "true")
         tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
+        val task = tree.taskOf(node.id)
+        task.priority?.let { attribute("priority", it.toString()) }
+        task.progress?.let { attribute("progress", it.name.lowercase()) }
         attribute("color", node.color.toHex())
         attribute("textColor", node.textColor.toHex())
         attribute("text", node.description)
@@ -339,10 +345,17 @@ object MindMapViewFile {
         tree.setNoteDisplay(id, element.noteDisplay())
         tree.setAttributeDisplay(id, element.attributeDisplay())
         tree.setFolded(id, element.attributes["folded"] == "true")
+        tree.setTask(id, element.task())
         return id
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    // A priority or progress that is not one this library has is left out, rather than the map not being read.
+    private fun XmlElement.task(): NodeTask = NodeTask(
+        priority = attributes["priority"]?.toIntOrNull()?.takeIf { it in NodeTask.PRIORITIES }
+        , progress = TaskProgress.entries.firstOrNull { it.name.lowercase() == attributes["progress"] }
+    )
 
     private fun XmlElement.descendantNodes(): List<XmlElement> =
         childNodes().flatMap { listOf(it) + it.descendantNodes() }

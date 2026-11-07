@@ -1,6 +1,7 @@
 package com.mindsync.library.io
 
 import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.RichText
 
@@ -42,7 +43,7 @@ summary { cursor: pointer; }
         tree: Tree<*>
         , node: NodeData<*>
     ) {
-        val text = "<span class=\"node\">${node.description}</span>"
+        val text = "${taskText(tree, node)}<span class=\"node\">${node.description}</span>"
         if (node.children.isEmpty()) {
             append("<li>$text")
             writeDetails(tree, node)
@@ -56,6 +57,19 @@ summary { cursor: pointer; }
         node.children.forEach { writeNode(tree, tree.getNode(it)) }
         append("</ul>\n")
         append("</details></li>\n")
+    }
+
+    // A task's priority and progress, as text in front of the node's, as a page has no badges.
+    private fun taskText(
+        tree: Tree<*>
+        , node: NodeData<*>
+    ): String {
+        val task = tree.taskOf(node.id)
+        val marks = listOfNotNull(
+            task.priority?.let { "P$it" }
+            , task.progress?.let { if (it == TaskProgress.DONE) "Done" else "${it.percent}%" }
+        )
+        return marks.joinToString("") { "<span class=\"task\">[$it]</span> " }
     }
 
     // The note and the attributes of the node, which are written below its text.

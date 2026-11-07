@@ -119,22 +119,22 @@ filter.
 ### Task A4: Priority and progress in files
 
 **Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/XMind.kt`, `io/Markdown.kt`, `io/Opml.kt`,
-`io/HtmlOutline.kt`, tests
+`io/HtmlOutline.kt`, tests `TaskFilesTest.kt` (common), `XMindTest.kt` (JVM), `MarkdownTest.kt`
 
-- [ ] `.mmv`: `priority="2"` and `progress="half"` on `<node>`.
-- [ ] FreeMind: priority as `<icon BUILTIN="full-N"/>`, FreeMind's own number icons. Done as `<icon
-  BUILTIN="button_ok"/>`. Before writing code, check Freeplane's progress icon names against its source, as was done
-  for summaries in the boundaries plan. If Freeplane has 0–100% icons, use them for the quarters; otherwise keep the
-  quarters in an attribute, as the shape is kept today. Read all of these back; other icons stay as they are read
-  today, which is ignored.
-- [ ] XMind: `priority-N` becomes the priority, and `task-start` / `task-oct` / `task-quarter` / `task-3oct` /
-  `task-half` / `task-5oct` / `task-3quar` / `task-7oct` / `task-done` become progress, rounded to the nearest
-  quarter (`task-oct` → 25%, `task-3oct` → 50%, `task-5oct` → 75%, `task-7oct` → Done). These markers no longer become
-  emoji; all other markers still do.
-- [ ] Markdown: a list item with progress is written `- [ ]`, or `- [x]` when Done, and read back that way. Headings
-  can't hold a checkbox and keep none. OPML: `_priority` and `_progress` attributes. HTML: the badges as text in front
-  of the topic, such as `[P1] [50%]`.
-- [ ] Tests for each, including XMind's emoji no longer appearing for those markers.
+- [x] `.mmv`: `priority="2"` and `progress="half"` on `<node>`, the root included. Unknown values are left out.
+- [x] FreeMind/Freeplane, with names checked in Freeplane 1.11.x's `Resources_en.properties` (`icon_full-1`…`9`,
+  `icon_0%`…`icon_100%`, `icon_button_ok`, `icon_checked`, `icon_unchecked`):
+  - Priority is written as `<icon BUILTIN="full-N"/>`.
+  - Progress is written as `0%`…`100%`, plus `button_ok` when done, as Freeplane's progress action writes it.
+  - Reading also takes `checked` and `unchecked`, and where there are several progress icons the furthest on wins.
+    `full-0` and other icons are ignored.
+- [x] XMind: `priority-N` is the priority; `task-*` is the progress, rounded to the nearest quarter (an eighth goes to
+  the quarter after). They're no longer emoji; `task-pause` and the other markers still are.
+- [x] Markdown: list items with progress are written `- [ ]`, or `- [x]` when Done, and read back as progress. This
+  replaces the ☐/☑ symbols the reader used to put into the text. Headings keep none. OPML: `_priority` and `_progress`
+  (percent), now reserved names. HTML: `[P1] [50%]` or `[Done]` in front of the topic.
+- [x] Tests: 8 in `TaskFilesTest`, 1 more in `XMindTest`, and the two existing tests that expected emoji or ☐/☑
+  updated.
 
 ### Task A5: Priority and progress in the app
 

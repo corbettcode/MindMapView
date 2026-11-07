@@ -3,6 +3,8 @@ package com.mindsync.library.io
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.IdGenerator
 
@@ -55,6 +57,8 @@ object Markdown {
         val children = mutableListOf<Section>()
         val paragraphs = mutableListOf<String>()
         val attributes = mutableListOf<NodeAttribute>()
+        // A list item that is a task, `- [ ]` or `- [x]`, is not started or done.
+        var progress: TaskProgress? = null
     }
 
     private class ListLevel(
@@ -171,7 +175,15 @@ object Markdown {
                     flushParagraph()
                     val indent = indentOf(listItem.groupValues[1])
                     while (lists.isNotEmpty() && lists.last().indent >= indent) lists.removeAt(lists.lastIndex)
-                    val section = Section(inline(task(listItem.groupValues[2])), level = Int.MAX_VALUE)
+                    val itemText = listItem.groupValues[2]
+                    val taskMark = TASK.find(itemText)
+                    val section = Section(
+                        inline(taskMark?.let { itemText.substring(it.range.last + 1) } ?: itemText)
+                        , level = Int.MAX_VALUE
+                    )
+                    section.progress = taskMark?.let {
+                        if (it.groupValues[1].isBlank()) TaskProgress.NOT_STARTED else TaskProgress.DONE
+                    }
                     target().children.add(section)
                     lists.add(ListLevel(indent, section))
                 }
@@ -239,7 +251,13 @@ object Markdown {
             writeNote(node.note, indent = null)
         } else {
             val indent = " ".repeat(TAB_WIDTH * (depth - HEADING_DEPTH - 1))
-            append("$indent- $text\n")
+            // A task is written as one of a task list, which has no steps between not started and done.
+            val checkbox = when (tree.taskOf(node.id).progress) {
+                null -> ""
+                TaskProgress.DONE -> "[x] "
+                else -> "[ ] "
+            }
+            append("$indent- $checkbox$text\n")
             writeNote(node.note, indent = "$indent${" ".repeat(TAB_WIDTH)}")
         }
         writeChildren(tree, node, depth)
@@ -323,6 +341,7 @@ object Markdown {
         )
         tree.setNode(id, node)
         tree.setAttributes(id, section.attributes)
+        tree.setTask(id, NodeTask(progress = section.progress))
         return id
     }
 
@@ -360,10 +379,6 @@ object Markdown {
     private fun indentOf(text: String): Int = text
         .takeWhile { it == ' ' || it == '\t' }
         .sumOf { if (it == '\t') TAB_WIDTH else 1 }
-
-    private fun task(text: String): String = TASK.find(text)?.let { match ->
-        (if (match.groupValues[1].isBlank()) "☐ " else "☑ ") + text.substring(match.range.last + 1)
-    } ?: text
 
     // Code spans are kept as they are written, so the marks in them are not read as formatting.
     private fun inline(text: String): String = text

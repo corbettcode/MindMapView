@@ -5,6 +5,8 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.NodeTask
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.RichText
@@ -19,7 +21,8 @@ import com.mindsync.library.util.RichText
  * map with one sheet has that sheet's central topic as its root. A map with several sheets gets a root named
  * after its title, with each sheet's central topic as a branch.
  *
- * Markers become emojis in front of the text, labels become a "Labels" attribute, a web link makes the text a
+ * Priority markers become the priority of the node's task, and task markers its progress, to the nearest quarter.
+ * Other markers become emojis in front of the text, labels become a "Labels" attribute, a web link makes the text a
  * link, and relationships become arrow links. Fill and text colors, bold and italic text, the shapes this
  * library has and folded branches are kept. Boundaries are kept too, without their titles. Images and the theme are
  * not.
@@ -42,10 +45,20 @@ object XMind {
     private val LINK_SCHEMES = listOf("http://", "https://", "mailto:", "file:")
     private val IMAGE = Regex("<img\\b[^>]*>", RegexOption.IGNORE_CASE)
     private val PRIORITY = Regex("priority-([1-9])")
+    // XMind marks progress in eighths, which are taken to the nearest quarter, an eighth on to the quarter after.
+    private val TASK_PROGRESS = mapOf(
+        "task-start" to TaskProgress.NOT_STARTED
+        , "task-oct" to TaskProgress.QUARTER
+        , "task-quarter" to TaskProgress.QUARTER
+        , "task-3oct" to TaskProgress.HALF
+        , "task-half" to TaskProgress.HALF
+        , "task-5oct" to TaskProgress.THREE_QUARTERS
+        , "task-3quar" to TaskProgress.THREE_QUARTERS
+        , "task-7oct" to TaskProgress.DONE
+        , "task-done" to TaskProgress.DONE
+    )
     private val MARKER_EMOJIS = mapOf(
-        "task-start" to "⬜"
-        , "task-done" to "✅"
-        , "task-pause" to "⏸️"
+        "task-pause" to "⏸️"
         , "smiley-smile" to "🙂"
         , "smiley-laugh" to "😄"
         , "smiley-angry" to "😠"
@@ -313,7 +326,10 @@ object XMind {
                 , textColor = rootTopic?.let { color(it.style["fo:color"]) } ?: root.textColor
             )
         )
-        rootTopic?.let { tree.setAttributes(root.id, attributes(it)) }
+        rootTopic?.let {
+            tree.setAttributes(root.id, attributes(it))
+            tree.setTask(root.id, task(it))
+        }
         sheets.flatMap { it.relationships }.forEach { (from, to) ->
             val sourceId = nodeIds[from] ?: return@forEach
             val targetId = nodeIds[to] ?: return@forEach
@@ -394,6 +410,7 @@ object XMind {
         tree.setNode(id, node)
         tree.setAttributes(id, attributes(topic))
         tree.setFolded(id, topic.isFolded)
+        tree.setTask(id, task(topic))
         return id
     }
 
@@ -410,10 +427,16 @@ object XMind {
         return if (emojis.isEmpty()) text else "<p>${(emojis + text).joinToString(" ")}</p>"
     }
 
+    // The markers of a task are the node's task, not emojis.
     private fun markerEmoji(markerId: String): String? {
-        PRIORITY.matchEntire(markerId)?.let { return it.groupValues[1] + "️⃣" }
+        if (PRIORITY.matches(markerId) || markerId in TASK_PROGRESS) return null
         return MARKER_EMOJIS[markerId] ?: MARKER_KIND_EMOJIS[markerId.substringBefore('-')]
     }
+
+    private fun task(topic: Topic): NodeTask = NodeTask(
+        priority = topic.markers.firstNotNullOfOrNull { PRIORITY.matchEntire(it)?.groupValues?.get(1)?.toInt() }
+        , progress = topic.markers.mapNotNull { TASK_PROGRESS[it] }.maxOrNull()
+    )
 
     // The images of a note are in the map's archive, which a note cannot show them from.
     private fun note(topic: Topic): String = topic.noteHtml

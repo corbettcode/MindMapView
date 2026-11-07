@@ -3,6 +3,7 @@ package com.mindsync.library
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.RectangleNodeData
+import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.io.Markdown
 import kotlin.test.Test
@@ -117,7 +118,11 @@ class MarkdownTest {
         )
         val section = tree.childrenOf(tree.getRootNode()).single()
 
-        assertEquals("Root\n  Section\n    ☐ todo\n    ☑ done\n", tree.outline())
+        // A task list's boxes are the progress of its items, not part of their text.
+        assertEquals("Root\n  Section\n    todo\n    done\n", tree.outline())
+        val (todo, done) = tree.childrenOf(section).take(2)
+        assertEquals(TaskProgress.NOT_STARTED, tree.taskOf(todo.id).progress)
+        assertEquals(TaskProgress.DONE, tree.taskOf(done.id).progress)
         assertEquals("a &lt; b<br>  c", tree.childrenOf(section).last().note)
     }
 
