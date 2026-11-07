@@ -160,15 +160,19 @@ manual and PDF, `README.md`, test `TaskAppTest.kt`
 
 ### Task B1: Start and due dates
 
-**Files:** `MindMapState.kt` (`setDates`, `today`), `layout/MeasureTextSize.kt` (the due label line), `MindMap.kt`
-(`dateLabel` parameter), tests
+**Files:** `MindMapState.kt` (`setDates`, `today`, `isOverdue`), `layout/MeasureTextSize.kt` (`dueLabelOf`,
+`NodeContent.dueLabel` and `dueTop`), `layout/TaskBadges.kt` (`OVERDUE_COLOR`), `MindMap.kt` (`dateLabel`), tests
+`NodeTaskStateTest.kt` and `TaskDueLabelTest.kt`
 
-- [ ] `setDates(start: TaskDate?, due: TaskDate?)` on the selected nodes, as one change; a start after the due date
-  throws. `state.today: TaskDate?` is set by the app, and `isOverdue(id)` is due before today and not Done.
-- [ ] The due date is a small line below the text (and above the note), measured into the node, in the theme's text
-  colour, or red when overdue. `MindMap(dateLabel = { date -> String })` formats it, defaulting to ISO. The start
-  date shows only in the dialog and the files.
-- [ ] Tests: the label line grows the node; overdue colour with a given `today`; nothing reads the system clock.
+- [x] `setDates(start: TaskDate?, due: TaskDate?)` on the selected nodes, as one change; a start after the due date
+  throws before changing anything. `state.today: TaskDate?` is set by the app, starts null (nothing overdue), and
+  measures the tree again when it changes. `isOverdue(id)` is due before today and not Done.
+- [x] The due date is a small line (0.8 of the text size) below the text and above the note, measured into the node,
+  in the node's text colour, or red when overdue. `MindMap(dateLabel = { date -> String })` writes it, defaulting to
+  ISO. The start date shows only in the dialog and the files.
+- [x] Tests (8): dates on two nodes as one step, then undo; a start after the due date refused; overdue rules; no
+  `today`, nothing overdue; the label line grows the node and sits below the text; a given label is used and widens
+  the node; a start date alone draws nothing; an overdue date is red in a PNG export until Done.
 
 ### Task B2: Dates in files and the app
 

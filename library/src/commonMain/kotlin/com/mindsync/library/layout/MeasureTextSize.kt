@@ -19,6 +19,7 @@ import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.DrawInfo
@@ -48,6 +49,9 @@ class MeasureTextSize(
      */
     var imageOf: (String) -> ImageBitmap? = { null }
 
+    /** Returns how the date a node is due on is written below its text: as `YYYY-MM-DD` unless it is set. */
+    var dueLabelOf: (TaskDate) -> String = { it.toIsoString() }
+
     private val topicTextStyles: Map<TopicKind, TextStyle> = TopicKind.entries.associateWith { kind ->
         topicFontFamilies[kind]?.let { textStyle.copy(fontFamily = it) } ?: textStyle
     }
@@ -66,6 +70,10 @@ class MeasureTextSize(
     // The attributes are plain text on one line each, a little smaller than the text of the node.
     private fun attributeTextStyle(style: TextStyle) =
         style.copy(fontSize = style.fontSize * ATTRIBUTE_TEXT_SCALE, textAlign = TextAlign.Start)
+
+    // The due date is a line of its own below the text, smaller than it, as a note is.
+    private fun dueTextStyle(style: TextStyle) =
+        style.copy(fontSize = style.fontSize * DUE_TEXT_SCALE, textAlign = TextAlign.Center)
 
     // A note is a paragraph, a little smaller than the text of the node and read from the left.
     private fun noteTextStyle(style: TextStyle) =
@@ -96,10 +104,10 @@ class MeasureTextSize(
     }
 
     /**
-     * Measures what is drawn in a node: its text, below it its note when it has one shown inline, by its own
-     * way of showing it or else by [noteDisplay], and below those the table of its attributes when it has any
-     * shown inline, by its own way of showing them or else by [attributeDisplay]. All of it is in the font of the
-     * node's kind of topic.
+     * Measures what is drawn in a node: its text, below it the date it is due on when it has one, written by
+     * [dueLabelOf], below that its note when it has one shown inline, by its own way of showing it or else by
+     * [noteDisplay], and below those the table of its attributes when it has any shown inline, by its own way of
+     * showing them or else by [attributeDisplay]. All of it is in the font of the node's kind of topic.
      */
     fun measureContent(
         tree: Tree<*>
@@ -115,6 +123,7 @@ class MeasureTextSize(
             .map { NodeImage(it, maxSize = with(density) { IMAGE_MAX_SIZE.dp.toPx() }) }
         val style = topicTextStyles.getValue(tree.topicKindOf(node.id))
         val text = measure(if (images.isEmpty()) node.description else RichText.withoutImages(node.description), style)
+        val due = tree.taskOf(node.id).due
         val isNoteShown = node.note.isNotBlank() && tree.shownNoteDisplayOf(node.id, noteDisplay) == NoteDisplay.INLINE
         return NodeContent(
             text = text
@@ -126,6 +135,8 @@ class MeasureTextSize(
             , imageGap = with(density) { IMAGE_GAP.dp.toPx() }
             , badgesWidth = with(density) { taskBadgesWidth(taskBadges(tree.taskOf(node.id)).size) }
             , badgeHeight = with(density) { TASK_BADGE_SIZE.toPx() }
+            , dueLabel = due?.let { textMeasurer.measure(dueLabelOf(it), dueTextStyle(style), maxLines = 1) }
+            , dueGap = with(density) { DUE_GAP.dp.toPx() }
         )
     }
 
@@ -267,6 +278,8 @@ class MeasureTextSize(
         private const val ATTRIBUTE_CELL_PADDING_X = 5f
         private const val ATTRIBUTE_CELL_PADDING_Y = 2f
         private const val NOTE_TEXT_SCALE = 0.85f
+        private const val DUE_TEXT_SCALE = 0.8f
+        private const val DUE_GAP = 2f
         // The number of a priority fills most of its badge.
         private const val BADGE_NUMBER_SCALE = 0.72f
         private const val NOTE_MAX_WIDTH = 240f
@@ -279,9 +292,9 @@ class MeasureTextSize(
 }
 
 /**
- * What is drawn in a node, in pixels: the [images] of its text, below them its [text], below that its [note] when
- * it is shown, and below those the [table] of its attributes when it has one. They are centered on the node
- * together.
+ * What is drawn in a node, in pixels: the [images] of its text, below them its [text], below that the [dueLabel] of
+ * the date it is due on when it has one, below that its [note] when it is shown, and below those the [table] of its
+ * attributes when it has one. They are centered on the node together.
  */
 class NodeContent(
     val text: TextLayoutResult
@@ -295,6 +308,8 @@ class NodeContent(
     // The badges of the node's task are in front of its text, on its line, and as high as [badgeHeight].
     , val badgesWidth: Float = 0f
     , badgeHeight: Float = 0f
+    , val dueLabel: TextLayoutResult? = null
+    , dueGap: Float = 0f
 ) {
     // A text of only images has no line of text below them.
     val isTextShown: Boolean = images.isEmpty() || text.layoutInput.text.text.isNotBlank()
@@ -325,14 +340,18 @@ class NodeContent(
     // The text is below the images, with a gap between them.
     private val textTop: Float = if (images.isNotEmpty() && isLineShown) imagesHeight + imageGap else imagesHeight
 
+    private val dueHeight: Float = dueLabel?.let { dueGap + it.size.height } ?: 0f
+
     val width: Float = maxOf(
         shownTextWidth + badgesWidth
+        , dueLabel?.size?.width?.toFloat() ?: 0f
         , note?.size?.width?.toFloat() ?: 0f
         , table?.width ?: 0f
         , images.maxOfOrNull { it.width } ?: 0f
     )
-    val height: Float =
-        textTop + textHeight + (note?.let { noteGap + it.size.height } ?: 0f) + (table?.let { gap + it.height } ?: 0f)
+    val height: Float = textTop + textHeight + dueHeight +
+        (note?.let { noteGap + it.size.height } ?: 0f) +
+        (table?.let { gap + it.height } ?: 0f)
 
     /** How far above the center of the node the center of the text is. */
     val textRise: Float = height / 2 - textTop - textHeight / 2
@@ -340,11 +359,14 @@ class NodeContent(
     /** How far below the center of the node the top of the images is. */
     val imagesTop: Float = -height / 2
 
-    /** How far below the center of the node the line between the text and the note is. */
-    val noteLineY: Float = -height / 2 + textTop + textHeight + noteGap / 2
+    /** How far below the center of the node the top of the due date is. */
+    val dueTop: Float = -height / 2 + textTop + textHeight + dueGap
+
+    /** How far below the center of the node the line between the due date and the note is. */
+    val noteLineY: Float = -height / 2 + textTop + textHeight + dueHeight + noteGap / 2
 
     /** How far below the center of the node the top of the note is. */
-    val noteTop: Float = -height / 2 + textTop + textHeight + noteGap
+    val noteTop: Float = -height / 2 + textTop + textHeight + dueHeight + noteGap
 
     /** How far below the center of the node the top of the table is. */
     val tableTop: Float = height / 2 - (table?.height ?: 0f)

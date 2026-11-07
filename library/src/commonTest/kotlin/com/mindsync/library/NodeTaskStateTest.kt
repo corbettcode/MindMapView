@@ -142,4 +142,53 @@ class NodeTaskStateTest {
 
         assertNull(state.tree.taskOf("a").priority)
     }
+
+    @Test
+    fun datesAreGivenToTheSelectedNodesAsOneChange() {
+        val state = state()
+        state.tree.setTask("b", NodeTask(priority = 2))
+        state.selectNodes("a", "b")
+
+        state.setDates(TaskDate(2026, 11, 1), TaskDate(2026, 11, 30))
+
+        assertEquals(TaskDate(2026, 11, 30), state.tree.taskOf("a").due)
+        assertEquals(NodeTask(2, null, TaskDate(2026, 11, 1), TaskDate(2026, 11, 30)), state.tree.taskOf("b"))
+        state.undo()
+        assertTrue(state.tree.taskOf("a").isEmpty)
+        assertEquals(NodeTask(priority = 2), state.tree.taskOf("b"))
+        assertFalse(state.canUndo)
+    }
+
+    @Test
+    fun startAfterTheDueDateIsRefused() {
+        val state = state()
+        state.selectNodes("a")
+
+        assertFailsWith<IllegalArgumentException> { state.setDates(TaskDate(2026, 12, 2), TaskDate(2026, 12, 1)) }
+        assertFalse(state.canUndo)
+        state.setDates(TaskDate(2026, 12, 1), TaskDate(2026, 12, 1))
+        assertEquals(TaskDate(2026, 12, 1), state.tree.taskOf("a").start)
+    }
+
+    @Test
+    fun overdueIsDueBeforeTodayAndNotDone() {
+        val state = state()
+        state.tree.setTask("a", NodeTask(due = TaskDate(2026, 11, 6)))
+        state.tree.setTask("b", NodeTask(progress = TaskProgress.DONE, due = TaskDate(2026, 11, 6)))
+        state.tree.setTask("c", NodeTask(due = TaskDate(2026, 11, 7)))
+
+        state.today = TaskDate(2026, 11, 7)
+
+        assertEquals(listOf(true, false, false), listOf("a", "b", "c").map { state.isOverdue(it) })
+        assertFalse(state.isOverdue(state.tree.getRootNode().id), "no due date is never overdue")
+    }
+
+    @Test
+    fun withoutTodayNothingIsOverdue() {
+        val state = state()
+        state.tree.setTask("a", NodeTask(due = TaskDate(1, 1, 1)))
+
+        assertNull(state.today, "the library reads no clock")
+        assertFalse(state.isOverdue("a"))
+    }
 }

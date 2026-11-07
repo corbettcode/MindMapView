@@ -68,6 +68,9 @@ internal val PRIORITY_COLORS = listOf(
     , Color(0xFF757575)
 )
 
+/** The color of a due date that is overdue: the red of the first priority. */
+internal val OVERDUE_COLOR = Color(0xFFE53935)
+
 internal fun priorityColor(priority: Int): Color = PRIORITY_COLORS[priority - 1]
 
 // Yellow is too light for white on it.

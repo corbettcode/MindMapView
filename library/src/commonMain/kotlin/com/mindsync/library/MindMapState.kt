@@ -38,6 +38,7 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.TreeSnapshot
@@ -1113,6 +1114,46 @@ class MindMapState(
     /** Gives the selected nodes [progress], or none when it is null, as one change. */
     fun setProgress(progress: TaskProgress?) {
         editTasks(selectedNodes.map { it.id }) { it.copy(progress = progress) }
+    }
+
+    /**
+     * Gives the selected nodes the dates they [start] and are [due] on, either null for none, as one change.
+     *
+     * @throws IllegalArgumentException when [start] is after [due], before changing anything.
+     */
+    fun setDates(
+        start: TaskDate?
+        , due: TaskDate?
+    ) {
+        require(start == null || due == null || start <= due) {
+            "A task can't start on $start, after it is due on $due"
+        }
+        editTasks(selectedNodes.map { it.id }) { it.copy(start = start, due = due) }
+    }
+
+    private var mapToday by mutableStateOf<TaskDate?>(null)
+
+    /**
+     * The date it is where the map is shown, which only the app knows, as the library reads no clock. A due date
+     * before it is overdue, see [isOverdue]. Null, as it starts, makes no date overdue. Setting it measures the tree
+     * again, as the due dates may be written by it in [MindMap]'s `dateLabel`.
+     */
+    var today: TaskDate?
+        get() = mapToday
+        set(value) {
+            if (value == mapToday) return
+            mapToday = value
+            animateTreeChange()
+        }
+
+    /** Returns whether the node [id] is due before [today] and not done. */
+    fun isOverdue(id: String): Boolean {
+        // The tree is no state of its own, so reading the tick is what tells a reader of a change.
+        drawTick
+        val task = tree.taskOf(id)
+        val today = today ?: return false
+        val due = task.due ?: return false
+        return due < today && task.progress != TaskProgress.DONE
     }
 
     /**

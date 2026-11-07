@@ -68,6 +68,7 @@ import com.mindsync.library.data.RectangleNodeData
 import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
+import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.withColors
@@ -79,6 +80,7 @@ import com.mindsync.library.layout.drawnBoundaries
 import com.mindsync.library.layout.priorityColor
 import com.mindsync.library.layout.priorityNumberColor
 import com.mindsync.library.layout.taskBadgeCenters
+import com.mindsync.library.layout.OVERDUE_COLOR
 import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
@@ -196,6 +198,10 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  *
  * While the attributes are not shown, a node with attributes has a marker on its bottom right edge instead, and
  * [MindMapState.attributeMarkerNode] is the node whose marker is under the mouse pointer, for showing them.
+ *
+ * A node due on a date has it written below its text by [dateLabel], as `YYYY-MM-DD` unless it is given, in red
+ * when it is overdue by [MindMapState.isOverdue]. A label that changes with the day is measured again when
+ * [MindMapState.today] is set.
  */
 @Composable
 fun MindMap(
@@ -213,18 +219,22 @@ fun MindMap(
     , onBoundaryMenu: (boundary: Boundary, position: Offset) -> Unit = { _, _ -> }
     , onNodeMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
     , onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit = { _, _, _, _ -> }
+    , dateLabel: (date: TaskDate) -> String = { it.toIsoString() }
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
     val drawInfo = remember { DrawInfo() }
+    val currentDateLabel by rememberUpdatedState(dateLabel)
     val measureTextSize = remember(textMeasurer, density, fontFamily, topicFontFamilies, emojiFontFamily) {
         val textStyle = TextStyle(
             fontSize = with(density) { drawInfo.textSize.dpVal.dp.toSp() },
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,
         )
-        MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily, topicFontFamilies)
+        MeasureTextSize(textMeasurer, textStyle, density, drawInfo, emojiFontFamily, topicFontFamilies).apply {
+            dueLabelOf = { currentDateLabel(it) }
+        }
     }
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
@@ -599,6 +609,14 @@ private fun DrawScope.drawTree(
             translate(left = content.textShiftX, top = -content.textRise) { nodeDrawer.drawText(this, content.text) }
         }
         drawTaskBadges(state, node, content, measureTextSize)
+        content.dueLabel?.let { label ->
+            val color = if (state.isOverdue(node.id)) OVERDUE_COLOR else node.textColor
+            val topLeft = Offset(
+                node.path.centerX.toPx(this) - label.size.width / 2f
+                , node.path.centerY.toPx(this) + content.dueTop
+            )
+            drawText(label, color, topLeft)
+        }
         drawNodeImages(node, content)
         content.note?.let { note ->
             val centerX = node.path.centerX.toPx(this)
