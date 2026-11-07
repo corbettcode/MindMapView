@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.Boundary
+import com.mindsync.library.data.BoundaryStyle
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.NodeAttribute
@@ -30,9 +32,10 @@ import kotlin.io.encoding.Base64
  * of its children is on, the arrow links, and where the root is when the user dragged it there.
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
- * order, then the `<arrowlink>` elements, then the `<preference>` elements, and then the `<image>` elements. A node's text and note are the HTML
- * they are kept as. Where the other nodes are is not stored: a map that was read needs to be arranged, as one
- * read with [FreeMind] does.
+ * order, then the `<arrowlink>` elements, then the `<boundary>` elements, then the `<preference>` elements, and then
+ * the `<image>` elements. A boundary's `children` are the ids of the children it is around, separated by spaces.
+ * A node's text and note are the HTML they are kept as. Where the other nodes are is not stored: a map that was read
+ * needs to be arranged, as one read with [FreeMind] does.
  *
  * The images of the HTML are stored in the file, so the map shows them where their addresses cannot be reached.
  * An `<image>` holds the bytes of the image at its `src` address in Base64; the HTML keeps the address.
@@ -72,6 +75,7 @@ object MindMapViewFile {
         tree.arrowLinks
             .filter { it.sourceId in writtenIds && it.targetId in writtenIds }
             .forEach { writeArrowLink(it) }
+        tree.boundaries.filter { it.parentId in writtenIds }.forEach { writeBoundary(it) }
         preferences.forEach { (name, value) ->
             append("  <preference name=\"").append(escapeAttribute(name))
             append("\" value=\"").append(escapeAttribute(value)).append("\"/>\n")
@@ -188,7 +192,42 @@ object MindMapViewFile {
                 )
             )
         }
+        map.children.filter { it.name == "boundary" }.forEach { element ->
+            val parentId = fileIds[element.attributes["parent"]] ?: return@forEach
+            val childIds = element.attributes["children"]
+                .orEmpty()
+                .split(' ')
+                .mapNotNull { fileIds[it] }
+                .toSet()
+            val boundary = Boundary(
+                id = element.attributes["id"]?.takeIf { it.isNotEmpty() && tree.boundaries.none { b -> b.id == it } }
+                    ?: IdGenerator.makeRandomNodeId()
+                , parentId = parentId
+                , childIds = childIds
+                , color = element.color("color")
+                , style = BoundaryStyle.entries.firstOrNull { it.name.lowercase() == element.attributes["style"] }
+                    ?: BoundaryStyle.DASHED
+                , isFilled = element.attributes["filled"] != "false"
+            )
+            // A boundary around none of its parent's children is left out, as the tree would have none such.
+            try {
+                tree.addBoundary(boundary)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
         return tree
+    }
+
+    private fun StringBuilder.writeBoundary(boundary: Boundary) {
+        append("  <boundary")
+        attribute("id", boundary.id)
+        attribute("parent", boundary.parentId)
+        attribute("children", boundary.childIds.joinToString(" "))
+        boundary.color?.let { attribute("color", it.toHex()) }
+        attribute("style", boundary.style.name.lowercase())
+        attribute("filled", boundary.isFilled.toString())
+        append("/>\n")
     }
 
     private fun StringBuilder.writeNode(

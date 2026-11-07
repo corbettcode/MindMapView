@@ -2,6 +2,7 @@ package com.mindsync.library.io
 
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.ArrowLink
+import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.Tree
@@ -19,7 +20,8 @@ import com.mindsync.library.util.RichText
  *
  * Markers become emojis in front of the text, labels become a "Labels" attribute, a web link makes the text a
  * link, and relationships become arrow links. Fill and text colors, bold and italic text, the shapes this
- * library has and folded branches are kept. Images, boundaries and the theme are not.
+ * library has and folded branches are kept. Boundaries are kept too, without their titles. Images and the theme are
+ * not.
  *
  * Node positions are not stored: a map that was read needs to be arranged, for example with
  * `MindMapState.animateTreeChange()`.
@@ -33,6 +35,7 @@ object XMind {
     private val MANIFESTS = listOf("manifest.json", "META-INF/manifest.xml")
     private const val ENCRYPTION = "encryption-data"
     private const val ATTACHED = "attached"
+    private const val MASTER = "master"
     private const val LABELS_ATTRIBUTE = "Labels"
 
     private val LINK_SCHEMES = listOf("http://", "https://", "mailto:", "file:")
@@ -80,6 +83,11 @@ object XMind {
         , val style: Map<String, String>
         , val isFolded: Boolean
         , val children: List<Topic>
+        // How many of the children are attached ones, which come first, and which the ranges of boundaries count.
+        , val attachedCount: Int = 0
+        // The attached children each boundary is around, by their places among them, or null for one that is around
+        // the topic itself.
+        , val boundaries: List<IntRange?> = emptyList()
     )
 
     private class Sheet(
@@ -133,12 +141,18 @@ object XMind {
     private fun jsonTopic(topic: Map<*, *>): Topic {
         val notes = topic["notes"] as? Map<*, *>
         val properties = (topic["style"] as? Map<*, *>)?.get("properties") as? Map<*, *>
-        val children = (topic["children"] as? Map<*, *>)
-            ?.entries
-            .orEmpty()
-            .sortedBy { it.key != ATTACHED }
+        val childLists = (topic["children"] as? Map<*, *>)?.entries.orEmpty().sortedBy { it.key != ATTACHED }
+        val children = childLists
             .flatMap { (it.value as? List<*>).orEmpty().filterIsInstance<Map<*, *>>() }
             .map(::jsonTopic)
+        val attachedCount = childLists
+            .firstOrNull { it.key == ATTACHED }
+            ?.let { (it.value as? List<*>).orEmpty().filterIsInstance<Map<*, *>>().size }
+            ?: 0
+        val boundaries = (topic["boundaries"] as? List<*>)
+            .orEmpty()
+            .filterIsInstance<Map<*, *>>()
+            .mapNotNull { boundaryRange(it.string("range")) }
         return Topic(
             id = topic.string("id")
             , title = topic.string("title").orEmpty()
@@ -156,7 +170,20 @@ object XMind {
                 .toMap()
             , isFolded = topic["branch"] == "folded"
             , children = children
+            , attachedCount = attachedCount
+            , boundaries = boundaries.map { it.range }
         )
+    }
+
+    private class BoundaryRange(val range: IntRange?)
+
+    // XMind writes the range of a boundary as "(first,last)", or "master" for one around the topic itself.
+    private fun boundaryRange(range: String?): BoundaryRange? {
+        val value = range?.trim() ?: return null
+        if (value == MASTER) return BoundaryRange(null)
+        val ends = value.removePrefix("(").removeSuffix(")").split(',').mapNotNull { it.trim().toIntOrNull() }
+        if (ends.size != 2 || ends[0] < 0 || ends[1] < ends[0]) return null
+        return BoundaryRange(ends[0]..ends[1])
     }
 
     private fun Map<*, *>.string(key: String): String? = this[key] as? String
@@ -187,13 +214,24 @@ object XMind {
         topic: XmlElement
         , styles: Map<String, Map<String, String>>
     ): Topic {
-        val children = topic.child("children")
+        val childLists = topic.child("children")
             ?.children
             .orEmpty()
             .filter { it.name == "topics" }
             .sortedBy { it.attributes["type"] != ATTACHED }
+        val children = childLists
             .flatMap { topics -> topics.children.filter { it.name == "topic" } }
             .map { xmlTopic(it, styles) }
+        val attachedCount = childLists
+            .firstOrNull { it.attributes["type"] == ATTACHED }
+            ?.children
+            ?.count { it.name == "topic" }
+            ?: 0
+        val boundaries = topic.child("boundaries")
+            ?.children
+            .orEmpty()
+            .filter { it.name == "boundary" }
+            .mapNotNull { boundaryRange(it.attributes["range"]) }
         return Topic(
             id = topic.attributes["id"]
             , title = topic.child("title")?.text.orEmpty()
@@ -205,6 +243,8 @@ object XMind {
             , style = topic.attributes["style-id"]?.let { styles[it] }.orEmpty()
             , isFolded = topic.attributes["branch"] == "folded"
             , children = children
+            , attachedCount = attachedCount
+            , boundaries = boundaries.map { it.range }
         )
     }
 
@@ -236,7 +276,10 @@ object XMind {
         rootTopic?.id?.let { nodeIds[it] = root.id }
         val branches = rootTopic?.children
             ?: sheets.map { sheet -> sheet.root.takeIf { it.title.isNotBlank() } ?: sheet.root.copy(title = sheet.title) }
-        val children = branches.map { addNode(tree, it, root.id, nodeIds) }
+        // A node is only in the tree once the nodes above it are, so the boundaries are added once all nodes are.
+        val boundaries = mutableListOf<Boundary>()
+        val children = branches.map { addNode(tree, it, root.id, nodeIds, boundaries) }
+        rootTopic?.let { boundaries.addAll(rangeBoundaries(it, root.id, children)) }
         tree.setRootNode(
             root.copy(
                 children = children
@@ -252,7 +295,22 @@ object XMind {
             val targetId = nodeIds[to] ?: return@forEach
             if (sourceId != targetId) tree.addArrowLink(ArrowLink(IdGenerator.makeRandomNodeId(), sourceId, targetId))
         }
+        boundaries.forEach { tree.addBoundary(it) }
         return tree
+    }
+
+    // The boundaries around ranges of the attached children of a topic, whose nodes are [childIds]. A range past
+    // the attached children is cut short at the last of them.
+    private fun rangeBoundaries(
+        topic: Topic
+        , nodeId: String
+        , childIds: List<String>
+    ): List<Boundary> {
+        val attachedIds = childIds.take(topic.attachedCount)
+        return topic.boundaries.filterNotNull().mapNotNull { range ->
+            val ids = attachedIds.filterIndexed { index, _ -> index in range }.toSet()
+            if (ids.isEmpty()) null else Boundary(IdGenerator.makeRandomNodeId(), nodeId, ids)
+        }
     }
 
     private fun addNode(
@@ -260,10 +318,13 @@ object XMind {
         , topic: Topic
         , parentId: String
         , nodeIds: MutableMap<String, String>
+        , boundaries: MutableList<Boundary>
     ): String {
         val id = IdGenerator.makeRandomNodeId()
         topic.id?.let { nodeIds[it] = id }
-        val children = topic.children.map { addNode(tree, it, id, nodeIds) }
+        val children = topic.children.map { addNode(tree, it, id, nodeIds, boundaries) }
+        boundaries.addAll(rangeBoundaries(topic, id, children))
+        if (null in topic.boundaries) boundaries.add(Boundary(IdGenerator.makeRandomNodeId(), parentId, setOf(id)))
         val shape = shape(topic.style["shape-class"]) ?: NodeShape.RECTANGLE
         val node = unplacedNode(
             shape

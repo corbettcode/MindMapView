@@ -7,7 +7,8 @@ import com.mindsync.library.util.RichText
 /**
  * Writes a tree as a web page of nested lists, to read or share the mind map as text. A node with children folds
  * and unfolds in a browser, and starts out as it is folded in the tree. Every node is written, those hidden in a
- * folded node too, with its rich text and links as they are, and its note and attributes below it.
+ * folded node too, with its rich text and links as they are, and its note and attributes below it. Arrow links and
+ * boundaries are left out, as lists have nothing like them.
  */
 object HtmlOutline {
     private const val STYLE = """

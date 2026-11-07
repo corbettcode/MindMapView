@@ -201,7 +201,7 @@ object Markdown {
      * Writes [tree] as a Markdown document that [read] reads back as the same tree. The root is the one top
      * heading, the nodes of the two levels below it are headings too, and the nodes below those are nested list
      * items. A note is written as paragraphs after its node. Bold, italic, struck-through text and links are kept;
-     * shapes, colors, borders, lines, arrow links, folds and the sides of the root are not.
+     * shapes, colors, borders, lines, arrow links, boundaries, folds and the sides of the root are not.
      *
      * Markdown can only give attributes to the rows of a table, which have no children and no notes. So the
      * children of a node that have attributes and no children of their own are written as a table right after it,

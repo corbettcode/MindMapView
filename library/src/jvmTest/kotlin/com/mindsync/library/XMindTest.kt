@@ -243,6 +243,67 @@ class XMindTest {
         assertEquals(listOf(tree.nodeNamed("Loose").id to igneous.id), tree.arrowLinks.map { it.sourceId to it.targetId })
     }
 
+    private fun Tree<Any>.boundaryTexts(): Set<List<String>> =
+        boundaries.map { boundary -> boundaryChildIds(boundary).map { getNode(it).description } }.toSet()
+
+    @Test
+    fun boundariesOfXMindAreKept() {
+        val content = """
+            [{ "title": "s", "rootTopic": {
+              "id": "r", "title": "Root",
+              "boundaries": [{ "id": "b1", "range": "(0,1)", "title": "Dropped" }],
+              "children": {
+                "detached": [{ "id": "f", "title": "Floating" }],
+                "attached": [
+                  { "id": "a", "title": "A",
+                    "boundaries": [{ "id": "b2", "range": "master" }, { "id": "b3", "range": "(1,5)" }],
+                    "children": { "attached": [
+                      { "id": "a1", "title": "A1" }, { "id": "a2", "title": "A2" }, { "id": "a3", "title": "A3" }
+                    ] } },
+                  { "id": "b", "title": "B" },
+                  { "id": "c", "title": "C" }
+                ]
+              }
+            } }]
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "map")
+
+        // A range past the attached children ends at the last of them, and floating topics are in none.
+        assertEquals(setOf(listOf("A", "B"), listOf("A"), listOf("A2", "A3")), tree.boundaryTexts())
+        assertTrue(tree.boundaries.all { it.color == null })
+    }
+
+    @Test
+    fun boundariesOfXMind8AreKept() {
+        val content = """
+            <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
+              <sheet id="s1">
+                <topic id="root">
+                  <title>Root</title>
+                  <children>
+                    <topics type="attached">
+                      <topic id="a"><title>A</title></topic>
+                      <topic id="b"><title>B</title></topic>
+                      <topic id="c"><title>C</title></topic>
+                    </topics>
+                  </children>
+                  <boundaries>
+                    <boundary id="x" range="(1,2)"/>
+                    <boundary id="y" range="master"/>
+                    <boundary id="z" range="nonsense"/>
+                  </boundaries>
+                </topic>
+              </sheet>
+            </xmap-content>
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.xml" to content), title = "map")
+
+        // The root is in no boundary, as it has no parent.
+        assertEquals(setOf(listOf("B", "C")), tree.boundaryTexts())
+    }
+
     @Test
     fun refusesWhatIsNotAnXMindMap() {
         assertFailsWith<IllegalArgumentException> { XMind.read("# Markdown".encodeToByteArray(), title = "x") }

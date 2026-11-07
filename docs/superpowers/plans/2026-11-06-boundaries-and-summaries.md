@@ -142,17 +142,23 @@ nothing structural; summaries second.
 
 ### Task A6: Boundaries in files
 
-**Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/XMind.kt`, tests in the matching `*Test.kt`
+**Files:** `io/MindMapViewFile.kt`, `io/FreeMind.kt`, `io/XMind.kt`, KDoc of `HtmlOutline`, `Opml` and `Markdown`,
+tests `BoundaryFilesTest.kt` (common) and `XMindTest.kt` (JVM)
 
-- [ ] `.mmv`: `<boundary id parent first last color style filled/>` elements after the `<arrowlink>` elements.
-  Writing and reading them back gives the same map. An older file without them reads as before.
-- [ ] FreeMind: read `<cloud COLOR=...>` on a node as a one-node boundary. Write a one-node boundary as a `<cloud>`.
-  FreeMind has no ranges, so a range is written as a cloud on each of its nodes. This is documented in the KDoc.
-- [ ] XMind JSON (`boundaries: [{range: "(0,2)"}]`) and XML (`<boundaries><boundary range="(0,2)"/>`) both read
-  their ranges as indexes among the attached children. A `master` range (the topic itself) becomes a one-node
-  boundary, except on the root, where it is dropped. Titles are dropped. Update the KDoc that says boundaries are not
-  kept.
-- [ ] HTML, OPML and Markdown leave boundaries out, as they leave out arrow links. Say so in their KDoc.
+- [x] `.mmv`: `<boundary id parent children color style filled/>` elements after the `<arrowlink>` elements, with
+  `children` the covered ids separated by spaces. Writing and reading back gives the same map. A boundary around nodes
+  that aren't in the file is left out, and an older file without boundaries reads as before.
+- [x] FreeMind: a `<cloud COLOR=...>` on a node is read as a one-node boundary with a solid line, and a cloud on the
+  root is ignored. A boundary is written as a `<cloud>` on each of its nodes, the first boundary winning where several
+  cover a node. FreeMind's cloud colour is a fill and its default is pale grey, so a pale cloud (luminance 0.8 or
+  more) is read as following the branch colour.
+- [x] XMind JSON (`boundaries: [{range: "(0,2)"}]`) and XML (`<boundaries><boundary range="(0,2)"/>`) read ranges as
+  indexes among the attached children; a range past them is cut short. `master` becomes a one-node boundary around
+  the topic, except on the root, where it's dropped. Titles and nonsense ranges are dropped. The KDoc says
+  boundaries are kept.
+- [x] HTML, OPML and Markdown leave boundaries out; their KDoc says so, and a test confirms their output is unchanged.
+- Neither sample `.xmind` in `desktop/` has boundaries or summaries, so hand-built fixtures in `XMindTest` cover
+  this. Review Focus 3 should be read that way.
 
 ### Task A7: Boundaries in the app
 

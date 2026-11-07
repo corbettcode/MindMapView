@@ -1,6 +1,7 @@
 package com.mindsync.library.io
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -8,6 +9,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
+import com.mindsync.library.data.Boundary
+import com.mindsync.library.data.BoundaryStyle
 import com.mindsync.library.data.ArrowLinkLineStyle
 import com.mindsync.library.data.ArrowLinkThickness
 import com.mindsync.library.data.CircleNodeData
@@ -42,6 +45,11 @@ import kotlin.math.roundToInt
  * below it is kept on the side it is to the left or right of. Arrow links are kept as FreeMind's own `<arrowlink>` children of
  * the node they start at. Node positions are not stored: a map that
  * was read needs to be arranged, for example with `MindMapState.animateTreeChange()`.
+ *
+ * A boundary is kept as FreeMind's own `<cloud>`, which is around one node and the nodes below it. FreeMind has
+ * nothing around several nodes, so a boundary around several is written as a cloud around each of them, and each
+ * cloud is read as a boundary of its own. A cloud's color is the color it is filled with, which is pale; a pale
+ * one is read as a boundary in the color of its branch, and a darker one as a boundary in that color.
  */
 object FreeMind {
     private const val SHAPE_ATTRIBUTE = "shape"
@@ -52,6 +60,9 @@ object FreeMind {
     private const val CLOSE_DOTS = "3 3"
     private const val DASHES_AND_DOTS = "7 7 2 7"
     private const val DEFAULT_FONT_POINTS = 12f
+    // FreeMind fills a cloud with its color, and its default one is a pale gray, which would hardly show as the line
+    // of a boundary.
+    private const val PALE_CLOUD_LUMINANCE = 0.8f
 
     fun write(tree: Tree<*>): String = buildString {
         append("<map version=\"1.0.1\">\n")
@@ -60,7 +71,12 @@ object FreeMind {
         val writtenIds = mutableSetOf<String>()
         tree.doPreorderTraversal { node -> writtenIds.add(node.id) }
         val arrowLinks = tree.arrowLinks.filter { it.targetId in writtenIds }.groupBy { it.sourceId }
-        writeNode(tree, tree.getRootNode(), depth = 0, arrowLinks)
+        // A node has one cloud, so of the boundaries around a node, the first is its cloud.
+        val clouds = mutableMapOf<String, Boundary>()
+        tree.boundaries.forEach { boundary ->
+            tree.boundaryChildIds(boundary).forEach { clouds.getOrPut(it) { boundary } }
+        }
+        writeNode(tree, tree.getRootNode(), depth = 0, arrowLinks, clouds)
         append("</map>\n")
     }
 
@@ -80,8 +96,10 @@ object FreeMind {
         // The node an arrow link leads to may be read after the link, so the links are added once all nodes are.
         val arrowLinks = mutableListOf<ArrowLink>()
         rootElement.readArrowLinks(root.id, arrowLinks)
+        // A node is only in the tree once the nodes above it are, so the clouds are added once all nodes are too.
+        val clouds = mutableListOf<Boundary>()
         val children = rootElement.childNodes().map { element ->
-            readNode(tree, element, root.id, usedIds, arrowLinks).also { id ->
+            readNode(tree, element, root.id, usedIds, arrowLinks, clouds).also { id ->
                 if (element.attributes["POSITION"] == "left") leftChildren.add(id)
             }
         }
@@ -105,6 +123,7 @@ object FreeMind {
             .forEach { link ->
                 tree.addArrowLink(if (usedArrowLinkIds.add(link.id)) link else link.copy(id = IdGenerator.makeRandomNodeId()))
             }
+        clouds.forEach { tree.addBoundary(it) }
         return tree
     }
 
@@ -113,6 +132,7 @@ object FreeMind {
         node: NodeData<*>,
         depth: Int,
         arrowLinks: Map<String, List<ArrowLink>>,
+        clouds: Map<String, Boundary>,
     ) {
         val indent = "  ".repeat(depth)
         val plainText = plainTextOrNull(node.description)
@@ -148,6 +168,11 @@ object FreeMind {
             line.width?.let { append(" WIDTH=\"").append(it.label).append('"') }
             append("/>\n")
         }
+        clouds[node.id]?.let { cloud ->
+            append(indent).append("  <cloud")
+            cloud.color?.let { append(" COLOR=\"").append(it.toHex()).append('"') }
+            append("/>\n")
+        }
         arrowLinks[node.id]?.forEach { link ->
             append(indent).append("  <arrowlink ID=\"").append(escapeXml(link.id)).append('"')
             append(" DESTINATION=\"").append(escapeXml(link.targetId)).append('"')
@@ -162,7 +187,7 @@ object FreeMind {
             link.endInclination?.let { append(" ENDINCLINATION=\"").append(it.toFreeMind()).append('"') }
             append("/>\n")
         }
-        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1, arrowLinks) }
+        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1, arrowLinks, clouds) }
         append(indent).append("</node>\n")
     }
 
@@ -172,12 +197,17 @@ object FreeMind {
         parentId: String,
         usedIds: MutableSet<String>,
         arrowLinks: MutableList<ArrowLink>,
+        clouds: MutableList<Boundary>,
     ): String {
         val id = element.attributes["ID"]?.takeIf { it.isNotEmpty() && usedIds.add(it) }
             ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
         element.readArrowLinks(id, arrowLinks)
+        element.children.firstOrNull { it.name == "cloud" }?.let { cloud ->
+            val color = cloud.color("COLOR")?.takeIf { it.luminance() < PALE_CLOUD_LUMINANCE }
+            clouds.add(Boundary(IdGenerator.makeRandomNodeId(), parentId, setOf(id), color, BoundaryStyle.SOLID))
+        }
         val shape = element.shapeAttribute()?.shape() ?: NodeShape.RECTANGLE
-        val children = element.childNodes().map { readNode(tree, it, id, usedIds, arrowLinks) }
+        val children = element.childNodes().map { readNode(tree, it, id, usedIds, arrowLinks, clouds) }
         val color = element.color("BACKGROUND_COLOR") ?: shape.defaultColor
         val textColor = element.color("COLOR") ?: shape.defaultTextColor
         val description = element.description()
