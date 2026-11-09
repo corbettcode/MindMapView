@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1" theme="contrast">
+  <rootposition x="1313.589" y="601.5322"/>
+  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;CQRS&lt;/p&gt;" note="&lt;p&gt;&lt;small&gt;Command Query Responsibility Segregation&lt;/small&gt;&lt;/p&gt;">
+    <node id="5981e29c-4900-43f2-a0d0-573a971a7db4" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Write side&lt;/p&gt;">
+      <node id="b847df2e-e71b-4308-bd2c-2ddab3b36610" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Commands&lt;/p&gt;"/>
+      <node id="8541e817-ead9-4ca6-a2e9-1efb2d28d73e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Events&lt;/p&gt;"/>
+    </node>
+    <node id="64bbae0b-970d-47d4-a7bb-4eda581e7219" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Read side&lt;/p&gt;">
+      <node id="f80b4e99-8c95-4cce-8342-748185352b45" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Projections&lt;/p&gt;"/>
+      <node id="78593e28-7cda-4962-bd0d-d9552205becf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="&lt;p&gt;Queries&lt;/p&gt;"/>
+    </node>
+    <node id="b1f2a8b4-3616-4272-afb9-299c13333fb2" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;event store&lt;/p&gt;"/>
+    <node id="6544a465-7842-4bf1-9fe5-7b38987534cb" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;database&lt;/p&gt;"/>
+  </node>
+  <arrowlink id="56154779-845a-4673-943e-4c508757a7d6" source="b847df2e-e71b-4308-bd2c-2ddab3b36610" target="b1f2a8b4-3616-4272-afb9-299c13333fb2" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="solid" thickness="normal" startInclination="59.65805;31.610516" endInclination="459.65805;31.610516"/>
+  <arrowlink id="a7847ce1-6605-429b-8882-24d53d2e3df5" source="8541e817-ead9-4ca6-a2e9-1efb2d28d73e" target="b1f2a8b4-3616-4272-afb9-299c13333fb2" color="#ffb0b0b0" startArrow="true" endArrow="false" lineStyle="solid" thickness="normal" startInclination="128.31241;30.917503" endInclination="315.4568;16.194883"/>
+  <arrowlink id="0798c5ca-302a-41e1-9c1a-5eb424a2f4fe" source="78593e28-7cda-4962-bd0d-d9552205becf" target="6544a465-7842-4bf1-9fe5-7b38987534cb" color="#ffb0b0b0" startArrow="true" endArrow="false" lineStyle="solid" thickness="normal" startInclination="232.18364;-24.48808" endInclination="-111.86288;-21.068768"/>
+  <arrowlink id="b41ce994-37e2-47f9-9547-b9752f82ced3" source="f80b4e99-8c95-4cce-8342-748185352b45" target="6544a465-7842-4bf1-9fe5-7b38987534cb" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="solid" thickness="normal" startInclination="-18.156563;10.566982" endInclination="-265.01672;54.896843"/>
+  <arrowlink id="b97ce06b-1aee-47fd-9d8c-640d317ab4eb" source="f80b4e99-8c95-4cce-8342-748185352b45" target="b1f2a8b4-3616-4272-afb9-299c13333fb2" color="#ffb0b0b0" startArrow="true" endArrow="false" lineStyle="solid" thickness="normal" startInclination="-255.12936;128.3212" endInclination="-1068.8833;244.97682"/>
+  <boundary id="9fbb57b6-6db1-42f5-a455-63527cfc3f1a" parent="root" children="5981e29c-4900-43f2-a0d0-573a971a7db4" style="dashed" filled="true"/>
+  <boundary id="4cfb407a-5de9-4035-9ab5-d659ddd0b8b6" parent="root" children="64bbae0b-970d-47d4-a7bb-4eda581e7219" style="dashed" filled="true"/>
+  <preference name="arrowLinkColors" value="#B0B0B0,#5C5C5C,#B3261E,#C98A4E,#274E13,#0B5394,#8A5FA3"/>
+  <preference name="backgroundColor" value=""/>
+  <preference name="rootTopic.font" value="INTER"/>
+  <preference name="rootTopic.noteDisplay" value="INLINE"/>
+  <preference name="rootTopic.attributeDisplay" value="INLINE"/>
+  <preference name="rootTopic.shape" value="RECTANGLE"/>
+  <preference name="rootTopic.fill" value=""/>
+  <preference name="rootTopic.text" value=""/>
+  <preference name="rootTopic.border" value="NONE,TWO,#000000"/>
+  <preference name="rootTopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="rootTopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="topic.font" value="INTER"/>
+  <preference name="topic.noteDisplay" value="INLINE"/>
+  <preference name="topic.attributeDisplay" value="INLINE"/>
+  <preference name="topic.shape" value="RECTANGLE"/>
+  <preference name="topic.fill" value=""/>
+  <preference name="topic.text" value=""/>
+  <preference name="topic.border" value="NONE,TWO,#000000"/>
+  <preference name="topic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="topic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.font" value="INTER"/>
+  <preference name="subtopic.noteDisplay" value="INLINE"/>
+  <preference name="subtopic.attributeDisplay" value="INLINE"/>
+  <preference name="subtopic.shape" value="LINE"/>
+  <preference name="subtopic.fill" value=""/>
+  <preference name="subtopic.text" value=""/>
+  <preference name="subtopic.border" value="NONE,TWO,#000000"/>
+  <preference name="subtopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="subtopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+</mindmapview>
