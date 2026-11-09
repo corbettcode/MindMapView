@@ -42,7 +42,7 @@ class UrlImageLoaderTest {
 
         val url = assertNotNull(UrlImageLoader.addImage(png))
 
-        assertTrue(url.startsWith("mmv-image:"))
+        assertTrue(url.startsWith("ccmm-image:"))
         assertNotEquals(url, UrlImageLoader.addImage(png))
         assertContentEquals(png, UrlImageLoader.bytesOf(listOf(url))[url])
     }

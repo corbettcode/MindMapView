@@ -40,7 +40,7 @@ class MarkdownFeatureTourTest {
 
     @Test
     fun featureTourRoundTrips() {
-        val tree = MindMapViewFile.read(File("../desktop/feature_tour.mmv").readText())
+        val tree = MindMapViewFile.read(File("../desktop/feature_tour.ccmm").readText())
 
         val back = Markdown.read(Markdown.write(tree), "t")
 

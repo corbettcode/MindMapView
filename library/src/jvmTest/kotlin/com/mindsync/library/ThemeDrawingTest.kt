@@ -52,7 +52,7 @@ class ThemeDrawingTest {
     @Test
     fun classicFeatureTourLooksAsBefore() = runComposeUiTest {
         val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/classic-feature-tour.png"))
-        val state = shownState(MindMapViewFile.read(File("../desktop/feature_tour.mmv").readText()))
+        val state = shownState(MindMapViewFile.read(File("../desktop/feature_tour.ccmm").readText()))
 
         val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
 

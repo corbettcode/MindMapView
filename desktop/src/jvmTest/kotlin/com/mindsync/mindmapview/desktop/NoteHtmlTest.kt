@@ -12,11 +12,11 @@ class NoteHtmlTest {
         val state = RichTextState().setHtml("<p>before</p>")
         state.selection = TextRange(state.annotatedString.text.length)
 
-        state.insertHtmlAfterSelection("<img src=\"mmv-image:abc\">")
+        state.insertHtmlAfterSelection("<img src=\"ccmm-image:abc\">")
 
         val html = noteHtml(state)
         assertTrue("before" in html, html)
-        assertTrue("<img src=\"mmv-image:abc\"" in html, html)
+        assertTrue("<img src=\"ccmm-image:abc\"" in html, html)
     }
 
     @Test

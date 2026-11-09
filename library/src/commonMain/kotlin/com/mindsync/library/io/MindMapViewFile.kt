@@ -30,7 +30,7 @@ import com.mindsync.library.util.IdGenerator
 import kotlin.io.encoding.Base64
 
 /**
- * Reads and writes mind maps in this library's own `.mmv` format, which keeps all there is of a [Tree]:
+ * Reads and writes mind maps in this library's own `.ccmm` format, which keeps all there is of a [Tree]:
  * each node's shape, colors, rich text, note and attributes and how they are shown, whether it is folded, the side of the root each
  * of its children is on, the arrow links, and where the root is when the user dragged it there.
  *
@@ -48,7 +48,7 @@ import kotlin.io.encoding.Base64
  * `value`, for the map to be opened as it was. What a value means is the app's to know.
  */
 object MindMapViewFile {
-    const val EXTENSION = "mmv"
+    const val EXTENSION = "ccmm"
 
     private const val FORMAT_VERSION = 1
     private const val ROOT_ELEMENT = "mindmapview"

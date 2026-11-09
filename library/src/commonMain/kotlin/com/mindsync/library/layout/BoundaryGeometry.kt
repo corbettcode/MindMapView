@@ -55,11 +55,16 @@ private fun Density.boundaryRect(
  * Returns the boundaries that are drawn, with the rectangle of each, in the order they are drawn in: each one
  * before those within it, so those are on top of it.
  */
-internal fun Density.drawnBoundaries(tree: Tree<*>): List<Pair<Boundary, Rect>> = tree.boundaries
+internal fun Density.drawnBoundaries(
+    tree: Tree<*>
+): List<Pair<Boundary, Rect>> = tree
+    .boundaries
     .sortedBy { tree.levelOf(it.parentId) }
     .mapNotNull { boundary -> boundaryRect(tree, boundary)?.let { boundary to it } }
 
-private fun Rect.union(other: Rect): Rect = Rect(
+private fun Rect.union(
+    other: Rect
+): Rect = Rect(
     minOf(left, other.left)
     , minOf(top, other.top)
     , maxOf(right, other.right)

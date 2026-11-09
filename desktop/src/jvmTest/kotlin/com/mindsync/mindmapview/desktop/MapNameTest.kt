@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class MapNameTest {
     @Test
     fun mapIsNamedForItsFile() {
-        assertEquals("plans.mmv", mapName("plans.mmv", isModified = false))
+        assertEquals("plans.ccmm", mapName("plans.ccmm", isModified = false))
     }
 
     @Test
@@ -16,7 +16,7 @@ class MapNameTest {
 
     @Test
     fun mapWithUnsavedChangesIsMarked() {
-        assertEquals("*plans.mmv", mapName("plans.mmv", isModified = true))
+        assertEquals("*plans.ccmm", mapName("plans.ccmm", isModified = true))
         assertEquals("*Untitled", mapName(null, isModified = true))
     }
 }

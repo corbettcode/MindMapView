@@ -45,7 +45,7 @@ class MapFilePreferencesTest {
     fun openingAMapTakesThePreferencesItWasSavedWith() {
         val content = MindMapViewFile.write(tree(), preferences = saved.mapValues())
 
-        val opened = UserPreferences().openedWith(tree(), readMapPreferences("a.mmv", content))
+        val opened = UserPreferences().openedWith(tree(), readMapPreferences("a.ccmm", content))
 
         // How the app works and the theme new maps start in are not the map's.
         assertEquals(saved.copy(emojiTones = emptyMap(), isRemoveConfirmed = true, mapThemeId = "classic"), opened)
@@ -55,7 +55,7 @@ class MapFilePreferencesTest {
     fun mapSavedWithNoBackgroundColorIsDrawnOnItsTheme() {
         val content = MindMapViewFile.write(tree(), preferences = UserPreferences().mapValues())
 
-        val opened = saved.openedWith(tree(), readMapPreferences("a.mmv", content))
+        val opened = saved.openedWith(tree(), readMapPreferences("a.ccmm", content))
 
         assertNull(opened.backgroundColor)
     }
@@ -65,7 +65,7 @@ class MapFilePreferencesTest {
         val paper = MapThemes.byId("paper")
         val content = MindMapViewFile.write(tree("paper"))
 
-        val opened = saved.openedWith(tree("paper"), readMapPreferences("a.mmv", content))
+        val opened = saved.openedWith(tree("paper"), readMapPreferences("a.ccmm", content))
 
         assertEquals(saved.withTheme(paper), opened)
         TopicKind.entries.forEach { assertEquals(NodeFont.LORA, opened.topicOf(it).font) }
@@ -84,7 +84,7 @@ class MapFilePreferencesTest {
             )
         )
 
-        val opened = UserPreferences().openedWith(tree("ocean"), readMapPreferences("a.mmv", content))
+        val opened = UserPreferences().openedWith(tree("ocean"), readMapPreferences("a.ccmm", content))
 
         assertEquals(ocean.mainTopic, opened.topic.style)
         assertEquals(listOf(Color(0xFF123456)), opened.subtopic.fillColors)

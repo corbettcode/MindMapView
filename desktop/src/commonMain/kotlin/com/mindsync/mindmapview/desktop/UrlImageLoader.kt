@@ -15,7 +15,7 @@ import kotlin.uuid.Uuid
 
 private const val PRELOAD_TIMEOUT_MILLIS = 5_000L
 // The address of an image from a file, which is shown from the mind map file it is stored in and from nowhere else.
-private const val STORED_IMAGE_SCHEME = "mmv-image"
+private const val STORED_IMAGE_SCHEME = "ccmm-image"
 
 
 /**

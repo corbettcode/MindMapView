@@ -10,7 +10,7 @@ class OldDefaultColorsTest {
     @Test
     fun mapsSavedWithEarlierDefaultsFollowTheTheme() {
         val ocean = MapThemes.byId("ocean")
-        listOf("weekly_planner.mmv", "testwith_6_axis.mmv").forEach { name ->
+        listOf("weekly_planner.ccmm", "testwith_6_axis.ccmm").forEach { name ->
             val tree = MindMapViewFile.read(File("../desktop/$name").readText()).apply { theme = ocean }
 
             tree.doPreorderTraversal { node ->
