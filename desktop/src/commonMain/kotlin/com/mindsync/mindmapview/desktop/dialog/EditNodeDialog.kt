@@ -211,9 +211,11 @@ fun EditNodeDialog(
     var selectedShape by remember { mutableStateOf(shape) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
+
     // The colors a node starts with follow the map's theme, so they are shown as the theme draws them.
     val defaultColor = selectedShape?.defaultColor ?: rootColor
     val defaultTextColor = selectedShape?.defaultTextColor ?: rootTextColor
+
     val fillSwatch = defaultColor?.let { ThemeSwatch(it, themeFill) }
     // A node with a fill of its own keeps its text color, as the theme's is made for the theme's fill.
     val isFillThemed = selectedColor == defaultColor
@@ -572,7 +574,13 @@ fun EditNodeDialog(
                         , modifier = modifier
                             .onSizeChanged { noteSectionHeight = with(density) { it.height.toDp() } }
                     ) {
-                        Box(modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp)) {
+                        Box(modifier = Modifier
+                            .padding(
+                                start = 12.dp
+                                , top = 12.dp
+                                , end = 12.dp
+                            )
+                        ) {
                             DropdownPicker(
                                 label = "Display"
                                 , choices = listOf(null) + NoteDisplay.entries
@@ -581,6 +589,7 @@ fun EditNodeDialog(
                                 , onSelect = { selectedNoteDisplay = it }
                             )
                         }
+
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                             , verticalAlignment = Alignment.CenterVertically
@@ -622,7 +631,8 @@ fun EditNodeDialog(
                             .onFocusChanged { isNoteFocused = it.hasFocus }
                         if (markdown == null && currentNoteState == null) {
                             Box(modifier = noteModifier)
-                        } else if (markdown == null && currentNoteState != null) {
+                        }
+                        else if (markdown == null && currentNoteState != null) {
                             CompositionLocalProvider(LocalImageLoader provides UrlImageLoader) {
                                 OutlinedRichTextEditor(
                                     state = currentNoteState
@@ -635,7 +645,8 @@ fun EditNodeDialog(
                                     , modifier = noteModifier
                                 )
                             }
-                        } else if (markdown != null) {
+                        }
+                        else if (markdown != null) {
                             OutlinedTextField(
                                 value = markdown
                                 , onValueChange = { noteMarkdown = it }

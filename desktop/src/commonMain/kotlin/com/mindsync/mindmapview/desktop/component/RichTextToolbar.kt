@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +20,9 @@ import com.mindsync.mindmapview.desktop.setLink
 import com.mindsync.mindmapview.desktop.setSize
 import com.mindsync.mindmapview.desktop.AnimatedDialog
 import com.mohamedrejeb.richeditor.model.RichTextState
+
+// The editor writes this color as <mark>, and reads <mark> as it, so a highlight is kept in the note's HTML.
+internal val HIGHLIGHT = SpanStyle(background = Color.Yellow)
 
 @Composable
 fun RichTextToolbar(
@@ -66,6 +70,12 @@ fun RichTextToolbar(
             labelStyle = SpanStyle(textDecoration = TextDecoration.LineThrough),
             checked = TextDecoration.LineThrough in decoration,
             onToggle = { state.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) },
+        )
+        RichTextToggle(
+            label = "H",
+            labelStyle = HIGHLIGHT.copy(color = Color.Black),
+            checked = spanStyle.background == HIGHLIGHT.background,
+            onToggle = { state.toggleSpanStyle(HIGHLIGHT) },
         )
         RichTextToggle(
             label = "\u2022",

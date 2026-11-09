@@ -1,6 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.text.TextRange
+import com.mindsync.mindmapview.desktop.component.HIGHLIGHT
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,5 +53,17 @@ class NoteHtmlTest {
         // A size is read again as it was written.
         val note = noteFromSource("<p><img src=\"https://e.org/x.png\" width=\"100\" height=\"50\"></p>")
         assertEquals(note, noteFromSource(note))
+    }
+
+    @Test
+    fun highlightIsTurnedOffAndOn() {
+        val state = RichTextState().setHtml("<p><mark>CQRS</mark></p>")
+        state.selection = TextRange(0, state.annotatedString.text.length)
+
+        state.toggleSpanStyle(HIGHLIGHT)
+        assertEquals("<p>CQRS</p>", noteHtml(state))
+
+        state.toggleSpanStyle(HIGHLIGHT)
+        assertEquals("<p><mark>CQRS</mark></p>", noteHtml(state))
     }
 }
