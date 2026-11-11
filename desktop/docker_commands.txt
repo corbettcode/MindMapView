@@ -1,0 +1,38 @@
+0. Basic Docker Commands
+	docker --version: Check Docker version.
+	docker help: Show Docker commands and options.
+	docker info: Display system-wide information about Docker.
+1. Images
+	docker images: List all local images.
+	docker pull <image>: Download an image from Docker Hub.
+	docker build -t <image_name> .: Build an image from a Dockerfile in the current directory.
+	docker rmi <image>: Remove an image.
+	docker tag <source_image> <new_image>: Tag an image with a new name.
+2. Containers
+	docker run <image>: Run a container from an image.
+	docker run -it <image>: Run a container in interactive mode.
+	docker run -d <image>: Run a container in detached mode.
+	docker ps: List running containers.
+	docker ps -a: List all containers (including stopped ones).
+	docker stop <container>: Stop a running container.
+	docker start <container>: Start a stopped container.
+	docker restart <container>: Restart a container.
+	docker rm <container>: Remove a stopped container.
+	docker exec -it <container> <command>: Run a command inside a running container.
+3. Container Management
+	docker logs <container>: View logs of a container.
+	docker top <container>: Display the processes running in a container.
+	docker stats <container>: Display a live stream of resource usage statistics.
+	docker inspect <container>: View details about a container or image.
+	docker rename <old_name> <new_name>: Rename a container.
+4. Networking
+	docker network ls: List all Docker networks.
+	docker network create <network_name>: Create a new network.
+	docker network connect <network> <container>: Connect a container to a network.
+	docker network disconnect <network> <container>: Disconnect a container from a network.
+	docker network inspect <network>: View details about a network.
+5. Volumes
+	docker volume ls: List all volumes.
+	docker volume create <volume_name>: Create a volume.
+	docker volume inspect <volume>: Display detailed information about a volume.
+	docker volume rm <volume>: Remove a volume.
