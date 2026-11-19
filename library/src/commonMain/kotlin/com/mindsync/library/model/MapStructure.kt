@@ -93,8 +93,9 @@ enum class MapStructure {
         val root = tree.getRootNode()
         if (id == root.id) return GrowDirection.RIGHT
         val branchId = tree.branchOf(id).id
-        if (tree.isFloating(branchId)) return GrowDirection.DOWN
-        val index = root.children.filterNot { tree.isFloating(it) }.indexOf(branchId)
+        // Floating topics, and summaries of the root's children, are below the axis.
+        if (tree.isFloating(branchId) || tree.isSummary(branchId)) return GrowDirection.DOWN
+        val index = root.children.filterNot { tree.isFloating(it) || tree.isSummary(it) }.indexOf(branchId)
         return if (index % 2 == 0) GrowDirection.UP else GrowDirection.DOWN
     }
 }

@@ -188,15 +188,18 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ### Task D1: Horizontal timeline
 
-**Files:** new `layout/TimelineLayout.kt`, `MindMap.kt` (the axis line), tests `TimelineTest.kt`
+**Files:** new `layout/TimelineLayout.kt`, `MindMapManager.kt` (timelines laid out and fitted as tree charts are),
+`model/MapStructure.kt` (summaries and floating topics below the axis), `MindMap.kt` (`drawTimelineAxis`,
+`timelineAxis`), test `TimelineTest.kt`
 
-- [ ] The root's children are placed along a horizontal axis to the right of the root, evenly by the width of their
-  branches; their branches grow up and down by turns, as org charts.
-- [ ] The axis is one line through the root and its children; each branch joins it with an elbow.
-- [ ] Tests (5): order along the axis; up and down by turns; spacing by branch width; the axis line; the tour
-  rendered.
-
----
+- [x] The root's children are on a horizontal axis through the root, to its right in order; their branches grow up and
+  down by turns, as org charts. Each is as far along as it needs to be clear of the topic before it on the axis and of
+  the branch before it on its own side, so branches above and below interleave (the tour went from 5880 to 3960 px
+  wide with that). A summary of them is below, centered on them, and takes no turn.
+- [x] The axis is one line from the root through the middle of its topics, behind them, in the color and width of the
+  line to the first; the topics sit on it, so no elbow joins them (unlike the plan's first idea).
+- [x] Tests (6): on the axis in order, clear of each other; up and down by turns; branches on one side clear of each
+  other; the axis's ends; a summary below; kept on the map. The tour was rendered and looked at.
 
 ## Phase E: Files, the app and the docs
 

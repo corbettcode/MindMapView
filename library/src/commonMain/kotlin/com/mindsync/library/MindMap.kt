@@ -565,6 +565,7 @@ internal fun DrawScope.drawMap(
     drawLines(state, drawInfo, lineColor, fadedIds)
     drawSummaryBrackets(state, drawInfo, lineColor, fadedIds)
     drawBraces(state, drawInfo, lineColor, fadedIds)
+    drawTimelineAxis(state, drawInfo, lineColor)
     drawArrowLinks(state, fadedIds)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor, filterView)
@@ -636,6 +637,34 @@ private fun DrawScope.drawBraces(
         val line = lines[firstId] ?: return@doVisiblePreorderTraversal
         drawBracket(path, bracket, line.color.fadedIf(firstId in fadedIds), line.width.toPx(this))
     }
+}
+
+// A timeline's axis runs from the root through its children, behind them, as the line to the first of them would be.
+private fun DrawScope.drawTimelineAxis(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+) {
+    val tree = state.tree
+    if (tree.structure != MapStructure.TIMELINE) return
+    val axis = timelineAxis(tree) ?: return
+    var line: ResolvedLine? = null
+    val firstId = tree.getRootNode().children.firstOrNull { !tree.isFloating(it) && !tree.isSummary(it) }
+    forEachNodeWithLine(tree, drawInfo, lineColor) { node, resolved -> if (node.id == firstId) line = resolved }
+    val resolved = line ?: return
+    drawLine(resolved.color, axis.first, axis.second, resolved.width.toPx(this), StrokeCap.Round)
+}
+
+/**
+ * Returns the ends of a timeline's axis: from the right edge of the root, through the middle of it, to the middle of
+ * the last of its children on it. Returns null without any.
+ */
+internal fun Density.timelineAxis(tree: Tree<*>): Pair<Offset, Offset>? {
+    val root = tree.getRootNode()
+    val lastId = root.children.lastOrNull { !tree.isFloating(it) && !tree.isSummary(it) } ?: return null
+    val last = tree.getNode(lastId)
+    val y = root.path.centerY.toPx(this)
+    return Offset(getNodeEdgeX(root, isRightEdge = true), y) to Offset(last.path.centerX.toPx(this), y)
 }
 
 // Draws [bracket]: from its top to its bottom along its back, curling into its point, with a line from there.
@@ -1145,8 +1174,9 @@ private fun DrawScope.drawLines(
         // A summary is joined to the siblings it is about by its bracket, not to its parent by a line, and a floating
         // topic to nothing.
         if (tree.isSummary(toNode.id) || tree.isFloating(toNode.id)) return@forEachNodeWithLine
-        // A brace map joins a topic to its children by a brace instead.
+        // A brace map joins a topic to its children by a brace instead, and a timeline the root's by its axis.
         if (tree.structure == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
+        if (tree.structure == MapStructure.TIMELINE && node.parentId == null) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val grow = tree.directionOf(toNode.id)

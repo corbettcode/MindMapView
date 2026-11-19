@@ -9,6 +9,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
+import com.mindsync.library.layout.TimelineLayout
 import com.mindsync.library.layout.TreeChartLayout
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.GrowDirection
@@ -143,6 +144,11 @@ class MindMapManager {
 
     private val treeChartLayouts = listOf(true, false).associateWith { TreeChartLayout(isRight = it) }
 
+    private val timelineLayout = TimelineLayout(
+        directionManagers.getValue(GrowDirection.UP)
+        , directionManagers.getValue(GrowDirection.DOWN)
+    )
+
     private fun treeChartLayout(): TreeChartLayout =
         treeChartLayouts.getValue(tree.structure == MapStructure.TREE_RIGHT)
 
@@ -159,7 +165,7 @@ class MindMapManager {
     // The root is placed once for all of its sets of children, then each side is arranged around it.
     // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
     fun arrangeTree() {
-        if (tree.structure.isTreeChart) return arrangeTreeChart()
+        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return arrangeWhole()
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
         rootManagers().forEach { it.arrangeChildren(root, tree) }
@@ -191,26 +197,33 @@ class MindMapManager {
         return getLayoutManager(LayoutSide.RIGHT).movedBy(root, DpOffset(Dp(shiftX), Dp(shiftY)))
     }
 
-    // A tree chart is laid out around the root where it is, then moved as a whole to be clear of the top and left of
-    // the map when it is not, unless the root was put where it is.
-    private fun arrangeTreeChart() {
-        layOutTreeChart(tree.getRootNode())
+    // A tree chart or a timeline is laid out around the root where it is, then moved as a whole to be clear of the
+    // top and left of the map when it is not, unless the root was put where it is.
+    private fun arrangeWhole() {
+        layOutWhole(tree.getRootNode())
         if (tree.isRootDragged) return
-        val (shiftX, shiftY) = treeChartOverflow()
+        val (shiftX, shiftY) = wholeOverflow()
         if (shiftX.dpVal == 0f && shiftY.dpVal == 0f) return
         val root = getLayoutManager(LayoutSide.RIGHT).movedBy(tree.getRootNode(), DpOffset(shiftX, shiftY))
         tree.setRootNode(root)
-        layOutTreeChart(root)
+        layOutWhole(root)
     }
 
-    private fun layOutTreeChart(root: NodeData<*>) {
+    private fun layOutWhole(root: NodeData<*>) {
+        if (tree.structure == MapStructure.TIMELINE) {
+            timelineLayout.arrange(root, tree)
+            floatingTopics().forEach { (node, offset) ->
+                directionManagers.getValue(GrowDirection.DOWN).arrangeFloating(root, node, offset, tree)
+            }
+            return
+        }
         val layout = treeChartLayout()
         layout.arrange(root, tree)
         floatingTopics().forEach { (node, offset) -> layout.arrangeFloating(root, node, offset, tree) }
     }
 
-    // How far right and down a tree chart, as it is laid out now, has to go to be clear of the top and left of the map.
-    private fun treeChartOverflow(): Pair<Dp, Dp> {
+    // How far right and down the map, as it is laid out now, has to go to be clear of the top and left of the map.
+    private fun wholeOverflow(): Pair<Dp, Dp> {
         var left = Float.MAX_VALUE
         var top = Float.MAX_VALUE
         tree.doVisiblePreorderTraversal { node ->
@@ -228,7 +241,7 @@ class MindMapManager {
      * Returns how far the tree reaches to the left of and above where it fits, as its x and y.
      */
     fun measureOverflow(): Pair<Dp, Dp> {
-        if (tree.structure.isTreeChart) return treeChartOverflow()
+        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return wholeOverflow()
         val root = tree.getRootNode()
         val fittedRoot = fittedRoot()
         return fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
