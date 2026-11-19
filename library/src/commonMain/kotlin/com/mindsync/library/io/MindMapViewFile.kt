@@ -165,6 +165,7 @@ object MindMapViewFile {
         tree.setNoteDisplay(root.id, rootElement.noteDisplay())
         tree.setAttributeDisplay(root.id, rootElement.attributeDisplay())
         tree.setTask(root.id, rootElement.task())
+        tree.setGridColumns(root.id, rootElement.gridColumns())
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
@@ -275,6 +276,7 @@ object MindMapViewFile {
         }
         if (tree.isFolded(node.id)) attribute("folded", "true")
         tree.branchStructureOf(node.id)?.let { attribute("structure", it.fileName) }
+        tree.gridColumnsOf(node.id)?.let { attribute("columns", it.toString()) }
         tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
         val task = tree.taskOf(node.id)
         task.priority?.let { attribute("priority", it.toString()) }
@@ -367,10 +369,14 @@ object MindMapViewFile {
         tree.setFolded(id, element.attributes["folded"] == "true")
         tree.setTask(id, element.task())
         tree.setBranchStructure(id, MapStructure.branchFromFileName(element.attributes["structure"]))
+        tree.setGridColumns(id, element.gridColumns())
         return id
     }
 
     private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    // A count that is no number of columns is left out, rather than the map not being read.
+    private fun XmlElement.gridColumns(): Int? = attributes["columns"]?.toIntOrNull()?.takeIf { it >= 1 }
 
     // A priority, progress or date that is not one this library has is left out, rather than the map not being read.
     private fun XmlElement.task(): NodeTask = NodeTask(

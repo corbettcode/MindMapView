@@ -36,9 +36,35 @@ class BranchStructureFilesTest {
     fun unknownStructureAndTheMindMapAreReadAsNone() {
         val text = MindMapViewFile.write(tree().apply { setBranchStructure("b", MapStructure.TIMELINE) })
 
-        listOf("tree-table", "mind-map").forEach { name ->
+        listOf("bubble", "mind-map").forEach { name ->
             val read = MindMapViewFile.read(text.replace("structure=\"timeline\"", "structure=\"$name\""))
             assertNull(read.branchStructureOf("b"), name)
+        }
+    }
+
+    @Test
+    fun gridColumnsOfTheRootAndOfABranchAreKept() {
+        val tree = tree().apply {
+            structure = MapStructure.GRID
+            setGridColumns(getRootNode().id, 3)
+            setBranchStructure("a", MapStructure.GRID)
+            setGridColumns("a", 2)
+        }
+
+        val read = MindMapViewFile.read(MindMapViewFile.write(tree))
+        assertEquals(3, read.gridColumnsOf(read.getRootNode().id))
+        assertEquals(2, read.gridColumnsOf("a"))
+        assertNull(read.gridColumnsOf("b"))
+    }
+
+    @Test
+    fun gridsOfAsManyColumnsAsFitAreWrittenAsBeforeAndNoCountIsReadAsThat() {
+        val text = MindMapViewFile.write(tree().apply { setBranchStructure("a", MapStructure.GRID) })
+        assertFalse("columns" in text)
+
+        listOf("0", "two").forEach { count ->
+            val read = MindMapViewFile.read(text.replace("structure=\"grid\"", "structure=\"grid\" columns=\"$count\""))
+            assertNull(read.gridColumnsOf("a"), count)
         }
     }
 }

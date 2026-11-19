@@ -41,6 +41,8 @@ val MapStructure.label: String
         MapStructure.FISHBONE_RIGHT -> "Fishbone, Head Right"
         MapStructure.MATRIX_ROWS -> "Matrix, Rows"
         MapStructure.MATRIX_COLUMNS -> "Matrix, Columns"
+        MapStructure.TREE_TABLE -> "Tree Table"
+        MapStructure.GRID -> "Grid"
     }
 
 /**
@@ -231,6 +233,33 @@ private fun DrawScope.drawStructure(
             val isRows = structure == MapStructure.MATRIX_ROWS
             listOf(0.52f, 0.84f).forEach { along ->
                 if (isRows) box(w * 0.2f, along * h, false) else box(along * w, h * 0.2f, false)
+            }
+        }
+        MapStructure.TREE_TABLE -> {
+            // A header across the top; below, a cell on the left as tall as the two cells of its children.
+            val left = 0.04f
+            val right = 0.96f
+            val middle = 0.4f
+            listOf(0.04f, 0.32f, 0.96f).forEach { line(left * w, it * h, right * w, it * h) }
+            line(middle * w, 0.64f * h, right * w, 0.64f * h)
+            listOf(left, right).forEach { line(it * w, 0.04f * h, it * w, 0.96f * h) }
+            line(middle * w, 0.32f * h, middle * w, 0.96f * h)
+            box(w / 2, h * 0.18f, true)
+            box(w * 0.22f, h * 0.64f, false)
+            box(w * 0.68f, h * 0.48f, false)
+            box(w * 0.68f, h * 0.8f, false)
+        }
+        MapStructure.GRID -> {
+            // A header across the top, and three cells below it, each headed by its topic.
+            val edges = listOf(0.04f, 0.34f, 0.66f, 0.96f)
+            listOf(0.04f, 0.32f, 0.96f).forEach { line(edges.first() * w, it * h, edges.last() * w, it * h) }
+            line(edges.first() * w, 0.04f * h, edges.first() * w, 0.96f * h)
+            line(edges.last() * w, 0.04f * h, edges.last() * w, 0.96f * h)
+            edges.subList(1, 3).forEach { line(it * w, 0.32f * h, it * w, 0.96f * h) }
+            box(w / 2, h * 0.18f, true)
+            edges.zipWithNext().forEach { (from, to) ->
+                box((from + to) / 2 * w, h * 0.5f, false)
+                line((from + 0.05f) * w, h * 0.66f, (to - 0.05f) * w, h * 0.66f)
             }
         }
     }

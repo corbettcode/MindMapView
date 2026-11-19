@@ -28,7 +28,7 @@ class MapStructureFilesTest {
     @Test
     fun unknownStructureIsAMindMap() {
         val text = MindMapViewFile.write(tree().apply { structure = MapStructure.ORG_DOWN })
-            .replace("org-chart-down", "tree-table")
+            .replace("org-chart-down", "bubble")
 
         assertEquals(MapStructure.MIND_MAP, MindMapViewFile.read(text).structure)
     }
@@ -43,7 +43,10 @@ class MapStructureFilesTest {
         assertEquals(MapStructure.FISHBONE_RIGHT, MapStructure.fromXMindClass("org.xmind.ui.fishbone.rightHeaded"))
         assertEquals(MapStructure.MATRIX_ROWS, MapStructure.fromXMindClass("org.xmind.ui.spreadsheet"))
         assertEquals(MapStructure.MATRIX_COLUMNS, MapStructure.fromXMindClass("org.xmind.ui.spreadsheet.column"))
-        assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass("org.xmind.ui.treetable"))
+        assertEquals(MapStructure.TREE_TABLE, MapStructure.fromXMindClass("org.xmind.ui.treetable"))
+        assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass("org.xmind.ui.bubble"))
+        // The grid's name in XMind's files is not known, so no name, nor none, is read as it.
         assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass(null))
+        assertEquals(null, MapStructure.branchFromXMindClass(null))
     }
 }

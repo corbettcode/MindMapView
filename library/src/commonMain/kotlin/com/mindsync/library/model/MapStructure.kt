@@ -27,8 +27,8 @@ enum class GrowDirection {
 enum class MapStructure(
     /** The name the structure is kept under in a map file. */
     val fileName: String
-    /** The structure class XMind names it by. */
-    , private val xmindClass: String
+    /** The structure class XMind names it by, or null for one whose name is not known. */
+    , private val xmindClass: String?
 ) {
     /** The root in the middle with branches on its six sides, as the map has been laid out all along. */
     MIND_MAP("mind-map", "org.xmind.ui.map.unbalanced")
@@ -51,7 +51,16 @@ enum class MapStructure(
     , MATRIX_ROWS("matrix-rows", "org.xmind.ui.spreadsheet")
 
     /** A table whose columns are the root's topics, with the topics below them in rows by their labels. */
-    , MATRIX_COLUMNS("matrix-columns", "org.xmind.ui.spreadsheet.column");
+    , MATRIX_COLUMNS("matrix-columns", "org.xmind.ui.spreadsheet.column")
+
+    /**
+     * Nested blocks: the owner across the top, and each topic a cell left of its children's, as tall as they are
+     * together.
+     */
+    , TREE_TABLE("tree-table", "org.xmind.ui.treetable")
+
+    /** A table of the owner's topics in a set number of columns, each with the topics below it in its cell. */
+    , GRID("grid", null);
 
     companion object {
         /** Returns the structure kept as [name] in a map file, or the mind map for one that is not known. */
@@ -61,8 +70,7 @@ enum class MapStructure(
          * Returns the structure of XMind's [structureClass], or the mind map for one this library has no layout for,
          * as a tree table, and for XMind's other mind maps, as the clockwise one.
          */
-        fun fromXMindClass(structureClass: String?): MapStructure =
-            entries.firstOrNull { it.xmindClass == structureClass } ?: MIND_MAP
+        fun fromXMindClass(structureClass: String?): MapStructure = ofXMindClass(structureClass) ?: MIND_MAP
 
         /**
          * Returns the structure a branch is kept as [name] in a map file with, or null for one laid out as its
@@ -73,7 +81,10 @@ enum class MapStructure(
 
         /** Returns the structure of a branch with XMind's [structureClass], or null for one laid out as its parent. */
         fun branchFromXMindClass(structureClass: String?): MapStructure? =
-            entries.firstOrNull { it.xmindClass == structureClass }?.takeIf { it != MIND_MAP }
+            ofXMindClass(structureClass)?.takeIf { it != MIND_MAP }
+
+        private fun ofXMindClass(structureClass: String?): MapStructure? =
+            structureClass?.let { name -> entries.firstOrNull { it.xmindClass == name } }
     }
 
     /**
@@ -89,7 +100,7 @@ enum class MapStructure(
         , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
-        LOGIC_RIGHT, BRACE_RIGHT -> GrowDirection.RIGHT
+        LOGIC_RIGHT, BRACE_RIGHT, TREE_TABLE, GRID -> GrowDirection.RIGHT
         LOGIC_LEFT -> GrowDirection.LEFT
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
@@ -106,6 +117,9 @@ enum class MapStructure(
 
     /** Whether the map is a matrix, a table of its topics. */
     val isMatrix: Boolean get() = this == MATRIX_ROWS || this == MATRIX_COLUMNS
+
+    /** Whether the map is drawn as a table of cells rather than with lines: a matrix, a tree table or a grid. */
+    val isTable: Boolean get() = isMatrix || this == TREE_TABLE || this == GRID
 
     /**
      * Returns whether the node [id] and its siblings are stacked along x, side by side, rather than along y, one

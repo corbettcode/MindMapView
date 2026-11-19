@@ -150,6 +150,19 @@ class StructureAppTest {
         assertEquals(MapStructure.MATRIX_ROWS, state.tree.structure)
     }
 
+    @Test
+    fun viewMenuSetsTheTreeTableAndGrid() = runComposeUiTest {
+        val state = shownApp()
+
+        listOf(MapStructure.TREE_TABLE, MapStructure.GRID).forEach { structure ->
+            onNodeWithText("View").performClick()
+            onNodeWithText("Structure").performClick()
+            onNodeWithText(structure.label).performScrollTo().performClick()
+            waitForIdle()
+            assertEquals(structure, state.tree.structure)
+        }
+    }
+
     private fun ComposeUiTest.openAttributes() {
         onNodeWithText("Edit").performClick()
         onNodeWithText("Attributes...").performScrollTo().performClick()

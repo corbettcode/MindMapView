@@ -48,6 +48,9 @@ class Tree<T> {
     // The topics laid out in a structure of their own, rather than in their parent's, each with that structure.
     private val branchStructures = mutableMapOf<String, MapStructure>()
 
+    // The topics a grid is laid out from, the root among them, each with how many columns its grid has.
+    private val gridColumns = mutableMapOf<String, Int>()
+
     /** The look of the map, which the nodes follow where they have no colors or border of their own. */
     var theme: MapTheme = MapThemes.CLASSIC
 
@@ -97,6 +100,22 @@ class Tree<T> {
      */
     fun structureOwnerOf(id: String): String =
         generateSequence(id) { getNode(it).parentId }.firstOrNull { it in branchStructures } ?: ROOT_ID
+
+    /**
+     * Returns how many columns the grid laid out from the topic [id] has, or null for as many as fit in a row, which
+     * is how a grid starts. It is kept whatever the structure, for when the topic's branch is a grid again.
+     */
+    fun gridColumnsOf(id: String): Int? = gridColumns[id]?.takeIf { id in _nodes }
+
+    /** Gives the grid laid out from the topic [id] [count] columns, or as many as fit in a row when it is null. */
+    fun setGridColumns(
+        id: String
+        , count: Int?
+    ) {
+        getNode(id)
+        require(count == null || count >= 1) { "A grid has at least one column, not $count" }
+        if (count == null) gridColumns.remove(id) else gridColumns[id] = count
+    }
 
     /** Returns the structure the children of the node [id] are laid out in: its owner's, see [structureOwnerOf]. */
     fun structureOf(id: String): MapStructure = branchStructures[structureOwnerOf(id)] ?: structure
@@ -702,6 +721,7 @@ class Tree<T> {
         , foldedIds = foldedIds.toSet()
         , floatingOffsets = floatingOffsets.toMap()
         , branchStructures = branchStructures.toMap()
+        , gridColumns = gridColumns.toMap()
         , arrowLinks = _arrowLinks.toList()
         , boundaries = boundaries
         , summaries = summaries.mapValues { it.value.toSet() }
@@ -734,6 +754,8 @@ class Tree<T> {
         floatingOffsets.putAll(snapshot.floatingOffsets)
         branchStructures.clear()
         branchStructures.putAll(snapshot.branchStructures)
+        gridColumns.clear()
+        gridColumns.putAll(snapshot.gridColumns)
         _arrowLinks.clear()
         _arrowLinks.addAll(snapshot.arrowLinks)
         _boundaries.clear()
@@ -943,6 +965,7 @@ class Tree<T> {
         rootChildSides.remove(targetId)
         floatingOffsets.remove(targetId)
         branchStructures.remove(targetId)
+        gridColumns.remove(targetId)
     }
 
     /**

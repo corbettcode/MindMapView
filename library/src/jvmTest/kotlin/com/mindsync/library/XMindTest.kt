@@ -487,7 +487,8 @@ class XMindTest {
               {"id": "a", "title": "Team", "structureClass": "org.xmind.ui.org-chart.down",
                 "children": {"attached": [{"id": "a1", "title": "Ann"}]}},
               {"id": "b", "title": "Ideas", "structureClass": "org.xmind.ui.map.unbalanced"},
-              {"id": "c", "title": "Bones", "structureClass": "org.xmind.ui.treetable"}
+              {"id": "c", "title": "Bubbles", "structureClass": "org.xmind.ui.bubble"},
+              {"id": "d", "title": "Costs", "structureClass": "org.xmind.ui.treetable"}
             ]}}}]
         """.trimIndent()
         val xmind8 = """
@@ -506,7 +507,8 @@ class XMindTest {
         assertEquals(MapStructure.ORG_DOWN, tree.branchStructureOf(tree.nodeNamed("Team").id))
         assertNull(tree.branchStructureOf(tree.nodeNamed("Ann").id))
         assertNull(tree.branchStructureOf(tree.nodeNamed("Ideas").id))
-        assertNull(tree.branchStructureOf(tree.nodeNamed("Bones").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Bubbles").id))
+        assertEquals(MapStructure.TREE_TABLE, tree.branchStructureOf(tree.nodeNamed("Costs").id))
         val tree8 = XMind.read(zip("content.xml" to xmind8), title = "plan")
         assertEquals(MapStructure.TIMELINE, tree8.branchStructureOf(tree8.nodeNamed("Steps").id))
     }

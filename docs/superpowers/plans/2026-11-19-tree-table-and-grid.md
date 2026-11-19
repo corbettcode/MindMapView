@@ -143,16 +143,18 @@ Each phase can ship on its own.
 **Files:** `model/MapStructure.kt`, `data/Tree.kt`, `io/MindMapViewFile.kt`, `io/XMind.kt`, `MindMapState.kt`;
 tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `XMindTest`
 
-- [ ] `TREE_TABLE("tree-table", "org.xmind.ui.treetable")`, `GRID("grid", null)`, with `isTreeTable`, `isGrid` and
-  `isTable` (with the matrices). `directionOf`: RIGHT for both, but a grid owner's grandchildren grow DOWN within the
-  cell. Until phases C and D, both are laid out as the logic chart →.
-- [ ] Tests that use `tree-table` / `org.xmind.ui.treetable` as an unknown name switch to one that stays unknown
+- [x] `TREE_TABLE("tree-table", "org.xmind.ui.treetable")`, `GRID("grid", null)`, and `isTable` (with the
+  matrices). `directionOf`: RIGHT for both until phases C and D lay them out; the grid's main topics' children grow
+  DOWN from D1. Until then, both are laid out as the logic chart →. Both are in the menus already, with their
+  pictures and labels, as each structure has been since it was added.
+- [x] Tests that use `tree-table` / `org.xmind.ui.treetable` as an unknown name switch to one that stays unknown
   (`bubble` / `org.xmind.ui.bubble`).
-- [ ] `Tree.gridColumnsOf`, `setGridColumns`, kept in the snapshot. A removed owner drops its count.
-  `state.setGridColumns(count)` on the selected topics, or on the root for the map's grid, is one undo step.
-- [ ] `.ccmm` writes and reads `columns` on the map and on nodes. Tests: round trip, and that an older file without
+- [x] `Tree.gridColumnsOf`, `setGridColumns`, kept in the snapshot. A removed owner drops its count.
+  `state.setGridColumns(count)` sets the grid a selected topic owns or is in, and is one undo step. Cut and paste
+  keep the count.
+- [x] `.ccmm` writes and reads `columns` on the owner's node, the root's for the map. Tests: round trip, and that an older file without
   it opens unchanged.
-- [ ] `XMind` reads `org.xmind.ui.treetable` as a map's or a branch's tree table.
+- [x] `XMind` reads `org.xmind.ui.treetable` as a map's or a branch's tree table.
 
 ## Phase B: One way of drawing tables
 
@@ -226,9 +228,9 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 **Files:** desktop `menuBar/StructureMenu.kt`, `MindMapApp.kt`, the topic menu; tests `StructureAppTest`
 
-- [ ] "Tree Table" and "Grid" in View › Structure, Edit › Branch Structure, a topic's menu and Preferences › New
-  maps, each with a picture.
-- [ ] Edit › Grid Columns ▸ 1 to 8, shown when the map or the selected branch is a grid.
+- [x] "Tree Table" and "Grid" in View › Structure, Edit › Branch Structure, a topic's menu and Preferences › New
+  maps, each with a picture (done in A1).
+- [ ] Edit › Grid Columns ▸ 1 to 8, and "As Many as Fit",, shown when the map or the selected branch is a grid.
 - [ ] Tests: each set from the menus, and that the column count is shown and set.
 
 ### Task E2: Docs

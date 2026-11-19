@@ -709,6 +709,25 @@ class MindMapState(
         }
     }
 
+    /**
+     * Gives the grids the selected topics are in [count] columns, or as many as fit in a row when it is null, as one
+     * change: the grid laid out from a selected topic, or else the one it is in. Topics in no grid are left out.
+     */
+    fun setGridColumns(count: Int?) {
+        val ownerIds = selectedNodes.mapNotNull { node ->
+            listOf(node.id, tree.structureOwnerOf(node.id)).firstOrNull { tree.isGridOwner(it) }
+        }.distinct()
+        if (ownerIds.isEmpty()) return
+        recordChange {
+            ownerIds.forEach { tree.setGridColumns(it, count) }
+            animateTreeChange()
+        }
+    }
+
+    // Whether a grid is laid out from the topic [id]: the root of a map that is one, or a topic with one of its own.
+    private fun Tree<*>.isGridOwner(id: String): Boolean =
+        (branchStructureOf(id) ?: structure.takeIf { getNode(id).parentId == null }) == MapStructure.GRID
+
     /** Makes the selected floating topics attached children of the root again, on its right, as one change. */
     fun attachToRoot() {
         recordChange {
@@ -895,6 +914,7 @@ class MindMapState(
         , attributeDisplay = tree.attributeDisplayOf(node.id)
         , floatingOffset = tree.floatingOffsetOf(node.id)
         , branchStructure = tree.branchStructureOf(node.id)
+        , gridColumns = tree.gridColumnsOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -922,6 +942,7 @@ class MindMapState(
                 tree.setNoteDisplay(id, branch.noteDisplay)
                 tree.setAttributeDisplay(id, branch.attributeDisplay)
                 tree.setBranchStructure(id, branch.branchStructure)
+                tree.setGridColumns(id, branch.gridColumns)
                 // A floating topic pasted onto the root floats again, a little off the one it is a copy of when that
                 // is still there; pasted onto another topic, it is attached to it.
                 val offset = branch.floatingOffset?.takeIf { parentId == tree.getRootNode().id }
@@ -2485,6 +2506,7 @@ private class CopiedNode(
     , val attributeDisplay: AttributeDisplay?
     , val floatingOffset: DpOffset?
     , val branchStructure: MapStructure?
+    , val gridColumns: Int?
     , val children: List<CopiedNode>
 )
 

@@ -99,4 +99,16 @@ class MapStructureTest {
         assertTrue(MapStructure.MATRIX_ROWS.isMatrix && MapStructure.MATRIX_COLUMNS.isMatrix)
         assertFalse(MapStructure.entries.any { it.isFishbone && it.isMatrix })
     }
+
+    @Test
+    fun treeTableAndGridGrowRightAndAreTablesWithTheMatrices() {
+        listOf(MapStructure.TREE_TABLE, MapStructure.GRID).forEach { structure ->
+            val tree = tree().apply { this.structure = structure }
+            listOf("a", "b", "d", "f").forEach { assertEquals(GrowDirection.RIGHT, tree.directionOf(it), it) }
+        }
+        assertEquals(
+            setOf(MapStructure.MATRIX_ROWS, MapStructure.MATRIX_COLUMNS, MapStructure.TREE_TABLE, MapStructure.GRID)
+            , MapStructure.entries.filter { it.isTable }.toSet()
+        )
+    }
 }
