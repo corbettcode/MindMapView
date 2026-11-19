@@ -17,7 +17,7 @@ internal actual fun mapSvg(
     , density: Density
     , measureTextSize: MeasureTextSize
 ): String? {
-    val bounds = density.exportBounds(state.tree)
+    val bounds = density.exportBounds(state.tree, state.mindMapManager.tableBounds())
     val scale = 1f / density.density
     val width = bounds.width * scale
     val height = bounds.height * scale

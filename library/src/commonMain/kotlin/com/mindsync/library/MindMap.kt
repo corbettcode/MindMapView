@@ -796,7 +796,8 @@ private fun DrawScope.drawMatrixHeaders(
 }
 
 // Whether the line from [parent] to [child] is one a table shows by its cells instead. In a matrix, those are from its
-// topic to its rows, and from a row to the topics in its cells; in a tree table, all of those between its topics.
+// topic to its rows, and from a row to the topics in its cells; in a tree table, all of those between its topics; and
+// in a grid, those from its topic to its main topics, and from each of those to the topics below it in its cell.
 private fun isTableLine(
     tree: Tree<*>
     , parent: NodeData<*>
@@ -804,6 +805,11 @@ private fun isTableLine(
 ): Boolean {
     if (tree.isSummary(child.id) || tree.isFloating(child.id)) return false
     if (tree.structureOf(parent.id) == MapStructure.TREE_TABLE) return isInTreeTable(tree, parent)
+    if (tree.structureOf(parent.id) == MapStructure.GRID) {
+        val ownerId = tree.structureOwnerOf(parent.id)
+        return parent.id == ownerId ||
+            (parent.parentId == ownerId && !tree.isSummary(parent.id) && !tree.isFloating(parent.id))
+    }
     fun isMatrixOwner(node: NodeData<*>) =
         tree.structureOf(node.id).isMatrix && tree.structureOwnerOf(node.id) == node.id
     if (isMatrixOwner(parent)) return true

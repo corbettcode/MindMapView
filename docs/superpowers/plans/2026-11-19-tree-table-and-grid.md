@@ -103,10 +103,10 @@ Each phase can ship on its own.
 | "Lowest level right-aligned" | A leaf above the deepest level stretches its cell to the right edge, with the topic at the right of the cell, so all leaves end in the last column. To confirm in F1. |
 | Vertical alignment in a spanning cell | Top, as an outline reads, with the matrix's padding. |
 | Grid's owner | A header cell across the full width, at the top, as in the tree table. |
-| Grid's main topics | Cells in reading order, a set number to a row, each holding its subtopics stacked below it. Rows of main topics wrap, as in a card layout. |
+| Grid's main topics | Cells in reading order, a set number to a row, each with its main topic above the topics below it, laid out as a logic chart. Rows of main topics wrap, as in a card layout. |
 | Grid's column count | Per owner, default "all in one row, at most 4", set from 1 to 8 in the app (Edit › Grid Columns, and a topic's menu for a branch). Changing it is one undo step. |
 | Grid column widths | Equal, the widest cell's, so that it reads as a grid. Row heights by their tallest cell. |
-| Cells and borders | Thin lines in the map's line color, as the matrix's (`MATRIX_LINE_WIDTH`), heavier under a header. Topics keep their own shapes inside cells. |
+| Cells and borders | Thin lines in the map's line color, as the matrix's (`TABLE_LINE_WIDTH`), heavier under a header. Topics keep their own shapes inside cells. |
 | Lines | None between topics of the same table. A branch below a grid cell's subtopic, or one with its own structure, draws its own lines. |
 | Summaries | Tree table: a summary is past the table's right edge, without a cell, centered on the rows of the topics it sums, with its bracket; one beside the same rows as another is past it. Grid: a summary of main topics is a row below the grid across its width; a summary inside a cell is as in a logic chart. |
 | Boundaries | Around topics within one cell or nested cells of one parent, drawn as they are now. Not across grid cells. |
@@ -202,26 +202,42 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 ### Task D1: The grid layout
 
-**Files:** `layout/GridLayout.kt` (new), `MindMapManager.kt`; tests `GridLayoutTest` (new)
+**Files:** `layout/GridLayout.kt` (new), `layout/TableCells.kt`, `layout/TreeTableLayout.kt`, `MindMapManager.kt`,
+`model/MapStructure.kt`, `data/Tree.kt`; tests `GridLayoutTest` (new)
 
-- [ ] The owner as a header across the top. The main topics in reading order, `gridColumnsOf(owner)` to a row, with
-  equal column widths. Each cell has its main topic at the top and its children stacked below, each branch laid out
-  → or in its own structure.
-- [ ] A summary of main topics is a row below the grid, across its width.
-- [ ] Laid out whole for a map, from `arrangeBelow` for a branch, with its box from its cells.
-- [ ] Tests:
+- [x] The owner as a header across the top. The main topics in reading order, `gridColumnsOf(owner)` to a row, or
+  as many as there are up to `GRID_DEFAULT_COLUMNS` (4), with equal column widths.
+- [x] Each cell has two parts: the main topic centered in the upper one, and the topics below it in the lower one,
+  laid out as a logic chart → of its children would be (so summaries, brackets and branches with a structure of
+  their own work as anywhere), moved to the part's top left. The parts of a row line up; a row whose main topics
+  have nothing below them has cells of one part. This replaces the heavier rule under each main topic: the edge
+  between the parts is a thin line.
+- [x] A main topic with a structure of its own has its whole branch in its cell.
+- [x] A summary of main topics is below the grid, centered on it, its branch growing down.
+- [x] Directions: the owner grows DOWN (its main topics are below it); the topics below a main topic grow RIGHT,
+  so a cell's topics are stacked by y when dragged. Main topics are dragged into reading order: a later row, or
+  further right in the same one.
+- [x] Laid out whole for a map, from `arrangeBelow` for a branch, with its box from its cells.
+- [x] A branch's topic, in a grid or a tree table, is at the end of its header nearest its parent, so the line to it
+  does not cross the table; the root's is in the middle (`tableLeftFor`).
+- [x] Tests:
   - the default count is one row of at most 4;
   - setting 2 columns wraps 5 topics into 3 rows;
-  - a cell's children are stacked below its main topic;
+  - a cell's topics are in its lower part;
   - the columns are equal;
-  - a grid branch is clear of its siblings.
+  - a grid branch is clear of its siblings;
+  - reading order when dragged.
 
 ### Task D2: Drawing the grid
 
-**Files:** `layout/GridLayout.kt`, `MindMap.kt`; tests `GridDrawTest` (new), `ThemeDrawingTest`
+**Files:** `MindMap.kt`, `MapImage.kt`, `MapSvg.skiko.kt`; tests `GridDrawTest` (new), `ThemeDrawingTest`
 
-- [ ] `cellsOf(owner)`: each cell, with a rule under its main topic. No lines from a main topic to its children.
-- [ ] A golden image, `grid-feature-tour.png`, of a plan in three columns.
+- [x] `GridCells.toCells()`: the header and each cell's parts. No lines from the owner to its main topics, nor from
+  a main topic to the topics below it.
+- [x] Exports take in each table's cells (`MindMapManager.tableBounds()`), so a grid's wide columns are not cut off.
+  Tables now get the same margin as the rest of the map: `matrix-project.png` and `tree-table-costs.png` grow by
+  the 10 dp their borders were inside it, and are otherwise unchanged.
+- [x] A golden image, `grid-plan.png`, of a launch plan in three columns.
 
 ## Phase E: The app and the docs
 

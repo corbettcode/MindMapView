@@ -185,6 +185,49 @@ class ThemeDrawingTest {
         assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
     }
 
+    // A launch plan as a grid of three columns: five main topics, a summary in a cell and one below the grid.
+    private fun launchPlan(): Tree<Any> = Tree<Any>().apply {
+        val root = getRootNode()
+        setRootNode(root.copy(description = "<p>Launch plan</p>"))
+        addNode("Research", root.id, "Research")
+        addNode("Users", "Research", "Talk to users")
+        addNode("Market", "Research", "Market size")
+        addNode("Build", root.id, "Build")
+        addNode("App", "Build", "App")
+        addNode("iOS", "App", "iOS")
+        addNode("API", "Build", "API")
+        addNode("Core", "Build", "Core")
+        setSummary("Core", setOf("App", "API"))
+        addNode("Marketing", root.id, "Marketing")
+        addNode("Site", "Marketing", "Web site")
+        addNode("Sales", root.id, "Sales")
+        addNode("Support", root.id, "Support")
+        addNode("Docs", "Support", "Docs")
+        addNode("Everything", root.id, "Everything")
+        setSummary("Everything", setOf("Research", "Support"))
+        setGridColumns(root.id, 3)
+        structure = MapStructure.GRID
+    }
+
+    @Test
+    fun launchPlanGridLooksAsBefore() = runComposeUiTest {
+        val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/grid-plan.png"))
+        val state = shownState(launchPlan())
+
+        val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        assertEquals(golden.width, image.width)
+        assertEquals(golden.height, image.height)
+        var differing = 0
+        for (y in 0 until image.height) for (x in 0 until image.width) {
+            val a = golden.getRGB(x, y)
+            val b = image.getRGB(x, y)
+            val isDifferent = listOf(0, 8, 16, 24).any { shift -> abs((a shr shift and 0xFF) - (b shr shift and 0xFF)) > 8 }
+            if (isDifferent) differing++
+        }
+        assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
+    }
+
     @Test
     fun oceanColorsTheNodes() = runComposeUiTest {
         val state = shownState(treeWithChildren())

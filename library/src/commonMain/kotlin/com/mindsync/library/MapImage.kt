@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.mindsync.library.data.Tree
+import com.mindsync.library.layout.CellRect
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.drawnBoundaries
 import com.mindsync.library.model.DrawInfo
@@ -37,7 +38,7 @@ internal fun mapImage(
     , pixelsPerDp: Float
     , maxSide: Int
 ): ImageBitmap {
-    val bounds = density.exportBounds(state.tree)
+    val bounds = density.exportBounds(state.tree, state.mindMapManager.tableBounds())
     val scale = min(pixelsPerDp / density.density, maxSide / max(bounds.width, bounds.height))
     val width = (bounds.width * scale).roundToInt().coerceAtLeast(1)
     val height = (bounds.height * scale).roundToInt().coerceAtLeast(1)
@@ -68,10 +69,13 @@ internal fun DrawScope.drawExportedMap(
     }
 }
 
-// What the nodes that are shown, their arrow links and their boundaries take up, in the pixels of the tree, with
-// room around them.
+// What the nodes that are shown, their arrow links, their boundaries and the [tables] they are in, in dp, take up, in
+// the pixels of the tree, with room around them.
 // A curve stays within its control points, so they are what an arrow link takes up at most.
-internal fun Density.exportBounds(tree: Tree<*>): Rect {
+internal fun Density.exportBounds(
+    tree: Tree<*>
+    , tables: List<CellRect> = emptyList()
+): Rect {
     var bounds = Rect.Zero
     var isEmpty = true
     fun add(rect: Rect) {
@@ -88,6 +92,10 @@ internal fun Density.exportBounds(tree: Tree<*>): Rect {
         listOf(curve.start, curve.startControl, curve.endControl, curve.end).forEach { add(Rect(it, it)) }
     }
     drawnBoundaries(tree).forEach { (_, rect) -> add(rect) }
+    tables.forEach { table ->
+        val topLeft = Offset(Dp(table.left).toPx(this), Dp(table.top).toPx(this))
+        add(Rect(topLeft, Offset(Dp(table.right).toPx(this), Dp(table.bottom).toPx(this))))
+    }
     return bounds.inflate(IMAGE_MARGIN.toPx(this))
 }
 
