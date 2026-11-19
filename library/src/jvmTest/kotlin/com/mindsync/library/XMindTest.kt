@@ -526,4 +526,84 @@ class XMindTest {
         assertEquals(MapStructure.LOGIC_RIGHT, tree.branchStructureOf(tree.nodeNamed("One").id))
         assertNull(tree.branchStructureOf(tree.nodeNamed("Two").id))
     }
+
+    @Test
+    fun matrixOfXMindHasTheTopicsOfItsCellsInTheColumnsOfTheirLabels() {
+        val content = """
+            [{"title": "Sheet", "rootTopic": {"id": "r", "title": "Project",
+              "structureClass": "org.xmind.ui.spreadsheet", "children": {"attached": [
+                {"id": "plan", "title": "Plan", "children": {"attached": [
+                  {"id": "goals", "title": "Goals", "labels": ["Q1"]},
+                  {"id": "risks", "title": "Risks", "labels": ["Q2", "urgent"]}
+                ]}},
+                {"id": "build", "title": "Build", "children": {"attached": [
+                  {"id": "docs", "title": "Docs", "labels": ["Q2"]},
+                  {"id": "app", "title": "App", "labels": ["Q1"]}
+                ]}}
+              ]}}}]
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "project")
+        assertEquals(MapStructure.MATRIX_ROWS, tree.structure)
+        assertEquals("Q2", tree.labelOf(tree.nodeNamed("Risks").id))
+        MindMapManager().apply {
+            setTree(tree)
+            arrangeTree()
+        }
+        fun left(name: String) = tree.nodeNamed(name).let { it.path.centerX.dpVal - halfWidth(it).dpVal }
+        assertEquals(left("Goals"), left("App"), 0.5f)
+        assertEquals(left("Risks"), left("Docs"), 0.5f)
+        assertTrue(left("Goals") < left("Risks"))
+    }
+
+    @Test
+    fun matrixByColumnsAndFishbonesOfXMind8AreKept() {
+        fun xmind8(structureClass: String) = """
+            <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
+              <sheet id="s1">
+                <topic id="root" structure-class="$structureClass">
+                  <title>Effect</title><children><topics type="attached">
+                  <topic id="a"><title>Cause</title><labels><label>Q1</label></labels></topic>
+                </topics></children></topic>
+                <title>Sheet 1</title>
+              </sheet>
+            </xmap-content>
+        """.trimIndent()
+
+        mapOf(
+            "org.xmind.ui.spreadsheet.column" to MapStructure.MATRIX_COLUMNS
+            , "org.xmind.ui.fishbone.leftHeaded" to MapStructure.FISHBONE_LEFT
+            , "org.xmind.ui.fishbone.rightHeaded" to MapStructure.FISHBONE_RIGHT
+        ).forEach { (structureClass, structure) ->
+            val tree = XMind.read(zip("content.xml" to xmind8(structureClass)), title = "effect")
+            assertEquals(structure, tree.structure, structureClass)
+            assertEquals("Q1", tree.labelOf(tree.nodeNamed("Cause").id))
+        }
+    }
+
+    @Test
+    fun fishboneBranchOfXMindIsLaidOutAsAFishbone() {
+        val content = """
+            [{"title": "Sheet", "rootTopic": {"id": "r", "title": "Release", "children": {"attached": [
+              {"id": "late", "title": "Late", "structureClass": "org.xmind.ui.fishbone.rightHeaded",
+                "children": {"attached": [
+                  {"id": "people", "title": "People"}, {"id": "tools", "title": "Tools"}
+                ]}},
+              {"id": "table", "title": "Table", "structureClass": "org.xmind.ui.spreadsheet.column"}
+            ]}}}]
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "release")
+        assertEquals(MapStructure.MIND_MAP, tree.structure)
+        assertEquals(MapStructure.FISHBONE_RIGHT, tree.branchStructureOf(tree.nodeNamed("Late").id))
+        assertEquals(MapStructure.MATRIX_COLUMNS, tree.branchStructureOf(tree.nodeNamed("Table").id))
+        MindMapManager().apply {
+            setTree(tree)
+            arrangeTree()
+        }
+        fun y(name: String) = tree.nodeNamed(name).path.centerY.dpVal
+        // The causes are above and below the spine that runs from the head, Late, by turns.
+        assertTrue(y("People") < y("Late") && y("Tools") > y("Late"))
+    }
 }

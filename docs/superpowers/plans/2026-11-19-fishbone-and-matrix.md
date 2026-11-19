@@ -242,12 +242,13 @@ golden `matrix-project.png`
 
 **Files:** `model/MapStructure.kt`, `io/XMind.kt`, tests `XMindTest.kt`, samples in `library/src/jvmTest/resources/`
 
-- [ ] **Needs files saved from XMind:** a fishbone (head left and right), a matrix (both kinds), and a mind map with a
-  fishbone branch. Confirm or correct the four class names, and that XMind keeps labels on cell topics as this plan
-  reads them.
-- [ ] Open each in MindMapView and compare with XMind: the head's side, the bones' angle and the ribs; the matrix's
+- [x] Confirm or correct the four class names, and that XMind keeps labels on cell topics as this plan reads them.
+  Confirmed against jan-bar/xmind (`model.go`), a library that reads and writes XMind's files: the four names are
+  as read, `spreadsheet` being rows and `spreadsheet.column` columns, and labels are a topic's `labels` array
+  (`<labels><label>` in XMind 8). Not yet against files saved from XMind itself.
+- [ ] **Needs files saved from XMind.** Open each in MindMapView and compare with XMind: the head's side, the bones' angle and the ribs; the matrix's
   columns and their order. Adjust the layouts where they differ.
-- [ ] Tests: each sample opens in its structure, with its cells in their columns.
+- [x] Tests: each sample opens in its structure, with its cells in their columns.
 
 ---
 

@@ -41,7 +41,6 @@ enum class MapStructure(
     , BRACE_RIGHT("brace-right", "org.xmind.ui.brace.right")
     , TIMELINE("timeline", "org.xmind.ui.timeline.horizontal")
 
-    // XMind's class names for the fishbones and the matrices are not confirmed by a file saved from XMind.
     /** An Ishikawa diagram with its head, the effect, on the left and the causes on bones to its right. */
     , FISHBONE_LEFT("fishbone-left", "org.xmind.ui.fishbone.leftHeaded")
 
