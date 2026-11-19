@@ -200,7 +200,18 @@ kotlin {
 }
 
 publishing {
-    publications.withType<MavenPublication>().configureEach {
-        artifactId = artifactId.replaceFirst(project.name, "MindMapView")
+    publications.withType<MavenPublication>().configureEach { useMindMapViewArtifactId() }
+}
+
+// Kotlin gives the iOS publications their artifact ids later than the others -- on a Linux host, after the
+// publishing block has run -- so they are renamed again where Kotlin expects it.
+kotlin {
+    targets.configureEach {
+        mavenPublication { useMindMapViewArtifactId() }
     }
+}
+
+/** Published as MindMapView[-<target>], in place of the project's name, library. */
+fun MavenPublication.useMindMapViewArtifactId() {
+    artifactId = artifactId.replaceFirst(project.name, "MindMapView")
 }
