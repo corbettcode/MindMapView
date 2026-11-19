@@ -243,7 +243,7 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ## Out of scope / follow-ups
 
-- A structure per branch, as XMind allows.
+- A structure per branch, as XMind allows: done in `2026-11-18-branch-structures.md`.
 - Fishbone and matrix structures.
 - XMind's clockwise mind map, as its own order of the root's sides.
 - Free positioning of attached topics.

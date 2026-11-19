@@ -230,10 +230,13 @@ topic a timeline is laid out from, lines left out by the structure the parent is
 
 ### Task D3: Docs
 
-**Files:** `docs/user-manual/user-manual.html` ("Structures" in chapter 5 gets "A structure for a branch", with a
-picture in `docs/structures/`), PDF, `README.md` (`setBranchStructure`, `structureOf`)
+**Files:** `docs/user-manual/user-manual.html` ("A structure for a branch" in chapter 5, after "Structures", with
+`docs/structures/branch-structures.png`), `desktop/manual/MindMapView-User-Manual.pdf`, `README.md`
+(`branchStructureOf`, `setBranchStructure`, `structureOwnerOf`, `structureOf`)
 
-- [ ] What it does, how it is chosen and cleared, how it nests, and how it is kept in each format.
+- [x] What it does, how it is chosen and cleared, how it nests, what it keeps, and how it is kept in files and read
+  from XMind. The picture is a mind map with its Team branch as an org chart and its Schedule branch as a timeline; the
+  PDF was printed again and its page looked at.
 
 ---
 
