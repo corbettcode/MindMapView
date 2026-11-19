@@ -914,6 +914,71 @@ class MindMapState(
     }
 
     /**
+     * Moves the selected branches, as in an outliner, to be the last children of the sibling before the first of
+     * those of one parent. Branches with no sibling before them stay where they are, as does the root.
+     */
+    fun indent() {
+        moveSelectedBranches { parentId, ids ->
+            val siblings = tree.getNode(parentId).children
+            val newParentId = siblings.getOrNull(siblings.indexOf(ids.first()) - 1) ?: return@moveSelectedBranches
+            ids.forEach { tree.moveNode(it, newParentId) }
+        }
+    }
+
+    /**
+     * Moves the selected branches, as in an outliner, to be the siblings right after their parent. A branch that
+     * goes under the root stays on the side it was on. The siblings after it stay where they are, as in XMind.
+     * Children of the root, and the root, stay where they are.
+     */
+    fun outdent() {
+        val rootId = tree.getRootNode().id
+        moveSelectedBranches { parentId, ids ->
+            if (parentId == rootId) return@moveSelectedBranches
+            val grandparentId = tree.getNode(parentId).parentId ?: return@moveSelectedBranches
+            val index = tree.getNode(grandparentId).children.indexOf(parentId) + 1
+            ids.forEachIndexed { offset, id -> tree.moveNode(id, grandparentId, index + offset, tree.sideOf(id)) }
+        }
+    }
+
+    /**
+     * Moves each of the selected branches one place up or down among its siblings, past the next sibling that is
+     * not selected. Those already at that end stop the ones behind them, so the selection keeps its order. Under the
+     * root the order is that of the root's children whatever their sides, which the branches keep.
+     */
+    fun moveAmongSiblings(isUp: Boolean) {
+        moveSelectedBranches { parentId, ids ->
+            val selectedIds = ids.toSet()
+            val children = tree.getNode(parentId).children.toMutableList()
+            val indices = if (isUp) children.indices else children.indices.reversed()
+            val step = if (isUp) -1 else 1
+            indices.forEach { index ->
+                val other = index + step
+                val isMoving = children[index] in selectedIds && other in children.indices
+                if (isMoving && children[other] !in selectedIds) {
+                    children[index] = children[other].also { children[other] = children[index] }
+                }
+            }
+            children.forEachIndexed { index, id ->
+                if (tree.getNode(parentId).children[index] != id) tree.moveNode(id, parentId, index, tree.sideOf(id))
+            }
+        }
+    }
+
+    // Moves the selected branches but the root, those of each parent together, in the order of the tree, as one
+    // change, and keeps them selected.
+    private fun moveSelectedBranches(move: (parentId: String, ids: List<String>) -> Unit) {
+        recordChange {
+            selectedBranches
+                .filter { it.parentId != null }
+                .groupBy { it.parentId!! }
+                .forEach { (parentId, nodes) -> move(parentId, nodes.map { it.id }) }
+            // The selected node is a copy of how it was, with the parent it had.
+            mindMapManager.setSelectedNode(selectedNode?.let { tree.nodes[it.id] })
+            animateTreeChange()
+        }
+    }
+
+    /**
      * Folds the selected nodes, which hides the nodes below them, or unfolds them when there is none left of
      * them to fold. Only a node with children is folded, and the root never is.
      */

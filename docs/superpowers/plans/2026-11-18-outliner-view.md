@@ -94,18 +94,18 @@ phase B adds typing and the outliner keys; phase C adds the app's view modes, me
 
 **Files:** `MindMapState.kt`, test `OutlineMoveStateTest.kt`
 
-- [ ] `indent()`: the selected branches, grouped by parent, each group goes as the last children of the sibling
+- [x] `indent()`: the selected branches, grouped by parent, each group goes as the last children of the sibling
   before its first one (the previous sibling in `children` order, any side). A group with no sibling before it stays.
-- [ ] `outdent()`: each selected branch whose parent is not the root goes after its parent, among its grandparent's
+- [x] `outdent()`: each selected branch whose parent is not the root goes after its parent, among its grandparent's
   children, with the side rule from the decisions. The siblings after it stay where they are (XMind's behaviour, not
   Workflowy's, which would make them its children).
-- [ ] `moveAmongSiblings(isUp: Boolean)`: a contiguous group of selected siblings swaps with the sibling before or
+- [x] `moveAmongSiblings(isUp: Boolean)`: a contiguous group of selected siblings swaps with the sibling before or
   after it; at the end nothing happens.
-- [ ] Each is one `recordChange`, keeps the selection on the moved topics, and animates the map. A change that moves
+- [x] Each is one `recordChange`, keeps the selection on the moved topics, and animates the map. A change that moves
   nothing records nothing.
-- [ ] Tests (10): indent one, then undo; indent three siblings together; indent the first child does nothing; outdent
+- [x] Tests (11): indent one, then undo; indent three siblings together; indent the first child does nothing; outdent
   to the root keeps the side; outdent two; move up and down; move at either end does nothing; the selection is kept;
-  each is one undo step; a summary indented is an ordinary topic.
+  children of the root keep their side; a summary indented is an ordinary topic.
 
 ### Task A3: Outline rows
 
