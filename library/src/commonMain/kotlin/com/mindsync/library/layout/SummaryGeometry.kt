@@ -55,7 +55,7 @@ internal fun Density.summaryBracket(
 ): SummaryBracket? {
     if (!tree.isVisible(summaryId)) return null
     val rangeIds = tree.summaryChildIds(summaryId).takeIf { it.isNotEmpty() } ?: return null
-    val grow = tree.directionOf(summaryId)
+    val grow = tree.structure.summaryDirectionOf(tree, summaryId)
     val isHorizontal = grow.isHorizontal
     val isBack = grow.sign < 0f
     // Along the way the branch grows, and across it, in pixels.

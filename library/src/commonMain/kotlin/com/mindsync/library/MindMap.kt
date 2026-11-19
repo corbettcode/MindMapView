@@ -89,6 +89,7 @@ import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
+import com.mindsync.library.layout.TREE_CHART_INDENT
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.TopicKind
 import com.mindsync.library.model.attachHighlightColor
@@ -1137,6 +1138,19 @@ private fun DrawScope.drawLines(
                 }
             val width = line.width.toPx(this)
             path.reset()
+            // The rows of a tree chart's columns hang off a spine below their parent, whatever the line style.
+            val isRow = tree.structure.isTreeChart && node.parentId != null
+            val elbow = if (isRow) treeChartElbow(tree, node, toNode) else null
+            if (elbow != null) {
+                val isSharp = line.style == NodeLineStyle.SHARP_LINEAR || line.style == NodeLineStyle.SHARP_BEZIER
+                if (isSharp) path.addWedge(elbow, sharpBase(width)) else path.addPolyline(elbow)
+                drawPath(
+                    path = path
+                    , color = line.color.fadedIf(toNode.id in fadedIds)
+                    , style = if (isSharp) Fill else Stroke(width = width)
+                )
+                return@forEachNodeWithLine
+            }
             when (line.style) {
                 NodeLineStyle.LINEAR -> path.addPolyline(curve.corners(isSlanted))
                 NodeLineStyle.BEZIER -> path.addCurve(curve)
@@ -1397,6 +1411,12 @@ internal fun Density.addButtonCenter(
     , side: LayoutSide = LayoutSide.RIGHT
 ): Offset {
     if (tree.structure == MapStructure.MIND_MAP) return addButtonCenter(node, side)
+    // In a tree chart the rows below a topic hang off the spine below it, where its button is.
+    if (tree.structure.isTreeChart && node.parentId != null) {
+        val spineX = treeChartSpineX(tree, node)
+        val bottom = node.path.centerY.toPx(this) + halfHeight(node).toPx(this)
+        return Offset(spineX, bottom + ADD_BUTTON_RADIUS.toPx(this))
+    }
     val grow = tree.directionOf(node.id)
     val radius = ADD_BUTTON_RADIUS.toPx(this) * grow.sign
     val edge = lineAnchor(node, grow, isOutgoing = true)
@@ -1412,6 +1432,36 @@ internal fun Density.addButtonCenter(
     if (node.parentId == null) return rootEdgePoint(node, side, ADD_BUTTON_RADIUS)
     val grow = if (side.isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
     return lineAnchor(node, grow, isOutgoing = true) + Offset(ADD_BUTTON_RADIUS.toPx(this) * grow.sign, 0f)
+}
+
+/**
+ * Returns the corners of the line from [parent] to [child] in a tree chart: down a spine from below the parent, half
+ * an indent in from its near edge, then straight into the near side of the child, halfway down it.
+ */
+internal fun Density.treeChartElbow(
+    tree: Tree<*>
+    , parent: NodeData<*>
+    , child: NodeData<*>
+): List<Offset> {
+    val isRight = tree.structure == MapStructure.TREE_RIGHT
+    val spineX = treeChartSpineX(tree, parent)
+    val parentBottom = parent.path.centerY.toPx(this) + halfHeight(parent).toPx(this)
+    val childY = lineEndY(child)
+    return listOf(
+        Offset(spineX, parentBottom)
+        , Offset(spineX, childY)
+        , Offset(getNodeEdgeX(child, isRightEdge = !isRight), childY)
+    )
+}
+
+// The x of the spine the rows below the node hang off in a tree chart: half an indent in from its near edge.
+private fun Density.treeChartSpineX(
+    tree: Tree<*>
+    , node: NodeData<*>
+): Float {
+    val isRight = tree.structure == MapStructure.TREE_RIGHT
+    val sign = if (isRight) 1f else -1f
+    return getNodeEdgeX(node, isRightEdge = !isRight) + sign * TREE_CHART_INDENT.toPx(this) / 2
 }
 
 // Where the lines of a branch growing [grow] leave the node, to its children, or come into it, from its parent: halfway

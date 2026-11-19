@@ -5,10 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeData
-import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
+import com.mindsync.library.data.shape
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
+import com.mindsync.library.layout.TreeChartLayout
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.GrowDirection
 import com.mindsync.library.model.LayoutSide
@@ -140,9 +141,25 @@ class MindMapManager {
     private fun floatingManager(id: String): MindMapLayoutManager =
         if (tree.structure == MapStructure.MIND_MAP) getLayoutManager(LayoutSide.RIGHT) else layoutManagerFor(id)
 
+    private val treeChartLayouts = listOf(true, false).associateWith { TreeChartLayout(isRight = it) }
+
+    private fun treeChartLayout(): TreeChartLayout =
+        treeChartLayouts.getValue(tree.structure == MapStructure.TREE_RIGHT)
+
+    /** Lays out the nodes below [node], where it is, as the map's structure has them: while it is dragged, say. */
+    fun arrangeBranch(node: NodeData<*>) {
+        if (tree.structure.isTreeChart) {
+            treeChartLayout().arrangeColumnAt(node, node.path.centerX.dpVal, node.path.centerY.dpVal, tree)
+        }
+        else {
+            layoutManagerFor(node.id).arrangeNode(tree, node)
+        }
+    }
+
     // The root is placed once for all of its sets of children, then each side is arranged around it.
     // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
     fun arrangeTree() {
+        if (tree.structure.isTreeChart) return arrangeTreeChart()
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
         rootManagers().forEach { it.arrangeChildren(root, tree) }
@@ -174,6 +191,35 @@ class MindMapManager {
         return getLayoutManager(LayoutSide.RIGHT).movedBy(root, DpOffset(Dp(shiftX), Dp(shiftY)))
     }
 
+    // A tree chart is laid out around the root where it is, then moved as a whole to be clear of the top and left of
+    // the map when it is not, unless the root was put where it is.
+    private fun arrangeTreeChart() {
+        layOutTreeChart(tree.getRootNode())
+        if (tree.isRootDragged) return
+        val (shiftX, shiftY) = treeChartOverflow()
+        if (shiftX.dpVal == 0f && shiftY.dpVal == 0f) return
+        val root = getLayoutManager(LayoutSide.RIGHT).movedBy(tree.getRootNode(), DpOffset(shiftX, shiftY))
+        tree.setRootNode(root)
+        layOutTreeChart(root)
+    }
+
+    private fun layOutTreeChart(root: NodeData<*>) {
+        val layout = treeChartLayout()
+        layout.arrange(root, tree)
+        floatingTopics().forEach { (node, offset) -> layout.arrangeFloating(root, node, offset, tree) }
+    }
+
+    // How far right and down a tree chart, as it is laid out now, has to go to be clear of the top and left of the map.
+    private fun treeChartOverflow(): Pair<Dp, Dp> {
+        var left = Float.MAX_VALUE
+        var top = Float.MAX_VALUE
+        tree.doVisiblePreorderTraversal { node ->
+            left = minOf(left, (node.path.centerX - halfWidth(node)).dpVal)
+            top = minOf(top, (node.path.centerY - halfHeight(node)).dpVal)
+        }
+        return Dp(maxOf(0f, TREE_CHART_MARGIN - left)) to Dp(maxOf(0f, TREE_CHART_MARGIN - top))
+    }
+
     private fun floatingTopics(): List<Pair<NodeData<*>, DpOffset>> = tree.getRootNode().children.mapNotNull { id ->
         tree.floatingOffsetOf(id)?.let { tree.getNode(id) to it }
     }
@@ -182,6 +228,7 @@ class MindMapManager {
      * Returns how far the tree reaches to the left of and above where it fits, as its x and y.
      */
     fun measureOverflow(): Pair<Dp, Dp> {
+        if (tree.structure.isTreeChart) return treeChartOverflow()
         val root = tree.getRootNode()
         val fittedRoot = fittedRoot()
         return fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
@@ -234,3 +281,6 @@ class MindMapManager {
     }
 
 }
+
+// How far a tree chart is kept from the top and left of the map, as the other layouts are.
+private const val TREE_CHART_MARGIN = 50f

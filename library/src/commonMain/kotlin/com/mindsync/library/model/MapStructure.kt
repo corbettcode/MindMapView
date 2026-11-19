@@ -53,6 +53,38 @@ enum class MapStructure {
         TIMELINE -> timelineDirectionOf(tree, id)
     }
 
+    /** Whether the map is a tree chart, laid out in indented columns rather than by a direction. */
+    val isTreeChart: Boolean get() = this == TREE_RIGHT || this == TREE_LEFT
+
+    /**
+     * Returns whether the node [id] and its siblings are stacked along x, side by side, rather than along y, one
+     * above the other: across the way their branch grows, but for the rows of a tree chart's columns, which are one
+     * above the other below the root's row.
+     */
+    fun isStackedAlongX(
+        tree: Tree<*>
+        , id: String
+    ): Boolean {
+        val isRootChild = tree.getNode(id).parentId == tree.getRootNode().id
+        return if (isTreeChart) isRootChild else !directionOf(tree, id).isHorizontal
+    }
+
+    /**
+     * Returns the way the summary [id] is past the siblings it is about: as its branch grows, but in a tree chart's
+     * columns to their side, as the rows go down.
+     */
+    fun summaryDirectionOf(
+        tree: Tree<*>
+        , id: String
+    ): GrowDirection {
+        val isRootChild = tree.getNode(id).parentId == tree.getRootNode().id
+        return when {
+            !isTreeChart || isRootChild -> directionOf(tree, id)
+            this == TREE_RIGHT -> GrowDirection.RIGHT
+            else -> GrowDirection.LEFT
+        }
+    }
+
     // The root's children are along the axis, to its right; the branch of every other one goes up, and of the rest down.
     private fun timelineDirectionOf(
         tree: Tree<*>

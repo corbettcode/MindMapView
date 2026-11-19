@@ -156,12 +156,22 @@ by structure), `MindMapState.kt` (summaries grouped the same way), tests `OrgCha
 
 ### Task C1: Tree chart
 
-**Files:** new `layout/TreeChartLayout.kt`, `MindMap.kt` (elbow lines), tests `TreeChartTest.kt`
+**Files:** new `layout/TreeChartLayout.kt`, `data/NodeData.kt` (`withCenter`), `MindMapManager.kt` (tree charts laid
+out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeChart`, `isStackedAlongX`,
+`summaryDirectionOf`), `MindMap.kt` (`treeChartElbow`, buttons on the spine), `layout/SummaryGeometry.kt`,
+`data/Tree.kt`, `MindMapState.kt`, test `TreeChartTest.kt`
 
-- [ ] Each topic's children are below it, stacked down, indented by a fixed step to the right (`TREE_RIGHT`) or left;
-  a branch takes the height of all its rows. The root's children are side by side in a row, each with its column below.
-- [ ] Lines: a vertical spine from below the parent, with a straight stub into the side of each child.
-- [ ] Tests (5): positions; elbow line points; folding shortens the column; summaries to the right; the tour rendered.
+- [x] The root's children are columns side by side in a row below it, centered on it; each topic's children are below
+  it, stacked down, indented 30 dp to the right (`TREE_RIGHT`) or left. The chart is moved as a whole to be clear of
+  the top and left of the map.
+- [x] Lines: a vertical spine from below the parent, half an indent in, with a straight stub into the side of each
+  child, in every line style (sharp ones as a wedge). The root's lines to its columns are curves down, as in an org
+  chart. Add buttons and fold rings are on the spine.
+- [x] Summaries: of rows, to their side, centered on them; of the root's columns, below them. Dropping a row among its
+  siblings goes by its y, a column by its x.
+- [x] Tests (8): columns in a row clear of each other; rows indented in order; the left chart; folding shortens the
+  column; the elbow's points and the button on the spine; a summary of rows; a summary of columns; drop order by y.
+  The tour was rendered both ways and looked at.
 
 ### Task C2: Brace map
 

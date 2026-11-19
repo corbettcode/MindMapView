@@ -841,7 +841,7 @@ class Tree<T> {
         , centerX: Dp
         , centerY: Dp
     ): Boolean {
-        val isAcrossX = !directionOf(targetId).isHorizontal
+        val isAcrossX = structure.isStackedAlongX(this, targetId)
         val center = if (isAcrossX) centerX else centerY
         fun crossOf(node: NodeData<*>) = if (isAcrossX) node.path.centerX else node.path.centerY
         val parent = _nodes[_nodes[targetId]?.parentId] ?: return false

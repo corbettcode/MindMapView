@@ -269,3 +269,16 @@ internal fun NodeData<*>.withParent(parentId: String): NodeData<*> = when (this)
     is StadiumNodeData -> copy(parentId = parentId)
     is OvalNodeData -> copy(parentId = parentId)
 }
+
+/** Returns the node with its center at ([centerX], [centerY]). */
+internal fun NodeData<*>.withCenter(
+    centerX: Dp
+    , centerY: Dp
+): NodeData<*> = when (this) {
+    is CircleNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+    is RectangleNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+    is SquareNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+    is LineNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+    is StadiumNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+    is OvalNodeData -> copy(path = path.copy(centerX = centerX, centerY = centerY))
+}
