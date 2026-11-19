@@ -482,7 +482,9 @@ fun MindMap(
                     , drawInfo
                     , measure
                     , lineColor
-                    , hiddenTextId = state.textEditNodeId
+                    // The text field is over the text only while it is typed on the map; typed in the outline, the
+                    // node shows the text as it is typed.
+                    , hiddenTextId = state.textEditNodeId?.takeIf { state.textEditHost == TextEditHost.MAP }
                     , filterView = state.taskFilterView()
                 ) {
                     if (onAddChildClick != null) drawAddButtons(state, drawInfo, lineColor, addIconColor)
