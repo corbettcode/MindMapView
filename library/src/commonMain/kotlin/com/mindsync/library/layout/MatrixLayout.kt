@@ -20,8 +20,10 @@ private const val MIN_CELL = 40f
  * The grid of a matrix laid out from [ownerId]: the left of each column and the top of each row, one more of each than
  * there are columns and rows, in dp. The corner cell holds the owner; [groupIds] are its children, the rows of a
  * matrix by rows or the columns of one by columns, each in the first cell of its row or column; [labels] are the
- * headers of the other way, in order, null for the one with no header, of the topics without a label; and [cells]
- * holds the topics of each cell, by the index of their group and of their label.
+ * headers of the other way, in order, null for the one with no header, of the topics without a label; [cells] holds
+ * the topics of each cell, by the index of their group and of their label; and [summaries] the summaries of each
+ * cell's topics, in the cell of the first topic each is about. A group with a structure of its own has no cells: its
+ * branch is in its header's cell.
  */
 internal class MatrixGrid(
     val ownerId: String
@@ -31,6 +33,7 @@ internal class MatrixGrid(
     , val groupIds: List<String>
     , val labels: List<String?>
     , val cells: Map<Pair<Int, Int>, List<String>>
+    , val summaries: Map<Pair<Int, Int>, List<String>> = emptyMap()
 ) {
     /** The column and row of the cell of [group] and [label], by their indexes, the header row and column being 0. */
     fun cellOf(
@@ -88,7 +91,8 @@ internal fun matrixGrid(
 ): MatrixGrid {
     val groupIds = matrixGroupIds(tree, owner)
     val labelsOf = groupIds.associateWith { id ->
-        tree.visibleChildren(tree.getNode(id)).map { it to tree.labelOf(it) }
+        if (tree.branchStructureOf(id) != null) emptyList()
+        else tree.visibleChildren(tree.getNode(id)).filterNot { tree.isSummary(it) }.map { it to tree.labelOf(it) }
     }
     val all = labelsOf.values.flatten()
     // The labels in the order they are first met, then the column with no header when a topic has no label.
@@ -100,7 +104,16 @@ internal fun matrixGrid(
             cells[group to labels.indexOf(label)] = ids
         }
     }
-    val grid = MatrixGrid(owner.id, isRows, emptyList(), emptyList(), groupIds, labels, cells)
+    val summaries = mutableMapOf<Pair<Int, Int>, List<String>>()
+    groupIds.forEachIndexed { group, id ->
+        if (tree.branchStructureOf(id) != null) return@forEachIndexed
+        tree.visibleChildren(tree.getNode(id)).filter { tree.isSummary(it) }.forEach { summaryId ->
+            val firstId = tree.summaryChildIds(summaryId).firstOrNull { tree.isVisible(it) } ?: return@forEach
+            val key = group to labels.indexOf(tree.labelOf(firstId))
+            summaries[key] = summaries[key].orEmpty() + summaryId
+        }
+    }
+    val grid = MatrixGrid(owner.id, isRows, emptyList(), emptyList(), groupIds, labels, cells, summaries)
     val columns = (if (isRows) labels.size else groupIds.size) + 1
     val rows = (if (isRows) groupIds.size else labels.size) + 1
     val widths = FloatArray(columns) { MIN_CELL }
@@ -112,7 +125,13 @@ internal fun matrixGrid(
     fit(0 to 0, halfWidth(owner).dpVal * 2, halfHeight(owner).dpVal * 2)
     groupIds.forEachIndexed { group, id ->
         val node = tree.getNode(id)
-        fit(grid.groupHeaderOf(group), halfWidth(node).dpVal * 2, halfHeight(node).dpVal * 2)
+        if (tree.branchStructureOf(id) != null) {
+            val reach = cellReach(id)
+            fit(grid.groupHeaderOf(group), reach.left + reach.right, reach.top + reach.bottom)
+        }
+        else {
+            fit(grid.groupHeaderOf(group), halfWidth(node).dpVal * 2, halfHeight(node).dpVal * 2)
+        }
     }
     labels.forEachIndexed { label, text ->
         val (width, height) = text?.let(headerSize) ?: (0f to 0f)
@@ -120,15 +139,19 @@ internal fun matrixGrid(
     }
     cells.forEach { (key, ids) ->
         val reaches = ids.map(cellReach)
-        val width = reaches.maxOf { it.left + it.right }
-        val height = reaches.sumOf { (it.top + it.bottom).toDouble() }.toFloat() + CELL_GAP * (ids.size - 1)
+        // A summary is past the topics of its cell, so it widens the cell by itself and its gap.
+        val summaryReaches = summaries[key].orEmpty().map(cellReach)
+        val summaryWidth = summaryReaches.maxOfOrNull { SUMMARY_OFFSET.value + it.left + it.right } ?: 0f
+        val width = reaches.maxOf { it.left + it.right } + summaryWidth
+        val stacked = reaches.sumOf { (it.top + it.bottom).toDouble() }.toFloat() + CELL_GAP * (ids.size - 1)
+        val height = maxOf(stacked, summaryReaches.maxOfOrNull { it.top + it.bottom } ?: 0f)
         fit(grid.cellOf(key.first, key.second), width, height)
     }
     val left = owner.path.centerX.dpVal - widths[0] / 2
     val top = owner.path.centerY.dpVal - heights[0] / 2
     val columnEdges = widths.runningFold(left) { edge, width -> edge + width }
     val rowEdges = heights.runningFold(top) { edge, height -> edge + height }
-    return MatrixGrid(owner.id, isRows, columnEdges, rowEdges, groupIds, labels, cells)
+    return MatrixGrid(owner.id, isRows, columnEdges, rowEdges, groupIds, labels, cells, summaries)
 }
 
 /** Returns how far the branch of the node [id] reaches from its center, as it is laid out now. */
@@ -193,7 +216,17 @@ internal class MatrixLayout(
         }
         grid.groupIds.forEachIndexed { group, id ->
             val (x, y) = grid.groupHeaderOf(group).let { grid.centerOf(it.first, it.second) }
-            tree.setNode(id, tree.getNode(id).withCenter(Dp(x), Dp(y)))
+            val node = tree.getNode(id)
+            if (tree.branchStructureOf(id) != null) {
+                // Its branch, in its own structure, is centered in the header's cell.
+                val reach = reaches.getValue(id)
+                val dx = x + (reach.left - reach.right) / 2 - node.path.centerX.dpVal
+                val dy = y + (reach.top - reach.bottom) / 2 - node.path.centerY.dpVal
+                shift(id, dx, dy, tree)
+            }
+            else {
+                tree.setNode(id, node.withCenter(Dp(x), Dp(y)))
+            }
         }
         grid.cells.forEach { (key, ids) ->
             val (column, row) = grid.cellOf(key.first, key.second)
@@ -210,6 +243,7 @@ internal class MatrixLayout(
                 )
                 y += reach.top + reach.bottom + CELL_GAP
             }
+            grid.summaries[key].orEmpty().forEach { summaryId -> placeCellSummary(summaryId, tree) }
         }
         placeSummaries(owner, grid, tree)
     }
@@ -236,6 +270,24 @@ internal class MatrixLayout(
             across.arrangeBelow(placed, tree)
             offset += (if (isRows) halfHeight(summary) else halfWidth(summary)).dpVal * 2 + CELL_GAP
         }
+    }
+
+    // A summary of topics in a cell is past them, centered on them, as in a logic chart.
+    private fun placeCellSummary(
+        summaryId: String
+        , tree: Tree<*>
+    ) {
+        val rangeIds = tree.summaryChildIds(summaryId).filter { tree.isVisible(it) }
+        if (rangeIds.isEmpty()) return
+        val reaches = rangeIds.associateWith { reachOf(tree, it) }
+        val rightEdge = rangeIds.maxOf { tree.getNode(it).path.centerX.dpVal + reaches.getValue(it).right }
+        val top = rangeIds.minOf { tree.getNode(it).path.centerY.dpVal - reaches.getValue(it).top }
+        val bottom = rangeIds.maxOf { tree.getNode(it).path.centerY.dpVal + reaches.getValue(it).bottom }
+        val summary = tree.getNode(summaryId)
+        val centerX = rightEdge + SUMMARY_OFFSET.value + right.backReach(summary, tree).dpVal
+        val placed = summary.withCenter(Dp(centerX), Dp((top + bottom) / 2))
+        tree.setNode(summaryId, placed)
+        right.arrangeBelow(placed, tree)
     }
 
     /** Returns the grid of the matrix of [owner] as its topics are laid out now, as it is drawn. */

@@ -813,8 +813,7 @@ private fun isTableLine(
     fun isMatrixOwner(node: NodeData<*>) =
         tree.structureOf(node.id).isMatrix && tree.structureOwnerOf(node.id) == node.id
     if (isMatrixOwner(parent)) return true
-    val ownerId = parent.parentId ?: return false
-    return isMatrixOwner(tree.getNode(ownerId)) && !tree.isSummary(parent.id) && !tree.isFloating(parent.id)
+    return tree.isMatrixCell(child.id)
 }
 
 // Whether [node] is a topic of the tree table it is laid out in, or its owner: not a summary nor a floating topic, nor

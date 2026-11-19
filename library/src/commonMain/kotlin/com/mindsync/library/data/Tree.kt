@@ -330,7 +330,9 @@ class Tree<T> {
         val groupId = getNode(id).parentId ?: return false
         val ownerId = getNode(groupId).parentId ?: return false
         val isOwner = structureOf(ownerId).isMatrix && structureOwnerOf(ownerId) == ownerId
-        return isOwner && !isSummary(id) && !isSummary(groupId) && !isFloating(groupId)
+        // A row or column with a structure of its own has its branch in its header, not in cells.
+        return isOwner && !isSummary(id) && !isSummary(groupId) && !isFloating(groupId) &&
+            branchStructureOf(groupId) == null
     }
 
     /**

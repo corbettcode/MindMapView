@@ -29,6 +29,8 @@ enum class MapStructure(
     val fileName: String
     /** The structure class XMind names it by, or null for one whose name is not known. */
     , private val xmindClass: String?
+    /** Other names XMind has had for it, read as it too. */
+    , private val otherXMindClasses: List<String> = emptyList()
 ) {
     /** The root in the middle with branches on its six sides, as the map has been laid out all along. */
     MIND_MAP("mind-map", "org.xmind.ui.map.unbalanced")
@@ -57,7 +59,7 @@ enum class MapStructure(
      * Nested blocks: the owner across the top, and each topic a cell left of its children's, as tall as they are
      * together.
      */
-    , TREE_TABLE("tree-table", "org.xmind.ui.treetable")
+    , TREE_TABLE("tree-table", "org.xmind.ui.treetable.toptitle", listOf("org.xmind.ui.treetable"))
 
     /** A table of the owner's topics in a set number of columns, each with the topics below it in its cell. */
     , GRID("grid", null);
@@ -84,7 +86,9 @@ enum class MapStructure(
             ofXMindClass(structureClass)?.takeIf { it != MIND_MAP }
 
         private fun ofXMindClass(structureClass: String?): MapStructure? =
-            structureClass?.let { name -> entries.firstOrNull { it.xmindClass == name } }
+            structureClass?.let { name ->
+                entries.firstOrNull { it.xmindClass == name || name in it.otherXMindClasses }
+            }
     }
 
     /**

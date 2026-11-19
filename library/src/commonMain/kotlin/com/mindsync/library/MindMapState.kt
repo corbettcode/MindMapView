@@ -2270,7 +2270,7 @@ class MindMapState(
     ): DroppedLabel? {
         val groupId = tree.getNode(id).parentId ?: return null
         val ownerId = tree.getNode(groupId).parentId ?: return null
-        if (tree.isSummary(id) || tree.isSummary(groupId)) return null
+        if (!tree.isMatrixCell(id)) return null
         val grid = mindMapManager.matrixGridOf(tree.getNode(ownerId)) ?: return null
         val across = if (grid.isRows) x else y
         val edges = if (grid.isRows) grid.columnEdges else grid.rowEdges

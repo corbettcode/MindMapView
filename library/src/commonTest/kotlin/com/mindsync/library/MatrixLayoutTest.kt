@@ -9,6 +9,7 @@ import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -144,5 +145,44 @@ class MatrixLayoutTest {
             assertTrue(tree.top(id) > tree.bottom("above") && tree.bottom(id) < tree.top("below"), "$id is between")
         }
         assertTrue(tree.right("r1-a") < tree.left("r1-b"))
+    }
+
+    @Test
+    fun summaryOfTopicsInACellIsBesideThemInTheCell() {
+        val tree = tree().apply {
+            addNode("both", "build", "Both")
+            setSummary("both", setOf("library", "app"))
+        }
+        val manager = MindMapManager().apply {
+            setTree(tree)
+            arrangeTree()
+        }
+        val grid = assertNotNull(manager.matrixGridOf(tree.getRootNode()))
+
+        assertFalse(tree.isMatrixCell("both"))
+        assertTrue(tree.left("both") > maxOf(tree.right("library"), tree.right("app")))
+        assertTrue(tree.right("both") < tree.left("docs"), "Both is in Q1's cell, left of Q2's")
+        assertTrue(tree.y("both") > tree.y("library") && tree.y("both") < tree.y("app"))
+        assertEquals(listOf("Q1", "Q2", "Q3", null), grid.labels)
+    }
+
+    @Test
+    fun rowWithAStructureOfItsOwnHasItsBranchInItsHeaderAndNoCells() {
+        val tree = tree().apply { setBranchStructure("build", MapStructure.ORG_DOWN) }
+        val manager = MindMapManager().apply {
+            setTree(tree)
+            arrangeTree()
+        }
+        val grid = assertNotNull(manager.matrixGridOf(tree.getRootNode()))
+        val (column, row) = grid.groupHeaderOf(1)
+
+        // Build's topics are no longer cells, so the column with no header, of Misc, is gone.
+        assertEquals(listOf("Q1", "Q2", "Q3"), grid.labels)
+        assertFalse(tree.isMatrixCell("library"))
+        listOf("build", "library", "app", "docs", "misc").forEach { id ->
+            assertTrue(tree.left(id) > grid.columnEdges[column] && tree.right(id) < grid.columnEdges[column + 1], id)
+            assertTrue(tree.top(id) > grid.rowEdges[row] && tree.bottom(id) < grid.rowEdges[row + 1], id)
+        }
+        assertTrue(tree.top("library") > tree.bottom("build"))
     }
 }

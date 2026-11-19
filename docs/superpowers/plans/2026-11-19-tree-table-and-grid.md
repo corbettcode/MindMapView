@@ -265,16 +265,29 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 ### Task F1: XMind names and shapes
 
-**Files:** `model/MapStructure.kt`, `io/XMind.kt`, the layouts, tests `XMindTest.kt`, samples in
-`library/src/jvmTest/resources/`
+**Files:** `model/MapStructure.kt`, `layout/MatrixLayout.kt`, `data/Tree.kt`, `MindMap.kt`, `MindMapState.kt`, tests
+`XMindTest.kt`, `MatrixLayoutTest.kt`, samples `xmind-tree-table-and-matrix-branches.xmind` and
+`xmind-matrix-sheet.xmind` in `library/src/jvmTest/resources/`
 
-- [ ] **Needs files saved from XMind:** a tree table with leaves at different depths, a grid of 3 columns with 5
-  main topics, and a mind map with a tree table branch and a grid branch.
-- [ ] Confirm the tree table's class name. Find the grid's class name and where it keeps its column count, then read
-  both.
-- [ ] Open each in MindMapView and compare with XMind: the header, the spanning, the leaves' alignment, the grid's
-  order and widths. Adjust the layouts where they differ.
-- [ ] Tests: each sample opens in its structure, with its column count.
+- [x] Files saved from XMind (2026-11-19): a mind map with a tree table branch and a matrix-by-columns branch with
+  summaries in its columns, and a sheet that is a matrix by columns whose columns include a tree table and a matrix.
+- [x] XMind writes the tree table as `org.xmind.ui.treetable.toptitle` ("top title": the header across the top, as
+  laid out here). It is read as the tree table, and so is `org.xmind.ui.treetable`. The matrix names are confirmed
+  again.
+- [x] XMind's matrices in these files have no labels: each column's topics are in its one cell, in the row with no
+  header, as this library lays them out.
+- [ ] **The grid is not in these files**: its name, and where its column count is kept, are still unknown, so it is
+  not read. The branches named "Tree Table Branch" and "Grid Branch" in the first sheet have no structure set, as
+  XMind's own thumbnail shows them as logic charts.
+- [x] Opened in MindMapView, two faults showed, both fixed:
+  - A summary of topics in a matrix's cell was stacked as one more topic of the cell, its bracket across the next
+    column. It is now past the topics it is about, in the cell, which widens for it.
+  - A row or column of a matrix with a structure of its own (a tree table, a matrix) had its topics both in the
+    matrix's cells and in its own structure, overlapping. Its whole branch is now in its header's cell, as a grid's
+    main topic with one is, and its topics are no cells: no labels, no lines left out, no column taken on a drop.
+- [ ] XMind draws no thumbnail of a second sheet, so the shapes are not compared with XMind's own drawing.
+- [x] Tests: each sample opens with its structures; the matrix sheet's columns are in one row with no header; a
+  summary in a cell is beside its topics; a row with its own structure has its branch in its header.
 
 ---
 

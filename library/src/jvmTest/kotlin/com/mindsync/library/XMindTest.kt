@@ -24,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -607,5 +608,48 @@ class XMindTest {
         fun y(name: String) = tree.nodeNamed(name).path.centerY.dpVal
         // The causes are above and below the spine that runs from the head, Late, by turns.
         assertTrue(y("People") < y("Late") && y("Tools") > y("Late"))
+    }
+
+    // Saved from XMind: a mind map, and a sheet with a tree table branch and a matrix branch with summaries in it.
+    private fun treeTableAndMatrixBranches(): Tree<Any> = XMind.read(
+        repositoryFile("library/src/jvmTest/resources/xmind-tree-table-and-matrix-branches.xmind").readBytes()
+        , "layouts"
+    )
+
+    @Test
+    fun treeTableAndMatrixBranchesSavedFromXMindAreKept() {
+        val tree = treeTableAndMatrixBranches()
+
+        assertEquals(MapStructure.TREE_TABLE, tree.branchStructureOf(tree.nodeNamed("Concept Structure").id))
+        val grid = tree.nodeNamed("Priority and Risk Grid")
+        assertEquals(MapStructure.MATRIX_COLUMNS, tree.branchStructureOf(grid.id))
+        // Each column of the matrix has a summary of the topics in it.
+        assertEquals(3, grid.children.count { column -> tree.getNode(column).children.any { tree.isSummary(it) } })
+        // The branches of the first sheet are named after the structures, but have none set.
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Tree Table Branch").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Grid Branch").id))
+    }
+
+    @Test
+    fun matrixSheetSavedFromXMindHasItsColumnsEachWithItsTopicsInOneCell() {
+        val tree = XMind.read(
+            repositoryFile("library/src/jvmTest/resources/xmind-matrix-sheet.xmind").readBytes()
+            , "concepts"
+        )
+        val sheet = tree.nodeNamed("Concepts, Facts, and Examples")
+        assertEquals(MapStructure.MATRIX_COLUMNS, tree.branchStructureOf(sheet.id))
+        val coreConcepts = sheet.children.map { tree.getNode(it) }.first { it.description == "Core Concepts" }
+        assertEquals(MapStructure.TREE_TABLE, tree.branchStructureOf(coreConcepts.id))
+        assertEquals(MapStructure.MATRIX_COLUMNS, tree.branchStructureOf(tree.nodeNamed("Evidence").id))
+
+        val manager = MindMapManager().apply {
+            setTree(tree)
+            arrangeTree()
+        }
+        // XMind's topics in the cells have no labels, so each column's are in the one row with no header.
+        val matrix = assertNotNull(manager.matrixGridOf(tree.getNode(sheet.id)))
+        assertEquals(listOf<String?>(null), matrix.labels)
+        assertEquals(5, matrix.groupIds.size)
+        assertNotNull(manager.treeTableGridOf(tree.getNode(coreConcepts.id)))
     }
 }
