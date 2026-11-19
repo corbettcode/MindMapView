@@ -125,15 +125,15 @@ the outline; phase D documents them.
 
 ### Task B1: Adding, detaching and attaching in the state
 
-**Files:** `MindMapState.kt` (`addFloatingNode(description, at: Offset?, …)`, `makeFloating()`, `attachToRoot()`,
-`moveFloating(id, by)`), test `FloatingStateTest.kt`
+**Files:** `MindMapState.kt` (`addFloatingNode(description, shape, color, textColor, at, …)`, `makeFloating()`,
+`attachToRoot()`, `moveFloating(by)`), test `FloatingStateTest.kt`
 
-- [ ] `addFloatingNode` adds one at a point of the map (screen to tree), or below the lowest node when none is given,
+- [x] `addFloatingNode` adds one at a point of the map (screen to tree), or below the lowest node when none is given,
   styled as a Topic; inside `addNodeForTextEdit { }` its text is typed at once.
-- [ ] `makeFloating()` detaches the selected topics, each keeping the place it is drawn at, as one step;
+- [x] `makeFloating()` detaches the selected topics, each keeping the place it is drawn at, as one step;
   `attachToRoot()` attaches the selected floating topics on the right, as one step.
-- [ ] `moveFloating(id, by: DpOffset)` for nudging, one step.
-- [ ] Tests (8): add at a point, then undo; add with no point; typed with `addNodeForTextEdit`, then cancel removes it;
+- [x] `moveFloating(by: DpOffset)` nudges the selected floating topics, one step.
+- [x] Tests (8): add at a point, then undo; add with no point; typed with `addNodeForTextEdit`, then cancel removes it;
   detach keeps the drawn place and the branch; detach several; attach; nudge; the root can't be detached.
 
 ### Task B2: Dragging

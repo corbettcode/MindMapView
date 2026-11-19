@@ -637,6 +637,91 @@ class MindMapState(
         }
     }
 
+    /**
+     * Adds a floating topic with [description]: a child of the root placed where it is put, with no line to the root,
+     * as XMind's floating topics are. It is centered on [at], a point on the screen, or below the lowest node shown
+     * when that is null, and is a [shape] in [color] with text in [textColor]. It is one change; inside
+     * [addNodeForTextEdit] its text is typed at once. [getAddNode] returns it.
+     */
+    fun addFloatingNode(
+        description: String
+        , shape: NodeShape = NodeShape.RECTANGLE
+        , color: Color = shape.defaultColor
+        , textColor: Color = shape.defaultTextColor
+        , at: Offset? = null
+        , line: NodeLine = NodeLine()
+        , border: NodeBorder = NodeBorder()
+    ) {
+        recordChange {
+            val root = tree.getRootNode()
+            addChild(root, description, shape, color, textColor, LayoutSide.RIGHT, "", line, border)
+            val id = addNode?.id ?: return
+            tree.setFloating(id, at?.let { floatingOffsetAt(it) } ?: floatingOffsetBelowAll())
+            animateTreeChange()
+        }
+    }
+
+    /**
+     * Makes each of the selected topics but the root a floating topic where it is drawn now, with the nodes below it,
+     * as one change. One below another topic leaves it for the root.
+     */
+    fun makeFloating() {
+        recordChange {
+            val rootId = tree.getRootNode().id
+            selectedBranches
+                .filter { it.parentId != null && !tree.isFloating(it.id) }
+                .forEach { node ->
+                    val offset = offsetFromRoot(tree.getNode(node.id))
+                    if (node.parentId != rootId) tree.moveNode(node.id, rootId)
+                    tree.setFloating(node.id, offset)
+                }
+            mindMapManager.setSelectedNode(selectedNode?.let { tree.nodes[it.id] })
+            animateTreeChange()
+        }
+    }
+
+    /** Makes the selected floating topics attached children of the root again, on its right, as one change. */
+    fun attachToRoot() {
+        recordChange {
+            selectedNodes.filter { tree.isFloating(it.id) }.forEach { tree.setFloating(it.id, null) }
+            animateTreeChange()
+        }
+    }
+
+    /** Moves the selected floating topics [by] that far, with the nodes below them, as one change. */
+    fun moveFloating(by: DpOffset) {
+        recordChange {
+            selectedNodes.forEach { node ->
+                val offset = tree.floatingOffsetOf(node.id) ?: return@forEach
+                tree.setFloating(node.id, offset + by)
+            }
+            animateTreeChange()
+        }
+    }
+
+    // How far the center of the node is from the root's.
+    private fun offsetFromRoot(node: NodeData<*>): DpOffset {
+        val root = tree.getRootNode()
+        return DpOffset(node.path.centerX - root.path.centerX, node.path.centerY - root.path.centerY)
+    }
+
+    // A point on the screen as how far it is from the center of the root.
+    private fun floatingOffsetAt(position: Offset): DpOffset {
+        val point = toTreePoint(position) / density.density
+        val root = tree.getRootNode()
+        return DpOffset(Dp(point.x) - root.path.centerX, Dp(point.y) - root.path.centerY)
+    }
+
+    // Below the lowest of the nodes shown, in line with the root, for a floating topic put nowhere in particular.
+    private fun floatingOffsetBelowAll(): DpOffset {
+        var bottom = Float.NEGATIVE_INFINITY
+        tree.doVisiblePreorderTraversal { node ->
+            if (node.id != addNode?.id) bottom = maxOf(bottom, (node.path.centerY + halfHeight(node)).dpVal)
+        }
+        val root = tree.getRootNode()
+        return DpOffset(Dp(0f), Dp(bottom) - root.path.centerY + FLOATING_GAP)
+    }
+
     fun getAddNode(): NodeData<*>? {
         return this.addNode
     }
@@ -2319,6 +2404,9 @@ private class CopiedNode(
     , val floatingOffset: DpOffset?
     , val children: List<CopiedNode>
 )
+
+// How far below the lowest node a floating topic put nowhere in particular is centered.
+private val FLOATING_GAP = Dp(60f)
 
 // How far a pasted floating topic is put from the one it is a copy of, so it doesn't hide it.
 private val PASTED_FLOATING_SHIFT = DpOffset(Dp(24f), Dp(24f))
