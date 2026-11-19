@@ -42,11 +42,12 @@ open class MindMapLayoutManager(
     protected val horizontalSpacing = Dp(50f)
     protected val verticalSpacing = Dp(50f)
 
-    // The space between a node and its children, and between siblings.
-    private val mainSpacing = horizontalSpacing
-    private val crossSpacing = verticalSpacing
-
     private val isHorizontal = direction.isHorizontal
+
+    // The space between a node and its children, and between siblings. Side by side, siblings are as wide as their
+    // text, so they need less room between them than one above the other, and the map stays a width to read.
+    private val mainSpacing = if (isHorizontal) horizontalSpacing else Dp(40f)
+    private val crossSpacing = if (isHorizontal) verticalSpacing else Dp(20f)
 
     // Whether the branch grows towards the left or top of the map, where it may not reach past the edge.
     private val isBackward = direction.sign < 0f

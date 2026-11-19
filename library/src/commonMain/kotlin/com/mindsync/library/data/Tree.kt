@@ -165,11 +165,18 @@ class Tree<T> {
 
     /**
      * Returns what the child of the root [id] is grouped with for boundaries and summaries: the side of the root it
-     * is on, or, for a floating topic, itself alone, as it is on no side.
+     * is on in a mind map, or all of the root's attached children in another structure, where they are in one row;
+     * and, for a floating topic, itself alone, as it is on no side.
      */
-    internal fun rootGroupOf(id: String): Any = if (isFloating(id)) FloatingGroup(id) else sideOf(id)
+    internal fun rootGroupOf(id: String): Any = when {
+        isFloating(id) -> FloatingGroup(id)
+        structure == MapStructure.MIND_MAP -> sideOf(id)
+        else -> AttachedGroup
+    }
 
     private data class FloatingGroup(val id: String)
+
+    private data object AttachedGroup
 
     // The attached children of the root come first, then the floating topics, each in their order.
     private fun orderRootChildren() {

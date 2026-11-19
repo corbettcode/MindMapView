@@ -572,11 +572,13 @@ class MindMapState(
         val groups = selectedBranches
             // A floating topic is on no side of the root, so there are no siblings for it to sum up with.
             .filter { it.parentId != null && !tree.isSummary(it.id) && !tree.isFloating(it.id) }
-            .groupBy { node -> node.parentId!! to tree.sideOf(node.id).takeIf { node.parentId == rootId } }
+            .groupBy { node -> node.parentId!! to tree.rootGroupOf(node.id).takeIf { node.parentId == rootId } }
         if (groups.isEmpty()) return
         recordChange {
             groups.forEach { (key, nodes) ->
-                val (parentId, side) = key
+                val parentId = key.first
+                // Under the root a summary is on the side of the first of its siblings, for a mind map's sake.
+                val side = tree.sideOf(nodes.first().id).takeIf { parentId == rootId }
                 val parent = tree.getNode(parentId)
                 val ids = nodes.map { it.id }.toSet()
                 val index = parent.children.indexOfLast { it in ids } + 1

@@ -137,17 +137,20 @@ structure), `MindMapState.kt` (dragging a node lays it out by its branch's layou
 
 ### Task B1: Org chart down and up
 
-**Files:** `model/MapStructure.kt`, `MindMapManager.kt`, `layout/BoundaryGeometry.kt` (gaps along x), the inline
-editor's place (`NodeTextEditor`, unchanged if it reads the node's center), tests `OrgChartTest.kt`
+**Files:** `layout/MindMapLayoutManager.kt` (spacing for branches growing down or up), `data/Tree.kt` (`rootGroupOf`
+by structure), `MindMapState.kt` (summaries grouped the same way), tests `OrgChartTest.kt`, `ThemeDrawingTest.kt`
+(`featureTourAsAnOrgChartLooksAsBefore`, golden `org-chart-feature-tour.png`)
 
-- [ ] `ORG_DOWN` lays every branch out with `DOWN`, the root's children in a row below it; `ORG_UP` with `UP`.
-- [ ] Lines leave the bottom (top) of a topic and enter the top (bottom) of its children, in every line style.
-- [ ] Wide topics: siblings are spaced by their own width and their branches' width, so neighbours never overlap.
-- [ ] Tests (7): positions; line ends; summary below; a boundary leaves room left and right; drag reorder by x; a
-  floating topic's branch grows down; the feature tour rendered as an org chart and looked at (and kept as a
-  second golden image).
-
----
+- [x] `ORG_DOWN` lays every branch out with `DOWN`, the root's children in a row below it; `ORG_UP` with `UP`. Lines
+  leave the bottom (top) of a topic and enter the top (bottom) of its children, in every line style (A3).
+- [x] Side by side, siblings are 20 dp apart and 40 dp below their parent (50 and 50 one above the other), as text
+  is wider than it is tall: the tour as an org chart went from 6587 to 5447 px wide going up.
+- [x] Outside the mind map the root's attached children are one group for summaries and boundaries, as they are in
+  one row; a summary keeps all it is about and, back in a mind map, is about those on its side again.
+- [x] Tests (6 + the golden): in a row below the root whatever their side; up, kept on the map; a summary below what
+  it sums up; a boundary leaves room left and right; a floating topic's branch grows down; a summary across two sides
+  of the root. The tour as an org chart was rendered down and up and looked at; a floating topic keeps its offset from
+  the root, so the tour's lands on the Import branch there, as it would in XMind.
 
 ## Phase C: The tree chart and the brace map
 

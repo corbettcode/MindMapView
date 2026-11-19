@@ -45,8 +45,8 @@ class DirectionLayoutTest {
     fun theyAreAGapBelowTheirParent() {
         val tree = tree().arranged(GrowDirection.DOWN)
 
-        assertEquals(tree.bottom(tree.rootId()) + 50f, tree.top("a"), 0.01f)
-        assertEquals(tree.bottom("b") + 50f, tree.top("d"), 0.01f)
+        assertEquals(tree.bottom(tree.rootId()) + 40f, tree.top("a"), 0.01f)
+        assertEquals(tree.bottom("b") + 40f, tree.top("d"), 0.01f)
     }
 
     @Test
@@ -61,8 +61,8 @@ class DirectionLayoutTest {
         val tree = tree().arranged(GrowDirection.DOWN)
 
         // "b" is as wide as "d" and "e" side by side, so "a" and "c" are clear of them.
-        assertTrue(tree.right("a") + 50f <= tree.left("d") + 0.01f)
-        assertTrue(tree.right("e") + 50f <= tree.left("c") + 0.01f)
+        assertTrue(tree.right("a") + 20f <= tree.left("d") + 0.01f)
+        assertTrue(tree.right("e") + 20f <= tree.left("c") + 0.01f)
     }
 
     @Test

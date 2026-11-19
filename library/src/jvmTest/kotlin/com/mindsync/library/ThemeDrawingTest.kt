@@ -14,6 +14,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.MindMapViewFile
 import com.mindsync.library.io.XmlElement
 import com.mindsync.library.io.XmlParser
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.util.Dp
 import java.awt.image.BufferedImage
@@ -53,6 +54,27 @@ class ThemeDrawingTest {
     fun classicFeatureTourLooksAsBefore() = runComposeUiTest {
         val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/classic-feature-tour.png"))
         val state = shownState(MindMapViewFile.read(File("../desktop/feature_tour.ccmm").readText()))
+
+        val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        assertEquals(golden.width, image.width)
+        assertEquals(golden.height, image.height)
+        var differing = 0
+        for (y in 0 until image.height) for (x in 0 until image.width) {
+            val a = golden.getRGB(x, y)
+            val b = image.getRGB(x, y)
+            val isDifferent = listOf(0, 8, 16, 24).any { shift -> abs((a shr shift and 0xFF) - (b shr shift and 0xFF)) > 8 }
+            if (isDifferent) differing++
+        }
+        assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
+    }
+
+    @Test
+    fun featureTourAsAnOrgChartLooksAsBefore() = runComposeUiTest {
+        val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/org-chart-feature-tour.png"))
+        val tree = MindMapViewFile.read(File("../desktop/feature_tour.ccmm").readText())
+        tree.structure = MapStructure.ORG_DOWN
+        val state = shownState(tree)
 
         val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
 
