@@ -20,7 +20,10 @@ internal class TimelineLayout(
     private val up: MindMapLayoutManager
     , private val down: MindMapLayoutManager
 ) {
-    /** Places the root's children and the topics below them along the axis through [root]. */
+    /**
+     * Places the children of [root] and the topics below them along the axis through it. [root] is the map's root,
+     * or a topic whose branch is laid out as a timeline of its own.
+     */
     fun arrange(
         root: NodeData<*>
         , tree: Tree<*>

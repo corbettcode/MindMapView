@@ -618,8 +618,8 @@ private fun DrawScope.drawSummaryBrackets(
     }
 }
 
-// A brace map joins each topic to its children by one brace, spanning them, with its point to the topic, drawn as the
-// line to the first of them would be.
+// A brace map joins each topic in it to its children by one brace, spanning them, with its point to the topic, drawn as
+// the line to the first of them would be.
 private fun DrawScope.drawBraces(
     state: MindMapState
     , drawInfo: DrawInfo
@@ -627,11 +627,15 @@ private fun DrawScope.drawBraces(
     , fadedIds: Set<String>
 ) {
     val tree = state.tree
-    if (tree.structure != MapStructure.BRACE_RIGHT) return
+    val isBraced = { node: NodeData<*> -> tree.structureOf(node.id) == MapStructure.BRACE_RIGHT }
+    var isAnyBraced = false
+    tree.doVisiblePreorderTraversal { if (isBraced(it)) isAnyBraced = true }
+    if (!isAnyBraced) return
     val lines = mutableMapOf<String, ResolvedLine>()
     forEachNodeWithLine(tree, drawInfo, lineColor) { node, line -> lines[node.id] = line }
     val path = Path()
     tree.doVisiblePreorderTraversal { parent ->
+        if (!isBraced(parent)) return@doVisiblePreorderTraversal
         val bracket = braceOf(tree, parent) ?: return@doVisiblePreorderTraversal
         val firstId = braceChildIds(tree, parent).first()
         val line = lines[firstId] ?: return@doVisiblePreorderTraversal
@@ -639,32 +643,56 @@ private fun DrawScope.drawBraces(
     }
 }
 
-// A timeline's axis runs from the root through its children, behind them, as the line to the first of them would be.
+// A timeline's axis runs from the topic it is laid out from, the root or a topic with a timeline of its own, through
+// its children, behind them, as the line to the first of them would be.
 private fun DrawScope.drawTimelineAxis(
     state: MindMapState
     , drawInfo: DrawInfo
     , lineColor: Color
 ) {
     val tree = state.tree
-    if (tree.structure != MapStructure.TIMELINE) return
-    val axis = timelineAxis(tree) ?: return
-    var line: ResolvedLine? = null
-    val firstId = tree.getRootNode().children.firstOrNull { !tree.isFloating(it) && !tree.isSummary(it) }
-    forEachNodeWithLine(tree, drawInfo, lineColor) { node, resolved -> if (node.id == firstId) line = resolved }
-    val resolved = line ?: return
-    drawLine(resolved.color, axis.first, axis.second, resolved.width.toPx(this), StrokeCap.Round)
+    val owners = mutableListOf<NodeData<*>>()
+    tree.doVisiblePreorderTraversal { node ->
+        if (isTimelineOwner(tree, node)) owners.add(node)
+    }
+    if (owners.isEmpty()) return
+    val lines = mutableMapOf<String, ResolvedLine>()
+    forEachNodeWithLine(tree, drawInfo, lineColor) { node, resolved -> lines[node.id] = resolved }
+    owners.forEach { owner ->
+        val axis = timelineAxis(tree, owner) ?: return@forEach
+        val firstId = timelineAxisIds(tree, owner).first()
+        val resolved = lines[firstId] ?: return@forEach
+        drawLine(resolved.color, axis.first, axis.second, resolved.width.toPx(this), StrokeCap.Round)
+    }
+}
+
+// Whether the node is the one a timeline is laid out from: the root of a timeline, or a topic with one of its own.
+private fun isTimelineOwner(
+    tree: Tree<*>
+    , node: NodeData<*>
+): Boolean = tree.structureOf(node.id) == MapStructure.TIMELINE && tree.structureOwnerOf(node.id) == node.id
+
+// The children of [owner] on its timeline's axis: its shown children but the floating topics and summaries.
+private fun timelineAxisIds(
+    tree: Tree<*>
+    , owner: NodeData<*>
+): List<String> {
+    val ids = if (owner.parentId == null) owner.children else tree.visibleChildren(owner)
+    return ids.filterNot { tree.isFloating(it) || tree.isSummary(it) }
 }
 
 /**
- * Returns the ends of a timeline's axis: from the right edge of the root, through the middle of it, to the middle of
- * the last of its children on it. Returns null without any.
+ * Returns the ends of the axis of a timeline laid out from [owner], the root by default: from its right edge, through
+ * the middle of it, to the middle of the last of its children on it. Returns null without any.
  */
-internal fun Density.timelineAxis(tree: Tree<*>): Pair<Offset, Offset>? {
-    val root = tree.getRootNode()
-    val lastId = root.children.lastOrNull { !tree.isFloating(it) && !tree.isSummary(it) } ?: return null
+internal fun Density.timelineAxis(
+    tree: Tree<*>
+    , owner: NodeData<*> = tree.getRootNode()
+): Pair<Offset, Offset>? {
+    val lastId = timelineAxisIds(tree, owner).lastOrNull() ?: return null
     val last = tree.getNode(lastId)
-    val y = root.path.centerY.toPx(this)
-    return Offset(getNodeEdgeX(root, isRightEdge = true), y) to Offset(last.path.centerX.toPx(this), y)
+    val y = owner.path.centerY.toPx(this)
+    return Offset(getNodeEdgeX(owner, isRightEdge = true), y) to Offset(last.path.centerX.toPx(this), y)
 }
 
 // Draws [bracket]: from its top to its bottom along its back, curling into its point, with a line from there.
@@ -1174,9 +1202,10 @@ private fun DrawScope.drawLines(
         // A summary is joined to the siblings it is about by its bracket, not to its parent by a line, and a floating
         // topic to nothing.
         if (tree.isSummary(toNode.id) || tree.isFloating(toNode.id)) return@forEachNodeWithLine
-        // A brace map joins a topic to its children by a brace instead, and a timeline the root's by its axis.
-        if (tree.structure == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
-        if (tree.structure == MapStructure.TIMELINE && node.parentId == null) return@forEachNodeWithLine
+        // A brace map joins a topic to its children by a brace instead, and a timeline the topic it is laid out from
+        // to those on its axis by the axis.
+        if (tree.structureOf(node.id) == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
+        if (isTimelineOwner(tree, node)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val grow = tree.placedDirectionOf(toNode.id)

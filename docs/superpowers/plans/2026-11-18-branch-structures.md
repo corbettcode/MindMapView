@@ -184,15 +184,18 @@ topic and kept for the layout under way, `inPass`; `layoutManagerFor` by `struct
 
 ### Task C2: Brace map and timeline in a branch
 
-**Files:** `MindMap.kt` (`drawBraces` and `drawTimelineAxis`/`timelineAxis` for each owner, lines skipped by owner),
-`layout/TimelineLayout.kt` (`arrange(owner, tree)`), `MindMapManager.kt`, test `BranchBraceAndTimelineTest.kt`
+**Files:** `MindMap.kt` (`drawBraces` for every topic in a brace map, `drawTimelineAxis` and `timelineAxis` for each
+topic a timeline is laid out from, lines left out by the structure the parent is in), `layout/TimelineLayout.kt`
+(laid out from any topic, done with C1), test `BranchBraceAndTimelineTest.kt`
 
-- [ ] A brace map branch draws braces for the topics in it, and lines elsewhere; a brace map map with a logic chart
-  branch draws lines in that branch.
-- [ ] A timeline branch has its axis from its owner to its right, its axis topics' branches up and down by turns,
-  measured as a box so its parent's layout clears it; its summaries below.
-- [ ] Tests (4): braces only in the brace branch; lines in a logic branch of a brace map; a timeline branch's axis
-  ends and turns; a timeline branch clear of its siblings. Both rendered and looked at.
+- [x] A topic in a brace map, the map's or a branch's, joins its children by a brace, and lines elsewhere: a brace
+  map with a logic chart branch draws lines in that branch.
+- [x] A timeline branch has its axis from its topic to its right, through its children, in the line of the first;
+  their branches up and down by turns; measured as a box, so its parent's layout keeps it clear of its siblings.
+- [x] Tests (4): braces only in a brace branch of a logic chart (by the paths of an SVG export); lines in a logic
+  branch of a brace map; a timeline branch's axis ends and turns; a timeline branch clear of its siblings. All 712
+  library and 251 desktop tests pass on a full rerun. The tour was rendered with a brace and a timeline branch in the
+  mind map, and a logic chart and a timeline branch in a brace map, and looked at.
 
 ## Phase D: Files, the app and the docs
 
