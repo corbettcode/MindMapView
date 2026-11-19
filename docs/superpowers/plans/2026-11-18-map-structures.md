@@ -175,14 +175,14 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ### Task C2: Brace map
 
-**Files:** `model/MapStructure.kt`, `MindMap.kt` (brace connectors, from the summary bracket's drawing),
-tests `BraceMapTest.kt`
+**Files:** `MindMap.kt` (`drawBraces`, the bracket's drawing shared as `drawBracket`), `layout/SummaryGeometry.kt`
+(`braceOf`, `braceChildIds`), test `BraceMapTest.kt`
 
-- [ ] Laid out as the logic chart to the right; each parent is joined to its children by a brace spanning them, in
-  place of separate lines.
-- [ ] Tests (3): a brace per parent with children; none for a leaf; line color and width followed.
-
----
+- [x] Laid out as the logic chart to the right; each parent is joined to its shown children (but summaries and
+  floating topics) by a brace spanning them, its point to the parent, in place of separate lines, in the color and
+  width of the line to its first child.
+- [x] Tests (3): the brace spans the children with its point to the parent; none for a leaf or a folded topic; an
+  SVG export has a brace for each parent in place of its lines. The tour was rendered and looked at.
 
 ## Phase D: The timeline
 

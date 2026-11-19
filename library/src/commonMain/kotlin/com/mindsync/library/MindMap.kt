@@ -89,6 +89,9 @@ import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.layout.taskBadges
 import com.mindsync.library.layout.summaryBracket
 import com.mindsync.library.layout.NodeContent
+import com.mindsync.library.layout.braceChildIds
+import com.mindsync.library.layout.braceOf
+import com.mindsync.library.layout.SummaryBracket
 import com.mindsync.library.layout.TREE_CHART_INDENT
 import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.TopicKind
@@ -561,6 +564,7 @@ internal fun DrawScope.drawMap(
     drawBoundaries(state, drawInfo, lineColor)
     drawLines(state, drawInfo, lineColor, fadedIds)
     drawSummaryBrackets(state, drawInfo, lineColor, fadedIds)
+    drawBraces(state, drawInfo, lineColor, fadedIds)
     drawArrowLinks(state, fadedIds)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor, filterView)
@@ -609,34 +613,62 @@ private fun DrawScope.drawSummaryBrackets(
     val path = Path()
     lines.forEach { (summaryId, line) ->
         val bracket = summaryBracket(tree, summaryId) ?: return@forEach
-        val halfWidth = (bracket.pointX - bracket.backX) / 2
-        val middleX = bracket.backX + halfWidth
-        val curl = minOf(abs(halfWidth), (bracket.bottom - bracket.top) / 4)
-        // The bracket is worked out along the way its branch grows and across it, and turned onto the screen.
-        fun moveTo(along: Float, across: Float) = bracket.at(along, across).let { path.moveTo(it.x, it.y) }
-        fun lineTo(along: Float, across: Float) = bracket.at(along, across).let { path.lineTo(it.x, it.y) }
-        fun cubicTo(control: Pair<Float, Float>, end: Pair<Float, Float>) {
-            val c = bracket.at(control.first, control.second)
-            val e = bracket.at(end.first, end.second)
-            path.cubicTo(c.x, c.y, c.x, c.y, e.x, e.y)
-        }
-        path.reset()
-        moveTo(bracket.backX, bracket.top)
-        cubicTo(middleX to bracket.top, middleX to bracket.top + curl)
-        lineTo(middleX, bracket.pointY - curl)
-        cubicTo(middleX to bracket.pointY, bracket.pointX to bracket.pointY)
-        cubicTo(middleX to bracket.pointY, middleX to bracket.pointY + curl)
-        lineTo(middleX, bracket.bottom - curl)
-        cubicTo(middleX to bracket.bottom, bracket.backX to bracket.bottom)
-        moveTo(bracket.pointX, bracket.pointY)
-        lineTo(bracket.nodeX, bracket.pointY)
-        drawPath(
-            path
-            , line.color.fadedIf(summaryId in fadedIds)
-            , style = Stroke(width = line.width.toPx(this), cap = StrokeCap.Round)
-        )
+        drawBracket(path, bracket, line.color.fadedIf(summaryId in fadedIds), line.width.toPx(this))
     }
 }
+
+// A brace map joins each topic to its children by one brace, spanning them, with its point to the topic, drawn as the
+// line to the first of them would be.
+private fun DrawScope.drawBraces(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+    , fadedIds: Set<String>
+) {
+    val tree = state.tree
+    if (tree.structure != MapStructure.BRACE_RIGHT) return
+    val lines = mutableMapOf<String, ResolvedLine>()
+    forEachNodeWithLine(tree, drawInfo, lineColor) { node, line -> lines[node.id] = line }
+    val path = Path()
+    tree.doVisiblePreorderTraversal { parent ->
+        val bracket = braceOf(tree, parent) ?: return@doVisiblePreorderTraversal
+        val firstId = braceChildIds(tree, parent).first()
+        val line = lines[firstId] ?: return@doVisiblePreorderTraversal
+        drawBracket(path, bracket, line.color.fadedIf(firstId in fadedIds), line.width.toPx(this))
+    }
+}
+
+// Draws [bracket]: from its top to its bottom along its back, curling into its point, with a line from there.
+private fun DrawScope.drawBracket(
+    path: Path
+    , bracket: SummaryBracket
+    , color: Color
+    , width: Float
+) {
+    val halfWidth = (bracket.pointX - bracket.backX) / 2
+    val middleX = bracket.backX + halfWidth
+    val curl = minOf(abs(halfWidth), (bracket.bottom - bracket.top) / 4)
+    // The bracket is worked out along the way its branch grows and across it, and turned onto the screen.
+    fun moveTo(along: Float, across: Float) = bracket.at(along, across).let { path.moveTo(it.x, it.y) }
+    fun lineTo(along: Float, across: Float) = bracket.at(along, across).let { path.lineTo(it.x, it.y) }
+    fun cubicTo(control: Pair<Float, Float>, end: Pair<Float, Float>) {
+        val c = bracket.at(control.first, control.second)
+        val e = bracket.at(end.first, end.second)
+        path.cubicTo(c.x, c.y, c.x, c.y, e.x, e.y)
+    }
+    path.reset()
+    moveTo(bracket.backX, bracket.top)
+    cubicTo(middleX to bracket.top, middleX to bracket.top + curl)
+    lineTo(middleX, bracket.pointY - curl)
+    cubicTo(middleX to bracket.pointY, bracket.pointX to bracket.pointY)
+    cubicTo(middleX to bracket.pointY, middleX to bracket.pointY + curl)
+    lineTo(middleX, bracket.bottom - curl)
+    cubicTo(middleX to bracket.bottom, bracket.backX to bracket.bottom)
+    moveTo(bracket.pointX, bracket.pointY)
+    lineTo(bracket.nodeX, bracket.pointY)
+    drawPath(path, color, style = Stroke(width = width, cap = StrokeCap.Round))
+}
+
 
 // A boundary is in the color of the line to the first of its children, which is that of its branch, unless it has a
 // color of its own.
@@ -1113,6 +1145,8 @@ private fun DrawScope.drawLines(
         // A summary is joined to the siblings it is about by its bracket, not to its parent by a line, and a floating
         // topic to nothing.
         if (tree.isSummary(toNode.id) || tree.isFloating(toNode.id)) return@forEachNodeWithLine
+        // A brace map joins a topic to its children by a brace instead.
+        if (tree.structure == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val grow = tree.directionOf(toNode.id)

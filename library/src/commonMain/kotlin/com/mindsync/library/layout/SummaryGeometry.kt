@@ -1,11 +1,9 @@
 package com.mindsync.library.layout
 
-import com.mindsync.library.data.NodeData
-
 import androidx.compose.ui.geometry.Offset
-
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.halfHeight
 import com.mindsync.library.halfWidth
@@ -70,7 +68,8 @@ internal fun Density.summaryBracket(
         tree.doVisiblePreorderTraversal(tree.getNode(id)) { node ->
             top = minOf(top, across(node) - halfAcross(node))
             bottom = maxOf(bottom, across(node) + halfAcross(node))
-            edge = if (isBack) minOf(edge, along(node) - halfAlong(node)) else maxOf(edge, along(node) + halfAlong(node))
+            edge = if (isBack) minOf(edge, along(node) - halfAlong(node))
+                else maxOf(edge, along(node) + halfAlong(node))
         }
     }
     val summary = tree.getNode(summaryId)
@@ -82,4 +81,35 @@ internal fun Density.summaryBracket(
     val end = minOf(SUMMARY_BRACKET_WIDTH.toPx(), (bottom - top) / 2)
     val pointY = across(summary).coerceIn(top + end, bottom - end)
     return SummaryBracket(top, bottom, backX, pointX, pointY, nodeX, isHorizontal)
+}
+
+/**
+ * Returns the children a brace of a brace map joins [parent] to: its shown children but summaries and floating
+ * topics.
+ */
+internal fun braceChildIds(
+    tree: Tree<*>
+    , parent: NodeData<*>
+): List<String> = tree.visibleChildren(parent).filterNot { tree.isSummary(it) || tree.isFloating(it) }
+
+/**
+ * Returns the brace of a brace map from [parent] to its children: along their near side, from the top of the first to
+ * the bottom of the last, with its point facing the parent and a line from there to the parent's edge. Returns null
+ * for a topic without children shown.
+ */
+internal fun Density.braceOf(
+    tree: Tree<*>
+    , parent: NodeData<*>
+): SummaryBracket? {
+    val childIds = braceChildIds(tree, parent).takeIf { it.isNotEmpty() } ?: return null
+    val children = childIds.map { tree.getNode(it) }
+    val top = children.minOf { it.path.centerY.toPx(this) - halfHeight(it).toPx(this) }
+    val bottom = children.maxOf { it.path.centerY.toPx(this) + halfHeight(it).toPx(this) }
+    val near = children.minOf { it.path.centerX.toPx(this) - halfWidth(it).toPx(this) }
+    val backX = near - SUMMARY_BRACKET_GAP.toPx()
+    val pointX = backX - SUMMARY_BRACKET_WIDTH.toPx()
+    val nodeX = parent.path.centerX.toPx(this) + halfWidth(parent).toPx(this)
+    val end = minOf(SUMMARY_BRACKET_WIDTH.toPx(), (bottom - top) / 2)
+    val pointY = parent.path.centerY.toPx(this).coerceIn(top + end, bottom - end)
+    return SummaryBracket(top, bottom, backX, pointX, pointY, nodeX)
 }
