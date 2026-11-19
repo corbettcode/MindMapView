@@ -48,7 +48,7 @@ object Markdown {
     private val HARD_BREAK = Regex("""( {2,}|\\)$""")
     private val CELL_SEPARATOR = Regex("""(?<!\\)\|""")
     private val TAG = Regex("""<[^>]+>""")
-    private val BOLD_LEAD = Regex("""^<b>(.+?)</b>(?:\s|<br>)*(.*)$""", RegexOption.DOT_MATCHES_ALL)
+    private val BOLD_LEAD = Regex("""(?s)^<b>(.+?)</b>(?:\s|<br>)*(.*)$""")
 
     private class Section(
         val text: String
