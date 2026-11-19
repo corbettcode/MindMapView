@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LevelStyle
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TopicKind
@@ -58,6 +59,7 @@ import com.mindsync.mindmapview.desktop.component.DropdownPicker
 import com.mindsync.mindmapview.desktop.component.PICKER_LABEL_WIDTH
 import com.mindsync.mindmapview.desktop.label
 import com.mindsync.mindmapview.desktop.loadNodeFontFamily
+import com.mindsync.mindmapview.desktop.menuBar.label
 import com.mindsync.mindmapview.desktop.themeArrowLinkColors
 import com.mindsync.mindmapview.desktop.withTheme
 
@@ -96,6 +98,8 @@ data class UserPreferences(
     // How the map is shown, and the share of the window the outline has beside the map.
     , val viewMode: ViewMode = ViewMode.MAP
     , val outlineFraction: Float = DEFAULT_OUTLINE_FRACTION
+    // How new maps are laid out.
+    , val newMapStructure: MapStructure = MapStructure.MIND_MAP
 ) {
     /** Returns the preferences of the nodes of [kind]. */
     fun topicOf(
@@ -198,6 +202,14 @@ fun PreferencesDialog(
                                 edited = edited.withTheme(theme).copy(mapThemeId = theme.id)
                             }
                         }
+                        , labelWidth = PREFERENCES_LABEL_WIDTH
+                    )
+                    DropdownPicker(
+                        label = "New maps"
+                        , choices = MapStructure.entries
+                        , choiceLabel = { it.label }
+                        , selectedChoice = edited.newMapStructure
+                        , onSelect = { edited = edited.copy(newMapStructure = it) }
                         , labelWidth = PREFERENCES_LABEL_WIDTH
                     )
                     CollapsibleSection(

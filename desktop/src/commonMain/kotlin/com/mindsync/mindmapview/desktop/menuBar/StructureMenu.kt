@@ -1,0 +1,165 @@
+package com.mindsync.mindmapview.desktop.menuBar
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
+import com.mindsync.library.model.MapStructure
+
+/** How a structure is named in the menus and the preferences. */
+val MapStructure.label: String
+    get() = when (this) {
+        MapStructure.MIND_MAP -> "Mind Map"
+        MapStructure.LOGIC_RIGHT -> "Logic Chart →"
+        MapStructure.LOGIC_LEFT -> "Logic Chart ←"
+        MapStructure.ORG_DOWN -> "Org Chart ↓"
+        MapStructure.ORG_UP -> "Org Chart ↑"
+        MapStructure.TREE_RIGHT -> "Tree Chart →"
+        MapStructure.TREE_LEFT -> "Tree Chart ←"
+        MapStructure.BRACE_RIGHT -> "Brace Map"
+        MapStructure.TIMELINE -> "Timeline"
+    }
+
+/**
+ * A "Structure" item of a menu, which opens a menu of the structures, each with a small picture of it and a tick at
+ * [structure], the map's. Each choice closes the menus, with [onClose], before it is made.
+ */
+@Composable
+fun StructureSubmenu(
+    structure: MapStructure
+    , onStructure: (MapStructure) -> Unit
+    , onClose: () -> Unit
+) {
+    var isOpen by remember { mutableStateOf(false) }
+    Box {
+        DropdownMenuItem(
+            text = { Text("Structure") }
+            , trailingIcon = { Text("▸") }
+            , onClick = { isOpen = true }
+        )
+        DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
+            MapStructure.entries.forEach { choice ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            StructurePicture(choice, MaterialTheme.colorScheme.onSurface)
+                            Text(choice.label, modifier = Modifier.padding(start = 10.dp))
+                        }
+                    }
+                    , leadingIcon = { Text(if (choice == structure) "✓" else "") }
+                    , onClick = {
+                        isOpen = false
+                        onClose()
+                        onStructure(choice)
+                    }
+                )
+            }
+        }
+    }
+}
+
+/** A small drawing of how [structure] lays a map out: a root, its branches and the lines between them. */
+@Composable
+fun StructurePicture(
+    structure: MapStructure
+    , color: Color
+) {
+    Canvas(modifier = Modifier.size(width = 32.dp, height = 22.dp)) {
+        val stroke = 1.2.dp.toPx()
+        val w = size.width
+        val h = size.height
+        fun box(x: Float, y: Float, isRoot: Boolean = false) {
+            val boxSize = if (isRoot) Size(w * 0.28f, h * 0.24f) else Size(w * 0.18f, h * 0.16f)
+            val topLeft = Offset(x - boxSize.width / 2, y - boxSize.height / 2)
+            if (isRoot) drawRect(color, topLeft, boxSize) else drawRect(color, topLeft, boxSize, style = Stroke(stroke))
+        }
+        fun line(x1: Float, y1: Float, x2: Float, y2: Float) =
+            drawLine(color, Offset(x1, y1), Offset(x2, y2), stroke)
+        drawStructure(structure, w, h, ::box, ::line)
+    }
+}
+
+// The picture of each structure, in the [w] by [h] of its canvas.
+private fun DrawScope.drawStructure(
+    structure: MapStructure
+    , w: Float
+    , h: Float
+    , box: (Float, Float, Boolean) -> Unit
+    , line: (Float, Float, Float, Float) -> Unit
+) {
+    val rows = listOf(0.2f, 0.5f, 0.8f).map { it * h }
+    val columns = listOf(0.2f, 0.5f, 0.8f).map { it * w }
+    when (structure) {
+        MapStructure.MIND_MAP -> {
+            box(w / 2, h / 2, true)
+            listOf(0.12f, 0.88f).forEach { x -> listOf(0.25f, 0.75f).forEach { y ->
+                line(w / 2, h / 2, x * w, y * h)
+                box(x * w, y * h, false)
+            } }
+        }
+        MapStructure.LOGIC_RIGHT, MapStructure.LOGIC_LEFT, MapStructure.BRACE_RIGHT -> {
+            val isLeft = structure == MapStructure.LOGIC_LEFT
+            val rootX = if (isLeft) w * 0.82f else w * 0.18f
+            val childX = if (isLeft) w * 0.2f else w * 0.8f
+            box(rootX, h / 2, true)
+            if (structure == MapStructure.BRACE_RIGHT) {
+                line(w * 0.55f, rows.first(), w * 0.55f, rows.last())
+                line(rootX, h / 2, w * 0.55f, h / 2)
+                rows.forEach { y -> box(childX, y, false) }
+            }
+            else {
+                rows.forEach { y ->
+                    line(rootX, h / 2, childX, y)
+                    box(childX, y, false)
+                }
+            }
+        }
+        MapStructure.ORG_DOWN, MapStructure.ORG_UP -> {
+            val isUp = structure == MapStructure.ORG_UP
+            val rootY = if (isUp) h * 0.8f else h * 0.2f
+            val childY = if (isUp) h * 0.2f else h * 0.8f
+            box(w / 2, rootY, true)
+            columns.forEach { x ->
+                line(w / 2, rootY, x, childY)
+                box(x, childY, false)
+            }
+        }
+        MapStructure.TREE_RIGHT, MapStructure.TREE_LEFT -> {
+            val sign = if (structure == MapStructure.TREE_RIGHT) 1f else -1f
+            val rootX = w / 2 - sign * w * 0.25f
+            box(rootX, h * 0.18f, true)
+            val spineX = rootX - sign * w * 0.06f
+            line(spineX, h * 0.3f, spineX, h * 0.85f)
+            listOf(0.55f, 0.85f).forEach { y ->
+                line(spineX, y * h, spineX + sign * w * 0.2f, y * h)
+                box(spineX + sign * w * 0.3f, y * h, false)
+            }
+        }
+        MapStructure.TIMELINE -> {
+            box(w * 0.12f, h / 2, true)
+            line(w * 0.12f, h / 2, w * 0.95f, h / 2)
+            listOf(0.4f to 0.18f, 0.62f to 0.82f, 0.84f to 0.18f).forEach { (x, y) ->
+                line(x * w, h / 2, x * w, y * h)
+                box(x * w, y * h, false)
+            }
+        }
+    }
+}

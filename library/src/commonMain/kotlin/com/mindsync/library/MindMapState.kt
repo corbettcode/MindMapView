@@ -992,6 +992,8 @@ class MindMapState(
      * is moved when [selectedNode] is the root, and the root is in no branch to move.
      */
     fun moveNodeToOtherSide() {
+        // The sides of the root are only a mind map's.
+        if (tree.structure != MapStructure.MIND_MAP) return
         recordChange {
             val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
             val side = tree.sideOf(node.id).mirrored
@@ -1011,6 +1013,8 @@ class MindMapState(
      * to move.
      */
     fun moveNodeAround(isClockwise: Boolean) {
+        // The sides of the root are only a mind map's.
+        if (tree.structure != MapStructure.MIND_MAP) return
         recordChange {
             val node = mindMapManager.getSelectedNode()?.takeIf { it.parentId != null } ?: return
             val side = tree.sideOf(node.id).next(isClockwise)

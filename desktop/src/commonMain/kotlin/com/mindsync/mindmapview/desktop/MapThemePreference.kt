@@ -8,9 +8,12 @@ import com.mindsync.library.model.TopicKind
 import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 
-/** Returns an empty map in the theme new maps start in. */
+/** Returns an empty map in the theme and the structure new maps start in. */
 internal fun newMapTree(preferences: UserPreferences): Tree<Any> =
-    Tree<Any>().apply { theme = MapThemes.byId(preferences.mapThemeId) }
+    Tree<Any>().apply {
+        theme = MapThemes.byId(preferences.mapThemeId)
+        structure = preferences.newMapStructure
+    }
 
 /**
  * Takes the preferences [submitted] in the dialog, which [opened] with the theme of the open map in [state], and

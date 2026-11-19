@@ -47,6 +47,7 @@ import kotlin.collections.forEach
  * @param onPaste Callback function invoked when the "Paste" action is selected.
  * @param onSelectAll Callback function invoked when the "Select All" action is selected.
  * @param canMove Function that determines whether the "Move" actions are enabled.
+ * @param canMoveAround Function that determines whether "Move Clockwise" and "Move Counterclockwise" are enabled.
  * @param onMoveAround Callback function invoked when a "Move" action is selected. Receives a boolean indicating whether the move is clockwise.
  * @param onOutlineMove Callback function invoked when "Move Up", "Move Down", "Indent" or "Outdent" is selected.
  * @param links Function that provides a list of `RichTextLink` objects representing the links available to open.
@@ -82,6 +83,7 @@ fun EditMenu(
     , onPaste: () -> Unit
     , onSelectAll: () -> Unit
     , canMove: () -> Boolean
+    , canMoveAround: () -> Boolean
     , onMoveAround: (isClockwise: Boolean) -> Unit
     , onOutlineMove: (OutlineMove) -> Unit
     , links: () -> List<RichTextLink>
@@ -252,6 +254,7 @@ fun EditMenu(
             HorizontalDivider()
 
             val isMoveEnabled = canMove()
+            val isMoveAroundEnabled = canMoveAround()
             listOf(
                 Triple("Move Clockwise \u21BB", "Ctrl+M", true)
                 , Triple("Move Counterclockwise \u21BA", "Ctrl+Shift+M", false)
@@ -264,7 +267,7 @@ fun EditMenu(
                         expanded = false
                         onMoveAround(isClockwise)
                     }
-                    , enabled = isMoveEnabled
+                    , enabled = isMoveAroundEnabled
                 )
             }
             OutlineMove.entries.forEach { move ->

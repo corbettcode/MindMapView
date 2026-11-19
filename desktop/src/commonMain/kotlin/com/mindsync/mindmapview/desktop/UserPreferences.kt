@@ -9,6 +9,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.emoji.EmojiCatalog
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LevelStyle
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
@@ -45,6 +46,7 @@ class UserPreferencesStore(
         const val BACKGROUND_COLOR = "backgroundColor"
         const val VIEW_MODE = "viewMode"
         const val OUTLINE_FRACTION = "outlineFraction"
+        const val NEW_MAP_STRUCTURE = "newMapStructure"
 
         // One font, shape, ways of showing notes and attributes, and lists of colors for every kind of topic, as
         // kept before each kind had its own. They are still read, for the kinds that have none of their own. A
@@ -135,6 +137,7 @@ internal fun readUserPreferences(
         , viewMode = ViewMode.entries.firstOrNull { it.name == read(VIEW_MODE) } ?: defaults.viewMode
         , outlineFraction = read(OUTLINE_FRACTION)?.toFloatOrNull()?.takeIf { it in OUTLINE_FRACTIONS }
             ?: defaults.outlineFraction
+        , newMapStructure = read(NEW_MAP_STRUCTURE)?.let { MapStructure.fromFileName(it) } ?: defaults.newMapStructure
     )
 }
 
@@ -189,6 +192,7 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
         , BACKGROUND_COLOR to backgroundColor?.toHex().orEmpty()
         , VIEW_MODE to viewMode.name
         , OUTLINE_FRACTION to outlineFraction.toString()
+        , NEW_MAP_STRUCTURE to newMapStructure.fileName
     ) + TopicKind.entries.flatMap { kind ->
         val topic = topicOf(kind)
         listOf(

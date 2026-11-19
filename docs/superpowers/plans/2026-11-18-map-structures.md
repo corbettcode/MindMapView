@@ -220,15 +220,17 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ### Task E2: In the app
 
-**Files:** `menuBar/ViewMenu.kt` (Structure submenu), new `component/StructurePicture.kt`,
-`dialog/PreferencesDialog.kt` (new maps' structure), `UserPreferences.kt`, `MindMapApp.kt`, test
-`StructureAppTest.kt`
+**Files:** new `menuBar/StructureMenu.kt` (`StructureSubmenu`, `StructurePicture`, `MapStructure.label`),
+`menuBar/ViewMenu.kt`, `menuBar/EditMenu.kt` (`canMoveAround`), `dialog/PreferencesDialog.kt` ("New maps"),
+`UserPreferences.kt` (`newMapStructure`), `MapThemePreference.kt` (`newMapTree`), `MindMapApp.kt`, `MindMapState.kt`
+(moving round the root only in a mind map), test `StructureAppTest.kt`
 
-- [ ] View › Structure with a tick on the current one and a small drawing of each; Preferences › Map › Structure for
-  new maps.
-- [ ] Root menus show Move Clockwise and the side add buttons only in the mind map.
-- [ ] Tests (4): the submenu sets it and undo takes it back; new maps get the preference; the root's buttons; a map
-  opens in its saved structure.
+- [x] View › Structure with a tick on the current one and a small drawing of each; Preferences › New maps for the
+  structure new maps start in, kept with the app's preferences, not the map's.
+- [x] Move Clockwise and Counterclockwise (menus and Ctrl+M) only in the mind map; the root's six add buttons only
+  there too (A3). Move Up, Move Down, Indent and Outdent stay in every structure.
+- [x] Tests (4): the submenu sets it and Ctrl+Z takes it back; Ctrl+M does nothing in a logic chart; new maps get the
+  preference; the preference is kept. The submenu was rendered and looked at; a map opens in its saved structure (E1).
 
 ### Task E3: Docs
 

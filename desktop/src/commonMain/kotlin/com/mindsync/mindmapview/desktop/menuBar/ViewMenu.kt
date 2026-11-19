@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.mindsync.library.model.MapStructure
 import com.mindsync.mindmapview.desktop.FOLD_COMMANDS
 import com.mindsync.mindmapview.desktop.FoldCommand
 import com.mindsync.mindmapview.desktop.ViewMode
@@ -25,6 +26,8 @@ fun ViewMenu(
     onFilter: () -> Unit,
     viewMode: ViewMode,
     onViewMode: (ViewMode) -> Unit,
+    structure: MapStructure,
+    onStructure: (MapStructure) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -74,6 +77,7 @@ fun ViewMenu(
                     onFilter()
                 },
             )
+            StructureSubmenu(structure = structure, onStructure = onStructure, onClose = { expanded = false })
             HorizontalDivider()
             FOLD_COMMANDS.forEach { command ->
                 DropdownMenuItem(

@@ -51,6 +51,7 @@ import com.mindsync.library.io.Outline
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TopicKind
 import com.mindsync.library.outline.MindMapOutline
@@ -1344,6 +1345,10 @@ private fun MindMapScreen(
                             // Read when the menu opens: moving a node does not change the selected node.
                             // The root is in no branch, so it is not moved.
                             canMove = { selectedNode?.parentId != null },
+                            // The sides of the root to move a branch round are only a mind map's.
+                            canMoveAround = {
+                                selectedNode?.parentId != null && state.tree.structure == MapStructure.MIND_MAP
+                            },
                             onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                             onOutlineMove = { state.move(it) },
                             // Read when the menu opens, as canMove is.
@@ -1371,6 +1376,8 @@ private fun MindMapScreen(
                             onFilter = onFilter,
                             viewMode = viewMode,
                             onViewMode = { onPreferencesChange(preferences.copy(viewMode = it)) },
+                            structure = state.tree.structure,
+                            onStructure = { state.setStructure(it) },
                         )
                         ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
                         HelpMenu(
@@ -1535,9 +1542,12 @@ private fun MindMapScreen(
                         state.tree.nodes[nodeId]?.let { node ->
                             NodeMenu(
                                 position = position,
-                                // The root is on neither side of itself, nor is a floating topic, so they are not moved.
-                                side = if (node.parentId == null || state.tree.isFloating(nodeId)) null
-                                    else state.tree.sideOf(nodeId),
+                                // The root is on neither side of itself, nor is a floating topic, so they are not moved;
+                                // and the sides are only a mind map's.
+                                side = if (node.parentId == null || state.tree.isFloating(nodeId) ||
+                                    state.tree.structure != MapStructure.MIND_MAP
+                                ) null
+                                else state.tree.sideOf(nodeId),
                                 onEdit = { operation = Operation.Update },
                                 onEditText = { state.startTextEdit() },
                                 onAddNodeToType = onAddNodeToType,
