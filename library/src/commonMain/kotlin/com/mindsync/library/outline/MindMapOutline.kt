@@ -42,7 +42,9 @@ fun outlineRowTag(id: String): String = "com.mindsync.library.outlineRow.$id"
  * A click on a row selects its topic, with Ctrl adds it to the selection or takes it out, and with Shift selects a
  * range, as on the map. A click on the arrow before a topic folds or unfolds it. A second click soon after calls
  * [onRowDoubleClick], a click on a link in the text [onLinkClick], and a right click [onRowMenu] with where it was,
- * in the outline. The selected topic's row is scrolled into view whenever the selection changes.
+ * in the outline. The selected topic's row is scrolled into view whenever the selection changes. While the pointer
+ * is on the note or attribute mark of a row, [onNoteHover] or [onAttributeHover] is called with the topic and where
+ * the pointer is, in the outline, for showing them, and with null once it leaves the mark.
  *
  * Each row shows the topic's fill as a bullet, its priority and progress, its text in the font of its kind from
  * [topicFontFamilies] with emojis in [emojiFontFamily], whether it has a note and how many attributes it has, and its
@@ -65,6 +67,8 @@ fun MindMapOutline(
     }
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onRowMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
+    , onNoteHover: (node: NodeData<*>?, position: Offset) -> Unit = { _, _ -> }
+    , onAttributeHover: (node: NodeData<*>?, position: Offset) -> Unit = { _, _ -> }
     , onFocusChange: (isFocused: Boolean) -> Unit = {}
     , focusRequester: FocusRequester = remember { FocusRequester() }
     , dateLabel: (date: TaskDate) -> String = { it.toIsoString() }
@@ -80,6 +84,8 @@ fun MindMapOutline(
     val currentOnRowDoubleClick by rememberUpdatedState(onRowDoubleClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnRowMenu by rememberUpdatedState(onRowMenu)
+    val currentOnNoteHover by rememberUpdatedState(onNoteHover)
+    val currentOnAttributeHover by rememberUpdatedState(onAttributeHover)
     var outlineCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val clicks = remember { OutlineClicks() }
 
@@ -139,6 +145,16 @@ fun MindMapOutline(
                 , onFoldClick = { node ->
                     focusRequester.requestFocus()
                     state.onFoldMarkerClick(node)
+                }
+                , onMarkHover = { mark, coordinates, position ->
+                    val node = coordinates?.let { state.tree.nodes[row.id] }
+                    val inOutline = coordinates
+                        ?.let { outlineCoordinates?.localPositionOf(it, position) }
+                        ?: position
+                    when (mark) {
+                        OutlineMark.NOTE -> currentOnNoteHover(node, inOutline)
+                        OutlineMark.ATTRIBUTES -> currentOnAttributeHover(node, inOutline)
+                    }
                 }
             )
         }

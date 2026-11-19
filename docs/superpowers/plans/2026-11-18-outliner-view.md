@@ -132,8 +132,10 @@ badge and note marker drawing), test `MindMapOutlineTest.kt` (JVM, Compose UI)
   screen, so clicking doesn't jump).
 - [x] Rows that don't match `state.taskFilter` are drawn at 30% alpha, unless a topic below them matches, from the
   same `taskFilterView()` the map uses.
-- [x] The note and attribute markers are shown, but hovering them opens no flyover yet (a follow-up); the edit dialog
-  shows both.
+- [x] The note and attribute markers report the pointer on them (`onNoteHover`, `onAttributeHover`), also with null
+  when their row goes while the pointer is on it, and the app shows its flyovers for them, whatever the topic's own
+  way of showing its note and attributes on the map, as a row shows neither. Tests: two in `MindMapOutlineTest`, one
+  in `OutlineAppTest`.
 - [x] Tests (7): rows in order with their indentation; a click selects and the map's `selectedNode` is it; a second
   click is a double click; the arrow folds and the rows below go, and undo brings them back; a change on the map (add,
   remove) shows in the outline; a selection made in the state scrolls its row into view; a right click calls

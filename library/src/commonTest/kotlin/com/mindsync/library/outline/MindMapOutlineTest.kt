@@ -15,6 +15,7 @@ import androidx.compose.ui.test.rightClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.MindMapState
+import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
@@ -29,6 +30,8 @@ class MindMapOutlineTest {
     private var menuNodeId: String? = null
     private var menuPosition: Offset? = null
     private var doubleClickedId: String? = null
+    private val noteHovers = mutableListOf<String?>()
+    private val attributeHovers = mutableListOf<String?>()
 
     // The root with "p" on its right and "q" on its left; "b" and "c" below "p", and "f" below "b".
     private fun ComposeUiTest.shownState(tree: Tree<Any> = tree()): MindMapState {
@@ -42,6 +45,8 @@ class MindMapOutlineTest {
                     menuPosition = position
                 }
                 , onRowDoubleClick = { doubleClickedId = it.id }
+                , onNoteHover = { node, _ -> noteHovers.add(node?.id) }
+                , onAttributeHover = { node, _ -> attributeHovers.add(node?.id) }
             )
         }
         waitForIdle()
@@ -151,5 +156,40 @@ class MindMapOutlineTest {
         val row = boundsOf("b")
         val position = assertNotNull(menuPosition)
         assertFalse(position.y < row.top.value * density.density - 1)
+    }
+
+    @Test
+    fun pointerOnTheMarksOfARowTellsOfItsNoteAndAttributes() = runComposeUiTest {
+        val tree = tree().apply {
+            updateNodeNote("c", "A note")
+            setAttributes("c", listOf(NodeAttribute("Owner", "Ann")))
+        }
+        shownState(tree)
+
+        onNodeWithTag(outlineNoteMarkTag("c")).performMouseInput { moveTo(center) }
+        onNodeWithTag(outlineRowTag("p")).performMouseInput { moveTo(center) }
+        onNodeWithTag(outlineAttributeMarkTag("c")).performMouseInput { moveTo(center) }
+        onNodeWithTag(outlineRowTag("p")).performMouseInput { moveTo(center) }
+        waitForIdle()
+
+        assertEquals("c", noteHovers.first())
+        assertEquals(null, noteHovers.last())
+        assertEquals("c", attributeHovers.first())
+        assertEquals(null, attributeHovers.last())
+        onNodeWithTag(outlineNoteMarkTag("b")).assertDoesNotExist()
+    }
+
+    @Test
+    fun markGoneWithThePointerOnItTellsItIsLeft() = runComposeUiTest {
+        val tree = tree().apply { updateNodeNote("c", "A note") }
+        val state = shownState(tree)
+        onNodeWithTag(outlineNoteMarkTag("c")).performMouseInput { moveTo(center) }
+        waitForIdle()
+
+        state.select(state.tree.getNode("c"))
+        state.removeNode()
+        waitForIdle()
+
+        assertEquals(listOf("c", null), noteHovers.distinct())
     }
 }

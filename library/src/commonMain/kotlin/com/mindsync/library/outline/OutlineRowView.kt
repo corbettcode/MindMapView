@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,6 +86,7 @@ internal fun OutlineRowView(
     , onAddSiblingToType: (isAbove: Boolean) -> Unit
     , onPress: (node: NodeData<*>, press: RowPress) -> Unit
     , onFoldClick: (node: NodeData<*>) -> Unit
+    , onMarkHover: (mark: OutlineMark, coordinates: LayoutCoordinates?, position: Offset) -> Unit
 ) {
     val tree = state.tree
     val node = tree.nodes[row.id] ?: return
@@ -182,8 +184,23 @@ internal fun OutlineRowView(
                     .onGloballyPositioned { textCoordinates = it }
             )
         }
-        if (node.note.isNotBlank()) NoteMark(textColor)
-        if (attributeCount > 0) AttributeMark(attributeCount, textColor)
+        if (node.note.isNotBlank()) {
+            NoteMark(
+                color = textColor
+                , modifier = Modifier
+                    .markHover { coordinates, position -> onMarkHover(OutlineMark.NOTE, coordinates, position) }
+                    .testTag(outlineNoteMarkTag(row.id))
+            )
+        }
+        if (attributeCount > 0) {
+            AttributeMark(
+                count = attributeCount
+                , color = textColor
+                , modifier = Modifier
+                    .markHover { coordinates, position -> onMarkHover(OutlineMark.ATTRIBUTES, coordinates, position) }
+                    .testTag(outlineAttributeMarkTag(row.id))
+            )
+        }
         task.due?.let { due ->
             BasicText(
                 text = dateLabel(due)
@@ -304,10 +321,59 @@ private fun TaskBadges(
     Spacer(Modifier.width(2.dp))
 }
 
+/** A mark in a row that shows more of its topic while the pointer is on it. */
+internal enum class OutlineMark {
+    NOTE
+    , ATTRIBUTES
+}
+
+// Tells where the pointer is on the mark while it is on it, and null coordinates once it is no longer on it, also
+// when the row goes, as one scrolled away or removed does, which no pointer event tells of.
+@Composable
+private fun Modifier.markHover(
+    onHover: (coordinates: LayoutCoordinates?, position: Offset) -> Unit
+): Modifier {
+    val currentOnHover by rememberUpdatedState(onHover)
+    var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var isHovered by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        onDispose { if (isHovered) currentOnHover(null, Offset.Zero) }
+    }
+    return this
+        .onGloballyPositioned { coordinates = it }
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull() ?: continue
+                    when (event.type) {
+                        PointerEventType.Enter, PointerEventType.Move -> {
+                            isHovered = true
+                            currentOnHover(coordinates, change.position)
+                        }
+                        PointerEventType.Exit -> {
+                            isHovered = false
+                            currentOnHover(null, change.position)
+                        }
+                    }
+                }
+            }
+        }
+}
+
+/** Returns the test tag of the note mark of the topic [id] in the outline. */
+fun outlineNoteMarkTag(id: String): String = "com.mindsync.library.outlineNoteMark.$id"
+
+/** Returns the test tag of the attribute mark of the topic [id] in the outline. */
+fun outlineAttributeMarkTag(id: String): String = "com.mindsync.library.outlineAttributeMark.$id"
+
 // A page with lines on it, as the map's note marker.
 @Composable
-private fun NoteMark(color: Color) {
-    Box(modifier = Modifier.padding(start = 8.dp)) {
+private fun NoteMark(
+    color: Color
+    , modifier: Modifier = Modifier
+) {
+    Box(modifier = Modifier.padding(start = 8.dp).then(modifier)) {
         Canvas(modifier = Modifier.size(width = 10.dp, height = 12.dp)) {
             val stroke = 1.dp.toPx()
             val markColor = color.copy(alpha = 0.6f)
@@ -329,9 +395,10 @@ private fun NoteMark(color: Color) {
 private fun AttributeMark(
     count: Int
     , color: Color
+    , modifier: Modifier = Modifier
 ) {
     val markColor = color.copy(alpha = 0.6f)
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp)) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp).then(modifier)) {
         Canvas(modifier = Modifier.size(10.dp)) {
             val stroke = 1.dp.toPx()
             drawRect(markColor, style = Stroke(stroke), size = Size(size.width, size.height))

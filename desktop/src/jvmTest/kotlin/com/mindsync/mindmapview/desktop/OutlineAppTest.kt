@@ -15,6 +15,8 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
@@ -26,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import com.mindsync.library.MindMapState
 import com.mindsync.library.NODE_TEXT_EDITOR_TAG
 import com.mindsync.library.TextEditHost
+import com.mindsync.library.data.NodeAttribute
+import com.mindsync.library.outline.outlineAttributeMarkTag
+import com.mindsync.library.outline.outlineNoteMarkTag
+import com.mindsync.library.outline.outlineRowTag
 import com.mindsync.library.outline.OUTLINE_TEXT_EDITOR_TAG
 import com.mindsync.library.util.RichText
 import com.mindsync.mindmapview.desktop.component.SPLIT_DIVIDER_TAG
@@ -221,5 +227,32 @@ class OutlineAppTest {
         assertNull(state.textEditNodeId)
         assertEquals(ViewMode.BOTH, platform.preferencesStore.preferences.viewMode)
         assertTrue(state.childTexts().contains("Twice"))
+    }
+
+    @Test
+    fun marksOfARowShowTheNoteAndAttributesInPopups() = runComposeUiTest {
+        val state = shownApp()
+        nextViewMode()
+        val id = state.idOf("Two")
+        state.select(state.tree.getNode(id))
+        state.editNodeNote("Remember the milk")
+        state.editNodeAttributes(listOf(NodeAttribute("Owner", "Ann")))
+        state.select(null)
+        waitForIdle()
+
+        onNodeWithTag(outlineNoteMarkTag(id)).performMouseInput { moveTo(center) }
+        mainClock.advanceTimeBy(1500)
+        waitForIdle()
+        onNodeWithText("Remember the milk", substring = true).assertExists()
+
+        onNodeWithTag(outlineAttributeMarkTag(id)).performMouseInput { moveTo(center) }
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Ann").assertExists()
+
+        onNodeWithTag(outlineRowTag(state.idOf("One"))).performMouseInput { moveTo(center) }
+        waitForIdle()
+        onNodeWithText("Ann").assertDoesNotExist()
+        onNodeWithText("Remember the milk", substring = true).assertDoesNotExist()
     }
 }

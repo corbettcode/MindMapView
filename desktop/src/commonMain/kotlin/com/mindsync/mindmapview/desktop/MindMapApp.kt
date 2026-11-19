@@ -1145,6 +1145,10 @@ private fun MindMapScreen(
     // A node that is removed without being confirmed is removed at once.
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
+    // The note or attributes icon of a row of the outline the pointer is on, and where it is, in the box the outline
+    // shares with the map, which is where the outline starts.
+    var outlineNoteHover by remember { mutableStateOf<MarkHover?>(null) }
+    var outlineAttributeHover by remember { mutableStateOf<MarkHover?>(null) }
     // Where the map is in the box it shares with the outline, which the menus and popups of the map are placed in.
     var mapOffset by remember { mutableStateOf(Offset.Zero) }
     // The note of the node whose note icon the pointer is on and where the pointer was, once it has stayed there.
@@ -1206,9 +1210,12 @@ private fun MindMapScreen(
         val kept = state.themeLook as? Map<String, String> ?: return@LaunchedEffect
         if (kept != mapPreferences) onPreferencesChange(preferences.withMapValues(kept))
     }
-    // Only a flyover note is shown in a popup, and only while the pointer is on its icon.
-    val noteMarkerNode = state.noteMarkerNode
-    val isNotePopupShown = noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
+    // Only a flyover note is shown in a popup, and only while the pointer is on its icon. A row of the outline shows
+    // no note, so its icon always shows it.
+    val outlineNoteNode = outlineNoteHover?.let { state.tree.nodes[it.nodeId] }
+    val noteMarkerNode = outlineNoteNode ?: state.noteMarkerNode
+    val isNotePopupShown = outlineNoteNode != null ||
+        noteMarkerNode?.let { state.noteDisplayOf(it.id) } == NoteDisplay.FLYOVER
     LaunchedEffect(
         noteMarkerNode?.id, noteMarkerNode?.note, noteMarkerNode?.color, noteMarkerNode?.textColor
         , isDialogOpen, isNotePopupShown
@@ -1219,18 +1226,23 @@ private fun MindMapScreen(
         delay(NOTE_POPUP_DELAY_MILLIS)
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
         UrlImageLoader.preload(node.note)
-        notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition + mapOffset)
+        val position = outlineNoteHover?.position ?: (state.hoverPosition + mapOffset)
+        notePopup = NotePopupContent(node.note, node.color, node.textColor, position)
     }
 
     val topicAttributeDisplays = preferences.topicAttributeDisplays
     LaunchedEffect(topicAttributeDisplays) { state.topicAttributeDisplays = topicAttributeDisplays }
-    val attributeMarkerNode = state.attributeMarkerNode
+    // A row of the outline shows only how many attributes its topic has, so its icon always shows them.
+    val outlineAttributeNode = outlineAttributeHover?.let { state.tree.nodes[it.nodeId] }
+    val attributeMarkerNode = outlineAttributeNode ?: state.attributeMarkerNode
     val attributes = attributeMarkerNode?.let { state.tree.attributesOf(it.id) }.orEmpty()
     LaunchedEffect(attributeMarkerNode?.id, attributes, isDialogOpen, topicAttributeDisplays) {
         attributePopup = null
         val node = attributeMarkerNode
             ?.takeIf {
-                attributes.isNotEmpty() && !isDialogOpen && state.attributeDisplayOf(it.id) == AttributeDisplay.FLYOVER
+                val isFlyover = outlineAttributeNode != null ||
+                    state.attributeDisplayOf(it.id) == AttributeDisplay.FLYOVER
+                attributes.isNotEmpty() && !isDialogOpen && isFlyover
             }
             ?: return@LaunchedEffect
         delay(ATTRIBUTE_POPUP_DELAY_MILLIS)
@@ -1238,7 +1250,7 @@ private fun MindMapScreen(
             attributes = attributes
             , color = state.tree.fillOf(node.id)
             , textColor = state.tree.textColorOf(node.id)
-            , position = state.hoverPosition + mapOffset
+            , position = outlineAttributeHover?.position ?: (state.hoverPosition + mapOffset)
         )
     }
 
@@ -1362,6 +1374,12 @@ private fun MindMapScreen(
                             , onRowMenu = { node, position ->
                                 onArrowLinkSourceIdChange(null)
                                 nodeMenu = node.id to position
+                            }
+                            , onNoteHover = { node, position ->
+                                outlineNoteHover = node?.let { MarkHover(it.id, position) }
+                            }
+                            , onAttributeHover = { node, position ->
+                                outlineAttributeHover = node?.let { MarkHover(it.id, position) }
                             }
                             , dateLabel = { dueLabel(it, state.today) }
                         )
@@ -2112,6 +2130,12 @@ private fun attributeNames(tree: Tree<*>): List<String> {
 }
 
 // A note as its popup shows it: in the colors of its node, by where the pointer was.
+// The icon of a row of the outline the pointer is on: that of the topic [nodeId], with the pointer at [position].
+private class MarkHover(
+    val nodeId: String
+    , val position: Offset
+)
+
 private class NotePopupContent(
     val note: String
     , val color: Color
