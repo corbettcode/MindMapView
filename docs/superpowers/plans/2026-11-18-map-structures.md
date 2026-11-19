@@ -234,10 +234,10 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ### Task E3: Docs
 
-**Files:** `docs/user-manual/user-manual.html` (a "Structures" section in chapter 5, with a picture of each), PDF,
-`README.md`
+**Files:** `docs/user-manual/user-manual.html` (a "Structures" section in chapter 5, with a picture of each from
+`docs/structures/`, a "New maps" row in the Preferences), PDF, `README.md`
 
-- [ ] What each structure is for, how to choose it, what it keeps, and how it is kept in each format.
+- [x] What each structure is for, how to choose it, what it keeps, and how it is kept in each format.
 
 ---
 

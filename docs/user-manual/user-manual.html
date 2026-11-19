@@ -112,6 +112,14 @@
     figure img.screenshot {
         border: 1px solid var(--rule);
     }
+    .structures {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .structures figure img {
+        max-height: 45mm;
+    }
     figcaption {
         color: var(--muted);
         font-size: 9pt;
@@ -545,6 +553,34 @@
         They are saved in MindMapView files and exported in images, SVG drawings and PDF documents. The floating topics
         of an imported XMind map float where they were; in outlines, Markdown and FreeMind maps they come after the
         root's other topics as ordinary ones, and OPML marks them.
+    </p>
+    <h3>Structures</h3>
+    <p>
+        A map can be laid out in other structures than the mind map. Choose one in
+        <span class="menu">View &rsaquo; Structure</span>; changing it is one step to undo, and only the drawing
+        changes: the topics, their order and everything about them stay as they are, so switching back gives the map
+        as it was. The structure is saved with the map, and <span class="menu">Preferences &rsaquo; New maps</span>
+        chooses the one new maps start in.
+    </p>
+    <div class="structures">
+        <figure class="structure"><img class="screenshot" src="../structures/mind-map.png" alt="Mind Map"><figcaption>Mind Map</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/logic-right.png" alt="Logic Chart →"><figcaption>Logic Chart →</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/org-chart-down.png" alt="Org Chart ↓"><figcaption>Org Chart ↓</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/tree-right.png" alt="Tree Chart →"><figcaption>Tree Chart →</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/brace-right.png" alt="Brace Map"><figcaption>Brace Map</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/timeline.png" alt="Timeline"><figcaption>Timeline</figcaption></figure>
+    </div>
+    <ul>
+        <li><b>Logic chart</b> (→ or ←): every branch to one side of the root.</li>
+        <li><b>Org chart</b> (↓ or ↑): branches in rows below, or above, the root.</li>
+        <li><b>Tree chart</b> (→ or ←): columns below the root, each topic's subtopics indented below it.</li>
+        <li><b>Brace map</b>: as the logic chart, with each topic joined to its subtopics by a brace.</li>
+        <li><b>Timeline</b>: the root's topics along an axis, their branches up and down by turns.</li>
+    </ul>
+    <p>
+        Move Clockwise and the root's six add buttons are only in the mind map; the sides of its branches are kept for
+        when it is one again. Summaries, boundaries, folding and floating topics work in every structure. XMind maps
+        open in their structure where MindMapView has it, and as a mind map otherwise.
     </p>
 </section>
 
@@ -1005,6 +1041,7 @@
     <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> or press <kbd>Ctrl+,</kbd> to change:</p>
     <table>
         <tr><th>Setting</th><th>Choices</th></tr>
+        <tr><td>New maps</td><td>The structure new maps start in (see <a href="#arrange">Structures</a>).</td></tr>
         <tr><td>Map theme</td><td>The look of the open map and of new maps (see <a href="#themes">Map themes</a>). It opens on the open map's theme; choosing another changes that map and the theme new maps start in, and replaces the settings below that the theme has with its own.</td></tr>
         <tr><td>Background color</td><td>The color the map is drawn on. <b>Reset</b> goes back to the theme's background.</td></tr>
         <tr><td>Root Topic, Topic, Subtopic</td><td>How each kind of node is drawn and added (see below).</td></tr>
