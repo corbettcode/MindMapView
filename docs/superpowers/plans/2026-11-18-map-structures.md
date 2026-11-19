@@ -96,16 +96,16 @@ the brace map; phase D the timeline; phase E files, the app and the docs. Each p
 
 ### Task A2: The layout in main and cross coordinates
 
-**Files:** `layout/MindMapLayoutManager.kt` (and its left and right subclasses, folded into one taking a direction),
-`MindMapManager.kt`, test `DirectionLayoutTest.kt`
+**Files:** `layout/MindMapLayoutManager.kt` (a `direction` and `isAllRootChildren` beside `side`; the left and right
+subclasses stay as they are, being public), test `DirectionLayoutTest.kt`
 
-- [ ] The side layout works in main/cross coordinates: stacking, gaps, summaries' room and boundaries' room along the
-  cross axis; children placed along the main axis. `RIGHT` and `LEFT` give today's positions exactly.
-- [ ] The root's slanted sides stay a mind-map-only step on top.
-- [ ] `fittedRoot` and `measureOverflow` measure reach along both axes, so a structure growing up or left is kept on
-  the map.
-- [ ] Tests: every existing layout test passes unchanged; the feature tour's golden image is unchanged; `DOWN` places
-  a parent's children below it, stacked left to right and centered on it (6 new).
+- [x] The side layout works in main/cross coordinates: stacking, gaps, summaries' room and boundaries' room along the
+  cross axis; children placed along the main axis; `adjustRoot` keeps the branches past the top and left of the map
+  across, and along for a branch growing left or up. `RIGHT` and `LEFT` give today's positions exactly.
+- [x] The root's slanted sides stay a mind-map-only step (not with `isAllRootChildren`, nor growing down or up).
+- [x] Tests: all 645 library tests pass unchanged, the feature tour's golden image among them; 6 new: `DOWN` places
+  the children below their parent in a row in order, a gap below, centered on it, each branch as wide as it needs;
+  `UP` is `DOWN` turned over; `isAllRootChildren` takes the root's children whatever their side.
 
 ### Task A3: Geometry by direction
 
