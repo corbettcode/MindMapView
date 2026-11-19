@@ -6,6 +6,7 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.BoundaryStyle
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.TaskDate
 import com.mindsync.library.data.TaskProgress
@@ -163,6 +164,12 @@ object MindMapViewFile {
         rootElement.childNodes().zip(children).forEach { (element, id) ->
             val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
             if (side != null) tree.setRootChildSide(id, side)
+            // A floating topic without where it is is read as an attached one, rather than put anywhere.
+            val dx = element.attributes["dx"]?.toFloatOrNull()
+            val dy = element.attributes["dy"]?.toFloatOrNull()
+            if (element.attributes["floating"] == "true" && dx != null && dy != null) {
+                tree.setFloating(id, DpOffset(Dp(dx), Dp(dy)))
+            }
         }
         map.children.firstOrNull { it.name == "rootposition" }?.let { position ->
             val x = position.attributes["x"]?.toFloatOrNull()
@@ -257,6 +264,11 @@ object MindMapViewFile {
         // The root is always an oval.
         if (node.parentId != null) attribute("shape", node.shape.name.lowercase())
         if (node.parentId == tree.getRootNode().id) attribute("side", tree.sideOf(node.id).name.lowercase())
+        tree.floatingOffsetOf(node.id)?.let { offset ->
+            attribute("floating", "true")
+            attribute("dx", offset.x.dpVal.toString())
+            attribute("dy", offset.y.dpVal.toString())
+        }
         if (tree.isFolded(node.id)) attribute("folded", "true")
         tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
         val task = tree.taskOf(node.id)

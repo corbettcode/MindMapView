@@ -115,12 +115,11 @@ the outline; phase D documents them.
 
 **Files:** `io/MindMapViewFile.kt`, test `FloatingFilesTest.kt`
 
-- [ ] `<node floating="true" dx="120" dy="-80" …>` under the root; attributes left out for an attached topic, so other
-  maps are written as before. A `floating` on a node that is not a child of the root is ignored.
-- [ ] Tests (3): round trip; a map without floating topics writes the same text as before; a misplaced attribute is
-  ignored.
-
----
+- [x] `<node … side="right" floating="true" dx="120.5" dy="-80.0">` under the root; the attributes are left out for
+  an attached topic, so other maps are written as before. `floating` on a node that is not a child of the root, or
+  without both `dx` and `dy`, is ignored and the topic is attached.
+- [x] Tests (4): round trip with its branch and order; no attributes written without floating topics; a misplaced
+  attribute is ignored; one without an offset is attached.
 
 ## Phase B: Making and moving them
 
