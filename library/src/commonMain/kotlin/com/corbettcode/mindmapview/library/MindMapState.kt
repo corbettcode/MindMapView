@@ -1882,13 +1882,13 @@ class MindMapState(
     }
 
     /**
-     * Moves the view so the node is in the middle of it. The view goes no further past the top and left of
-     * the tree than it can be panned, so a node near them may stay short of the middle.
+     * Moves the view so the node is in the middle of it, even when that takes the view past the top or left of the
+     * tree, further than it can be panned; panning then takes it back toward the tree but no further out.
      */
     fun centerNode(id: String) {
         val node = tree.nodes[id] ?: return
         if (viewportSize.isEmpty()) return
-        currentPoint = limitPan(panToCenter(node))
+        currentPoint = panToCenter(node)
         invalidate()
     }
 
@@ -2372,17 +2372,20 @@ class MindMapState(
     internal fun onTransform(pan: Offset, zoom: Float) {
         val center = viewportSize.center
         scaleFactor *= zoom
-        currentPoint = limitPan(center - (center - currentPoint) * zoom + pan)
+        currentPoint = limitPan(center - (center - currentPoint) * zoom + pan, from = currentPoint)
     }
 
     // The mind map is not panned past its left and top, other than to the nodes a dragged root left there, or as far as
-    // zooming out around the center of the screen moved it.
-    private fun limitPan(point: Offset): Offset {
+    // zooming out around the center of the screen moved it. A view already further out, as centerNode leaves it, stays
+    // where it is rather than jumping back, and goes no further out.
+    private fun limitPan(point: Offset, from: Offset? = null): Offset {
         val (overflowX, overflowY) = mindMapManager.measureOverflow()
         val zoomedOut = viewportSize.center * maxOf(0f, 1f - scaleFactor)
+        val limitX = maxOf(overflowX.toPx(density) * scaleFactor, zoomedOut.x)
+        val limitY = maxOf(overflowY.toPx(density) * scaleFactor, zoomedOut.y)
         return Offset(
-            minOf(maxOf(overflowX.toPx(density) * scaleFactor, zoomedOut.x), point.x),
-            minOf(maxOf(overflowY.toPx(density) * scaleFactor, zoomedOut.y), point.y),
+            minOf(if (from == null) limitX else maxOf(limitX, from.x), point.x),
+            minOf(if (from == null) limitY else maxOf(limitY, from.y), point.y),
         )
     }
 

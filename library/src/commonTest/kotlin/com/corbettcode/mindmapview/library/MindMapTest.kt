@@ -2853,6 +2853,38 @@ class MindMapTest {
     }
 
     @Test
+    fun centeringANodeNearTheTopGoesPastWhereTheViewCanBePanned() = runComposeUiTest {
+        val state = MindMapState()
+        setMindMap(state)
+        waitForIdle()
+        fun onScreen(node: NodeData<*>) = with(density) {
+            Offset(node.path.centerX.dpVal.dp.toPx(), node.path.centerY.dpVal.dp.toPx())
+        } * state.scaleFactor + state.currentPoint
+        val middle = onScreen(state.tree.getRootNode())
+        repeat(12) {
+            clickNode(state.tree.getRootNode())
+            state.addNode("child $it")
+            waitForIdle()
+        }
+        val top = state.tree.getRootNode().children.map { state.tree.getNode(it) }.minBy { it.path.centerY.dpVal }
+        // Panning down as far as the view goes leaves the top child above the middle.
+        state.onTransform(Offset(0f, 100000f), 1f)
+        assertTrue(onScreen(top).y < middle.y - 1f)
+
+        state.centerNode(top.id)
+        waitForIdle()
+        assertEquals(middle.x, onScreen(top).x, 0.5f)
+        assertEquals(middle.y, onScreen(top).y, 0.5f)
+
+        // Panning further out leaves the view where it is; panning back toward the tree moves it.
+        val centered = state.currentPoint
+        state.onTransform(Offset(0f, 100f), 1f)
+        assertEquals(centered.y, state.currentPoint.y, 0.5f)
+        state.onTransform(Offset(0f, -100f), 1f)
+        assertEquals(centered.y - 100f, state.currentPoint.y, 0.5f)
+    }
+
+    @Test
     fun goingToAHiddenNodeUnfoldsTheNodesAboveIt() = runComposeUiTest {
         val fold = stateToFold()
         val state = fold.state
