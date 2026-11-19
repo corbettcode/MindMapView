@@ -171,6 +171,8 @@ fun EditNodeDialog(
     , attributes: List<NodeAttribute>
     // The names other nodes have attributes of, to add one of at a click.
     , knownAttributeNames: List<String>
+    // A word on the attributes, below them: what a topic's labels do in a matrix, say.
+    , attributeHint: String? = null
     // Whether the attributes are open to start with, as when they are what the dialog was opened for.
     , isAttributesOpenOnStart: Boolean
     , mapEmojis: List<String>
@@ -692,6 +694,7 @@ fun EditNodeDialog(
                             rows = attributeRows
                             , knownNames = knownAttributeNames
                             , isFocusedOnStart = startsInAttributes
+                            , hint = attributeHint
                             , modifier = Modifier
                                 .padding(12.dp)
                                 .onFocusChanged { isAttributesFocused = it.hasFocus }

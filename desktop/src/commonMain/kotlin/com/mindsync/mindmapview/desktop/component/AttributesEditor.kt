@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,7 +41,7 @@ fun attributesToKeep(rows: List<NodeAttribute>): List<NodeAttribute> =
  * A node's attributes as rows of a name and a value, which can be changed, removed and added to. A row can be added
  * of each of the [knownNames] other nodes have attributes of. Enter goes on to the next field: from a name to its
  * value, and from a value to the name on the next row, which is added after the last row. With [isFocusedOnStart],
- * the first name is focused, to type one in at once.
+ * the first name is focused, to type one in at once. A [hint], when there is one, is shown below the rows.
  */
 @Composable
 fun AttributesEditor(
@@ -48,6 +49,7 @@ fun AttributesEditor(
     , knownNames: List<String>
     , isFocusedOnStart: Boolean
     , modifier: Modifier = Modifier
+    , hint: String? = null
 ) {
     val unusedNames = knownNames.filter { name -> rows.none { it.name == name } }
     // The fields by row and column, the name being column 0 and the value column 1.
@@ -134,6 +136,13 @@ fun AttributesEditor(
                     Text("+ $name")
                 }
             }
+        }
+        hint?.let {
+            Text(
+                it
+                , style = MaterialTheme.typography.bodySmall
+                , color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

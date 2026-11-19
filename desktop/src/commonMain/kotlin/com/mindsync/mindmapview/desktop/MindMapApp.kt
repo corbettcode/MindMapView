@@ -1703,6 +1703,10 @@ private fun MindMapScreen(
                     else state.tree.childTopicKindOf(node.id)
                 } ?: TopicKind.TOPIC
             }
+            // Whether the topic edited is in a cell of a matrix, where its labels make its column.
+            val isMatrixCellEdited = remember(currentOperation) {
+                currentOperation is Operation.Update && selectedNode?.let { state.tree.isMatrixCell(it.id) } == true
+            }
             // Topics and subtopics are each counted on their own.
             val nodeNumber = remember(currentOperation) {
                 nextNodeNumber(state.tree, editedKind, createdNodeCount[editedKind] ?: 0)
@@ -1798,7 +1802,13 @@ private fun MindMapScreen(
                     } else {
                         emptyList()
                     },
-                    knownAttributeNames = remember(currentOperation) { attributeNames(state.tree) },
+                    knownAttributeNames = remember(currentOperation) {
+                        val names = attributeNames(state.tree)
+                        // A topic in a matrix is offered labels, which make its column.
+                        if (isMatrixCellEdited && LABELS_ATTRIBUTE !in names) (names + LABELS_ATTRIBUTE).sorted()
+                        else names
+                    },
+                    attributeHint = MATRIX_LABEL_HINT.takeIf { isMatrixCellEdited },
                     isAttributesOpenOnStart = isEditForAttributes,
                     onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay,
                         attributeDisplay, task ->
@@ -2266,6 +2276,10 @@ private val BoundaryStyle.label: String
 
 // The names of the attributes of all nodes of the map: an attribute is given to a node, but its name is
 // one of the map.
+// What the edit dialog says of labels for a topic in a matrix.
+internal const val MATRIX_LABEL_HINT =
+    "In a matrix, the first of the topic's Labels, separated by commas, is the column it is in."
+
 private fun attributeNames(tree: Tree<*>): List<String> {
     val names = mutableSetOf<String>()
     tree.doPreorderTraversal { node -> tree.attributesOf(node.id).forEach { names.add(it.name) } }

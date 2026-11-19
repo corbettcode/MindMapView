@@ -306,7 +306,7 @@ class Tree<T> {
      * Whether the node is a topic in a cell of a matrix: a child of one of its rows or columns, but a summary. Its
      * label is the header of its column, so the table of its attributes leaves it out.
      */
-    internal fun isMatrixCell(id: String): Boolean {
+    fun isMatrixCell(id: String): Boolean {
         val groupId = getNode(id).parentId ?: return false
         val ownerId = getNode(groupId).parentId ?: return false
         val isOwner = structureOf(ownerId).isMatrix && structureOwnerOf(ownerId) == ownerId

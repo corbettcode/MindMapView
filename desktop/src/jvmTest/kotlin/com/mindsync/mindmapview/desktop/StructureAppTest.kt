@@ -133,6 +133,58 @@ class StructureAppTest {
     }
 
     @Test
+    fun viewMenuSetsTheFishbonesAndMatrices() = runComposeUiTest {
+        val state = shownApp()
+
+        listOf(
+            MapStructure.FISHBONE_LEFT, MapStructure.FISHBONE_RIGHT, MapStructure.MATRIX_ROWS
+            , MapStructure.MATRIX_COLUMNS
+        ).forEach { structure ->
+            onNodeWithText("View").performClick()
+            onNodeWithText("Structure").performClick()
+            onNodeWithText(structure.label).performClick()
+            waitForIdle()
+            assertEquals(structure, state.tree.structure)
+        }
+        press(Key.Z, Key.CtrlLeft)
+        assertEquals(MapStructure.MATRIX_ROWS, state.tree.structure)
+    }
+
+    private fun ComposeUiTest.openAttributes() {
+        onNodeWithText("Edit").performClick()
+        onNodeWithText("Attributes...").performScrollTo().performClick()
+        waitForIdle()
+    }
+
+    @Test
+    fun aTopicInAMatrixIsToldWhatItsLabelsDoAndOfferedThem() = runComposeUiTest {
+        val state = shownApp()
+        val one = state.tree.getRootNode().children.first()
+        state.select(state.tree.getNode(one))
+        state.addNode("Cell")
+        state.setStructure(MapStructure.MATRIX_ROWS)
+        val cell = state.tree.getNode(one).children.single()
+        state.select(state.tree.getNode(cell))
+        waitForIdle()
+
+        openAttributes()
+
+        onNodeWithText(MATRIX_LABEL_HINT).assertExists()
+        onNodeWithText("+ Labels").assertExists()
+    }
+
+    @Test
+    fun aTopicOutsideAMatrixIsNotToldOfLabels() = runComposeUiTest {
+        val state = shownApp()
+        state.select(state.tree.getNode(state.tree.getRootNode().children.first()))
+        waitForIdle()
+
+        openAttributes()
+
+        onNodeWithText(MATRIX_LABEL_HINT).assertDoesNotExist()
+    }
+
+    @Test
     fun branchesAreNotMovedRoundTheRootOutsideTheMindMap() = runComposeUiTest {
         val state = shownApp()
         state.setStructure(MapStructure.LOGIC_RIGHT)

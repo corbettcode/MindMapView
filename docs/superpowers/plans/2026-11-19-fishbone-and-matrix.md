@@ -213,12 +213,17 @@ golden `matrix-project.png`
 
 ### Task D1: In the app
 
-**Files:** desktop `menuBar/StructureMenu.kt` (pictures), the edit dialog's attributes (a hint that "Labels" sets a
-matrix's column), test `StructureAppTest.kt`
+**Files:** desktop `component/AttributesEditor.kt` (`hint`), `dialog/EditNodeDialog.kt` (`attributeHint`),
+`MindMapApp.kt` (`MATRIX_LABEL_HINT`, "+ Labels" offered), library `data/Tree.kt` (`isMatrixCell` public), test
+`StructureAppTest.kt`
 
-- [ ] Both structures in View › Structure and Edit › Branch Structure with their pictures; Preferences › New maps
-  offers them too.
-- [ ] Tests: the submenus set them; undo.
+- [x] View › Structure, Edit › Branch Structure and Preferences › New maps already list the four, each with its
+  picture (A1).
+- [x] Editing a topic in a matrix cell, the attributes say that the first of its Labels is its column, and offer a
+  "+ Labels" row when no topic has labels yet.
+- [x] Tests (3): View › Structure sets each of the four and undo takes the last back; the hint and "+ Labels" for a
+  topic in a matrix; no hint outside one. All 738 library and 257 desktop tests pass on a full rerun, and the web app
+  builds.
 
 ### Task D2: Docs
 
