@@ -14,6 +14,17 @@ plugins {
 group = "com.corbettcode.mindmapview"
 version = "2.0.0"
 
+// The jar and klib files are named after the project as well, and library-jvm.jar can meet another project's
+// library-jvm.jar in an application's lib folder.
+base {
+    archivesName = "MindMapView"
+}
+
+// Kotlin/Native names the iOS klibs it packs after the project, whatever archivesName is.
+tasks.withType<Zip>().matching { it.name in setOf("iosArm64Klib", "iosSimulatorArm64Klib") }.configureEach {
+    archiveBaseName = "MindMapView-${name.removeSuffix("Klib").lowercase()}"
+}
+
 val generateEmojiData by tasks.registering {
     val emojiTest = file("emoji/emoji-test.txt")
     val annotations = file("emoji/annotations-en.xml")
