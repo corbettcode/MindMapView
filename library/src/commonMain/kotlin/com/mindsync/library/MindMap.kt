@@ -94,8 +94,8 @@ import com.mindsync.library.model.TopicKind
 import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.GrowDirection
-import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.node.NodeDrawerFactory
 import com.mindsync.library.util.Dp

@@ -2153,7 +2153,7 @@ class MindMapState(
             Dp(Px(point.y).toDp(density)),
         )
         mindMapManager.update(tree)
-        mindMapManager.getLayoutManager(tree.sideOf(selectedNode.id)).arrangeNode(tree, tree.getNode(selectedNode.id))
+        mindMapManager.layoutManagerFor(selectedNode.id).arrangeNode(tree, tree.getNode(selectedNode.id))
         attachedNode = findIncludedNode(point, selectedNode.id)
         invalidate()
     }

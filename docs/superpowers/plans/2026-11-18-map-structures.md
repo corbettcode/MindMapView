@@ -124,14 +124,14 @@ subclasses stay as they are, being public), test `DirectionLayoutTest.kt`
 
 ### Task A4: The logic chart
 
-**Files:** `model/MapStructure.kt`, `MindMapManager.kt`, `MindMapState.kt` (root add buttons, Move Clockwise only in
-the mind map), test `LogicChartTest.kt`
+**Files:** `MindMapManager.kt` (`layoutManagerFor`, the root's layouts by structure, floating topics and fitting by
+structure), `MindMapState.kt` (dragging a node lays it out by its branch's layout), test `LogicChartTest.kt`
 
-- [ ] `LOGIC_RIGHT` / `LOGIC_LEFT` lay all the root's children out on one side, in their order, straight out (no
-  slanted sides); the root's sides are kept for switching back.
-- [ ] Tests (4): all to the right in order; to the left; back to the mind map with the sides as they were; undo.
-
----
+- [x] `LOGIC_RIGHT` / `LOGIC_LEFT` lay all the root's children out on one side, in their order, straight out (no
+  slanted sides); the root's sides are kept for switching back. Every structure with one direction (the org chart
+  too) goes through the same path; the root of a map in another structure has one add button.
+- [x] Tests (4): all to the right in order; to the left, kept on the map; back to the mind map with every position
+  and side as it was; the root's buttons.
 
 ## Phase B: The org chart
 
