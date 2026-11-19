@@ -9,6 +9,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.BranchBox
 import com.mindsync.library.layout.FishboneLayout
+import com.mindsync.library.layout.MatrixLayout
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
 import com.mindsync.library.layout.OwnedBranches
@@ -187,6 +188,7 @@ class MindMapManager {
                     .arrange(owner, tree)
                 structure == MapStructure.TIMELINE -> timelineLayout.arrange(owner, tree)
                 structure.isFishbone -> fishboneLayout(structure).arrange(owner, tree)
+                structure.isMatrix -> matrixLayout(structure).arrange(owner, tree)
                 else -> layoutManagerFor(owner.id).arrangeChildren(owner, tree)
             }
         }
@@ -214,6 +216,23 @@ class MindMapManager {
     private fun fishboneLayout(structure: MapStructure): FishboneLayout =
         fishboneLayouts.getValue(structure == MapStructure.FISHBONE_LEFT)
 
+    private val matrixLayouts = listOf(true, false).associateWith { isRows ->
+        MatrixLayout(
+            isRows
+            , directionManagers.getValue(GrowDirection.RIGHT)
+            , directionManagers.getValue(if (isRows) GrowDirection.DOWN else GrowDirection.RIGHT)
+        ).apply {
+            // Headers are measured as the app draws them once it can measure text, and guessed at before.
+            val guess = headerSize
+            headerSize = { text ->
+                measureTextSize?.headerSize(text)?.let { (width, height) -> width.dpVal to height.dpVal } ?: guess(text)
+            }
+        }
+    }
+
+    private fun matrixLayout(structure: MapStructure): MatrixLayout =
+        matrixLayouts.getValue(structure == MapStructure.MATRIX_ROWS)
+
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
         treeChartLayouts.values.forEach { it.ownedBranches = ownedBranches }
@@ -223,7 +242,8 @@ class MindMapManager {
     // Whether the map is laid out as a whole around its root and then moved clear of the top and left of the map,
     // rather than placed where its branches fit, as those laid out by a direction are.
     private val isLaidOutWhole: Boolean
-        get() = tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE || tree.structure.isFishbone
+        get() = tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE || tree.structure.isFishbone ||
+            tree.structure.isMatrix
 
     private val timelineLayout = TimelineLayout(
         directionManagers.getValue(GrowDirection.UP)
@@ -239,7 +259,8 @@ class MindMapManager {
         val isOwner = tree.branchStructureOf(node.id) != null
         when {
             // A tree chart's or a timeline's own topic has its branch laid out from it, wherever it is.
-            isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE || structure.isFishbone) -> {
+            isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE || structure.isFishbone ||
+                structure.isMatrix) -> {
                 ownedBranches.arrangeBelow(node, tree)
             }
             // A cause of a fishbone has its ribs along its bone, from where it is.
@@ -307,6 +328,13 @@ class MindMapManager {
     }
 
     private fun layOutWhole(root: NodeData<*>) {
+        if (tree.structure.isMatrix) {
+            matrixLayout(tree.structure).arrange(root, tree)
+            floatingTopics().forEach { (node, offset) ->
+                directionManagers.getValue(GrowDirection.RIGHT).arrangeFloating(root, node, offset, tree)
+            }
+            return
+        }
         if (tree.structure.isFishbone) {
             fishboneLayout(tree.structure).arrange(root, tree)
             val tail = if (tree.structure == MapStructure.FISHBONE_LEFT) GrowDirection.RIGHT else GrowDirection.LEFT

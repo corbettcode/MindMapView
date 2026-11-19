@@ -86,13 +86,15 @@ class MapStructureTest {
     }
 
     @Test
-    fun fishbonesGrowAwayFromTheirHeadsAndMatricesAlongTheirRows() {
+    fun fishbonesGrowAwayFromTheirHeadsAndMatricesIntoTheirCells() {
         val tree = tree()
 
         assertEquals(GrowDirection.RIGHT, MapStructure.FISHBONE_LEFT.directionOf(tree, "d"))
         assertEquals(GrowDirection.LEFT, MapStructure.FISHBONE_RIGHT.directionOf(tree, "d"))
         assertEquals(GrowDirection.RIGHT, MapStructure.MATRIX_ROWS.directionOf(tree, "d"))
-        assertEquals(GrowDirection.DOWN, MapStructure.MATRIX_COLUMNS.directionOf(tree, "d"))
+        // In a matrix by columns the columns grow down, and the topics in their cells right, as logic charts.
+        assertEquals(GrowDirection.DOWN, MapStructure.MATRIX_COLUMNS.directionOf(tree, "b"))
+        assertEquals(GrowDirection.RIGHT, MapStructure.MATRIX_COLUMNS.directionOf(tree, "d"))
         assertTrue(MapStructure.FISHBONE_LEFT.isFishbone && MapStructure.FISHBONE_RIGHT.isFishbone)
         assertTrue(MapStructure.MATRIX_ROWS.isMatrix && MapStructure.MATRIX_COLUMNS.isMatrix)
         assertFalse(MapStructure.entries.any { it.isFishbone && it.isMatrix })

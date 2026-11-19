@@ -163,17 +163,28 @@ test `FishboneLayoutTest.kt`
 
 ### Task C1: The matrix layout
 
-**Files:** new `layout/MatrixLayout.kt`, `MindMapManager.kt`, `data/Tree.kt` (`labelOf(id)`, the first value of the
-`Labels` attribute), test `MatrixLayoutTest.kt`
+**Files:** new `layout/MatrixLayout.kt` (`MatrixLayout`, and `matrixGrid`, which the drawing in C2 shares),
+`MindMapManager.kt`, `model/MapStructure.kt` (`matrixDirectionOf`), `data/Tree.kt` (`labelOf`, `setLabel`),
+`data/NodeAttribute.kt` (`LABELS_ATTRIBUTE`, shared with `XMind`), `layout/MeasureTextSize.kt` (`header`,
+`headerSize`), tests `MatrixLayoutTest.kt`, `MapStructureTest.kt`
 
-- [ ] Columns are the labels of the owner's grandchildren in the order first met, then the column with no header. Each
-  cell stacks its topics, each laid out as a logic chart → (or its branch structure) and measured as a box. Column
-  widths and row heights fit the largest cell; padding inside cells; the owner in the corner, the rows in the first
-  column, centered in their cells.
-- [ ] `MATRIX_COLUMNS` swaps the axes.
-- [ ] Measured as a box when it is a branch's; a folded row is one line high.
-- [ ] Tests: cells in the right columns by label; unlabeled topics in the last column; widths and heights fit;
-  several topics in one cell stacked; the turned matrix; a matrix branch clear of its siblings; folding.
+- [x] `matrixGrid` works out the table from the sizes of what is in it: the owner in the corner; its rows (columns) in
+  the first cell of each; the labels as headers of the other way, in the order first met row by row, then the one
+  with no header; each cell's topics stacked, each with its branch laid out as a logic chart → and measured. Each
+  column is as wide, and each row as tall, as the largest in it with 10 dp padding, at least 40 dp. The corner cell is
+  centered on the owner; topics are at the top left of their cells, row and column topics centered in theirs.
+- [x] Headers are measured as the app draws them, the text of a topic on one line, once text can be measured, and
+  guessed at before.
+- [x] `MATRIX_COLUMNS` swaps the axes. Directions: the rows of a matrix by rows grow right and stack by y; the
+  columns of one by columns grow down and stack by x; the topics in cells grow right; a summary of the rows is below
+  the table (right of it, for columns), its branch growing away from it. Summaries of topics in cells are placed in
+  the cells by their own labels, as XMind does with any topic.
+- [x] A folded row has no cells; a matrix branch is measured as a box, clear of its siblings.
+- [x] Tests (6): a label is the first of a node's labels, and setting one keeps the others; topics in the columns of
+  their labels in the order first met, the unlabeled last; rows one below another, a cell's topics stacked, the row
+  as tall as them; the turned table; a folded row; a matrix branch clear of its siblings. The phase A test of a
+  matrix by columns now checks a column and a cell topic apart. All 734 library and 254 desktop tests pass on a full
+  rerun.
 
 ### Task C2: Drawing the matrix
 

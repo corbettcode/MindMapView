@@ -8,3 +8,6 @@ data class NodeAttribute(
     val name: String
     , val value: String
 )
+
+/** The name of the attribute that holds a node's labels, comma-separated, as XMind's labels are read into. */
+const val LABELS_ATTRIBUTE = "Labels"

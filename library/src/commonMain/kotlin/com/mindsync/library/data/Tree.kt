@@ -290,6 +290,46 @@ class Tree<T> {
         if (attributes.isEmpty()) nodeAttributes.remove(id) else nodeAttributes[id] = attributes.toList()
     }
 
+    /**
+     * Returns the node's label: the first of the comma-separated values of its [LABELS_ATTRIBUTE] attribute, as
+     * XMind's labels are read, or null without one. A matrix puts a topic in the column of its label.
+     */
+    fun labelOf(id: String): String? = attributesOf(id)
+        .firstOrNull { it.name == LABELS_ATTRIBUTE }
+        ?.value
+        ?.split(',')
+        ?.first()
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+
+    /**
+     * Makes [label] the node's first label, keeping its others, or takes its labels away when it is null.
+     */
+    fun setLabel(
+        id: String
+        , label: String?
+    ) {
+        val attributes = attributesOf(id)
+        val others = attributes.firstOrNull { it.name == LABELS_ATTRIBUTE }
+            ?.value
+            ?.split(',')
+            ?.drop(1)
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() && it != label }
+            .orEmpty()
+        val labels = listOfNotNull(label) + if (label == null) emptyList() else others
+        val attribute = labels
+            .takeIf { it.isNotEmpty() }
+            ?.let { NodeAttribute(LABELS_ATTRIBUTE, it.joinToString(", ")) }
+        val index = attributes.indexOfFirst { it.name == LABELS_ATTRIBUTE }
+        val changed = when {
+            index < 0 -> attributes + listOfNotNull(attribute)
+            attribute == null -> attributes.filterIndexed { i, _ -> i != index }
+            else -> attributes.mapIndexed { i, it -> if (i == index) attribute else it }
+        }
+        setAttributes(id, changed)
+    }
+
     /** Returns what is drawn around a node: no border unless it was given one. */
     fun borderOf(id: String): NodeBorder = nodeBorders[id] ?: NodeBorder()
 

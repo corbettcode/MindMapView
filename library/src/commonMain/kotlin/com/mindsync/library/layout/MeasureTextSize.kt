@@ -79,6 +79,19 @@ class MeasureTextSize(
     private fun noteTextStyle(style: TextStyle) =
         style.copy(fontSize = style.fontSize * NOTE_TEXT_SCALE, textAlign = TextAlign.Start)
 
+    private val headerLayouts = mutableMapOf<String, TextLayoutResult>()
+
+    /** Returns [text], a header of a matrix, laid out on one line as the text of a topic is. */
+    fun header(text: String): TextLayoutResult {
+        if (headerLayouts.size >= RICH_TEXT_CACHE_SIZE && text !in headerLayouts) headerLayouts.clear()
+        return headerLayouts.getOrPut(text) { textMeasurer.measure(text, textStyleOf(TopicKind.TOPIC), maxLines = 1) }
+    }
+
+    /** Returns the width and height, in dp, of [text] as a header of a matrix. */
+    fun headerSize(text: String): Pair<Dp, Dp> = header(text).size.let { size ->
+        Dp(Px(size.width.toFloat()).toDp(density)) to Dp(Px(size.height.toFloat()).toDp(density))
+    }
+
     fun measure(
         description: String
         , style: TextStyle = textStyle

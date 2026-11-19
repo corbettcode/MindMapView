@@ -90,13 +90,13 @@ enum class MapStructure(
         , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
-        LOGIC_RIGHT, BRACE_RIGHT, MATRIX_ROWS -> GrowDirection.RIGHT
+        LOGIC_RIGHT, BRACE_RIGHT -> GrowDirection.RIGHT
         LOGIC_LEFT -> GrowDirection.LEFT
-        MATRIX_COLUMNS -> GrowDirection.DOWN
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
         TIMELINE -> timelineDirectionOf(tree, id, owner)
         FISHBONE_LEFT, FISHBONE_RIGHT -> fishboneDirectionOf(tree, id, owner)
+        MATRIX_ROWS, MATRIX_COLUMNS -> matrixDirectionOf(tree, id, owner)
     }
 
     /** Whether the map is a tree chart, laid out in indented columns rather than by a direction. */
@@ -156,6 +156,22 @@ enum class MapStructure(
         if (id != branchId) return tail
         val boneIds = tree.getNode(owner).children.filterNot { tree.isFloating(it) || tree.isSummary(it) }
         return if (boneIds.indexOf(branchId) % 2 == 0) GrowDirection.DOWN else GrowDirection.UP
+    }
+
+    // The owner's children, the rows of a matrix by rows, are one above the other, their cells to their right; those
+    // of a matrix by columns side by side, their cells below them. The topics in the cells grow right, as logic
+    // charts, and those of a summary of the rows, which is past the table, away from it.
+    private fun matrixDirectionOf(
+        tree: Tree<*>
+        , id: String
+        , owner: String
+    ): GrowDirection {
+        val groupDirection = if (this == MATRIX_ROWS) GrowDirection.RIGHT else GrowDirection.DOWN
+        if (id == owner) return groupDirection
+        val branchId = generateSequence(id) { tree.getNode(it).parentId }.first { tree.getNode(it).parentId == owner }
+        if (tree.isFloating(branchId)) return GrowDirection.RIGHT
+        if (tree.isSummary(branchId)) return if (this == MATRIX_ROWS) GrowDirection.DOWN else GrowDirection.RIGHT
+        return if (id == branchId) groupDirection else GrowDirection.RIGHT
     }
 
     // The owner's children are along the axis, to its right; the branch of every other one goes up, and of the rest

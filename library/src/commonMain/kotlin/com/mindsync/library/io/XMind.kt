@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.DpOffset
+import com.mindsync.library.data.LABELS_ATTRIBUTE
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.NodeTask
@@ -46,7 +47,6 @@ object XMind {
     private const val ATTACHED = "attached"
     private const val DETACHED = "detached"
     private const val MASTER = "master"
-    private const val LABELS_ATTRIBUTE = "Labels"
 
     private val LINK_SCHEMES = listOf("http://", "https://", "mailto:", "file:")
     private val IMAGE = Regex("<img\\b[^>]*>", RegexOption.IGNORE_CASE)
