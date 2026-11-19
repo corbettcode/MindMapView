@@ -186,13 +186,14 @@ test `FloatingDragTest.kt`
 
 ### Task C2: The outline
 
-**Files:** `outline/OutlineRows.kt` (`isFloating`), `outline/OutlineRowView.kt` (dashed bullet), `MindMapState.kt`
-(`indent`, `outdent` with floating topics), tests `OutlineRowsTest.kt`, `OutlineMoveStateTest.kt`
+**Files:** `outline/OutlineRows.kt` (`isFloating`), `outline/OutlineRowView.kt` (dashed bullet), tests
+`OutlineRowsTest.kt`, `OutlineMoveStateTest.kt` (the tree keeping floating topics last makes `indent`, `outdent` and
+the moves right with no change of their own)
 
-- [ ] Floating topics are rows at depth 1 after the attached topics, with a dashed bullet.
-- [ ] Indenting a floating topic makes it an attached child of the row above; outdenting a child of a floating topic
+- [x] Floating topics are rows at depth 1 after the attached topics, with a dashed bullet.
+- [x] Indenting a floating topic makes it an attached child of the row above; outdenting a child of a floating topic
   makes it an attached topic of the root on the right. Move up and down keep floating topics among themselves.
-- [ ] Tests (4): row order and flag; indent; outdent; move among floating topics.
+- [x] Tests (4): row order, depth and flag; indent; outdent; moves among floating topics only.
 
 ---
 

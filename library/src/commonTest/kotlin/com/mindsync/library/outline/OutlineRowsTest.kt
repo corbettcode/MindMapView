@@ -1,10 +1,12 @@
 package com.mindsync.library.outline
 
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -82,4 +84,17 @@ class OutlineRowsTest {
         assertNull(rows.rowBelow("q"))
         assertNull(rows.rowBelow("f"))
     }
+
+    @Test
+    fun floatingTopicsAreRowsAfterTheOtherTopicsOfTheRoot() {
+        val tree = tree().apply { setFloating("p", DpOffset(Dp(0f), Dp(300f))) }
+
+        val rows = outlineRows(tree)
+
+        assertEquals(listOf("q", "p", "b", "f", "c"), rows.drop(1).map { it.id })
+        assertTrue(rows.single { it.id == "p" }.isFloating)
+        assertEquals(1, rows.single { it.id == "p" }.depth)
+        assertFalse(rows.single { it.id == "b" }.isFloating)
+    }
 }
+

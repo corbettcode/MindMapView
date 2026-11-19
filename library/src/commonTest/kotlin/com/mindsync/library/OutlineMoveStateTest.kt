@@ -1,5 +1,6 @@
 package com.mindsync.library
 
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.Tree
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.util.Dp
@@ -165,4 +166,47 @@ class OutlineMoveStateTest {
         assertFalse(state.tree.isSummary("s"))
         assertEquals("c", state.tree.getNode("s").parentId)
     }
+
+    @Test
+    fun indentedFloatingTopicIsAttachedToTheTopicAbove() {
+        val state = state()
+        state.tree.setFloating("q", DpOffset(Dp(0f), Dp(300f)))
+        state.selectNodes("q")
+
+        state.indent()
+
+        assertEquals("p", state.tree.getNode("q").parentId)
+        assertFalse(state.tree.isFloating("q"))
+    }
+
+    @Test
+    fun topicOutdentedFromAFloatingOneIsAttachedToTheRoot() {
+        val state = state()
+        state.tree.setFloating("p", DpOffset(Dp(0f), Dp(300f)))
+        state.selectNodes("c")
+
+        state.outdent()
+
+        assertEquals(listOf("q", "c", "p"), state.childrenOf(state.tree.getRootNode().id))
+        assertFalse(state.tree.isFloating("c"))
+        assertEquals(LayoutSide.RIGHT, state.tree.sideOf("c"))
+    }
+
+    @Test
+    fun floatingTopicsMoveOnlyAmongThemselves() {
+        val state = state()
+        val rootId = state.tree.getRootNode().id
+        state.tree.addNode("r", rootId, "R")
+        state.tree.setFloating("q", DpOffset(Dp(0f), Dp(300f)))
+        state.tree.setFloating("r", DpOffset(Dp(0f), Dp(400f)))
+        state.selectNodes("r")
+
+        state.moveAmongSiblings(isUp = true)
+        assertEquals(listOf("p", "r", "q"), state.childrenOf(rootId))
+
+        state.moveAmongSiblings(isUp = true)
+        assertEquals(listOf("p", "r", "q"), state.childrenOf(rootId), "not above the attached topics")
+        assertTrue(state.tree.isFloating("r"))
+    }
 }
+

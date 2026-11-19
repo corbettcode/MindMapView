@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isCtrlPressed
@@ -150,7 +151,7 @@ internal fun OutlineRowView(
             .testTag(outlineRowTag(row.id))
     ) {
         FoldArrow(row, textColor) { onFoldClick(node) }
-        Bullet(tree.fillOf(row.id), textColor)
+        Bullet(tree.fillOf(row.id), textColor, isDashed = row.isFloating)
         Spacer(Modifier.width(8.dp))
         TaskBadges(state, row.id, textColor)
         val textStyle = TextStyle(
@@ -282,11 +283,24 @@ private fun FoldArrow(
 private fun Bullet(
     fill: Color
     , outline: Color
+    , isDashed: Boolean
 ) {
     Canvas(modifier = Modifier.size(BULLET_SIZE)) {
         val radius = size.minDimension / 2
-        drawCircle(fill, radius)
-        drawCircle(outline.copy(alpha = 0.35f), radius - 0.5.dp.toPx(), style = Stroke(1.dp.toPx()))
+        // A floating topic has no line to the root, which its dashed ring stands for.
+        if (isDashed) {
+            val dash = 1.5.dp.toPx()
+            drawCircle(fill, radius * 0.55f)
+            drawCircle(
+                outline.copy(alpha = 0.7f)
+                , radius - 0.5.dp.toPx()
+                , style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)))
+            )
+        }
+        else {
+            drawCircle(fill, radius)
+            drawCircle(outline.copy(alpha = 0.35f), radius - 0.5.dp.toPx(), style = Stroke(1.dp.toPx()))
+        }
     }
 }
 
