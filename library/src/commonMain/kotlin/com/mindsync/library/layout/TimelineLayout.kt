@@ -36,14 +36,16 @@ internal class TimelineLayout(
             val manager = if (index % 2 == 0) up else down
             val node = tree.getNode(id)
             val halfNode = halfWidth(node).dpVal
-            val span = maxOf(manager.measureChildHeight(node, tree).dpVal, halfNode * 2)
-            val centerX = maxOf(axisCursor + halfNode, sideCursors.getValue(manager) + span / 2)
+            val (before, after) = manager.crossReach(node, tree).let { (before, after) ->
+                maxOf(before.dpVal, halfNode) to maxOf(after.dpVal, halfNode)
+            }
+            val centerX = maxOf(axisCursor + halfNode, sideCursors.getValue(manager) + before)
             val placed = node.withCenter(Dp(centerX), Dp(axisY))
             tree.setNode(id, placed)
-            manager.arrangeChildren(placed, tree)
-            spans[id] = centerX - span / 2 to centerX + span / 2
+            manager.arrangeBelow(placed, tree)
+            spans[id] = centerX - before to centerX + after
             axisCursor = centerX + halfNode + AXIS_GAP.dpVal
-            sideCursors[manager] = centerX + span / 2 + AXIS_GAP.dpVal
+            sideCursors[manager] = centerX + after + AXIS_GAP.dpVal
         }
         ids.filter { tree.isSummary(it) }.forEach { summaryId ->
             val rangeIds = tree.summaryChildIds(summaryId).filter { it in spans }
@@ -60,7 +62,7 @@ internal class TimelineLayout(
             val centerY = bottom + SUMMARY_OFFSET.value + halfHeight(summary).dpVal
             val placed = summary.withCenter(Dp((left + right) / 2), Dp(centerY))
             tree.setNode(summaryId, placed)
-            down.arrangeChildren(placed, tree)
+            down.arrangeBelow(placed, tree)
         }
     }
 }

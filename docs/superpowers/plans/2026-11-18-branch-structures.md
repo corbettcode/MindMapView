@@ -120,18 +120,22 @@ own.
 
 ### Task B1: The layouts measure boxes
 
-**Files:** new `layout/BranchBox.kt` (`BranchBox(back, forward, before, after)` in a direction's main/cross terms,
-with `turned` to screen terms), `layout/MindMapLayoutManager.kt` (stacking and main placement by box),
-`layout/TreeChartLayout.kt`, `layout/TimelineLayout.kt` (spans by box), test `BranchBoxTest.kt`
+**Files:** new `layout/BranchBox.kt` (`BranchBox(left, right, top, bottom)` on the screen, and `OwnedBranches`, which
+measures and lays out a branch with a structure of its own), `layout/MindMapLayoutManager.kt` (`ownedBranches`,
+stacking and main placement by box, `crossReach`, `arrangeBelow`), `layout/TimelineLayout.kt` (spans by
+`crossReach`), test `BranchBoxTest.kt`
 
-- [ ] `MindMapLayoutManager.measureBox(node, tree)`: today's numbers for a branch in its parent's structure (across:
-  `measureChildHeight` centered; back: the node's half size along). `arrangeChildren` stacks by `before + after` and
-  places the child's center `before` past where its slot starts, and along at the parent's edge + gap + `back`. The
-  same for `measureChildrenHeight`, `stackGaps`' summaries and boundaries, `adjustRoot`'s reaches.
-- [ ] `TreeChartLayout` and `TimelineLayout` take their columns' and axis topics' spans from their boxes.
-- [ ] No change: all library tests and both golden images pass on a full rerun.
-- [ ] Tests (3): a box of a leaf is its own size; of a branch is centered across and starts at its topic along; the
-  same for `DOWN`.
+- [x] A side layout with `ownedBranches` reads the box of a child with a structure of its own, turned to its
+  direction: it stacks it by how far it reaches before and after it across, places it the gap and its back reach past
+  its parent, and hands what is below it to `arrangeBelow`. The same in `outerEdge` (summaries), `backMost` (the
+  overflow past the top and left), summaries with a structure of their own, and floating topics. Any other branch goes
+  through the arithmetic it went through before, so nothing moves.
+- [x] The timeline's axis topics take their spans from `crossReach`, which is today's half each side for a branch in
+  its parent's structure. The tree chart is left to C1, which places columns by their boxes.
+- [x] No change: all 698 library and 251 desktop tests pass on a full rerun, both golden images among them.
+- [x] Tests (3): with the hook, a map without branch structures is laid out as without it; a child with a box as an
+  org chart row's is pushed its back reach past its parent and its siblings are clear of the box; a layout growing
+  down reads the box turned.
 
 ### Task B2: Directions in a branch
 

@@ -55,6 +55,12 @@ open class MindMapLayoutManager(
     private val slope = abs(tan(side.angleDegrees * PI.toFloat() / 180f))
 
     /**
+     * What lays out the branches of the topics with a structure of their own. Without it, every branch is laid out
+     * here.
+     */
+    internal var ownedBranches: OwnedBranches? = null
+
+    /**
      * Returns the root moved to where the nodes on this side of it fit, which have to be past the top and left of
      * the map: across the way they grow by half of [totalCross], the size across of a tree that is centered on the
      * root, and, for a branch growing up or left, along it too.
@@ -109,10 +115,10 @@ open class MindMapLayoutManager(
             val (gapBefore, gapAfter) = gaps[index]
             start += gapBefore
             val newMain = childMain(main(currentNodeData), currentNodeData, child, tree)
-            val newChild = place(child, newMain, start + (childCross / 2))
+            val newChild = place(child, newMain, start + (ownedBox(child, tree)?.let(::before) ?: (childCross / 2)))
 
             tree.setNode(childId, newChild)
-            arrangeChildren(newChild, tree)
+            arrangeBelow(newChild, tree)
             slots[childId] = start to start + childCross
             start += childCross + gapAfter + crossSpacing
         }
@@ -139,11 +145,15 @@ open class MindMapLayoutManager(
                     .map { outerEdge(tree.getNode(it), tree).dpVal }
                     .let { edges -> if (isBackward) edges.min() else edges.max() }
                 val summary = tree.getNode(summaryId)
-                val offset = Dp(SUMMARY_OFFSET.value) + mainHalf(summary)
+                val offset = Dp(SUMMARY_OFFSET.value) + mainBack(summary, tree)
                 val summaryMain = if (isBackward) Dp(edge) - offset else Dp(edge) + offset
-                val newSummary = place(summary, summaryMain, Dp((first + last) / 2))
+                // A summary's own branch need not reach as far before it as after it, so its box is centered.
+                val summaryCross = ownedBox(summary, tree)
+                    ?.let { box -> Dp((first + last) / 2) + (before(box) - after(box)) / 2 }
+                    ?: Dp((first + last) / 2)
+                val newSummary = place(summary, summaryMain, summaryCross)
                 tree.setNode(summaryId, newSummary)
-                arrangeChildren(newSummary, tree)
+                arrangeBelow(newSummary, tree)
                 placed.add(summaryId to rangeIds)
             }
     }
@@ -153,6 +163,9 @@ open class MindMapLayoutManager(
         node: NodeData<*>
         , tree: Tree<*>
     ): Dp {
+        ownedBox(node, tree)?.let { box ->
+            return if (isBackward) main(node) - forward(box) else main(node) + forward(box)
+        }
         val ownEdge = if (isBackward) main(node) - mainHalf(node) else main(node) + mainHalf(node)
         return tree.visibleChildren(node)
             .map { outerEdge(tree.getNode(it), tree) }
@@ -208,6 +221,7 @@ open class MindMapLayoutManager(
         , nodeMain: Dp
         , tree: Tree<*>
     ): Dp {
+        ownedBox(node, tree)?.let { box -> return nodeMain - (if (isHorizontal) box.left else box.top) }
         var backMost = nodeMain - mainHalf(node)
         val childIds = childrenOnSide(node, tree)
         val childBackMosts = mutableMapOf<String, Dp>()
@@ -228,7 +242,7 @@ open class MindMapLayoutManager(
                         rangeIds + placed.filter { (_, ids) -> ids.any { it in rangeIds } }.map { it.first }
                     val edge = passedIds.minOf { childBackMosts.getValue(it).dpVal }
                     val summary = tree.getNode(summaryId)
-                    val summaryMain = Dp(edge) - Dp(SUMMARY_OFFSET.value) - mainHalf(summary)
+                    val summaryMain = Dp(edge) - Dp(SUMMARY_OFFSET.value) - mainBack(summary, tree)
                     childBackMosts[summaryId] = backMost(summary, summaryMain, tree)
                     placed.add(summaryId to rangeIds)
                 }
@@ -246,7 +260,7 @@ open class MindMapLayoutManager(
         , tree: Tree<*>
     ): Dp {
         val gap = if (parent.parentId == null) rootGap(parent, tree) else mainHalf(parent) + mainSpacing
-        val offset = gap + mainHalf(child)
+        val offset = gap + mainBack(child, tree)
         return if (isBackward) parentMain - offset else parentMain + offset
     }
 
@@ -296,7 +310,7 @@ open class MindMapLayoutManager(
     ) {
         val placed = moveNode(node, root.path.centerX + offset.x, root.path.centerY + offset.y)
         tree.setNode(node.id, placed)
-        arrangeChildren(placed, tree)
+        arrangeBelow(placed, tree)
     }
 
     /** Returns [node] moved by [offset]. */
@@ -317,7 +331,7 @@ open class MindMapLayoutManager(
     ): DpOffset {
         val placed = moveNode(node, root.path.centerX + offset.x, root.path.centerY + offset.y)
         val back = backMost(node, main(placed), tree)
-        val before = cross(placed) - measureChildHeight(node, tree) / 2
+        val before = cross(placed) - crossBefore(node, tree)
         val left = if (isHorizontal) back else before
         val top = if (isHorizontal) before else back
         return DpOffset(
@@ -348,6 +362,70 @@ open class MindMapLayoutManager(
             tree.visibleChildren(node)
         }
     }
+
+    /**
+     * Returns how far [node] and the nodes below it reach before its center across the way this side grows, and
+     * after it: half of [measureChildHeight] each for a branch laid out here.
+     */
+    internal fun crossReach(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): Pair<Dp, Dp> {
+        val box = ownedBox(node, tree) ?: return measureChildHeight(node, tree).let { it / 2 to it / 2 }
+        return before(box) to after(box)
+    }
+
+    private fun crossBefore(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): Dp = crossReach(node, tree).first
+
+    /** Lays out the nodes below [node], here or, for a topic with a structure of its own, in that. */
+    internal fun arrangeBelow(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ) {
+        val branches = ownedBranches
+        if (branches != null && tree.branchStructureOf(node.id) != null) branches.arrangeBelow(node, tree)
+        else arrangeChildren(node, tree)
+    }
+
+    // The box of the branch of a topic with a structure of its own, or null for one laid out here.
+    private fun ownedBox(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): BranchBox? {
+        val branches = ownedBranches ?: return null
+        if (tree.branchStructureOf(node.id) == null) return null
+        return branches.boxOf(node, tree)
+    }
+
+    // How far a box reaches back towards the parent along the way this side grows, out away from it, and across
+    // before and after the node.
+    private fun back(box: BranchBox): Dp = when (direction) {
+        GrowDirection.RIGHT -> box.left
+        GrowDirection.LEFT -> box.right
+        GrowDirection.DOWN -> box.top
+        GrowDirection.UP -> box.bottom
+    }
+
+    private fun forward(box: BranchBox): Dp = when (direction) {
+        GrowDirection.RIGHT -> box.right
+        GrowDirection.LEFT -> box.left
+        GrowDirection.DOWN -> box.bottom
+        GrowDirection.UP -> box.top
+    }
+
+    private fun before(box: BranchBox): Dp = if (isHorizontal) box.top else box.left
+
+    private fun after(box: BranchBox): Dp = if (isHorizontal) box.bottom else box.right
+
+    // How far the node's branch reaches back towards its parent: half of the node, or its box's for one with a
+    // structure of its own, which may reach back past it.
+    private fun mainBack(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): Dp = ownedBox(node, tree)?.let(::back) ?: mainHalf(node)
 
     // Where the node's center is along the way the branch grows, and across it.
     private fun main(node: NodeData<*>): Dp = if (isHorizontal) node.path.centerX else node.path.centerY
@@ -412,6 +490,7 @@ open class MindMapLayoutManager(
         nodeData: NodeData<*>,
         tree: Tree<*>,
     ): Dp {
+        ownedBox(nodeData, tree)?.let { box -> return before(box) + after(box) }
         val childrenCross = measureChildrenHeight(nodeData, tree)
         val ownCross = crossSize(nodeData)
         return if (childrenCross.dpVal > ownCross.dpVal) childrenCross else ownCross
