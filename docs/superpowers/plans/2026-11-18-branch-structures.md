@@ -1,0 +1,210 @@
+# Branch Structures Implementation Plan
+
+> **For agentic workers:** Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** A topic can have a **structure of its own**, as in XMind: a mind map whose "Timeline" branch is a timeline
+and whose "Team" branch is an org chart. The topic's children and everything below them are laid out in that
+structure; the topic itself stays where its parent's structure puts it. The topics below a topic with a structure
+follow it until one of them has its own. As with the map's structure, only the drawing changes: switching a branch
+back to its parent's structure gives the map as it was.
+
+Today the structure is the map's (`tree.structure`) and every question about it asks the map: `tree.directionOf(id)`
+goes to `tree.structure.directionOf`, and `MindMapManager`, `MindMap.kt` (lines, braces, the timeline's axis, add
+buttons, the tree chart's elbows), `SummaryGeometry`, `Tree.moveAmongSiblings` and `MindMapState` all test
+`tree.structure == …`. Many of them also test "is a child of the root" where they mean "is a child of the topic the
+structure is laid out from": the tree chart's columns, the timeline's axis, the curves from the root of a tree chart,
+summaries of columns. The layouts measure a branch as **centered across** on its topic (`measureChildHeight`, placed
+at `start + childCross / 2`) and **starting at its topic along** the way it grows, which stops being true when a
+child's branch is an org chart inside a logic chart.
+
+**Architecture:**
+
+- **Owner:** `tree.branchStructureOf(id): MapStructure?` is the structure set on a topic, or null to follow its parent.
+  `tree.structureOwnerOf(id)` is the nearest topic, starting at `id`, with one set, or the root; `tree.structureOf(id)`
+  is that owner's structure (the root's is `tree.structure`). `structureOf(id)` is the structure **id's children** are
+  laid out in, as `directionOf(id)` is already the way they grow.
+- **Structures relative to their owner:** `MapStructure.directionOf`, `isStackedAlongX` and `summaryDirectionOf` take
+  the owner where they now take the root: a topic is a "column" of a tree chart, or "on the axis" of a timeline, when
+  its parent is the owner. The mind map stays the map's only: it is not offered for a branch, and a branch whose
+  parent is in a mind map and has no structure of its own grows left or right by the root's sides, as now.
+- **A branch is a box:** each layout measures a child's branch as a box around the child's center — how far it
+  reaches back and forward along the way the parent's branch grows, and before and after across it — instead of one
+  length across centered on the child. A child with the same structure as its parent has today's box exactly (back =
+  its half size, across centered), so nothing moves. A child that owns another structure is laid out by that structure
+  around a probe center, its box read off the result, and the branch moved into place once its parent's layout has
+  placed it: back past its parent's edge by the gap and its box's back reach, across by its box's before and after.
+- **One recursion:** `MindMapManager.arrangeBranchOf(node)` lays out `node`'s children in `structureOf(node.id)` —
+  the side layouts for a direction, `TreeChartLayout` or `TimelineLayout` from `node` instead of from the root — and
+  the layouts call it for each child that owns a structure, instead of going on with their own recursion.
+- **Geometry by owner:** every `tree.structure == X` test in drawing and editing becomes a test of the structure the
+  thing is in: a line by `structureOf(parent)`, a brace by `structureOf(parent)`, a timeline axis for each owner that
+  is a timeline, an add button and fold ring by `structureOf(node)`, a drop among siblings by `structureOf(parent)`.
+  Only the root's six sides, slanted lines, "Move Clockwise" and the root's six add buttons stay with `tree.structure`.
+
+**Build order:** phase A adds the branch structure to the tree with no visible change; phase B turns the layouts into
+boxes with no visible change and composes them, starting with directions (logic and org charts in a branch); phase C
+puts tree charts, brace maps and timelines in a branch; phase D files, the app and the docs. Each phase can ship on its
+own.
+
+## Decisions (proposed, for review)
+
+| Question | Proposal |
+|---|---|
+| Which topics | Any topic but the root, whose structure is the map's (View › Structure). Floating topics too: a floating topic's own structure lays out its branch. Summary topics too, as they have branches. |
+| Which structures | The eight that are not the mind map: logic → / ←, org ↓ / ↑, tree → / ←, brace map, timeline. "Same as parent" clears it. The mind map needs a root's six sides, so it is not offered for a branch, as XMind doesn't. |
+| Where it is chosen | Edit › Branch Structure and the node menu: a submenu as View › Structure's, with "Same as Parent" first and a tick on what the selected topics have; it sets it on every selected topic but the root, as one change. View › Structure stays the map's. |
+| What a branch keeps | Its structure whatever its parent's: a map switched from the mind map to an org chart keeps its timeline branch a timeline. Moving a topic (drag, cut and paste, indent) takes its structure with it; copying copies it. |
+| Direction in a branch | As chosen, whatever the parent's direction: a timeline in a branch on the left of a mind map still runs to the right of its topic, its box pushing it clear of the parent, as XMind does. "← / →" are the user's to pick. |
+| Where the branch's topic is | Where its parent's structure puts it: a column topic of a tree chart branch is placed by the parent's layout, then its children are laid out around it. The parent's layout leaves room for the whole box, back and across, so nothing overlaps. |
+| Lines | The line into the owner is the parent's (a curve in a logic chart, an elbow in a tree chart); lines out of it are its structure's. A brace map branch draws braces below its owner only; a timeline branch draws its axis from its owner. |
+| Summaries and boundaries | A summary is in the structure of the topic whose children it is about (`structureOf(parent)`), as now relative to the owner: of a timeline branch's axis topics, below them. A boundary around the owner holds its whole box. |
+| Drag to reorder | Among siblings by the parent's structure. A dragged owner is laid out by its own structure while it moves (`arrangeBranch`). |
+| Keyboard | Arrow keys select by screen direction, so no change. |
+| Undo | Setting or clearing branch structures is one change; the snapshot keeps them, `hasSameContentAs` compares them. |
+| Exports | PNG, SVG and PDF as on screen; outlines unchanged. |
+| Files | `.ccmm`: `<node … structure="timeline">`, left out when it follows its parent, so other maps are written as before; an unknown name, or `mind-map`, is read as none. XMind: the `structureClass` (`structure-class` in XMind 8) of every topic but the central one, already read into `Topic.structureClass` and unused; `org.xmind.ui.map.*` and unknown classes (fishbone, matrix) as none. FreeMind/Freeplane: not written. Older versions of the app ignore the attribute and draw the branch in its parent's structure. |
+| Big maps | A box is measured once per layout pass and kept by id for the pass, as an owner's probe layout is a whole layout of its branch; nested owners are measured from the inside out. |
+
+## Global Constraints
+
+- No formatter is configured. Follow `CLAUDE.md` by hand: 4 spaces, max 120 columns, K&R braces, leading commas in
+  multi-line parameter and argument lists, booleans named as questions.
+- Comments explain *why*. Public library API gets KDoc in the style of `MindMapState`.
+- One commit per task on a branch, merged into `main` and the branch deleted, messages `feat:` / `fix:` / `docs:`
+  ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- **Phases A and B1 must not change a single pixel of a map with no branch structures**, in any of the nine map
+  structures: `ThemeDrawingTest.classicFeatureTourLooksAsBefore`, `featureTourAsAnOrgChartLooksAsBefore` and every
+  layout test of the library guard that. Run the suites with `--rerun`.
+- Works in the web app (wasm): common code only.
+
+## Review Focus
+
+1. **No change without branch structures:** the box refactor keeps every position for maps of every structure.
+2. **Every "child of the root" that means "child of the owner"** found: columns, axis topics, root curves of a tree
+   chart, summary placement and direction, add buttons on the spine, `isStackedAlongX`, `rootGroupOf` (which stays the
+   map root's: only it has sides).
+3. **Nesting:** an org chart in a logic chart in a mind map, a timeline in a tree chart column, an owner below an
+   owner — each laid out clear of its siblings and its parent, rendered and looked at.
+4. **Switching back:** setting a branch structure and clearing it gives the map as it was, with one undo step each way;
+   switching the map's structure keeps the branches'.
+
+---
+
+## Phase A: The branch structure in the tree
+
+### Task A1: Owners
+
+**Files:** `data/Tree.kt` (`branchStructures`, `branchStructureOf`, `setBranchStructure`, `structureOwnerOf`,
+`structureOf`, `directionOf`), `data/TreeSnapshot.kt`, `model/MapStructure.kt` (owner instead of root),
+`MindMapState.kt` (`setBranchStructure(ids, structure)`), test `BranchStructureTest.kt`
+
+- [ ] `branchStructures: Map<String, MapStructure>` kept beside the floating offsets; removed with the node, carried
+  by cut and paste and copies (find how the clipboard carries per-node data such as tasks and attributes), in the
+  snapshot and `hasSameContentAs`. `setBranchStructure(id, null)` clears; the root and `MIND_MAP` are refused.
+- [ ] `MapStructure.directionOf(tree, id, owner)`, `isStackedAlongX` and `summaryDirectionOf` read "child of the root"
+  as "child of `owner`"; the timeline's turns count the owner's attached children. `tree.directionOf(id)` passes
+  `structureOwnerOf(id)` — for the root, `tree.structure` and the root as now, so nothing changes yet.
+- [ ] `state.setBranchStructure(ids, structure)` is one change that re-lays out the map. Until phase B the layouts
+  still lay everything out in the map's structure.
+- [ ] Tests (6): none by default; set, undo, redo; the owner of a topic, its grandchild and a topic below a nested
+  owner; directions by owner (an org chart branch in a mind map grows down below its owner, the mind map around it
+  by sides); kept through cut and paste and the map's structure change; refused for the root and the mind map.
+
+## Phase B: Boxes, and directions in a branch
+
+### Task B1: The layouts measure boxes
+
+**Files:** new `layout/BranchBox.kt` (`BranchBox(back, forward, before, after)` in a direction's main/cross terms,
+with `turned` to screen terms), `layout/MindMapLayoutManager.kt` (stacking and main placement by box),
+`layout/TreeChartLayout.kt`, `layout/TimelineLayout.kt` (spans by box), test `BranchBoxTest.kt`
+
+- [ ] `MindMapLayoutManager.measureBox(node, tree)`: today's numbers for a branch in its parent's structure (across:
+  `measureChildHeight` centered; back: the node's half size along). `arrangeChildren` stacks by `before + after` and
+  places the child's center `before` past where its slot starts, and along at the parent's edge + gap + `back`. The
+  same for `measureChildrenHeight`, `stackGaps`' summaries and boundaries, `adjustRoot`'s reaches.
+- [ ] `TreeChartLayout` and `TimelineLayout` take their columns' and axis topics' spans from their boxes.
+- [ ] No change: all library tests and both golden images pass on a full rerun.
+- [ ] Tests (3): a box of a leaf is its own size; of a branch is centered across and starts at its topic along; the
+  same for `DOWN`.
+
+### Task B2: Directions in a branch
+
+**Files:** `MindMapManager.kt` (`arrangeBranchOf`, `measureBoxOf` with the probe and a per-pass cache, layouts by
+`structureOf`), `layout/MindMapLayoutManager.kt` (an owner child handed back to the manager), `MindMap.kt` (lines by
+`structureOf(parent)`), test `BranchDirectionTest.kt`
+
+- [ ] `arrangeBranchOf(node)` lays out a node's children by `structureOf(node.id)`; `arrangeTree` starts it at the
+  root, floating topics through it too. A layout meeting a child that owns a structure takes its box from
+  `measureBoxOf` (its branch laid out around a probe center and measured, cached for the pass), places the child, and
+  calls `arrangeBranchOf(child)` for what is below.
+- [ ] Logic and org charts in a branch: an org chart ↓ under a topic on the right of a mind map has its children in a
+  row below its topic, the topic pushed right of its parent by the row's half width, its siblings above and below it
+  clear of the whole row.
+- [ ] Lines out of a topic are drawn by `structureOf(that topic)`, so an org chart branch's lines leave the bottom of
+  its topics, and the line into its owner is the mind map's curve.
+- [ ] Tests (5): an org chart branch in a mind map is a row below its owner, clear of its parent and siblings; a logic
+  chart ← in a right branch reaches back past its owner, which is pushed clear; a nested owner (org ↑ under org ↓);
+  the lines' ends; clearing it gives every position back. The feature tour with a branch of each was rendered.
+
+## Phase C: Tree charts, brace maps and timelines in a branch
+
+### Task C1: Tree chart in a branch
+
+**Files:** `layout/TreeChartLayout.kt` (`arrange(owner, tree)`), `MindMapManager.kt`, `MindMap.kt` (`treeChartElbow`,
+the owner's curves to its columns, buttons on the spine, by owner), `layout/SummaryGeometry.kt`, `data/Tree.kt`
+(drop among siblings by owner), test `BranchTreeChartTest.kt`
+
+- [ ] A tree chart branch: the owner's children in columns in a row below it, centered on it, rows indented; laid out
+  and measured as a box. The owner's lines to its columns are curves down, as from a tree chart's root.
+- [ ] Every test of `parentId == root` / `parentId != null` for columns and rows asks for the owner instead.
+- [ ] Tests (4): columns below the owner; rows indented; a summary of columns below them; drop order by x for columns,
+  y for rows, in the branch.
+
+### Task C2: Brace map and timeline in a branch
+
+**Files:** `MindMap.kt` (`drawBraces` and `drawTimelineAxis`/`timelineAxis` for each owner, lines skipped by owner),
+`layout/TimelineLayout.kt` (`arrange(owner, tree)`), `MindMapManager.kt`, test `BranchBraceAndTimelineTest.kt`
+
+- [ ] A brace map branch draws braces for the topics in it, and lines elsewhere; a brace map map with a logic chart
+  branch draws lines in that branch.
+- [ ] A timeline branch has its axis from its owner to its right, its axis topics' branches up and down by turns,
+  measured as a box so its parent's layout clears it; its summaries below.
+- [ ] Tests (4): braces only in the brace branch; lines in a logic branch of a brace map; a timeline branch's axis
+  ends and turns; a timeline branch clear of its siblings. Both rendered and looked at.
+
+## Phase D: Files, the app and the docs
+
+### Task D1: In files
+
+**Files:** `io/MindMapViewFile.kt`, `io/XMind.kt`, tests `BranchStructureFilesTest.kt`, `XMindTest.kt`
+
+- [ ] `.ccmm`: `structure="…"` on a node with one; read back, an unknown name or `mind-map` as none.
+- [ ] XMind: `Topic.structureClass` of every topic but the central one, by `MapStructure.fromXMindClass`, the mind map
+  and unknown ones as none. Find or make a sample with a branch structure to confirm XMind 2020+ writes it on the
+  subtopic.
+- [ ] Tests (3): kept; nothing written without; an XMind map with an org chart branch.
+
+### Task D2: In the app
+
+**Files:** `menuBar/StructureMenu.kt` (`StructureSubmenu` with an optional "Same as Parent" and a title),
+`menuBar/EditMenu.kt`, `MindMapApp.kt` (`NodeMenu`), test `StructureAppTest.kt`
+
+- [ ] Edit › Branch Structure and the node menu, for the selected topics, disabled with only the root selected; a
+  tick on the structure they share, none when they differ.
+- [ ] Tests (3): the submenu sets it on the selected topics and Ctrl+Z takes it back; "Same as Parent" clears it;
+  disabled for the root.
+
+### Task D3: Docs
+
+**Files:** `docs/user-manual/user-manual.html` ("Structures" in chapter 5 gets "A structure for a branch", with a
+picture in `docs/structures/`), PDF, `README.md` (`setBranchStructure`, `structureOf`)
+
+- [ ] What it does, how it is chosen and cleared, how it nests, and how it is kept in each format.
+
+---
+
+## Out of scope / follow-ups
+
+- Fishbone and matrix structures, for the map or a branch.
+- The mind map as a branch structure.
+- Mirroring a branch's structure by the side of the root it is on (a timeline running left in a left branch).
