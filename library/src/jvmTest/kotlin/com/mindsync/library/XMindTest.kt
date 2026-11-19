@@ -24,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class XMindTest {
@@ -478,5 +479,51 @@ class XMindTest {
         assertEquals(MapStructure.ORG_DOWN, XMind.read(zip("content.json" to content), title = "plan").structure)
         assertEquals(MapStructure.MIND_MAP, XMind.read(repositoryFile("docs/xmind_2026.xmind").readBytes(), "t").structure)
     }
-}
 
+    @Test
+    fun topicsOfXMindKeepTheirStructures() {
+        val content = """
+            [{"title": "Sheet", "rootTopic": {"id": "r", "title": "Plan", "children": {"attached": [
+              {"id": "a", "title": "Team", "structureClass": "org.xmind.ui.org-chart.down",
+                "children": {"attached": [{"id": "a1", "title": "Ann"}]}},
+              {"id": "b", "title": "Ideas", "structureClass": "org.xmind.ui.map.unbalanced"},
+              {"id": "c", "title": "Bones", "structureClass": "org.xmind.ui.fishbone.leftHeaded"}
+            ]}}}]
+        """.trimIndent()
+        val xmind8 = """
+            <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
+              <sheet id="s1">
+                <topic id="root"><title>Plan</title><children><topics type="attached">
+                  <topic id="a" structure-class="org.xmind.ui.timeline.horizontal"><title>Steps</title></topic>
+                </topics></children></topic>
+                <title>Sheet 1</title>
+              </sheet>
+            </xmap-content>
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "plan")
+        assertEquals(MapStructure.ORG_DOWN, tree.branchStructureOf(tree.nodeNamed("Team").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Ann").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Ideas").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Bones").id))
+        val tree8 = XMind.read(zip("content.xml" to xmind8), title = "plan")
+        assertEquals(MapStructure.TIMELINE, tree8.branchStructureOf(tree8.nodeNamed("Steps").id))
+    }
+
+    @Test
+    fun sheetsOfAMapKeepTheirStructuresAsBranches() {
+        val content = """
+            [
+              { "title": "First",
+                "rootTopic": { "id": "r1", "title": "One", "structureClass": "org.xmind.ui.logic.right" } },
+              { "title": "Second", "rootTopic": { "id": "r2", "title": "Two" } }
+            ]
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.json" to content), title = "plans")
+        assertEquals(MapStructure.MIND_MAP, tree.structure)
+        assertEquals(MapStructure.LOGIC_RIGHT, tree.branchStructureOf(tree.nodeNamed("One").id))
+        assertNull(tree.branchStructureOf(tree.nodeNamed("Two").id))
+    }
+}

@@ -439,6 +439,7 @@ object XMind {
         tree.setAttributes(id, attributes(topic))
         tree.setFolded(id, topic.isFolded)
         tree.setTask(id, task(topic))
+        tree.setBranchStructure(id, MapStructure.branchFromXMindClass(topic.structureClass))
         return id
     }
 

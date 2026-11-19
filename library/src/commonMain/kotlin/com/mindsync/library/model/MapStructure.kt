@@ -51,6 +51,17 @@ enum class MapStructure(
          */
         fun fromXMindClass(structureClass: String?): MapStructure =
             entries.firstOrNull { it.xmindClass == structureClass } ?: MIND_MAP
+
+        /**
+         * Returns the structure a branch is kept as [name] in a map file with, or null for one laid out as its
+         * parent: with none, one that is not known, or the mind map, which a branch cannot have.
+         */
+        fun branchFromFileName(name: String?): MapStructure? =
+            entries.firstOrNull { it.fileName == name }?.takeIf { it != MIND_MAP }
+
+        /** Returns the structure of a branch with XMind's [structureClass], or null for one laid out as its parent. */
+        fun branchFromXMindClass(structureClass: String?): MapStructure? =
+            entries.firstOrNull { it.xmindClass == structureClass }?.takeIf { it != MIND_MAP }
     }
 
     /**

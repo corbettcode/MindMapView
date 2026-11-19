@@ -274,6 +274,7 @@ object MindMapViewFile {
             attribute("dy", offset.y.dpVal.toString())
         }
         if (tree.isFolded(node.id)) attribute("folded", "true")
+        tree.branchStructureOf(node.id)?.let { attribute("structure", it.fileName) }
         tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
         val task = tree.taskOf(node.id)
         task.priority?.let { attribute("priority", it.toString()) }
@@ -365,6 +366,7 @@ object MindMapViewFile {
         tree.setAttributeDisplay(id, element.attributeDisplay())
         tree.setFolded(id, element.attributes["folded"] == "true")
         tree.setTask(id, element.task())
+        tree.setBranchStructure(id, MapStructure.branchFromFileName(element.attributes["structure"]))
         return id
     }
 

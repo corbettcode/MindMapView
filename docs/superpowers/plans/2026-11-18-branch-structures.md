@@ -201,13 +201,19 @@ topic a timeline is laid out from, lines left out by the structure the parent is
 
 ### Task D1: In files
 
-**Files:** `io/MindMapViewFile.kt`, `io/XMind.kt`, tests `BranchStructureFilesTest.kt`, `XMindTest.kt`
+**Files:** `model/MapStructure.kt` (`branchFromFileName`, `branchFromXMindClass`), `io/MindMapViewFile.kt`,
+`io/XMind.kt`, tests `BranchStructureFilesTest.kt`, `XMindTest.kt`
 
-- [ ] `.ccmm`: `structure="…"` on a node with one; read back, an unknown name or `mind-map` as none.
-- [ ] XMind: `Topic.structureClass` of every topic but the central one, by `MapStructure.fromXMindClass`, the mind map
-  and unknown ones as none. Find or make a sample with a branch structure to confirm XMind 2020+ writes it on the
-  subtopic.
-- [ ] Tests (3): kept; nothing written without; an XMind map with an org chart branch.
+- [x] `.ccmm`: `structure="…"` on a node with one; read back, an unknown name or `mind-map` as none, so a file of a
+  later version with a structure this one has no layout for opens with that branch as its parent's.
+- [x] XMind: the `structureClass` (`structure-class` in XMind 8) of every topic but the central one, the mind map and
+  unknown ones (fishbone, matrix) as none. A map of several sheets is read as one map with a branch for each, so each
+  sheet's structure is its branch's. **Not confirmed with a file from XMind:** none of the repo's three samples has a
+  structure below the central topic. XMind keeps `structureClass` on a topic, not a sheet, so it is read the same way
+  there; a sample with one would confirm it.
+- [x] Tests (5): every branch structure kept; nothing written without one; an unknown one and the mind map read as
+  none; XMind 2020 and XMind 8 topics with a structure, the mind map and a fishbone; the sheets of a map. All 717
+  library and 251 desktop tests pass on a full rerun.
 
 ### Task D2: In the app
 
