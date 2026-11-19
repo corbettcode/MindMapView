@@ -227,7 +227,7 @@ the section numbers that point at them one on, rows in the shortcut tables), the
 - [x] Shortcuts: "In the outliner" and "While typing in the outliner" groups, Alt+Shift+Up / Down under Editing,
   Ctrl+Shift+O under View, and two Mouse rows, in the dialog and the manual alike.
 - [x] A screenshot of Map and Outliner on `desktop/feature_tour.ccmm` in the README (`docs/outliner_split_view.png`),
-  rendered at 2x from the app in a test with some branches folded. The manual has no screenshot of it yet.
+  rendered at 2x from the app in a test with some branches folded, and in the manual's outliner chapter as a figure.
 
 ## Out of scope / follow-ups
 
