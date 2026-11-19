@@ -10,7 +10,12 @@ written in [`docs/user-manual/user-manual.html`](docs/user-manual/user-manual.ht
 
 ![A tour of the features: node shapes including the line shape, colours, rich text, notes shown inline and attributes, folding, the type, width and colour of the lines between nodes, and arrow links in each line style](docs/feature_tour.png)
 
-The map above is [`desktop/feature_tour.mmv`](desktop/feature_tour.mmv): open it in the app to explore each feature.
+The map above is [`desktop/feature_tour.ccmm`](desktop/feature_tour.ccmm): open it in the app to explore each feature.
+
+![The feature tour in View › Map and Outliner: the outline on the left, with folded and open branches, rich text, note and attribute marks and the selected row, and the same branches on the map on the right](docs/outliner_split_view.png)
+
+View › Map and Outliner (Ctrl+Shift+O) shows the same map as an outline beside it, where it can be typed as a list:
+Enter goes on to the next topic, Tab and Shift+Tab indent and outdent.
 
 ```
 dependencyResolutionManagement {
