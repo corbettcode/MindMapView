@@ -157,7 +157,8 @@ test `FloatingDragTest.kt`
 - [x] Double-click on blank map adds a floating topic there and types its text, styled and numbered as a new Topic.
 - [x] Edit › Add Floating Topic (with or without a selection) puts one below the map; the node menu has Make
   Floating Topic (not on the root or a floating topic) and Attach to Root (on a floating topic), and no Move
-  Clockwise for a floating topic. A right click on blank map has no menu yet (a follow-up).
+  Clockwise for a floating topic. A right click on blank map opens a menu with Add Floating Topic (there) and Fit
+  (`MindMap(onBlankMenu = …)`, added after the plan; tests in `FloatingDragTest` and `FloatingAppTest`).
 - [x] Alt+arrow keys nudge the selected floating topics 10 dp; with only attached topics selected they do nothing.
   No Shift variant: Alt+Shift+Up / Down already move topics among their siblings.
 - [x] Tests (5): double-click on blank map, type, then undo; Edit menu, then Esc takes it away; Make Floating Topic
@@ -213,7 +214,6 @@ link to Arrow Links, right of the map), `KeyboardShortcuts.kt`
 ## Out of scope / follow-ups
 
 - Floating topics in Freeplane files, once a file saved by Freeplane with a free node confirms the format.
-- A right click on blank map offering Add Floating Topic there.
 - Floating topics under topics other than the root (XMind allows them; they are read as ordinary children).
 - XMind's own floating-topic style and callouts.
 - Snapping or aligning floating topics to each other.

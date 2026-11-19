@@ -9,6 +9,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.rightClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.DpOffset
@@ -24,6 +25,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class FloatingDragTest {
     private var blankDoubleClick: Offset? = null
+    private var blankMenu: Offset? = null
 
     // The root with "a" and "b" below it, "c" below "a", and "f" floating below the root, shown on the screen.
     private fun ComposeUiTest.shownState(): MindMapState {
@@ -41,6 +43,7 @@ class FloatingDragTest {
                 state = state
                 , modifier = Modifier.size(900.dp, 700.dp).testTag(TAG)
                 , onBlankDoubleClick = { blankDoubleClick = it }
+                , onBlankMenu = { blankMenu = it }
             )
         }
         state.animateTreeChange()
@@ -134,6 +137,22 @@ class FloatingDragTest {
         waitForIdle()
 
         val point = assertNotNull(blankDoubleClick)
+        assertEquals(blank.x, point.x, 1f)
+        assertEquals(blank.y, point.y, 1f)
+    }
+
+    @Test
+    fun rightClickOnBlankMapAsksForItsMenuThere() = runComposeUiTest {
+        val state = shownState()
+        val blank = onScreen(state, "f", dx = 250f)
+
+        onNodeWithTag(TAG).performMouseInput { rightClick(onScreen(state, "b")) }
+        waitForIdle()
+        assertNull(blankMenu, "a node has a menu of its own")
+
+        onNodeWithTag(TAG).performMouseInput { rightClick(blank) }
+        waitForIdle()
+        val point = assertNotNull(blankMenu)
         assertEquals(blank.x, point.x, 1f)
         assertEquals(blank.y, point.y, 1f)
     }

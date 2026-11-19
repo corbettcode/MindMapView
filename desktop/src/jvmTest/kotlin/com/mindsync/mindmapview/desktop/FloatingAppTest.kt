@@ -167,4 +167,23 @@ class FloatingAppTest {
 
         assertTrue(state.floatingIds().isEmpty())
     }
+
+    @Test
+    fun blankMapMenuAddsAFloatingTopicWhereItWasOpened() = runComposeUiTest {
+        val state = shownApp()
+
+        onNodeWithTag(MIND_MAP_TAG).performMouseInput { rightClick(Offset(40f, height - 40f)) }
+        onNodeWithText("Add Floating Topic").performClick()
+        waitForIdle()
+
+        val id = state.floatingIds().single()
+        assertEquals(id, state.textEditNodeId)
+        val root = state.tree.getRootNode()
+        val node = state.tree.getNode(id)
+        assertTrue(node.path.centerX.dpVal < root.path.centerX.dpVal, "left of the root, where it was opened")
+        assertTrue(node.path.centerY.dpVal > root.path.centerY.dpVal, "below the root, where it was opened")
+        press(Key.Escape)
+        assertTrue(state.floatingIds().isEmpty())
+    }
 }
+

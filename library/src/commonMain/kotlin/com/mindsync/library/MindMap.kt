@@ -179,6 +179,9 @@ private const val ATTRIBUTE_LINE_ALPHA = 0.5f
  * with the innermost boundary there and the position of the click. A drag inside one moves the map, as a drag on
  * empty space does.
  *
+ * A click with the secondary mouse button on blank map, where there is no node, arrow link nor boundary, calls
+ * [onBlankMenu] with the position of the click, and a double click there [onBlankDoubleClick].
+ *
  * The attributes of a node are drawn as a table below its text when they are shown inline, by
  * [MindMapState.attributeDisplayOf], and
  * its note as a paragraph between the two when it is shown inline, by [MindMapState.noteDisplayOf], in place of
@@ -223,6 +226,7 @@ fun MindMap(
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onArrowLinkMenu: (link: ArrowLink, position: Offset) -> Unit = { _, _ -> }
     , onBoundaryMenu: (boundary: Boundary, position: Offset) -> Unit = { _, _ -> }
+    , onBlankMenu: ((position: Offset) -> Unit)? = null
     , onNodeMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
     , onNodeLink: (tree: Tree<*>, from: NodeData<*>, to: NodeData<*>, isLinked: Boolean) -> Unit = { _, _, _, _ -> }
     , dateLabel: (date: TaskDate) -> String = { it.toIsoString() }
@@ -250,6 +254,7 @@ fun MindMap(
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnArrowLinkMenu by rememberUpdatedState(onArrowLinkMenu)
     val currentOnBoundaryMenu by rememberUpdatedState(onBoundaryMenu)
+    val currentOnBlankMenu by rememberUpdatedState(onBlankMenu)
     val currentOnNodeMenu by rememberUpdatedState(onNodeMenu)
     val currentOnNodeLink by rememberUpdatedState(onNodeLink)
 
@@ -469,6 +474,12 @@ fun MindMap(
                                 else if (change != null && boundary != null) {
                                     change.consume()
                                     currentOnBoundaryMenu(boundary, change.position)
+                                }
+                                else if (change != null) {
+                                    currentOnBlankMenu?.let { onBlankMenu ->
+                                        change.consume()
+                                        onBlankMenu(change.position)
+                                    }
                                 }
                             }
                             if (event.type == PointerEventType.Scroll) {

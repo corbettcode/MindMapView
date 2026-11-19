@@ -1176,6 +1176,8 @@ private fun MindMapScreen(
     var arrowLinkMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     // The boundary its menu is open for, and where in the mind map it was asked for.
     var boundaryMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
+    // Where blank map was clicked with the secondary mouse button, on the map, for its menu.
+    var blankMenu by remember { mutableStateOf<Offset?>(null) }
     // The node its menu is open for, and where in the mind map it was asked for.
     var nodeMenu by remember { mutableStateOf<Pair<String, Offset>?>(null) }
     var isRemoveConfirmOpen by remember { mutableStateOf(false) }
@@ -1200,7 +1202,7 @@ private fun MindMapScreen(
         operation != null || isRemoveConfirmOpen || isPreferencesOpen || isReadmeOpen || isShortcutsOpen
             || isAboutOpen || saveQuestion != null || isImportConfirmOpen || missingRecentPath != null
 
-    val isMenuOpen = nodeMenu != null || arrowLinkMenu != null || boundaryMenu != null
+    val isMenuOpen = nodeMenu != null || arrowLinkMenu != null || boundaryMenu != null || blankMenu != null
     LaunchedEffect(isDialogOpen, isMenuOpen) { onDialogOpenChange(isDialogOpen || isMenuOpen) }
 
     // As a click on a '+' button of the node does. Of the root's buttons, that of the side new children go to.
@@ -1478,6 +1480,10 @@ private fun MindMapScreen(
                                 , onNodeDoubleClick = { state.startTextEdit() }
                                 // As in XMind, a double click on blank map adds a floating topic there.
                                 , onBlankDoubleClick = { position -> onAddFloating(position) }
+                                , onBlankMenu = { position ->
+                                    onArrowLinkSourceIdChange(null)
+                                    blankMenu = position
+                                }
                                 , onAddChildClick = { _, side -> addChild(side) }
                                 , onArrowLinkMenu = { link, position ->
                                     arrowLinkMenu = link.id to position + mapOffset
@@ -1566,6 +1572,14 @@ private fun MindMapScreen(
                                 onDismiss = { nodeMenu = null },
                             )
                         }
+                    }
+                    blankMenu?.let { position ->
+                        BlankMenu(
+                            position = position + mapOffset
+                            , onAddFloating = { onAddFloating(position) }
+                            , onFit = { state.fitScreen() }
+                            , onDismiss = { blankMenu = null }
+                        )
                     }
                     boundaryMenu?.let { (boundaryId, position) ->
                         state.boundaries.firstOrNull { it.id == boundaryId }?.let { boundary ->
@@ -1855,6 +1869,35 @@ private fun nodeLabel(description: String?): String {
 
 // The menu of a node, which floats where the node was clicked. The click selected the node, which is the
 // one the items act on. Each of them closes the menu.
+/** The menu of blank map, at [position] in the box the map is in, for what belongs to no node. */
+@Composable
+private fun BlankMenu(
+    position: Offset
+    , onAddFloating: () -> Unit
+    , onFit: () -> Unit
+    , onDismiss: () -> Unit
+) {
+    Box(modifier = Modifier.offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }) {
+        DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+            DropdownMenuItem(
+                text = { Text("Add Floating Topic") }
+                , trailingIcon = { Text("Double-click", style = MaterialTheme.typography.labelMedium) }
+                , onClick = {
+                    onDismiss()
+                    onAddFloating()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Fit") }
+                , onClick = {
+                    onDismiss()
+                    onFit()
+                }
+            )
+        }
+    }
+}
+
 @Composable
 private fun NodeMenu(
     position: Offset,
