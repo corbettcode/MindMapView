@@ -10,7 +10,7 @@ import com.mindsync.library.util.Dp
 // The space inside a cell of a grid, around what is in it, as in a matrix's.
 private const val GRID_PADDING = MATRIX_PADDING
 
-// The space between the summaries below a grid.
+// The space between the topics stacked in a cell of a grid, and between the summaries below it, as in a matrix's cells.
 private const val GRID_GAP = 10f
 
 // The least width and height of a cell of a grid.
@@ -157,8 +157,9 @@ internal fun gridCells(
 /**
  * Lays a branch out as a grid: its topic in a header across the top, and below it its children's cells, a set number
  * to a row ([Tree.gridColumnsOf], or as many as fit in a row of [GRID_DEFAULT_COLUMNS]), all as wide as the widest.
- * Each main topic is centered in the top part of its cell, and the topics below it are in the other part, laid out by
- * [right] as a logic chart of its children would be, each growing right or in a structure of its own. A main topic
+ * Each main topic is centered in the top part of its cell, and its children are stacked in the other part, each with
+ * its branch laid out by [right], growing right, or in a structure of its own; a summary of them is past them, as in
+ * a logic chart. A main topic
  * with a structure of its own has its branch in its cell. A summary of the main topics is below the grid, its branch
  * laid out by [down].
  */
@@ -179,10 +180,7 @@ internal class GridLayout(
                 reachOf(tree, id)
             }
         }
-        val bodyBlock = { id: String ->
-            right.arrangeBelow(tree.getNode(id), tree)
-            bodyBlockOf(tree, id)
-        }
+        val bodyBlock = { id: String -> stackBody(id, 0f, 0f, tree) }
         val grid = gridCells(tree, owner, ownedReach, bodyBlock)
         grid.mainIds.forEachIndexed { index, mainId ->
             val head = grid.headOf(index)
@@ -198,14 +196,45 @@ internal class GridLayout(
             tree.setNode(mainId, placed)
             val body = grid.bodyOf(index)
             if (body == null || !hasBody(tree, mainId)) return@forEachIndexed
-            // The block is laid out from where the main topic is now, then moved to the top left of its part.
-            right.arrangeBelow(placed, tree)
-            val block = bodyBlockOf(tree, mainId)
-            tree.visibleChildren(placed).forEach { childId ->
-                shift(childId, body.left + GRID_PADDING - block.left, body.top + GRID_PADDING - block.top, tree)
-            }
+            stackBody(mainId, body.left + GRID_PADDING, body.top + GRID_PADDING, tree)
         }
         placeSummaries(owner, grid, tree)
+    }
+
+    // Stacks the children of the main topic [mainId] from ([left], [top]) down, each with its branch, and places the
+    // summaries of them past them; returns the edges of all of it.
+    private fun stackBody(
+        mainId: String
+        , left: Float
+        , top: Float
+        , tree: Tree<*>
+    ): CellRect {
+        val childIds = tree.visibleChildren(tree.getNode(mainId))
+        var y = top
+        childIds.filterNot { tree.isSummary(it) }.forEach { id ->
+            right.arrangeBelow(tree.getNode(id), tree)
+            val reach = reachOf(tree, id)
+            val node = tree.getNode(id)
+            shift(id, left + reach.left - node.path.centerX.dpVal, y + reach.top - node.path.centerY.dpVal, tree)
+            y += reach.top + reach.bottom + GRID_GAP
+        }
+        childIds.filter { tree.isSummary(it) }.forEach { summaryId ->
+            val rangeIds = tree.summaryChildIds(summaryId).filter { it in childIds }
+            if (rangeIds.isEmpty()) return@forEach
+            val range = rangeIds.map { id ->
+                val node = tree.getNode(id)
+                val reach = reachOf(tree, id)
+                Triple(node.path.centerX.dpVal + reach.right, node.path.centerY.dpVal - reach.top, reach)
+                    .let { (rightEdge, topEdge, r) -> CellRect(0f, topEdge, rightEdge, topEdge + r.top + r.bottom) }
+            }
+            val summary = tree.getNode(summaryId)
+            val centerX = range.maxOf { it.right } + SUMMARY_OFFSET.value + right.backReach(summary, tree).dpVal
+            val centerY = (range.minOf { it.top } + range.maxOf { it.bottom }) / 2
+            val placed = summary.withCenter(Dp(centerX), Dp(centerY))
+            tree.setNode(summaryId, placed)
+            right.arrangeBelow(placed, tree)
+        }
+        return bodyBlockOf(tree, mainId)
     }
 
     /** Returns the cells of the grid of [owner] as its topics are laid out now, as it is drawn. */

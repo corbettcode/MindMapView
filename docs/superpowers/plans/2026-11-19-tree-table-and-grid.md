@@ -103,7 +103,7 @@ Each phase can ship on its own.
 | "Lowest level right-aligned" | A leaf above the deepest level stretches its cell to the right edge, with the topic at the right of the cell, so all leaves end in the last column. To confirm in F1. |
 | Vertical alignment in a spanning cell | Top, as an outline reads, with the matrix's padding. |
 | Grid's owner | A header cell across the full width, at the top, as in the tree table. |
-| Grid's main topics | Cells in reading order, a set number to a row, each with its main topic above the topics below it, laid out as a logic chart. Rows of main topics wrap, as in a card layout. |
+| Grid's main topics | Cells in reading order, a set number to a row, each with its main topic above its children, stacked. Rows of main topics wrap, as in a card layout. |
 | Grid's column count | Per owner, default "all in one row, at most 4", set from 1 to 8 in the app (Edit › Grid Columns, and a topic's menu for a branch). Changing it is one undo step. |
 | Grid column widths | Equal, the widest cell's, so that it reads as a grid. Row heights by their tallest cell. |
 | Cells and borders | Thin lines in the map's line color, as the matrix's (`TABLE_LINE_WIDTH`), heavier under a header. Topics keep their own shapes inside cells. |
@@ -207,11 +207,12 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 - [x] The owner as a header across the top. The main topics in reading order, `gridColumnsOf(owner)` to a row, or
   as many as there are up to `GRID_DEFAULT_COLUMNS` (4), with equal column widths.
-- [x] Each cell has two parts: the main topic centered in the upper one, and the topics below it in the lower one,
-  laid out as a logic chart → of its children would be (so summaries, brackets and branches with a structure of
-  their own work as anywhere), moved to the part's top left. The parts of a row line up; a row whose main topics
-  have nothing below them has cells of one part. This replaces the heavier rule under each main topic: the edge
-  between the parts is a thin line.
+- [x] Each cell has two parts: the main topic centered in the upper one, and its children stacked in the lower one,
+  10 dp apart as in a matrix's cells, each with its branch laid out → or in its own structure; a summary of them is
+  past them, as in a logic chart. (Laying them out as a whole logic chart, as first done, spread them as far apart
+  as a map's branches, too loose for a table: changed in E2, with `grid-plan.png` made again.) The parts of a row
+  line up; a row whose main topics have nothing below them has cells of one part. This replaces the heavier rule
+  under each main topic: the edge between the parts is a thin line.
 - [x] A main topic with a structure of its own has its whole branch in its cell.
 - [x] A summary of main topics is below the grid, centered on it, its branch growing down.
 - [x] Directions: the owner grows DOWN (its main topics are below it); the topics below a main topic grow RIGHT,
@@ -256,9 +257,9 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 **Files:** `docs/user-manual/user-manual.html`, `README.md`, `desktop/manual/MindMapView-User-Manual.pdf`,
 `docs/structures/`
 
-- [ ] The manual's "Structures" section: a picture and a paragraph for each, and grid columns. Rebuild the PDF with
+- [x] The manual's "Structures" section: a picture and a paragraph for each, and grid columns. Rebuild the PDF with
   `docs/user-manual/make-pdf.sh`.
-- [ ] The README: the two structures, `gridColumnsOf` / `setGridColumns`, and that XMind's grid is not yet read.
+- [x] The README: the two structures, `gridColumnsOf` / `setGridColumns`, and that XMind's grid is not yet read.
 
 ## Phase F: Against XMind's files
 

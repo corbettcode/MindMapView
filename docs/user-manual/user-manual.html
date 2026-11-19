@@ -571,6 +571,8 @@
         <figure class="structure"><img class="screenshot" src="../structures/timeline.png" alt="Timeline"><figcaption>Timeline</figcaption></figure>
         <figure class="structure"><img class="screenshot" src="../structures/fishbone-right.png" alt="Fishbone, Head Right"><figcaption>Fishbone, Head Right</figcaption></figure>
         <figure class="structure"><img class="screenshot" src="../structures/matrix-rows.png" alt="Matrix, Rows"><figcaption>Matrix, Rows</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/tree-table.png" alt="Tree Table"><figcaption>Tree Table</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/grid.png" alt="Grid"><figcaption>Grid</figcaption></figure>
     </div>
     <ul>
         <li><b>Logic chart</b> (→ or ←): every branch to one side of the root.</li>
@@ -584,11 +586,16 @@
             head.</li>
         <li><b>Matrix</b> (rows or columns): a table. The root is in the corner and its topics are the rows (or the
             columns); their subtopics are in the cells, in the column of their label.</li>
+        <li><b>Tree table</b>: nested blocks. The root is a header across the top, and each topic is in a cell to the
+            left of its subtopics' cells, as tall as they are together. The last topic of every branch reaches to the
+            table's right edge, so they line up for comparing, as the amounts of a budget do.</li>
+        <li><b>Grid</b>: the root is a header across the top, and its topics are cells below it, a set number to a
+            row. Each topic heads its cell, with its subtopics listed below it.</li>
     </ul>
     <p>
         Move Clockwise and the root's six add buttons are only in the mind map; the sides of its branches are kept for
         when it is one again. Summaries, boundaries, folding and floating topics work in every structure. XMind maps
-        open in their structure where MindMapView has it, and as a mind map otherwise.
+        open in their structure where MindMapView has it, and as a mind map otherwise; XMind's grid is not read yet.
     </p>
     <p>
         A matrix takes its columns (its rows, by columns) from labels. A topic's label is the first value of its
@@ -598,6 +605,15 @@
         column's label, as one step to undo. Editing a topic in a matrix, its attributes say so and offer
         <span class="menu">+ Labels</span>. A topic in a cell doesn't show its label in its table of attributes, as
         the column's header does.
+    </p>
+    <p>
+        A grid starts with its topics in one row, up to four of them. To choose how many go to a row, select the root
+        or any topic in the grid and choose <span class="menu">Edit &rsaquo; Grid Columns</span>, or right-click a
+        topic: <span class="menu">As Many as Fit</span> goes back to one row of up to four, and 1 to 8 sets the
+        number, as one step to undo. Each grid keeps its own number, and it is saved with the map. Dragging a topic of
+        the grid puts it in reading order: across a row, then down to the next. The topics in a tree table or a grid
+        are drawn in their cells, without lines between them; topics below those, and summaries, have their lines as
+        anywhere.
     </p>
     <h3>A structure for a branch</h3>
     <p>
