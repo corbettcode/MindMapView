@@ -77,6 +77,8 @@ import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.withColors
 import com.mindsync.library.layout.AttributeTable
+import com.mindsync.library.layout.FISHBONE_HEAD_GAP
+import com.mindsync.library.layout.FISHBONE_SLANT
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.TASK_BADGE_SIZE
 import com.mindsync.library.layout.TaskBadge
@@ -566,6 +568,7 @@ internal fun DrawScope.drawMap(
     drawSummaryBrackets(state, drawInfo, lineColor, fadedIds)
     drawBraces(state, drawInfo, lineColor, fadedIds)
     drawTimelineAxis(state, drawInfo, lineColor)
+    drawFishbones(state, drawInfo, lineColor, fadedIds)
     drawArrowLinks(state, fadedIds)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor, filterView)
@@ -664,6 +667,110 @@ private fun DrawScope.drawTimelineAxis(
         val resolved = lines[firstId] ?: return@forEach
         drawLine(resolved.color, axis.first, axis.second, resolved.width.toPx(this), StrokeCap.Round)
     }
+}
+
+// A fishbone's spine runs from its head, the topic it is laid out from, past its bones; each cause is at the end of a
+// bone from the spine, and each rib joins its topic to its bone. They are drawn straight, whatever the line style, in
+// the line of the topic they lead to, and the spine in that of the first cause.
+private fun DrawScope.drawFishbones(
+    state: MindMapState
+    , drawInfo: DrawInfo
+    , lineColor: Color
+    , fadedIds: Set<String>
+) {
+    val tree = state.tree
+    val heads = mutableListOf<NodeData<*>>()
+    tree.doVisiblePreorderTraversal { node -> if (isFishboneHead(tree, node)) heads.add(node) }
+    if (heads.isEmpty()) return
+    val lines = mutableMapOf<String, ResolvedLine>()
+    forEachNodeWithLine(tree, drawInfo, lineColor) { node, resolved -> lines[node.id] = resolved }
+    fun draw(id: String, segment: Pair<Offset, Offset>) {
+        val line = lines[id] ?: return
+        val color = line.color.fadedIf(id in fadedIds)
+        drawLine(color, segment.first, segment.second, line.width.toPx(this), StrokeCap.Round)
+    }
+    heads.forEach { head ->
+        val fishbone = fishboneLines(tree, head) ?: return@forEach
+        fishbone.bones.firstOrNull()?.let { (firstId, _) -> draw(firstId, fishbone.spine) }
+        fishbone.bones.forEach { (id, bone) -> draw(id, bone) }
+        fishbone.ribs.forEach { (id, rib) -> draw(id, rib) }
+    }
+}
+
+/**
+ * The lines of a fishbone, in pixels: its [spine], and the [bones] and [ribs], each with the id of the topic it
+ * leads to.
+ */
+internal class FishboneLines(
+    val spine: Pair<Offset, Offset>
+    , val bones: List<Pair<String, Pair<Offset, Offset>>>
+    , val ribs: List<Pair<String, Pair<Offset, Offset>>>
+)
+
+/**
+ * Returns the lines of the fishbone laid out from [head], from where its topics are: the spine from the head's edge to
+ * past the last bone's joint, each bone from its joint on the spine to the near edge of its cause, slanting at 60°,
+ * and each rib straight across from its bone to the near edge of its topic. Returns null without any causes.
+ */
+internal fun Density.fishboneLines(
+    tree: Tree<*>
+    , head: NodeData<*>
+): FishboneLines? {
+    val isHeadLeft = tree.structureOf(head.id) == MapStructure.FISHBONE_LEFT
+    val sign = if (isHeadLeft) 1f else -1f
+    val spineY = head.path.centerY.toPx(this)
+    val causeIds = fishboneCauseIds(tree, head).takeIf { it.isNotEmpty() } ?: return null
+    val bones = mutableListOf<Pair<String, Pair<Offset, Offset>>>()
+    val ribs = mutableListOf<Pair<String, Pair<Offset, Offset>>>()
+    causeIds.forEach { id ->
+        val cause = tree.getNode(id)
+        val centerY = cause.path.centerY.toPx(this)
+        val halfHeight = halfHeight(cause).toPx(this)
+        val endY = if (centerY < spineY) centerY + halfHeight else centerY - halfHeight
+        val end = Offset(cause.path.centerX.toPx(this), endY)
+        val joint = Offset(end.x - sign * abs(spineY - endY) * FISHBONE_SLANT, spineY)
+        bones.add(id to (joint to end))
+        // A cause with a structure of its own draws the lines of its branch as that structure does.
+        if (tree.branchStructureOf(id) != null) return@forEach
+        tree.visibleChildren(cause).filterNot { tree.isSummary(it) }.forEach { ribId ->
+            val rib = tree.getNode(ribId)
+            val y = lineEndY(rib)
+            val boneX = joint.x + sign * abs(spineY - y) * FISHBONE_SLANT
+            ribs.add(ribId to (Offset(boneX, y) to Offset(getNodeEdgeX(rib, isRightEdge = !isHeadLeft), y)))
+        }
+    }
+    val spineStart = Offset(getNodeEdgeX(head, isRightEdge = isHeadLeft), spineY)
+    val lastJoint = bones.maxOf { (_, bone) -> sign * bone.first.x }
+    val spineEnd = Offset(sign * (lastJoint + FISHBONE_HEAD_GAP.dp.toPx()), spineY)
+    return FishboneLines(spineStart to spineEnd, bones, ribs)
+}
+
+// Whether the node is the head of a fishbone: the root of one, or a topic with one of its own.
+private fun isFishboneHead(
+    tree: Tree<*>
+    , node: NodeData<*>
+): Boolean = tree.structureOf(node.id).isFishbone && tree.structureOwnerOf(node.id) == node.id
+
+// The causes of the fishbone of [head]: its shown children but the floating topics and summaries.
+private fun fishboneCauseIds(
+    tree: Tree<*>
+    , head: NodeData<*>
+): List<String> {
+    val ids = if (head.parentId == null) head.children else tree.visibleChildren(head)
+    return ids.filterNot { tree.isFloating(it) || tree.isSummary(it) }
+}
+
+// Whether the line from [parent] to [child] is a bone or a rib of a fishbone, drawn as part of it.
+private fun isFishboneLine(
+    tree: Tree<*>
+    , parent: NodeData<*>
+    , child: NodeData<*>
+): Boolean {
+    if (isFishboneHead(tree, parent)) return child.id in fishboneCauseIds(tree, parent)
+    val headId = parent.parentId ?: return false
+    val head = tree.getNode(headId)
+    return isFishboneHead(tree, head) && tree.branchStructureOf(parent.id) == null &&
+        parent.id in fishboneCauseIds(tree, head) && !tree.isSummary(child.id)
 }
 
 // Whether the node is the one a timeline is laid out from: the root of a timeline, or a topic with one of its own.
@@ -1206,6 +1313,7 @@ private fun DrawScope.drawLines(
         // to those on its axis by the axis.
         if (tree.structureOf(node.id) == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
         if (isTimelineOwner(tree, node)) return@forEachNodeWithLine
+        if (isFishboneLine(tree, node, toNode)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val grow = tree.placedDirectionOf(toNode.id)

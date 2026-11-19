@@ -144,15 +144,20 @@ test `FishboneLayoutTest.kt`
 
 ### Task B2: Drawing the fishbone
 
-**Files:** `MindMap.kt` (`drawFishbone`: the spine, the bones and the ribs, lines skipped for topics in a fishbone, add
-buttons and fold rings at the end of a bone or rib), `layout/SummaryGeometry.kt`, test `FishboneDrawTest.kt`, the
-golden `fishbone-feature-tour.png`
+**Files:** `MindMap.kt` (`drawFishbones`, `fishboneLines`, the lines of bones and ribs left out of `drawLines`), test
+`FishboneDrawTest.kt`, `ThemeDrawingTest.featureTourAsAFishboneLooksAsBefore` with the golden
+`fishbone-feature-tour.png`
 
-- [ ] The spine from the head's edge to past the last bone; a bone from the spine to its topic; a rib from the bone to
-  its topic's near edge; all straight, in each topic's line color and width.
-- [ ] Summaries and boundaries as in the Decisions; drop order along the spine and along the bone.
-- [ ] Tests: the spine's ends; a bone's ends; an SVG export has the bones in place of the lines; a golden image of the
-  tour as a fishbone, rendered and looked at, head left and right.
+- [x] For each fishbone head, the map's root or a topic with a fishbone of its own: the spine from the head's edge to
+  40 dp past the last joint, in the line of the first cause; a bone from its joint to its cause's near edge; a rib from
+  the bone straight across to its topic's near edge; all straight, in each topic's line color and width, whatever the
+  line style, and faded by a task filter as lines are. The topics below a rib have ordinary lines.
+- [x] Add buttons and fold rings needed no change: a cause's are at the bone's end, as its ribs grow towards the spine
+  (B1), and a rib's towards the tail. Summary brackets and drop order follow the directions of B1.
+- [x] Tests (3 + the golden): the spine's ends; a bone's ends at 60° and a rib's across to its topic; an SVG export has
+  the spine, bones and ribs in place of the lines. The tour was rendered as a fishbone head left and head right, and
+  with its Lines branch as a fishbone in the mind map, and looked at. All 728 library and 254 desktop tests pass on a
+  full rerun.
 
 ## Phase C: Matrix
 
