@@ -8,7 +8,10 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.BranchBox
+import com.mindsync.library.layout.CellRect
 import com.mindsync.library.layout.FishboneLayout
+import com.mindsync.library.layout.GridCells
+import com.mindsync.library.layout.GridLayout
 import com.mindsync.library.layout.MatrixGrid
 import com.mindsync.library.layout.MatrixLayout
 import com.mindsync.library.layout.TableCells
@@ -201,6 +204,7 @@ class MindMapManager {
                 structure.isFishbone -> fishboneLayout(structure).arrange(owner, tree)
                 structure.isMatrix -> matrixLayout(structure).arrange(owner, tree)
                 structure == MapStructure.TREE_TABLE -> treeTableLayout.arrange(owner, tree)
+                structure == MapStructure.GRID -> gridLayout.arrange(owner, tree)
                 else -> layoutManagerFor(owner.id).arrangeChildren(owner, tree)
             }
         }
@@ -265,9 +269,27 @@ class MindMapManager {
         return treeTableLayout.gridOf(owner, tree)
     }
 
+    private val gridLayout = GridLayout(
+        directionManagers.getValue(GrowDirection.RIGHT)
+        , directionManagers.getValue(GrowDirection.DOWN)
+    )
+
+    /** Returns the cells of the grid laid out from [owner], as its topics are now, or null when it is no grid's. */
+    internal fun gridCellsOf(owner: NodeData<*>): GridCells? {
+        if (tree.structureOf(owner.id) != MapStructure.GRID || tree.structureOwnerOf(owner.id) != owner.id) return null
+        return gridLayout.cellsOf(owner, tree)
+    }
+
+    /** Returns the edges of each table the shown topics are laid out in, as they are now. */
+    internal fun tableBounds(): List<CellRect> {
+        val bounds = mutableListOf<CellRect>()
+        tree.doVisiblePreorderTraversal { node -> tableCellsOf(node)?.bounds?.let(bounds::add) }
+        return bounds
+    }
+
     /** Returns the cells of the table laid out from [owner], as its topics are now, or null when it is no table's. */
     internal fun tableCellsOf(owner: NodeData<*>): TableCells? =
-        matrixGridOf(owner)?.toCells() ?: treeTableGridOf(owner)?.toCells()
+        matrixGridOf(owner)?.toCells() ?: treeTableGridOf(owner)?.toCells() ?: gridCellsOf(owner)?.toCells()
 
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
@@ -280,7 +302,7 @@ class MindMapManager {
     // rather than placed where its branches fit, as those laid out by a direction are.
     private val isLaidOutWhole: Boolean
         get() = tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE || tree.structure.isFishbone ||
-            tree.structure.isMatrix || tree.structure == MapStructure.TREE_TABLE
+            tree.structure.isTable
 
     private val timelineLayout = TimelineLayout(
         directionManagers.getValue(GrowDirection.UP)
@@ -297,7 +319,7 @@ class MindMapManager {
         when {
             // A tree chart's or a timeline's own topic has its branch laid out from it, wherever it is.
             isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE || structure.isFishbone ||
-                structure.isMatrix || structure == MapStructure.TREE_TABLE) -> {
+                structure.isTable) -> {
                 ownedBranches.arrangeBelow(node, tree)
             }
             // A cause of a fishbone has its ribs along its bone, from where it is.
@@ -365,8 +387,9 @@ class MindMapManager {
     }
 
     private fun layOutWhole(root: NodeData<*>) {
-        if (tree.structure == MapStructure.TREE_TABLE) {
-            treeTableLayout.arrange(root, tree)
+        if (tree.structure == MapStructure.TREE_TABLE || tree.structure == MapStructure.GRID) {
+            if (tree.structure == MapStructure.GRID) gridLayout.arrange(root, tree)
+            else treeTableLayout.arrange(root, tree)
             floatingTopics().forEach { (node, offset) ->
                 directionManagers.getValue(GrowDirection.RIGHT).arrangeFloating(root, node, offset, tree)
             }

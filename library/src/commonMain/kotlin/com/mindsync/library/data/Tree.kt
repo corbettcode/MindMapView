@@ -1,6 +1,7 @@
 package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.halfHeight
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.GrowDirection
 import com.mindsync.library.model.LayoutSide
@@ -986,7 +987,15 @@ class Tree<T> {
         val others = parent.children - targetId
         val sameSide = others.filter { sideOf(it) == side }
         if (sameSide.isEmpty()) return false
-        val below = sameSide.firstOrNull { crossOf(getNode(it)).dpVal > center.dpVal }
+        // A grid's main topics are in reading order: a row of cells down, then along it.
+        val isReadingOrder = structureOf(parent.id) == MapStructure.GRID && structureOwnerOf(parent.id) == parent.id
+        fun isAfter(node: NodeData<*>): Boolean {
+            if (!isReadingOrder) return crossOf(node).dpVal > center.dpVal
+            val dy = node.path.centerY.dpVal - centerY.dpVal
+            val rowHalf = halfHeight(node).dpVal
+            return dy > rowHalf || (dy >= -rowHalf && node.path.centerX.dpVal > centerX.dpVal)
+        }
+        val below = sameSide.firstOrNull { isAfter(getNode(it)) }
         val index = if (below != null) others.indexOf(below) else others.indexOf(sameSide.last()) + 1
         val newChildren = others.toMutableList().apply { add(index, targetId) }
         if (newChildren == parent.children) return false

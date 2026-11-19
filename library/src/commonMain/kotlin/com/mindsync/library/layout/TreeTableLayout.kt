@@ -113,7 +113,7 @@ internal fun treeTableGrid(
     val headerHeight = maxOf(TREE_TABLE_MIN_CELL, halfHeight(owner).dpVal * 2 + 2 * TREE_TABLE_PADDING)
     // A table of only its header has one column, the header's.
     val columnWidths = if (columns == 0) listOf(widths[0]) else widths.drop(1)
-    val left = owner.path.centerX.dpVal - columnWidths.sum() / 2
+    val left = tableLeftFor(tree, owner, columnWidths.sum(), TREE_TABLE_PADDING)
     val headerTop = owner.path.centerY.dpVal - headerHeight / 2
     val columnEdges = columnWidths.runningFold(left) { edge, width -> edge + width }
     val rowEdges = heights.toList().runningFold(headerTop + headerHeight) { edge, height -> edge + height }

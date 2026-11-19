@@ -100,7 +100,8 @@ enum class MapStructure(
         , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
-        LOGIC_RIGHT, BRACE_RIGHT, TREE_TABLE, GRID -> GrowDirection.RIGHT
+        LOGIC_RIGHT, BRACE_RIGHT, TREE_TABLE -> GrowDirection.RIGHT
+        GRID -> gridDirectionOf(tree, id, owner)
         LOGIC_LEFT -> GrowDirection.LEFT
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
@@ -185,6 +186,18 @@ enum class MapStructure(
         if (tree.isFloating(branchId)) return GrowDirection.RIGHT
         if (tree.isSummary(branchId)) return if (this == MATRIX_ROWS) GrowDirection.DOWN else GrowDirection.RIGHT
         return if (id == branchId) groupDirection else GrowDirection.RIGHT
+    }
+
+    // The owner's children are in cells below it, so it grows down. The topics below them grow right, as logic charts,
+    // and those of a summary of the main topics, which is below the grid, down.
+    private fun gridDirectionOf(
+        tree: Tree<*>
+        , id: String
+        , owner: String
+    ): GrowDirection {
+        if (id == owner) return GrowDirection.DOWN
+        val branchId = generateSequence(id) { tree.getNode(it).parentId }.first { tree.getNode(it).parentId == owner }
+        return if (tree.isSummary(branchId) && !tree.isFloating(branchId)) GrowDirection.DOWN else GrowDirection.RIGHT
     }
 
     // The owner's children are along the axis, to its right; the branch of every other one goes up, and of the rest

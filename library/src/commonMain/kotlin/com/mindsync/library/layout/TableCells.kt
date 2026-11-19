@@ -1,6 +1,31 @@
 package com.mindsync.library.layout
 
+import com.mindsync.library.data.NodeData
+import com.mindsync.library.data.Tree
+import com.mindsync.library.halfWidth
+import com.mindsync.library.model.GrowDirection
 import kotlin.math.abs
+
+/**
+ * Returns the left of a table [width] wide whose header holds [owner], with [padding] around it, in dp. A branch's
+ * topic is at the end of the header nearest its parent, so the line to it does not cross the table; the root's, and a
+ * topic placed below or above its parent, in the middle.
+ */
+internal fun tableLeftFor(
+    tree: Tree<*>
+    , owner: NodeData<*>
+    , width: Float
+    , padding: Float
+): Float {
+    val centerX = owner.path.centerX.dpVal
+    val halfWidth = halfWidth(owner).dpVal
+    if (owner.parentId == null) return centerX - width / 2
+    return when (tree.placedDirectionOf(owner.id)) {
+        GrowDirection.RIGHT -> centerX - halfWidth - padding
+        GrowDirection.LEFT -> centerX + halfWidth + padding - width
+        else -> centerX - width / 2
+    }
+}
 
 /** A cell of a table, by its edges, in dp. */
 internal class CellRect(
