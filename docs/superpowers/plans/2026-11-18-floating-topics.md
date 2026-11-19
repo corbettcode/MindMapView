@@ -138,15 +138,15 @@ the outline; phase D documents them.
 
 ### Task B2: Dragging
 
-**Files:** `MindMapState.kt` (`onNodeDrag`, `onTouchUp`), `MindMap.kt` (Alt on drop, double-click on blank map),
+**Files:** `MindMapState.kt` (`onTouchUp(…, isDetaching)`), `MindMap.kt` (Alt on drop, double-click on blank map),
 test `FloatingDragTest.kt`
 
-- [ ] A floating topic dropped on blank map moves there (its offset changes), one step; dropped on a topic, it
+- [x] A floating topic dropped on blank map moves there (its offset changes), one step; dropped on a topic, it
   becomes that topic's last child.
-- [ ] An attached topic dropped on blank map with Alt held becomes floating there; without Alt it is reordered among
+- [x] An attached topic dropped on blank map with Alt held becomes floating there; without Alt it is reordered among
   its siblings, as today.
-- [ ] `MindMap(onBlankDoubleClick = { point -> })`, which the app uses to add a floating topic there.
-- [ ] Tests (5): drag a floating topic on blank map, then undo; onto a topic; Alt-drag an attached topic to blank
+- [x] `MindMap(onBlankDoubleClick = { point -> })`, which the app uses to add a floating topic there.
+- [x] Tests (5): drag a floating topic on blank map, then undo; onto a topic; Alt-drag an attached topic to blank
   map; a plain drag still reorders; a double click on blank map calls `onBlankDoubleClick` with the point.
 
 ### Task B3: In the app

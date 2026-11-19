@@ -2142,11 +2142,15 @@ class MindMapState(
         invalidate()
     }
 
-    internal fun onTouchUp(onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit) {
+    internal fun onTouchUp(
+        onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit
+        , isDetaching: Boolean = false
+    ) {
         if (mindMapManager.getMovingState()) {
             mindMapManager.setNotMoving()
             val selectedNode = mindMapManager.getSelectedNode()
             val attachedNode = this.attachedNode
+            val isFloating = selectedNode != null && tree.isFloating(selectedNode.id)
             if (selectedNode != null && attachedNode != null) {
                 // A node dropped on the root joins the children on the side of the root it was dropped nearest to.
                 val side = LayoutSide.nearest(
@@ -2155,6 +2159,17 @@ class MindMapState(
                 )
                 recordChange { tree.moveNode(selectedNode.id, attachedNode.id, side = side) }
                 onNodeMove(tree, selectedNode, attachedNode)
+            }
+            // A floating topic dropped on no other node stays where it was dropped, as does a node dropped with Alt,
+            // which floats from then on.
+            else if (selectedNode != null && (isFloating || isDetaching)) {
+                val dropped = offsetFromRoot(tree.getNode(selectedNode.id))
+                recordChange {
+                    val rootId = tree.getRootNode().id
+                    if (tree.getNode(selectedNode.id).parentId != rootId) tree.moveNode(selectedNode.id, rootId)
+                    tree.setFloating(selectedNode.id, dropped)
+                }
+                mindMapManager.setSelectedNode(tree.nodes[selectedNode.id])
             }
             // A node dropped on no other node takes the place among its siblings that it was dropped at.
             else if (selectedNode != null) {

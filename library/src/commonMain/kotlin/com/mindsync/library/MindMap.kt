@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.isAltPressed
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -216,6 +217,7 @@ fun MindMap(
     , emojiFontFamily: FontFamily? = null
     , onNodeClick: (node: NodeData<*>?) -> Unit = {}
     , onNodeDoubleClick: (node: NodeData<*>) -> Unit = {}
+    , onBlankDoubleClick: ((position: Offset) -> Unit)? = null
     , onNodeMove: (tree: Tree<*>, target: NodeData<*>, parent: NodeData<*>) -> Unit = { _, _, _ -> }
     , onAddChildClick: ((node: NodeData<*>, side: LayoutSide) -> Unit)? = null
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
@@ -242,6 +244,7 @@ fun MindMap(
     }
     val currentOnNodeClick by rememberUpdatedState(onNodeClick)
     val currentOnNodeDoubleClick by rememberUpdatedState(onNodeDoubleClick)
+    val currentOnBlankDoubleClick by rememberUpdatedState(onBlankDoubleClick)
     val currentOnNodeMove by rememberUpdatedState(onNodeMove)
     val currentOnAddChildClick by rememberUpdatedState(onAddChildClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
@@ -278,6 +281,8 @@ fun MindMap(
                 .pointerInput(state) {
                     var lastClickedNodeId: String? = null
                     var lastClickTime = 0L
+                    // When and where blank map was last clicked, for a second click there to be a double click.
+                    var lastBlankClick: Pair<Long, Offset>? = null
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         // A press anywhere on the map but in the text being typed ends the typing.
@@ -357,6 +362,7 @@ fun MindMap(
                                 }
                             }
                             else {
+                                var isPanned = false
                                 try {
                                     do {
                                         val event = awaitPointerEvent()
@@ -364,6 +370,7 @@ fun MindMap(
                                         event.changes.forEach { change ->
                                             if (change.positionChanged()) {
                                                 isMapDragged = true
+                                                isPanned = true
                                                 change.consume()
                                             }
                                         }
@@ -371,6 +378,14 @@ fun MindMap(
                                 } finally {
                                     isMapDragged = false
                                 }
+                                // Two clicks on blank map, close in time and place, are a double click there.
+                                val previous = lastBlankClick
+                                val isSecondClick = !isPanned && previous != null &&
+                                    down.uptimeMillis - previous.first <= viewConfiguration.doubleTapTimeoutMillis &&
+                                    (down.position - previous.second).getDistance() <= viewConfiguration.touchSlop
+                                lastBlankClick =
+                                    if (isPanned || isSecondClick) null else down.uptimeMillis to down.position
+                                if (isSecondClick) currentOnBlankDoubleClick?.invoke(down.position)
                             }
                         }
                         else {
@@ -400,7 +415,12 @@ fun MindMap(
                                     isNodeDragged = false
                                 }
                             }
-                            if (isLinkDrag) state.onLinkDrop(currentOnNodeLink) else state.onTouchUp(currentOnNodeMove)
+                            if (isLinkDrag) {
+                                state.onLinkDrop(currentOnNodeLink)
+                            }
+                            else {
+                                state.onTouchUp(currentOnNodeMove, currentEvent.keyboardModifiers.isAltPressed)
+                            }
                             link?.let { (node, url) -> currentOnLinkClick(node, url) }
                             // A second click on the same node shortly after the first is a double click; a drag is
                             // not a click, nor is one that changes which nodes are selected.
