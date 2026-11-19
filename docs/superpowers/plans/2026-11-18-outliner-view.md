@@ -82,11 +82,11 @@ phase B adds typing and the outliner keys; phase C adds the app's view modes, me
 
 **Files:** `data/Tree.kt`, test `TreeMoveTest.kt` (common)
 
-- [ ] `Tree.moveNode(targetId, parentId, index: Int?, side)`: takes the topic from its parent and puts it at `index`
+- [x] `Tree.moveNode(targetId, parentId, index: Int?, side)`: takes the topic from its parent and puts it at `index`
   among the new parent's children (counted as `addNode` counts it, null for the end). It throws for the root, a
   missing topic or parent, or a parent in the topic's own branch. It unfolds the new parent and sets the root child
   side when the new parent is the root, and drops it otherwise. `onTouchUp`'s remove-then-attach uses it.
-- [ ] Tests (8): to another parent at an index; within the same parent, up and down; to the end; under its own
+- [x] Tests (9): to another parent at an index; within the same parent, up and down; to the end; with its branch; under its own
   descendant refused; the root refused; a folded parent unfolded; to the root with a side; a topic in a summary's range
   moved out leaves the summary about the rest.
 

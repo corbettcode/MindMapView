@@ -249,3 +249,23 @@ internal fun NodeData<*>.withColors(
     is StadiumNodeData -> copy(color = color, textColor = textColor)
     is OvalNodeData -> copy(color = color, textColor = textColor)
 }
+
+/** Returns the node with [children] as its children, in that order. */
+internal fun NodeData<*>.withChildren(children: List<String>): NodeData<*> = when (this) {
+    is CircleNodeData -> copy(children = children)
+    is RectangleNodeData -> copy(children = children)
+    is SquareNodeData -> copy(children = children)
+    is LineNodeData -> copy(children = children)
+    is StadiumNodeData -> copy(children = children)
+    is OvalNodeData -> copy(children = children)
+}
+
+/** Returns the node as a child of [parentId]. */
+internal fun NodeData<*>.withParent(parentId: String): NodeData<*> = when (this) {
+    is CircleNodeData -> copy(parentId = parentId)
+    is RectangleNodeData -> copy(parentId = parentId)
+    is SquareNodeData -> copy(parentId = parentId)
+    is LineNodeData -> copy(parentId = parentId)
+    is StadiumNodeData -> copy(parentId = parentId)
+    is OvalNodeData -> copy(parentId = parentId)
+}

@@ -696,6 +696,39 @@ class Tree<T> {
         setRootChildSide(targetId, side)
     }
 
+    /**
+     * Moves the node [targetId], with the nodes below it, to [index] among the children of [parentId], counted
+     * without the node itself, or after the last of them when [index] is null. An index past either end puts it at
+     * that end. Under the root it goes on [side]. The new parent is unfolded so the node stays in view. It throws for
+     * the root, a node or parent that is not in the tree, or a parent in the node's own branch.
+     */
+    fun moveNode(
+        targetId: String
+        , parentId: String
+        , index: Int? = null
+        , side: LayoutSide = LayoutSide.RIGHT
+    ) {
+        if (targetId == ROOT_ID) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        val target = _nodes[targetId]
+            ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_TARGET_NODE_NOT_EXIST.message)
+        if (_nodes[parentId] == null) {
+            throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_PARENT_NODE_NOT_EXIST.message)
+        }
+        val isOwnBranch = generateSequence(parentId) { _nodes[it]?.parentId }.any { it == targetId }
+        if (isOwnBranch) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        val oldParent = getNode(target.parentId)
+        val oldChildren = oldParent.children - targetId
+        _nodes[oldParent.id] = oldParent.withChildren(oldChildren)
+        val newParent = getNode(parentId)
+        val newChildren = newParent.children.toMutableList()
+        newChildren.add(index?.coerceIn(0, newChildren.size) ?: newChildren.size, targetId)
+        _nodes[parentId] = newParent.withChildren(newChildren)
+        _nodes[targetId] = getNode(targetId).withParent(parentId)
+        if (oldChildren.isEmpty()) foldedIds.remove(oldParent.id)
+        foldedIds.remove(parentId)
+        setRootChildSide(targetId, side)
+    }
+
     fun removeNode(targetId: String) {
         if (targetId == ROOT_ID) throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
         val targetNode =

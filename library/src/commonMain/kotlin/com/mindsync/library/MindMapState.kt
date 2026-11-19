@@ -1930,10 +1930,7 @@ class MindMapState(
                     (selectedNode.path.centerX - attachedNode.path.centerX).dpVal
                     , (selectedNode.path.centerY - attachedNode.path.centerY).dpVal
                 )
-                recordChange {
-                    tree.removeNode(selectedNode.id)
-                    tree.attachNode(selectedNode.id, attachedNode.id, side)
-                }
+                recordChange { tree.moveNode(selectedNode.id, attachedNode.id, side = side) }
                 onNodeMove(tree, selectedNode, attachedNode)
             }
             // A node dropped on no other node takes the place among its siblings that it was dropped at.
