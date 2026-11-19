@@ -108,7 +108,7 @@ Each phase can ship on its own.
 | Grid column widths | Equal, the widest cell's, so that it reads as a grid. Row heights by their tallest cell. |
 | Cells and borders | Thin lines in the map's line color, as the matrix's (`MATRIX_LINE_WIDTH`), heavier under a header. Topics keep their own shapes inside cells. |
 | Lines | None between topics of the same table. A branch below a grid cell's subtopic, or one with its own structure, draws its own lines. |
-| Summaries | Tree table: a summary is a column past the table's right edge, its cell spanning the rows of the topics it sums. Grid: a summary of main topics is a row below the grid across its width; a summary inside a cell is as in a logic chart. |
+| Summaries | Tree table: a summary is past the table's right edge, without a cell, centered on the rows of the topics it sums, with its bracket; one beside the same rows as another is past it. Grid: a summary of main topics is a row below the grid across its width; a summary inside a cell is as in a logic chart. |
 | Boundaries | Around topics within one cell or nested cells of one parent, drawn as they are now. Not across grid cells. |
 | Folded topics | A folded topic is a leaf: its cell stretches as any leaf's does. |
 | Floating topics | As in the other structures: where they were put, their branch a logic chart →. |
@@ -176,13 +176,13 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 **Files:** `layout/TreeTableLayout.kt` (new), `MindMapManager.kt`; tests `TreeTableLayoutTest` (new)
 
-- [ ] Columns by depth, leaves as rows, each topic's cell spanning its leaves' rows, leaves stretched to the last
+- [x] Columns by depth, leaves as rows, each topic's cell spanning its leaves' rows, leaves stretched to the last
   column with the topic at the cell's right, and the owner as a header across the top.
-- [ ] A topic with its own branch structure is a leaf holding its branch's box. A folded topic is a leaf.
-- [ ] Summaries in a column past the right edge, spanning the rows they sum.
-- [ ] `MindMapManager`: a map in `TREE_TABLE` is laid out whole. A branch's is dispatched from `arrangeBelow`, and
+- [x] A topic with its own branch structure is a leaf holding its branch's box. A folded topic is a leaf.
+- [x] Summaries past the right edge, centered on the rows they sum, each past those beside the same rows.
+- [x] `MindMapManager`: a map in `TREE_TABLE` is laid out whole. A branch's is dispatched from `arrangeBelow`, and
   its box comes from its cells.
-- [ ] Tests:
+- [x] Tests:
   - the header spans the table;
   - siblings are one below the other in order;
   - a parent's cell spans its children;
@@ -194,8 +194,9 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 **Files:** `layout/TreeTableLayout.kt`, `MindMap.kt`; tests `TreeTableDrawTest` (new), `ThemeDrawingTest`
 
-- [ ] `cellsOf(owner)` gives the cells, and `drawTables` draws them. No lines between its topics.
-- [ ] A golden image, `tree-table-feature-tour.png`, of a small list of costs by area, with leaves at two depths.
+- [x] `TreeTableGrid.toCells()` gives the cells, and `drawTables` draws them. No lines between its topics; a topic
+  with its own structure, and a summary, keep theirs.
+- [x] A golden image, `tree-table-costs.png`, of a trip's costs, with leaves at two depths and a summary.
 
 ## Phase D: Grid
 

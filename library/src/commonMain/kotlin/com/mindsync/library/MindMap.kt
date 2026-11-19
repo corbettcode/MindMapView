@@ -796,18 +796,31 @@ private fun DrawScope.drawMatrixHeaders(
 }
 
 // Whether the line from [parent] to [child] is one a table shows by its cells instead. In a matrix, those are from its
-// topic to its rows, and from a row to the topics in its cells.
+// topic to its rows, and from a row to the topics in its cells; in a tree table, all of those between its topics.
 private fun isTableLine(
     tree: Tree<*>
     , parent: NodeData<*>
     , child: NodeData<*>
 ): Boolean {
     if (tree.isSummary(child.id) || tree.isFloating(child.id)) return false
+    if (tree.structureOf(parent.id) == MapStructure.TREE_TABLE) return isInTreeTable(tree, parent)
     fun isMatrixOwner(node: NodeData<*>) =
         tree.structureOf(node.id).isMatrix && tree.structureOwnerOf(node.id) == node.id
     if (isMatrixOwner(parent)) return true
     val ownerId = parent.parentId ?: return false
     return isMatrixOwner(tree.getNode(ownerId)) && !tree.isSummary(parent.id) && !tree.isFloating(parent.id)
+}
+
+// Whether [node] is a topic of the tree table it is laid out in, or its owner: not a summary nor a floating topic, nor
+// below one, which are laid out past the table.
+private fun isInTreeTable(
+    tree: Tree<*>
+    , node: NodeData<*>
+): Boolean {
+    val ownerId = tree.structureOwnerOf(node.id)
+    return generateSequence(node.id) { id -> tree.getNode(id).parentId?.takeIf { id != ownerId } }
+        .takeWhile { it != ownerId }
+        .none { tree.isSummary(it) || tree.isFloating(it) }
 }
 
 // Whether the node is the head of a fishbone: the root of one, or a topic with one of its own.

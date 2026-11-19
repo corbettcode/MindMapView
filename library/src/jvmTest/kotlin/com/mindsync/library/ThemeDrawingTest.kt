@@ -149,6 +149,42 @@ class ThemeDrawingTest {
         assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
     }
 
+    // The costs of a trip as a tree table: leaves at two depths, a summary past the table.
+    private fun tripCosts(): Tree<Any> = Tree<Any>().apply {
+        val root = getRootNode()
+        setRootNode(root.copy(description = "<p>Trip costs</p>"))
+        addNode("Travel", root.id, "Travel")
+        addNode("Flights", "Travel", "Flights")
+        addNode("Out", "Flights", "Out: 320")
+        addNode("Back", "Flights", "Back: 290")
+        addNode("Train", "Travel", "Train: 45")
+        addNode("Stay", root.id, "Stay")
+        addNode("Hotel", "Stay", "Hotel, 4 nights: 560")
+        addNode("Most", "Stay", "Most")
+        setSummary("Most", setOf("Hotel"))
+        addNode("Food", root.id, "Food: 200")
+        structure = MapStructure.TREE_TABLE
+    }
+
+    @Test
+    fun tripCostsTreeTableLooksAsBefore() = runComposeUiTest {
+        val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/tree-table-costs.png"))
+        val state = shownState(tripCosts())
+
+        val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        assertEquals(golden.width, image.width)
+        assertEquals(golden.height, image.height)
+        var differing = 0
+        for (y in 0 until image.height) for (x in 0 until image.width) {
+            val a = golden.getRGB(x, y)
+            val b = image.getRGB(x, y)
+            val isDifferent = listOf(0, 8, 16, 24).any { shift -> abs((a shr shift and 0xFF) - (b shr shift and 0xFF)) > 8 }
+            if (isDifferent) differing++
+        }
+        assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
+    }
+
     @Test
     fun oceanColorsTheNodes() = runComposeUiTest {
         val state = shownState(treeWithChildren())
