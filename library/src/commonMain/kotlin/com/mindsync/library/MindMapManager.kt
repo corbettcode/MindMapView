@@ -180,12 +180,14 @@ class MindMapManager {
             owner: NodeData<*>
             , tree: Tree<*>
         ) {
-            layoutManagerFor(owner.id).arrangeChildren(owner, tree)
+            val structure = tree.structureOf(owner.id)
+            when {
+                structure.isTreeChart -> treeChartLayouts.getValue(structure == MapStructure.TREE_RIGHT)
+                    .arrange(owner, tree)
+                structure == MapStructure.TIMELINE -> timelineLayout.arrange(owner, tree)
+                else -> layoutManagerFor(owner.id).arrangeChildren(owner, tree)
+            }
         }
-    }
-
-    init {
-        (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
     }
 
     // The layouts the root's children are arranged with: one for each side of a mind map, or the structure's one.
@@ -199,6 +201,11 @@ class MindMapManager {
 
     private val treeChartLayouts = listOf(true, false).associateWith { TreeChartLayout(isRight = it) }
 
+    init {
+        (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
+        treeChartLayouts.values.forEach { it.ownedBranches = ownedBranches }
+    }
+
     private val timelineLayout = TimelineLayout(
         directionManagers.getValue(GrowDirection.UP)
         , directionManagers.getValue(GrowDirection.DOWN)
@@ -209,11 +216,16 @@ class MindMapManager {
 
     /** Lays out the nodes below [node], where it is, as the map's structure has them: while it is dragged, say. */
     fun arrangeBranch(node: NodeData<*>) = inPass {
-        if (tree.structure.isTreeChart && tree.structureOwnerOf(node.id) == tree.getRootNode().id) {
-            treeChartLayout().arrangeColumnAt(node, node.path.centerX.dpVal, node.path.centerY.dpVal, tree)
-        }
-        else {
-            layoutManagerFor(node.id).arrangeNode(tree, node)
+        val structure = tree.structureOf(node.id)
+        val isOwner = tree.branchStructureOf(node.id) != null
+        when {
+            // A tree chart's or a timeline's own topic has its branch laid out from it, wherever it is.
+            isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE) -> {
+                ownedBranches.arrangeBelow(node, tree)
+            }
+            structure.isTreeChart -> treeChartLayouts.getValue(structure == MapStructure.TREE_RIGHT)
+                .arrangeColumnAt(node, node.path.centerX.dpVal, node.path.centerY.dpVal, tree)
+            else -> layoutManagerFor(node.id).arrangeNode(tree, node)
         }
     }
 

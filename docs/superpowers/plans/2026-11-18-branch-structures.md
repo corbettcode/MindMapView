@@ -164,15 +164,23 @@ topic and kept for the layout under way, `inPass`; `layoutManagerFor` by `struct
 
 ### Task C1: Tree chart in a branch
 
-**Files:** `layout/TreeChartLayout.kt` (`arrange(owner, tree)`), `MindMapManager.kt`, `MindMap.kt` (`treeChartElbow`,
-the owner's curves to its columns, buttons on the spine, by owner), `layout/SummaryGeometry.kt`, `data/Tree.kt`
-(drop among siblings by owner), test `BranchTreeChartTest.kt`
+**Files:** `layout/TreeChartLayout.kt` (`arrange` from any topic, `ownedBranches`, `placeOwned`),
+`layout/TimelineLayout.kt` (`arrange` from any topic), `MindMapManager.kt` (`arrangeBelow` by structure,
+`arrangeBranch`), `MindMap.kt` (elbows, spine and buttons by the structure the topic is in), test
+`BranchTreeChartTest.kt`
 
-- [ ] A tree chart branch: the owner's children in columns in a row below it, centered on it, rows indented; laid out
-  and measured as a box. The owner's lines to its columns are curves down, as from a tree chart's root.
-- [ ] Every test of `parentId == root` / `parentId != null` for columns and rows asks for the owner instead.
-- [ ] Tests (4): columns below the owner; rows indented; a summary of columns below them; drop order by x for columns,
-  y for rows, in the branch.
+- [x] A tree chart branch: the owner's shown children in columns in a row below it, centered on it, rows indented;
+  measured as a box like any other. The owner's lines to its columns are curves down (`placedDirectionOf`), as from a
+  tree chart's root.
+- [x] A row or column of a tree chart with a structure of its own is placed so its whole branch has its near edge
+  where the row's would be and its top at the row's top, and is laid out in its structure.
+- [x] Every `parentId == null` / `!= null` test for columns and rows asks for the owner instead (`isRow`, the add
+  button on the spine); the elbow's and spine's side by `structureOf`. A dragged tree chart or timeline owner lays
+  its branch out from where it is.
+- [x] Tests (5): columns below the owner, clear of its parent and siblings; rows indented with the elbow on the
+  spine; a summary of columns below them; stacking by x for columns, y for rows; a logic chart column in a tree chart
+  map. All 708 library and 251 desktop tests pass on a full rerun. The tour was rendered with a tree chart → and ←
+  branch in the mind map, and a logic chart and an org chart column in a tree chart, and looked at.
 
 ### Task C2: Brace map and timeline in a branch
 

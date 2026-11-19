@@ -27,12 +27,23 @@ internal class TreeChartLayout(private val isRight: Boolean) {
     // +1 when the columns grow right, -1 left.
     private val sign = if (isRight) 1f else -1f
 
-    /** Places the root's children and the topics below them, in columns in a row below [root]. */
+    /**
+     * What lays out the branches of the topics with a structure of their own among the rows and columns. Without it,
+     * every branch is laid out here.
+     */
+    var ownedBranches: OwnedBranches? = null
+
+    /**
+     * Places the children of [root] and the topics below them, in columns in a row below it. [root] is the map's
+     * root, or a topic whose branch is laid out as a tree chart of its own.
+     */
     fun arrange(
         root: NodeData<*>
         , tree: Tree<*>
     ) {
-        val ids = root.children.filterNot { tree.isFloating(it) }
+        // The root's floating topics are placed apart, and the children of a folded topic below it are hidden.
+        val ids =
+            if (root.parentId == null) root.children.filterNot { tree.isFloating(it) } else tree.visibleChildren(root)
         val columnIds = ids.filterNot { tree.isSummary(it) }
         val top = bottomOf(root) + COLUMN_GAP.dpVal
         var cursor = 0f
@@ -97,6 +108,7 @@ internal class TreeChartLayout(private val isRight: Boolean) {
         , top: Float
         , tree: Tree<*>
     ): Float {
+        placeOwned(node, near, top, tree)?.let { return it }
         val halfWidth = halfWidth(node).dpVal
         val placed = node.withCenter(Dp(near + sign * halfWidth), Dp(top + halfHeight(node).dpVal))
         tree.setNode(node.id, placed)
@@ -123,6 +135,24 @@ internal class TreeChartLayout(private val isRight: Boolean) {
             bottom = maxOf(bottom, placeColumn(summary, summaryNear, summaryTop, tree))
         }
         return bottom
+    }
+
+    // A topic with a structure of its own is placed so its whole branch, laid out in that, has its near edge at [near]
+    // and its top at [top]. Returns how far down it reaches, or null for a topic laid out here.
+    private fun placeOwned(
+        node: NodeData<*>
+        , near: Float
+        , top: Float
+        , tree: Tree<*>
+    ): Float? {
+        val branches = ownedBranches ?: return null
+        if (tree.branchStructureOf(node.id) == null) return null
+        val box = branches.boxOf(node, tree)
+        val nearReach = (if (isRight) box.left else box.right).dpVal
+        val placed = node.withCenter(Dp(near + sign * nearReach), Dp(top + box.top.dpVal))
+        tree.setNode(node.id, placed)
+        branches.arrangeBelow(placed, tree)
+        return top + box.top.dpVal + box.bottom.dpVal
     }
 
     // The left and right of the node and the shown nodes below it, as they are placed now.

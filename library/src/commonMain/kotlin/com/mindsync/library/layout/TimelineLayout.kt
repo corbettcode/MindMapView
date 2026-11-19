@@ -25,7 +25,9 @@ internal class TimelineLayout(
         root: NodeData<*>
         , tree: Tree<*>
     ) {
-        val ids = root.children.filterNot { tree.isFloating(it) }
+        // The root's floating topics are placed apart, and the children of a folded topic below it are hidden.
+        val ids =
+            if (root.parentId == null) root.children.filterNot { tree.isFloating(it) } else tree.visibleChildren(root)
         val axisY = root.path.centerY.dpVal
         val start = root.path.centerX.dpVal + halfWidth(root).dpVal + AXIS_GAP.dpVal
         // Where the next topic on the axis, and the next branch above and below it, may start.

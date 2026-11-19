@@ -1203,7 +1203,7 @@ private fun DrawScope.drawLines(
             val width = line.width.toPx(this)
             path.reset()
             // The rows of a tree chart's columns hang off a spine below their parent, whatever the line style.
-            val isRow = tree.structure.isTreeChart && node.parentId != null
+            val isRow = tree.structureOf(node.id).isTreeChart && node.id != tree.structureOwnerOf(node.id)
             val elbow = if (isRow) treeChartElbow(tree, node, toNode) else null
             if (elbow != null) {
                 val isSharp = line.style == NodeLineStyle.SHARP_LINEAR || line.style == NodeLineStyle.SHARP_BEZIER
@@ -1476,7 +1476,7 @@ internal fun Density.addButtonCenter(
 ): Offset {
     if (tree.structureOf(node.id) == MapStructure.MIND_MAP) return addButtonCenter(node, side)
     // In a tree chart the rows below a topic hang off the spine below it, where its button is.
-    if (tree.structureOf(node.id).isTreeChart && node.parentId != null) {
+    if (tree.structureOf(node.id).isTreeChart && node.id != tree.structureOwnerOf(node.id)) {
         val spineX = treeChartSpineX(tree, node)
         val bottom = node.path.centerY.toPx(this) + halfHeight(node).toPx(this)
         return Offset(spineX, bottom + ADD_BUTTON_RADIUS.toPx(this))
@@ -1507,7 +1507,7 @@ internal fun Density.treeChartElbow(
     , parent: NodeData<*>
     , child: NodeData<*>
 ): List<Offset> {
-    val isRight = tree.structure == MapStructure.TREE_RIGHT
+    val isRight = tree.structureOf(parent.id) == MapStructure.TREE_RIGHT
     val spineX = treeChartSpineX(tree, parent)
     val parentBottom = parent.path.centerY.toPx(this) + halfHeight(parent).toPx(this)
     val childY = lineEndY(child)
@@ -1523,7 +1523,7 @@ private fun Density.treeChartSpineX(
     tree: Tree<*>
     , node: NodeData<*>
 ): Float {
-    val isRight = tree.structure == MapStructure.TREE_RIGHT
+    val isRight = tree.structureOf(node.id) == MapStructure.TREE_RIGHT
     val sign = if (isRight) 1f else -1f
     return getNodeEdgeX(node, isRightEdge = !isRight) + sign * TREE_CHART_INDENT.toPx(this) / 2
 }
