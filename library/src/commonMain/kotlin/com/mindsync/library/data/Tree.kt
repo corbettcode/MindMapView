@@ -155,6 +155,14 @@ class Tree<T> {
         }
     }
 
+    /**
+     * Returns what the child of the root [id] is grouped with for boundaries and summaries: the side of the root it
+     * is on, or, for a floating topic, itself alone, as it is on no side.
+     */
+    internal fun rootGroupOf(id: String): Any = if (isFloating(id)) FloatingGroup(id) else sideOf(id)
+
+    private data class FloatingGroup(val id: String)
+
     // The attached children of the root come first, then the floating topics, each in their order.
     private fun orderRootChildren() {
         val root = getRootNode()
@@ -523,7 +531,7 @@ class Tree<T> {
     private fun siblingsOnSideOf(id: String): List<String> {
         val parentId = _nodes[id]?.parentId ?: return emptyList()
         val children = _nodes[parentId]?.children.orEmpty()
-        return if (parentId == ROOT_ID) children.filter { sideOf(it) == sideOf(id) } else children
+        return if (parentId == ROOT_ID) children.filter { rootGroupOf(it) == rootGroupOf(id) } else children
     }
 
     // A removed node stays among the nodes, but is no longer a child of its parent, or is below one that is not.
@@ -543,8 +551,8 @@ class Tree<T> {
     ): List<String> {
         val children = _nodes[parentId]?.children.orEmpty()
         if (parentId != ROOT_ID) return children
-        val side = children.firstOrNull { it in childIds }?.let(::sideOf) ?: return emptyList()
-        return children.filter { sideOf(it) == side }
+        val group = children.firstOrNull { it in childIds }?.let(::rootGroupOf) ?: return emptyList()
+        return children.filter { rootGroupOf(it) == group }
     }
 
     /**

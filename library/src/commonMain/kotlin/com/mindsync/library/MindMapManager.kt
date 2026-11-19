@@ -3,6 +3,7 @@ package com.mindsync.library
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.shape
 import com.mindsync.library.data.Tree
@@ -123,13 +124,28 @@ class MindMapManager {
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
         layoutManagers.values.forEach { it.arrangeChildren(root, tree) }
+        // Floating topics are where they were put in relation to the root, with the nodes below them to their right.
+        floatingTopics().forEach { (node, offset) ->
+            getLayoutManager(LayoutSide.RIGHT).arrangeFloating(root, node, offset, tree)
+        }
     }
 
     private fun fittedRoot(): NodeData<*> {
         val totalHeight = measureHeight(tree.getRootNode())
-        return layoutManagers.values.fold(tree.getRootNode() as NodeData<*>) { root, manager ->
+        val root = layoutManagers.values.fold(tree.getRootNode() as NodeData<*>) { root, manager ->
             manager.adjustRoot(root, tree, totalHeight)
         }
+        // A floating topic above or left of the rest moves them all, for it to be on the mind map too.
+        val manager = getLayoutManager(LayoutSide.RIGHT)
+        val overflows = floatingTopics().map { (node, offset) -> manager.floatingOverflow(root, node, offset, tree) }
+        val shiftX = overflows.maxOfOrNull { it.x.dpVal } ?: 0f
+        val shiftY = overflows.maxOfOrNull { it.y.dpVal } ?: 0f
+        if (shiftX == 0f && shiftY == 0f) return root
+        return manager.movedBy(root, DpOffset(Dp(shiftX), Dp(shiftY)))
+    }
+
+    private fun floatingTopics(): List<Pair<NodeData<*>, DpOffset>> = tree.getRootNode().children.mapNotNull { id ->
+        tree.floatingOffsetOf(id)?.let { tree.getNode(id) to it }
     }
 
     /**

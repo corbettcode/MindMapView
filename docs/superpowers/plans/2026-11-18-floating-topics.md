@@ -96,18 +96,20 @@ the outline; phase D documents them.
 
 ### Task A2: Layout and drawing
 
-**Files:** `layout/MindMapLayoutManager.kt` (`childrenOnSide`), `MindMapManager.kt` (`arrangeTree`, `fittedRoot`,
-`measureOverflow`), `MindMap.kt` (`drawLines`, `addButtonSides`), `layout/BoundaryGeometry.kt`, tests
-`FloatingLayoutTest.kt`, `FloatingDrawTest.kt`
+**Files:** `layout/MindMapLayoutManager.kt` (`childrenOnSide`, `arrangeFloating`, `floatingOverflow`, `movedBy`),
+`MindMapManager.kt` (`arrangeTree`, `fittedRoot`), `MindMap.kt` (`drawLines`), `data/Tree.kt` (`rootGroupOf`),
+`MindMapState.kt` (`fitScreen`, `selectParent`, boundary and summary grouping), tests `FloatingLayoutTest.kt`,
+`FloatingDrawTest.kt`
 
-- [ ] The side layouts skip floating topics. `arrangeTree` then places each at the root plus its offset and arranges
+- [x] The side layouts skip floating topics. `arrangeTree` then places each at the root plus its offset and arranges
   its branch with the right-hand manager.
-- [ ] `fittedRoot` moves the root right and down far enough that no floating branch reaches above or left of the
-  map; `measureOverflow` counts them too, so panning and Fit reach them.
-- [ ] No line from the root to a floating topic, and the root's add buttons and boundaries ignore it.
-- [ ] Tests (8): placed at its offset; its branch to its right; attached topics laid out as if it weren't there;
-  re-laid out after an edit, it stays; the root dragged, it moves along; one above-left of the root is inside the map;
-  no line to it in a PNG export; Fit takes it in.
+- [x] `fittedRoot` moves the root right and down far enough that no floating branch reaches above or left of the
+  map; `measureOverflow` uses it, so panning reaches them. Fit also covers the furthest node shown.
+- [x] No line from the root to a floating topic. At the root, each floating topic is a group of its own for
+  boundaries (`rootGroupOf`), and summaries leave floating topics out; Ctrl+Left does nothing from one.
+- [x] Tests (7): placed at its offset; its branch to its right; attached topics laid out as if it weren't there;
+  it stays when the map changes; it moves with a dragged root; one far above-left of the root is inside the map;
+  no line to it in an SVG export (fails without the change). Fit needs a check by eye.
 
 ### Task A3: In `.ccmm` files
 

@@ -1068,8 +1068,9 @@ private fun DrawScope.drawLines(
 
     forEachNodeWithLine(tree, drawInfo, lineColor) { toNode, line ->
         val node = toNode.parentId?.let { tree.getNode(it) } ?: return@forEachNodeWithLine
-        // A summary is joined to the siblings it is about by its bracket, not to its parent by a line.
-        if (tree.isSummary(toNode.id)) return@forEachNodeWithLine
+        // A summary is joined to the siblings it is about by its bracket, not to its parent by a line, and a floating
+        // topic to nothing.
+        if (tree.isSummary(toNode.id) || tree.isFloating(toNode.id)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val isRightSide = !side.isLeft

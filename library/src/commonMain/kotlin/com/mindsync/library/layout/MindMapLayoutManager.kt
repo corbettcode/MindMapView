@@ -1,6 +1,7 @@
 package com.mindsync.library.layout
 
 import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
@@ -233,7 +234,7 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         , tree: Tree<*>
     ): Dp {
         val onLine = (halfWidth(root) + horizontalSpacing) * slope
-        val straightChildren = root.children.filter { tree.sideOf(it) == side.horizontal }
+        val straightChildren = root.children.filter { tree.sideOf(it) == side.horizontal && !tree.isFloating(it) }
         val clearOfStraight =
             if (straightChildren.isEmpty()) Dp(0f) else measureHeight(straightChildren, tree) / 2 + verticalSpacing
         return if (clearOfStraight.dpVal > onLine.dpVal) clearOfStraight else onLine
@@ -250,6 +251,47 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         return if (side.isUpper) Dp(0f) - offset else offset
     }
 
+    /**
+     * Places the floating topic [node] at [offset] from the center of [root] and lays out the nodes below it on this
+     * side of it.
+     */
+    fun arrangeFloating(
+        root: NodeData<*>
+        , node: NodeData<*>
+        , offset: DpOffset
+        , tree: Tree<*>
+    ) {
+        val placed = moveNode(node, root.path.centerX + offset.x, root.path.centerY + offset.y)
+        tree.setNode(node.id, placed)
+        arrangeChildren(placed, tree)
+    }
+
+    /** Returns [node] moved by [offset]. */
+    fun movedBy(
+        node: NodeData<*>
+        , offset: DpOffset
+    ): NodeData<*> = moveNode(node, node.path.centerX + offset.x, node.path.centerY + offset.y)
+
+    /**
+     * Returns how far right and down [root] has to go for the floating topic [node], at [offset] from it, and the
+     * nodes below it on this side of it to be clear of the top and left of the mind map, or zero when they are.
+     */
+    fun floatingOverflow(
+        root: NodeData<*>
+        , node: NodeData<*>
+        , offset: DpOffset
+        , tree: Tree<*>
+    ): DpOffset {
+        val centerX = root.path.centerX + offset.x
+        val centerY = root.path.centerY + offset.y
+        val left = leftMost(node, centerX, tree)
+        val top = centerY - measureChildHeight(node, tree) / 2
+        return DpOffset(
+            Dp(maxOf(0f, (horizontalSpacing - left).dpVal))
+            , Dp(maxOf(0f, (verticalSpacing - top).dpVal))
+        )
+    }
+
     // The mind map cannot be panned above y = 0, so the node is moved down until the nodes below it fit.
     private fun adjustVertically(
         node: NodeData<*>
@@ -264,7 +306,13 @@ open class MindMapLayoutManager(val side: LayoutSide) {
         node: NodeData<*>
         , tree: Tree<*>
     ): List<String> {
-        return if (node.parentId == null) node.children.filter { tree.sideOf(it) == side } else tree.visibleChildren(node)
+        // A floating topic is placed where it was put, apart from the sides.
+        return if (node.parentId == null) {
+            node.children.filter { tree.sideOf(it) == side && !tree.isFloating(it) }
+        }
+        else {
+            tree.visibleChildren(node)
+        }
     }
 
     protected fun halfWidth(node: NodeData<*>): Dp {

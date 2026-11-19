@@ -569,7 +569,8 @@ class MindMapState(
     ) {
         val rootId = tree.getRootNode().id
         val groups = selectedBranches
-            .filter { it.parentId != null && !tree.isSummary(it.id) }
+            // A floating topic is on no side of the root, so there are no siblings for it to sum up with.
+            .filter { it.parentId != null && !tree.isSummary(it.id) && !tree.isFloating(it.id) }
             .groupBy { node -> node.parentId!! to tree.sideOf(node.id).takeIf { node.parentId == rootId } }
         if (groups.isEmpty()) return
         recordChange {
@@ -1548,7 +1549,7 @@ class MindMapState(
         val rootId = tree.getRootNode().id
         val groups = selectedBranches
             .filter { it.parentId != null }
-            .groupBy { node -> node.parentId to tree.sideOf(node.id).takeIf { node.parentId == rootId } }
+            .groupBy { node -> node.parentId to tree.rootGroupOf(node.id).takeIf { node.parentId == rootId } }
         if (groups.isEmpty()) return emptyList()
         val added = groups.map { (key, nodes) ->
             Boundary(IdGenerator.makeRandomNodeId(), key.first!!, nodes.map { it.id }.toSet())
@@ -1625,10 +1626,11 @@ class MindMapState(
 
     /**
      * Selects the parent of the selected node, one node up its branch towards the root. Nothing changes when
-     * the root or no node is selected.
+     * the root, a floating topic or no node is selected.
      */
     fun selectParent() {
-        val parentId = selectedNode?.parentId ?: return
+        // A floating topic has no line to the root, so the root is not its parent to go to.
+        val parentId = selectedNode?.takeIf { !tree.isFloating(it.id) }?.parentId ?: return
         goToNode(parentId)
     }
 
@@ -1762,10 +1764,20 @@ class MindMapState(
     fun fitScreen() {
         if (viewportSize.isEmpty()) return
         val root = tree.getRootNode()
-        val widthScale =
-            (mindMapManager.measureWidth(root).toPx(density) + Dp(50f).toPx(density)) / viewportSize.width
+        // Floating topics are apart from the branches the root is measured with, so the map is as far as the
+        // furthest of the nodes shown reaches, if that is further.
+        var right = 0f
+        var bottom = 0f
+        tree.doVisiblePreorderTraversal { node ->
+            right = maxOf(right, (node.path.centerX + halfWidth(node)).dpVal)
+            bottom = maxOf(bottom, (node.path.centerY + halfHeight(node)).dpVal)
+        }
+        val width = maxOf(mindMapManager.measureWidth(root).dpVal, right) + 50f
+        val widthScale = Dp(width).toPx(density) / viewportSize.width
         val heightScale = maxOf(
-            mindMapManager.measureHeight(root).toPx(density) * 1.4f, Dp(500f).toPx(density)
+            mindMapManager.measureHeight(root).toPx(density) * 1.4f
+            , Dp(500f).toPx(density)
+            , Dp(bottom + 50f).toPx(density)
         ) / viewportSize.height
         val scale = maxOf(widthScale, heightScale, DEFAULT_ZOOM)
         executeAnimation(
