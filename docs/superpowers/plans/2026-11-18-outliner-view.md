@@ -173,37 +173,44 @@ while nothing is typed (B2).
 
 ### Task B2: The outline's keys in the app
 
-**Files:** new `desktop/.../OutlineKeys.kt` (`outlineKeyAction`), `MindMapApp.kt` (send keys by the view that has
-the focus), tests `OutlineKeysTest.kt`, `OutlineAppTest.kt`
+**Files:** new `desktop/.../OutlineKeys.kt` (`outlineKeyAction`, `OutlineKeyAction`), `MindMapApp.kt`
+(`onOutlineKey`, `selectRow`), tests `OutlineKeysTest.kt`, `OutlineAppTest.kt` (with C1's)
 
-- [ ] `outlineKeyAction(key, codePoint, isShift, isCtrl, isAlt, isMeta, hasSelectedNode)` for the outline while
-  nothing is typed: Enter / Shift+Enter add a sibling below / above to type in, Tab and Shift+Tab indent and outdent,
-  Alt+Shift+Up / Down move, Up / Down go to the row above / below, Left folds or goes to the parent, Right unfolds or
-  goes to the first child, F2 and a typed letter start typing as on the map, Alt+Enter opens the edit dialog.
-- [ ] While the outline has the focus and nothing is typed, the app acts on these instead of the map's keys; while a
-  row is typed in, the app leaves Enter, Tab, Esc and Backspace to the row's editor.
-- [ ] Tests: `OutlineKeysTest` for each key; `OutlineAppTest`: type three topics with Enter in the app's style,
-  indent with Tab, Up and Down between rows, Left and Right fold, a typed letter replaces the text.
+- [x] `outlineKeyAction(key, codePoint, isShift, isCtrl, isAlt, isMeta, hasSelectedNode)` for the outline while
+  nothing is typed: Tab and Shift+Tab indent and outdent, Up / Down go to the row above / below, Left folds or goes to
+  the parent, Right unfolds or goes to the first child; Enter, Shift+Enter, F2, Alt+Enter and a typed letter do what
+  they do on the map. With nothing selected, Down selects the root and Enter adds a topic to it.
+- [x] The keys go by the view in use, `state.textEditHost`, which a press on either view sets, rather than by the
+  focus: on the desktop the map never has the focus, so it could not take it from the outline. While a row is typed
+  in, the app leaves every key to the row's editor but those that end the typing to go on, as Ctrl+S.
+- [x] Tests: `OutlineKeysTest` (5); `OutlineAppTest`: type topics one after another with Enter in the app's style,
+  then undo; Tab and Shift+Tab in the outline, and Tab on the map still adding a child; the arrow keys along the rows
+  and folding.
 
 ## Phase C: In the app
 
 ### Task C1: View modes
 
-**Files:** `MindMapApp.kt`, `menuBar/ViewMenu.kt`, `menuBar/EditMenu.kt` (Move Up, Move Down, Indent, Outdent),
-`UserPreferences.kt` (`viewMode`), new `component/SplitPane.kt`, `KeyboardShortcuts.kt`, test `ViewModeAppTest.kt`
+**Files:** new `ViewMode.kt` (`ViewMode`, `OutlineMove`), `MindMapApp.kt`, `menuBar/ViewMenu.kt`,
+`menuBar/EditMenu.kt` (Move Up, Move Down, Indent, Outdent), `UserPreferences.kt` and `dialog/PreferencesDialog.kt`
+(`viewMode`, `outlineFraction`), new `component/SplitDivider.kt`, `MindMapState.kt` (`showNode`), test
+`OutlineAppTest.kt`
 
-- [ ] `enum class ViewMode { MAP, OUTLINER, BOTH }`, remembered in the preferences. View › Map / Outliner / Map and
-  Outliner with a tick, and Ctrl+Shift+O to cycle. Changing the mode while typing commits the text first.
-- [ ] Map and Outliner: a `SplitPane` with the outline on the left (35% to start, kept in the preferences, 200 dp at
-  least on either side); below 700 dp of window width it shows the outline only, as the web app on a phone.
-- [ ] In Map and Outliner, a row selected in the outline centres its topic on the map only when the topic is off the
-  map's screen (`centerNode`), so the map doesn't move under a mouse that is on it.
-- [ ] The node menu, the edit dialog (Alt+Enter), Delete, cut, copy and paste, folding keys, task keys, boundaries,
-  summaries and find all act on the selection, so they work from the outline with no change; each is tried once in
-  the tests.
-- [ ] Tests (7): the menu and Ctrl+Shift+O switch modes and are remembered; Tab in the outline indents and Tab on the
-  map adds a child; Edit › Move Up on the map; Ctrl+F finds and selects in the outline; Alt+Enter opens the dialog
-  from a row; switching modes while typing keeps the text; the narrow window shows the outline alone.
+- [x] `enum class ViewMode { MAP, OUTLINER, BOTH }`, kept in the preferences. View › Map / Outliner / Map and
+  Outliner with a tick, and Ctrl+Shift+O to go round them. Changing the mode ends the typing first.
+- [x] Map and Outliner: the outline on the left (35% to start), then a `SplitDivider` that is dragged between 15% and
+  85%, kept in the preferences when the drag ends. Below 700 dp of window width the outline is shown alone.
+- [x] The map stays composed under the outline in Outliner mode, so it stays laid out for the exports, and its menus
+  and popups are placed by where the map is beside the outline (`mapOffset`).
+- [x] In Map and Outliner, a topic selected in the outline is brought into view on the map only when it is off it
+  (`state.showNode`), so the map doesn't move under a mouse that is on it.
+- [x] Alt+Shift+Up / Down move the selected topics on the map and in the outline; the Edit menu has Move Up, Move
+  Down, Indent and Outdent for both.
+- [x] The node menu (right click on a row), the edit dialog (Alt+Enter), cut, copy and paste, folding keys, task keys,
+  boundaries, summaries and find all act on the selection, so they work from the outline with no change.
+- [x] Tests (4 more in `OutlineAppTest`): Ctrl+Shift+O goes round the modes, which the preferences keep; a narrow
+  window shows the outline alone; Alt+Shift+Up on the map; changing the mode while typing keeps the text. The divider
+  drag and the menus need a check by eye.
 
 ### Task C2: Documentation
 

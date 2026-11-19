@@ -5,8 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,8 +44,10 @@ import com.mindsync.mindmapview.desktop.AppDialog
 import com.mindsync.mindmapview.desktop.AppDialogState
 import com.mindsync.mindmapview.desktop.DEFAULT_ARROW_LINK_COLORS
 import com.mindsync.mindmapview.desktop.DEFAULT_NODE_COLORS
+import com.mindsync.mindmapview.desktop.DEFAULT_OUTLINE_FRACTION
 import com.mindsync.mindmapview.desktop.DEFAULT_TEXT_COLORS
 import com.mindsync.mindmapview.desktop.NodeFont
+import com.mindsync.mindmapview.desktop.ViewMode
 import com.mindsync.mindmapview.desktop.component.BorderSettings
 import com.mindsync.mindmapview.desktop.component.COLOR_EDITOR_BUTTON_WIDTH
 import com.mindsync.mindmapview.desktop.component.CollapsibleSection
@@ -91,6 +93,9 @@ data class UserPreferences(
     , val rootTopic: TopicPreferences = TopicPreferences()
     , val subtopic: TopicPreferences = TopicPreferences()
     , val topic: TopicPreferences = TopicPreferences()
+    // How the map is shown, and the share of the window the outline has beside the map.
+    , val viewMode: ViewMode = ViewMode.MAP
+    , val outlineFraction: Float = DEFAULT_OUTLINE_FRACTION
 ) {
     /** Returns the preferences of the nodes of [kind]. */
     fun topicOf(

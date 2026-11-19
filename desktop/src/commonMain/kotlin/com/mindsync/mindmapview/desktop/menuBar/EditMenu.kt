@@ -22,6 +22,7 @@ import com.mindsync.library.util.RichTextLink
 import com.mindsync.mindmapview.desktop.LINK_MENU_MAX_WIDTH
 import com.mindsync.mindmapview.desktop.NEW_NODE_ITEMS
 import com.mindsync.mindmapview.desktop.NewNodePlace
+import com.mindsync.mindmapview.desktop.OutlineMove
 import com.mindsync.mindmapview.desktop.label
 import kotlin.collections.forEach
 
@@ -47,6 +48,7 @@ import kotlin.collections.forEach
  * @param onSelectAll Callback function invoked when the "Select All" action is selected.
  * @param canMove Function that determines whether the "Move" actions are enabled.
  * @param onMoveAround Callback function invoked when a "Move" action is selected. Receives a boolean indicating whether the move is clockwise.
+ * @param onOutlineMove Callback function invoked when "Move Up", "Move Down", "Indent" or "Outdent" is selected.
  * @param links Function that provides a list of `RichTextLink` objects representing the links available to open.
  * @param onOpenLink Callback function invoked when an "Open Link" action is selected. Receives the URL of the link.
  * @param onAddArrowLink Callback function invoked when the "Add Arrow Link" action is selected.
@@ -80,6 +82,7 @@ fun EditMenu(
     , onSelectAll: () -> Unit
     , canMove: () -> Boolean
     , onMoveAround: (isClockwise: Boolean) -> Unit
+    , onOutlineMove: (OutlineMove) -> Unit
     , links: () -> List<RichTextLink>
     , onOpenLink: (String) -> Unit
     , onAddArrowLink: () -> Unit
@@ -258,6 +261,17 @@ fun EditMenu(
                     , onClick = {
                         expanded = false
                         onMoveAround(isClockwise)
+                    }
+                    , enabled = isMoveEnabled
+                )
+            }
+            OutlineMove.entries.forEach { move ->
+                DropdownMenuItem(
+                    text = { Text(move.label) }
+                    , trailingIcon = { Text(move.shortcut, style = MaterialTheme.typography.labelMedium) }
+                    , onClick = {
+                        expanded = false
+                        onOutlineMove(move)
                     }
                     , enabled = isMoveEnabled
                 )

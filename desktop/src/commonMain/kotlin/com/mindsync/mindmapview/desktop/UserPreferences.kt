@@ -43,6 +43,8 @@ class UserPreferencesStore(
         const val EMOJI_TONES = "emojiTones"
         const val MAP_THEME = "mapTheme"
         const val BACKGROUND_COLOR = "backgroundColor"
+        const val VIEW_MODE = "viewMode"
+        const val OUTLINE_FRACTION = "outlineFraction"
 
         // One font, shape, ways of showing notes and attributes, and lists of colors for every kind of topic, as
         // kept before each kind had its own. They are still read, for the kinds that have none of their own. A
@@ -130,8 +132,14 @@ internal fun readUserPreferences(
         , rootTopic = topics.getValue(TopicKind.ROOT_TOPIC)
         , subtopic = topics.getValue(TopicKind.SUBTOPIC)
         , topic = topics.getValue(TopicKind.TOPIC)
+        , viewMode = ViewMode.entries.firstOrNull { it.name == read(VIEW_MODE) } ?: defaults.viewMode
+        , outlineFraction = read(OUTLINE_FRACTION)?.toFloatOrNull()?.takeIf { it in OUTLINE_FRACTIONS }
+            ?: defaults.outlineFraction
     )
 }
+
+/** The shares of the window's width the outline can have beside the map, so neither is too narrow to use. */
+val OUTLINE_FRACTIONS = 0.15f..0.85f
 
 // A kind of topic without settings of its own takes those kept for all of them before, but for a font the theme
 // has, [isThemeFont], a way of showing attributes it has, [isThemeAttributes], or a shape it has for the kind,
@@ -179,6 +187,8 @@ internal fun UserPreferences.values(): Map<String, String> = with(UserPreference
         , EMOJI_TONES to emojiTones.entries.joinToString(",") { "${it.key}=${it.value}" }
         , MAP_THEME to mapThemeId
         , BACKGROUND_COLOR to backgroundColor?.toHex().orEmpty()
+        , VIEW_MODE to viewMode.name
+        , OUTLINE_FRACTION to outlineFraction.toString()
     ) + TopicKind.entries.flatMap { kind ->
         val topic = topicOf(kind)
         listOf(

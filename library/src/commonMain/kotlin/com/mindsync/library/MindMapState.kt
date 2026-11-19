@@ -1732,6 +1732,17 @@ class MindMapState(
         invalidate()
     }
 
+    /**
+     * Moves the view so the node is in the middle of it only when its center is off the screen, as [goToNode] does,
+     * so a node already in view stays where it is.
+     */
+    fun showNode(id: String) {
+        val node = tree.nodes[id] ?: return
+        if (viewportSize.isEmpty() || Rect(Offset.Zero, viewportSize).contains(screenPosition(node))) return
+        currentPoint = limitPan(panToCenter(node))
+        invalidate()
+    }
+
     private fun screenPosition(
         node: NodeData<*>
     ): Offset = Offset(node.path.centerX.toPx(density), node.path.centerY.toPx(density)) * scaleFactor + currentPoint

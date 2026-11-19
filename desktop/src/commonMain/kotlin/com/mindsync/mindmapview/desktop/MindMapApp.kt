@@ -2,6 +2,10 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,15 +20,17 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -33,43 +39,55 @@ import com.FileActions
 import com.FileMenu
 import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
+import com.mindsync.library.TextEditHost
 import com.mindsync.library.data.*
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
-import com.mindsync.library.io.Outline
 import com.mindsync.library.io.Opml
+import com.mindsync.library.io.Outline
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TopicKind
+import com.mindsync.library.outline.MindMapOutline
+import com.mindsync.library.outline.outlineRows
+import com.mindsync.library.outline.rowAbove
+import com.mindsync.library.outline.rowBelow
 import com.mindsync.library.util.DescriptionEmoji
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.component.ColorPicker
+import com.mindsync.mindmapview.desktop.component.SplitDivider
 import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.dialog.*
-import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
-import com.mindsync.mindmapview.desktop.menuBar.ToolMenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
+import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.TaskSubmenu
+import com.mindsync.mindmapview.desktop.menuBar.ToolMenu
 import com.mindsync.mindmapview.desktop.menuBar.ViewMenu
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
-import com.mohamedrejeb.richeditor.ui.material3.RichText as RichTextView
 
 internal const val APP_NAME = "MindMapView"
 private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 // Shorter than a note's, as the pointer is put on the small icon on purpose.
 private const val ATTRIBUTE_POPUP_DELAY_MILLIS = 300L
 private const val SUCCESS_MESSAGE_MILLIS = 3000L
+
+// Below this width the outline is shown alone rather than beside the map.
+private val NARROW_WINDOW_WIDTH = 700.dp
+
+/** The test tag of the outline in the app. */
+internal const val OUTLINE_PANE_TAG = "outlinePane"
 
 val EDIT_DIALOG_SIZE = DpSize(600.dp, 770.dp)
 val EDIT_DIALOG_MIN_WIDTH = 480.dp
@@ -606,6 +624,8 @@ internal class MindMapApp(
         val isEditing = state.textEditNodeId != null
         val canAct = !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null
         if (!isEditing && !canAct) return null
+        val isInOutline = state.textEditHost == TextEditHost.OUTLINE
+        if (isInOutline) return onOutlineKey(event, isEditing)
         val action = inlineKeyAction(
             key = event.key
             , codePoint = event.utf16CodePoint
@@ -635,6 +655,75 @@ internal class MindMapApp(
             InlineKeyAction.Ignore -> {}
         }
         return true
+    }
+
+    // The keys of the outline, as an outliner's. While a row is typed in, its text field has the keys, as those of
+    // an outliner are its own, but those that end the typing to go on, as Ctrl+S.
+    private fun onOutlineKey(
+        event: KeyEvent
+        , isEditing: Boolean
+    ): Boolean? {
+        if (isEditing) {
+            val action = inlineKeyAction(
+                key = event.key
+                , codePoint = event.utf16CodePoint
+                , isShift = event.isShiftPressed
+                , isCtrl = event.isCtrlPressed
+                , isAlt = event.isAltPressed
+                , isMeta = event.isMetaPressed
+                , isEditing = true
+                , hasSelectedNode = state.selectedNode != null
+            )
+            if (action != InlineKeyAction.CommitAndGoOn) return false
+            state.commitTextEdit()
+            return null
+        }
+        val action = outlineKeyAction(
+            key = event.key
+            , codePoint = event.utf16CodePoint
+            , isShift = event.isShiftPressed
+            , isCtrl = event.isCtrlPressed
+            , isAlt = event.isAltPressed
+            , isMeta = event.isMetaPressed
+            , hasSelectedNode = state.selectedNode != null
+        ) ?: return null
+        when (action) {
+            is OutlineKeyAction.Inline -> when (val inline = action.action) {
+                is InlineKeyAction.AddNode -> addNodeToType(inline.place)
+                InlineKeyAction.EditText -> state.startTextEdit()
+                is InlineKeyAction.TypeText -> state.startTextEdit(inline.text)
+                InlineKeyAction.OpenEditDialog -> editNodeRequest++
+                else -> {}
+            }
+            is OutlineKeyAction.Move -> state.move(action.move)
+            is OutlineKeyAction.SelectRow -> selectRow(action.isUp)
+            OutlineKeyAction.FoldOrParent -> {
+                val node = state.selectedNode ?: return true
+                val canFold = node.parentId != null && node.children.isNotEmpty() && !state.tree.isFolded(node.id)
+                if (canFold) state.toggleFold() else state.selectParent()
+            }
+            OutlineKeyAction.UnfoldOrChild -> {
+                val node = state.selectedNode ?: return true
+                val firstChildId = state.tree.visibleChildren(node).firstOrNull()
+                when {
+                    state.tree.isFolded(node.id) -> state.toggleFold()
+                    firstChildId != null -> state.goToNode(firstChildId)
+                }
+            }
+        }
+        return true
+    }
+
+    // Selects the topic of the row above or below the selected one, or the root when none is selected.
+    private fun selectRow(isUp: Boolean) {
+        val rows = outlineRows(state.tree)
+        val selectedId = state.selectedNode?.id
+        val id = when {
+            selectedId == null -> state.tree.getRootNode().id
+            isUp -> rows.rowAbove(selectedId)
+            else -> rows.rowBelow(selectedId)
+        } ?: return
+        state.select(state.tree.getNode(id))
     }
 
     private fun onSaveChoice(choice: SaveChoice) {
@@ -685,6 +774,12 @@ internal class MindMapApp(
                 addChildRequest++
                 true
             }
+            // XMind's keys for moving a topic among its siblings, on the map and in the outline.
+            !isDialogOpen && !isFindFocused && error == null && event.isAltPressed && event.isShiftPressed &&
+                !event.isCtrlPressed && (event.key == Key.DirectionUp || event.key == Key.DirectionDown) -> {
+                state.moveAmongSiblings(isUp = event.key == Key.DirectionUp)
+                true
+            }
             // The File menu goes through its items with the arrow keys while it is open.
             !isDialogOpen && !isFindFocused && !fileMenuExpanded && error == null && !event.isCtrlPressed &&
                 !event.isAltPressed && !event.isShiftPressed && event.arrowDirection() != null -> {
@@ -720,6 +815,10 @@ internal class MindMapApp(
             // A dialog is about the mind map as it is, so neither another one nor a change of it comes in between.
             !isDialogOpen && error == null && event.key == Key.N -> {
                 fileActions.new()
+                true
+            }
+            !isDialogOpen && error == null && event.isShiftPressed && event.key == Key.O -> {
+                preferences = platform.preferencesStore.update(preferences.copy(viewMode = preferences.viewMode.next))
                 true
             }
             !isDialogOpen && error == null && event.key == Key.O -> {
@@ -910,6 +1009,7 @@ internal class MindMapApp(
                     )
                 }
             },
+            viewMode = preferences.viewMode,
             filterBar = {
                 if (isFilterOpen) {
                     val filter = state.taskFilter
@@ -960,6 +1060,14 @@ private fun foldCommand(event: KeyEvent): FoldCommand? {
 }
 
 // The root is never removed, and it is the only branch there is when it is selected.
+/** Makes the [move] of the selected topics, as an outliner does. */
+internal fun MindMapState.move(move: OutlineMove) = when (move) {
+    OutlineMove.UP -> moveAmongSiblings(isUp = true)
+    OutlineMove.DOWN -> moveAmongSiblings(isUp = false)
+    OutlineMove.INDENT -> indent()
+    OutlineMove.OUTDENT -> outdent()
+}
+
 private fun List<NodeData<*>>.isRemovable(): Boolean = any { it.parentId != null }
 
 @Composable
@@ -1016,6 +1124,7 @@ private fun MindMapScreen(
     onAddSummary: () -> Unit,
     onMapPress: () -> Unit,
     findBar: @Composable () -> Unit,
+    viewMode: ViewMode,
     filterBar: @Composable () -> Unit,
 ) {
     val selectedNode = state.selectedNode
@@ -1036,6 +1145,8 @@ private fun MindMapScreen(
     // A node that is removed without being confirmed is removed at once.
     val removeNode = { if (preferences.isRemoveConfirmed) isRemoveConfirmOpen = true else state.removeNode() }
 
+    // Where the map is in the box it shares with the outline, which the menus and popups of the map are placed in.
+    var mapOffset by remember { mutableStateOf(Offset.Zero) }
     // The note of the node whose note icon the pointer is on and where the pointer was, once it has stayed there.
     var notePopup by remember { mutableStateOf<NotePopupContent?>(null) }
     // The attributes of the node whose attribute icon the pointer is on, once it has stayed there.
@@ -1108,7 +1219,7 @@ private fun MindMapScreen(
         delay(NOTE_POPUP_DELAY_MILLIS)
         // The note is only drawn once its images are loaded, as an image that is loaded later does not show.
         UrlImageLoader.preload(node.note)
-        notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition)
+        notePopup = NotePopupContent(node.note, node.color, node.textColor, state.hoverPosition + mapOffset)
     }
 
     val topicAttributeDisplays = preferences.topicAttributeDisplays
@@ -1127,7 +1238,7 @@ private fun MindMapScreen(
             attributes = attributes
             , color = state.tree.fillOf(node.id)
             , textColor = state.tree.textColorOf(node.id)
-            , position = state.hoverPosition
+            , position = state.hoverPosition + mapOffset
         )
     }
 
@@ -1179,6 +1290,7 @@ private fun MindMapScreen(
                             // The root is in no branch, so it is not moved.
                             canMove = { selectedNode?.parentId != null },
                             onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
+                            onOutlineMove = { state.move(it) },
                             // Read when the menu opens, as canMove is.
                             links = {
                                 selectedNode?.let { RichText.links(it.description) + RichText.links(it.note) }.orEmpty()
@@ -1201,6 +1313,8 @@ private fun MindMapScreen(
                             onCenter = { state.selectedNode?.let { state.centerNode(it.id) } },
                             onFold = { it.run(state) },
                             onFilter = onFilter,
+                            viewMode = viewMode,
+                            onViewMode = { onPreferencesChange(preferences.copy(viewMode = it)) },
                         )
                         ToolMenu(onImport = onImport, onImportFolder = onImportFolder)
                         HelpMenu(
@@ -1221,36 +1335,107 @@ private fun MindMapScreen(
                 findBar()
                 filterBar()
 
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .onPress(onMapPress)
                 ) {
-                    MindMap(
-                        state = state
-                        , modifier = Modifier.fillMaxSize().testTag(MIND_MAP_TAG)
-                        , topicFontFamilies = topicFontFamilies
-                        , emojiFontFamily = LocalEmojiFontFamily.current
-                        // While an arrow link is being added, the next click chooses the node it leads to, or none.
-                        , onNodeClick = { node ->
-                            arrowLinkSourceId?.let { sourceId ->
-                                if (node != null) state.addArrowLink(sourceId, node.id)
-                                onArrowLinkSourceIdChange(null)
+                    // Beside the map the outline would be too narrow in a narrow window, as on a phone, so it is
+                    // shown alone.
+                    val shownMode = viewMode.takeIf { it != ViewMode.BOTH || maxWidth >= NARROW_WINDOW_WIDTH }
+                        ?: ViewMode.OUTLINER
+                    LaunchedEffect(shownMode) {
+                        state.commitTextEdit()
+                        state.textEditHost = if (shownMode == ViewMode.MAP) TextEditHost.MAP else TextEditHost.OUTLINE
+                    }
+                    val outline = @Composable { modifier: Modifier ->
+                        MindMapOutline(
+                            state = state
+                            , modifier = modifier.testTag(OUTLINE_PANE_TAG)
+                            , topicFontFamilies = topicFontFamilies
+                            , emojiFontFamily = LocalEmojiFontFamily.current
+                            , onRowDoubleClick = { state.startTextEdit() }
+                            , onAddSiblingToType = { isAbove ->
+                                onAddNodeToType(if (isAbove) NewNodePlace.SIBLING_ABOVE else NewNodePlace.SIBLING_BELOW)
                             }
+                            , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
+                            , onRowMenu = { node, position ->
+                                onArrowLinkSourceIdChange(null)
+                                nodeMenu = node.id to position
+                            }
+                            , dateLabel = { dueLabel(it, state.today) }
+                        )
+                    }
+                    // A topic chosen in the outline is brought into view on the map beside it, which otherwise stays
+                    // where it is, for the topics around it to stay put.
+                    val selectedId = state.selectedNode?.id
+                    LaunchedEffect(selectedId, shownMode) {
+                        val isOutlineInUse = state.textEditHost == TextEditHost.OUTLINE
+                        if (shownMode == ViewMode.BOTH && isOutlineInUse && selectedId != null) {
+                            state.showNode(selectedId)
                         }
-                        // As in XMind, the text is typed on the map; the dialog has the rest of the node.
-                        , onNodeDoubleClick = { state.startTextEdit() }
-                        , onAddChildClick = { _, side -> addChild(side) }
-                        , onArrowLinkMenu = { link, position -> arrowLinkMenu = link.id to position }
-                        , onBoundaryMenu = { boundary, position -> boundaryMenu = boundary.id to position }
-                        , onNodeMenu = { node, position ->
-                            onArrowLinkSourceIdChange(null)
-                            nodeMenu = node.id to position
+                    }
+                    var dragFraction by remember { mutableStateOf<Float?>(null) }
+                    val fraction = dragFraction ?: preferences.outlineFraction
+                    val boxWidth = maxWidth
+                    val boxWidthPx = constraints.maxWidth.toFloat()
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        if (shownMode == ViewMode.BOTH) {
+                            outline(Modifier.width(boxWidth * fraction).fillMaxHeight())
+                            SplitDivider(
+                                onDrag = { dx ->
+                                    dragFraction = ((dragFraction ?: preferences.outlineFraction) + dx / boxWidthPx)
+                                        .coerceIn(OUTLINE_FRACTIONS)
+                                }
+                                , onDragEnd = {
+                                    dragFraction?.let { onPreferencesChange(preferences.copy(outlineFraction = it)) }
+                                    dragFraction = null
+                                }
+                            )
                         }
-                        // A plain click selects a node or starts a double click, so a link takes Ctrl to open.
-                        , onLinkClick = { _, url -> if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url) }
-                        , dateLabel = { dueLabel(it, state.today) }
-                    )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .onGloballyPositioned { mapOffset = it.positionInParent() }
+                        ) {
+                            MindMap(
+                                state = state
+                                , modifier = Modifier.fillMaxSize().testTag(MIND_MAP_TAG)
+                                , topicFontFamilies = topicFontFamilies
+                                , emojiFontFamily = LocalEmojiFontFamily.current
+                                // While an arrow link is being added, the next click chooses the node it leads to, or
+                                // none.
+                                , onNodeClick = { node ->
+                                    arrowLinkSourceId?.let { sourceId ->
+                                        if (node != null) state.addArrowLink(sourceId, node.id)
+                                        onArrowLinkSourceIdChange(null)
+                                    }
+                                }
+                                // As in XMind, the text is typed on the map; the dialog has the rest of the node.
+                                , onNodeDoubleClick = { state.startTextEdit() }
+                                , onAddChildClick = { _, side -> addChild(side) }
+                                , onArrowLinkMenu = { link, position ->
+                                    arrowLinkMenu = link.id to position + mapOffset
+                                }
+                                , onBoundaryMenu = { boundary, position ->
+                                    boundaryMenu = boundary.id to position + mapOffset
+                                }
+                                , onNodeMenu = { node, position ->
+                                    onArrowLinkSourceIdChange(null)
+                                    nodeMenu = node.id to position + mapOffset
+                                }
+                                // A plain click selects a node or starts a double click, so a link takes Ctrl to
+                                // open.
+                                , onLinkClick = { _, url ->
+                                    if (windowInfo.keyboardModifiers.isCtrlPressed) openLink(url)
+                                }
+                                , dateLabel = { dueLabel(it, state.today) }
+                            )
+                        }
+                    }
+                    // Over the map, which stays laid out beneath it for what is exported to draw it as it is.
+                    if (shownMode == ViewMode.OUTLINER) outline(Modifier.fillMaxSize())
 
                     // The two popups would be on top of each other by the pointer, so the attributes win.
                     attributePopup?.let { AttributePopup(it) } ?: notePopup?.let { NotePopup(it) }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.mindsync.mindmapview.desktop.FOLD_COMMANDS
 import com.mindsync.mindmapview.desktop.FoldCommand
+import com.mindsync.mindmapview.desktop.ViewMode
 
 @Composable
 fun ViewMenu(
@@ -22,6 +23,8 @@ fun ViewMenu(
     onCenter: () -> Unit,
     onFold: (FoldCommand) -> Unit,
     onFilter: () -> Unit,
+    viewMode: ViewMode,
+    onViewMode: (ViewMode) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -30,6 +33,23 @@ fun ViewMenu(
             Text("View")
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ViewMode.entries.forEach { mode ->
+                DropdownMenuItem(
+                    text = { Text(mode.label) },
+                    leadingIcon = { Text(if (mode == viewMode) "✓" else "") },
+                    // The key goes round the modes, so it is shown by the one it goes to.
+                    trailingIcon = {
+                        if (mode == viewMode.next) {
+                            Text("Ctrl+Shift+O", style = MaterialTheme.typography.labelMedium)
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        onViewMode(mode)
+                    },
+                )
+            }
+            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text("Fit") },
                 onClick = {
