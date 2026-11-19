@@ -66,6 +66,7 @@ import com.mindsync.mindmapview.desktop.component.ColorPicker
 import com.mindsync.mindmapview.desktop.component.SplitDivider
 import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.dialog.*
+import com.mindsync.mindmapview.desktop.menuBar.BranchStructureSubmenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
 import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.TaskSubmenu
@@ -1360,6 +1361,9 @@ private fun MindMapScreen(
                             onAddBoundary = { state.addBoundary() },
                             onAddSummary = onAddSummary,
                             onAddFloating = { onAddFloating(null) },
+                            // Read when the menu opens, as canMove is.
+                            branchStructures = { state.selectedBranchStructures() },
+                            onBranchStructure = { state.setBranchStructure(it) },
                             task = { selectedNode?.let { state.tree.taskOf(it.id) } ?: NodeTask() },
                             onPriority = { state.setPriority(it) },
                             onProgress = { state.setProgress(it) },
@@ -1565,6 +1569,8 @@ private fun MindMapScreen(
                                 onMakeFloating = if (node.parentId == null || state.tree.isFloating(nodeId)) null
                                     else ({ state.makeFloating() }),
                                 onAttachToRoot = if (state.tree.isFloating(nodeId)) ({ state.attachToRoot() }) else null,
+                                branchStructures = state.selectedBranchStructures(),
+                                onBranchStructure = { state.setBranchStructure(it) },
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
@@ -1908,6 +1914,10 @@ private fun BlankMenu(
     }
 }
 
+// The structures of the selected topics but the root, null for one laid out as its parent.
+private fun MindMapState.selectedBranchStructures(): Set<MapStructure?> =
+    selectedNodes.filter { it.parentId != null }.map { tree.branchStructureOf(it.id) }.toSet()
+
 @Composable
 private fun NodeMenu(
     position: Offset,
@@ -1924,6 +1934,8 @@ private fun NodeMenu(
     onToggleDone: () -> Unit,
     onMakeFloating: (() -> Unit)?,
     onAttachToRoot: (() -> Unit)?,
+    branchStructures: Set<MapStructure?>,
+    onBranchStructure: (MapStructure?) -> Unit,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -2015,6 +2027,14 @@ private fun NodeMenu(
                         onDismiss()
                         attachToRoot()
                     },
+                )
+            }
+            // The root's structure is the map's, in View › Structure.
+            if (branchStructures.isNotEmpty()) {
+                BranchStructureSubmenu(
+                    structures = branchStructures
+                    , onStructure = onBranchStructure
+                    , onClose = onDismiss
                 )
             }
             DropdownMenuItem(

@@ -3,6 +3,7 @@ package com.mindsync.mindmapview.desktop.menuBar
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
@@ -48,27 +49,71 @@ fun StructureSubmenu(
     , onStructure: (MapStructure) -> Unit
     , onClose: () -> Unit
 ) {
+    StructureChoices(
+        title = "Structure"
+        , choices = MapStructure.entries
+        , ticked = setOf(structure)
+        , isEnabled = true
+        , onChoice = { it?.let(onStructure) }
+        , onClose = onClose
+    )
+}
+
+/**
+ * A "Branch Structure" item of a menu, for the selected topics, which opens a menu of "Same as Parent" and the
+ * structures a branch can have: all but the mind map, which only the root can be laid out in. [structures] are those
+ * of the selected topics but the root, null for one laid out as its parent; the one they share is ticked, and none
+ * when they differ. Without any, as with only the root selected, it is disabled.
+ */
+@Composable
+fun BranchStructureSubmenu(
+    structures: Set<MapStructure?>
+    , onStructure: (MapStructure?) -> Unit
+    , onClose: () -> Unit
+) {
+    StructureChoices(
+        title = "Branch Structure"
+        , choices = listOf(null) + MapStructure.entries.filter { it != MapStructure.MIND_MAP }
+        , ticked = structures.takeIf { it.size == 1 }.orEmpty()
+        , isEnabled = structures.isNotEmpty()
+        , onChoice = onStructure
+        , onClose = onClose
+    )
+}
+
+// A submenu of [choices], null being "Same as Parent", each with a small picture of it, and a tick at those [ticked].
+@Composable
+private fun StructureChoices(
+    title: String
+    , choices: List<MapStructure?>
+    , ticked: Set<MapStructure?>
+    , isEnabled: Boolean
+    , onChoice: (MapStructure?) -> Unit
+    , onClose: () -> Unit
+) {
     var isOpen by remember { mutableStateOf(false) }
     Box {
         DropdownMenuItem(
-            text = { Text("Structure") }
+            text = { Text(title) }
             , trailingIcon = { Text("▸") }
             , onClick = { isOpen = true }
+            , enabled = isEnabled
         )
         DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
-            MapStructure.entries.forEach { choice ->
+            choices.forEach { choice ->
                 DropdownMenuItem(
                     text = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            StructurePicture(choice, MaterialTheme.colorScheme.onSurface)
-                            Text(choice.label, modifier = Modifier.padding(start = 10.dp))
+                            if (choice == null) Spacer(Modifier.size(width = 32.dp, height = 22.dp))
+                            else StructurePicture(choice, MaterialTheme.colorScheme.onSurface)
+                            Text(choice?.label ?: "Same as Parent", modifier = Modifier.padding(start = 10.dp))
                         }
                     }
-                    , leadingIcon = { Text(if (choice == structure) "✓" else "") }
+                    , leadingIcon = { Text(if (choice in ticked) "✓" else "") }
                     , onClick = {
                         isOpen = false
                         onClose()
-                        onStructure(choice)
+                        onChoice(choice)
                     }
                 )
             }

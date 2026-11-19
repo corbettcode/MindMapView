@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.TaskProgress
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.util.RichTextLink
 import com.mindsync.mindmapview.desktop.LINK_MENU_MAX_WIDTH
 import com.mindsync.mindmapview.desktop.NEW_NODE_ITEMS
@@ -56,6 +57,9 @@ import kotlin.collections.forEach
  * @param onAddBoundary Callback function invoked when the "Add Boundary" action is selected.
  * @param onAddSummary Callback function invoked when the "Add Summary" action is selected.
  * @param onAddFloating Callback function invoked when the "Add Floating Topic" action is selected.
+ * @param branchStructures Function that provides the structures of the selected topics but the root, null for one laid
+ * out as its parent, read when the menu opens.
+ * @param onBranchStructure Callback function invoked when a branch structure, or "Same as Parent", is chosen.
  * @param task Function that provides the task of the selected node, read when the Task menu opens.
  * @param onPriority Callback function invoked when a priority, or none, is chosen in the Task menu.
  * @param onProgress Callback function invoked when a progress, or none, is chosen in the Task menu.
@@ -92,6 +96,8 @@ fun EditMenu(
     , onAddBoundary: () -> Unit
     , onAddSummary: () -> Unit
     , onAddFloating: () -> Unit
+    , branchStructures: () -> Set<MapStructure?>
+    , onBranchStructure: (MapStructure?) -> Unit
     , task: () -> NodeTask
     , onPriority: (Int?) -> Unit
     , onProgress: (TaskProgress?) -> Unit
@@ -323,6 +329,11 @@ fun EditMenu(
                     expanded = false
                     onAddFloating()
                 }
+            )
+            BranchStructureSubmenu(
+                structures = branchStructures()
+                , onStructure = onBranchStructure
+                , onClose = { expanded = false }
             )
             val nodeLinks = links()
             Box {

@@ -217,13 +217,16 @@ topic a timeline is laid out from, lines left out by the structure the parent is
 
 ### Task D2: In the app
 
-**Files:** `menuBar/StructureMenu.kt` (`StructureSubmenu` with an optional "Same as Parent" and a title),
-`menuBar/EditMenu.kt`, `MindMapApp.kt` (`NodeMenu`), test `StructureAppTest.kt`
+**Files:** `menuBar/StructureMenu.kt` (`BranchStructureSubmenu`, both submenus through one `StructureChoices`),
+`menuBar/EditMenu.kt`, `MindMapApp.kt` (`NodeMenu`, `selectedBranchStructures`), test `StructureAppTest.kt`
 
-- [ ] Edit › Branch Structure and the node menu, for the selected topics, disabled with only the root selected; a
-  tick on the structure they share, none when they differ.
-- [ ] Tests (3): the submenu sets it on the selected topics and Ctrl+Z takes it back; "Same as Parent" clears it;
-  disabled for the root.
+- [x] Edit › Branch Structure, after Add Floating Topic, and the same in the node menu: "Same as Parent" first, then
+  the eight structures a branch can have, each with its picture; a tick on the one the selected topics share, none
+  when they differ. In the Edit menu it is disabled with only the root selected, and the node menu leaves it out for
+  the root, as it does its other items that are not the root's.
+- [x] Tests (3): the submenu sets it on two selected topics and Ctrl+Z takes it back, the map's own structure
+  untouched; "Same as Parent" clears it; disabled for the root. All 717 library and 254 desktop tests pass on a full
+  rerun, and the web app builds. The submenu was rendered and looked at.
 
 ### Task D3: Docs
 

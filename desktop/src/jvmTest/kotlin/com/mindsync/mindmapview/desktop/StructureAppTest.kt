@@ -13,10 +13,12 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
@@ -29,6 +31,7 @@ import com.mindsync.mindmapview.desktop.menuBar.label
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalTestApi::class)
 class StructureAppTest {
@@ -80,6 +83,53 @@ class StructureAppTest {
 
         press(Key.Z, Key.CtrlLeft)
         assertEquals(MapStructure.MIND_MAP, state.tree.structure)
+    }
+
+    private fun ComposeUiTest.chooseBranchStructure(label: String) {
+        onNodeWithText("Edit").performClick()
+        // The Edit menu is longer than the window.
+        onNodeWithText("Branch Structure").performScrollTo().performClick()
+        onNodeWithText(label).performClick()
+        waitForIdle()
+    }
+
+    @Test
+    fun editMenuSetsTheBranchStructureOfTheSelectedTopicsAndUndoTakesItBack() = runComposeUiTest {
+        val state = shownApp()
+        val (one, two) = state.tree.getRootNode().children
+        state.select(state.tree.getNode(one))
+        state.toggleSelected(two)
+
+        chooseBranchStructure(MapStructure.TIMELINE.label)
+        assertEquals(MapStructure.TIMELINE, state.tree.branchStructureOf(one))
+        assertEquals(MapStructure.TIMELINE, state.tree.branchStructureOf(two))
+        assertEquals(MapStructure.MIND_MAP, state.tree.structure)
+
+        press(Key.Z, Key.CtrlLeft)
+        assertNull(state.tree.branchStructureOf(one))
+        assertNull(state.tree.branchStructureOf(two))
+    }
+
+    @Test
+    fun sameAsParentClearsTheBranchStructure() = runComposeUiTest {
+        val state = shownApp()
+        val one = state.tree.getRootNode().children.first()
+        state.select(state.tree.getNode(one))
+        state.setBranchStructure(MapStructure.ORG_DOWN)
+
+        chooseBranchStructure("Same as Parent")
+
+        assertNull(state.tree.branchStructureOf(one))
+    }
+
+    @Test
+    fun branchStructureIsNotForTheRoot() = runComposeUiTest {
+        val state = shownApp()
+        state.select(state.tree.getRootNode())
+
+        onNodeWithText("Edit").performClick()
+
+        onNodeWithText("Branch Structure").assertIsNotEnabled()
     }
 
     @Test
