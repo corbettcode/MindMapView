@@ -41,6 +41,7 @@ import com.mindsync.library.MindMap
 import com.mindsync.library.MindMapState
 import com.mindsync.library.TextEditHost
 import com.mindsync.library.data.*
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.io.FreeMind
 import com.mindsync.library.io.HtmlOutline
 import com.mindsync.library.io.Markdown
@@ -57,6 +58,7 @@ import com.mindsync.library.outline.outlineRows
 import com.mindsync.library.outline.rowAbove
 import com.mindsync.library.outline.rowBelow
 import com.mindsync.library.util.DescriptionEmoji
+import com.mindsync.library.util.Dp as LibraryDp
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.component.ColorPicker
@@ -82,6 +84,9 @@ private const val NOTE_POPUP_DELAY_MILLIS = 1000L
 // Shorter than a note's, as the pointer is put on the small icon on purpose.
 private const val ATTRIBUTE_POPUP_DELAY_MILLIS = 300L
 private const val SUCCESS_MESSAGE_MILLIS = 3000L
+
+// How far Alt and an arrow key move the selected floating topics.
+private const val NUDGE_DP = 10f
 
 // Below this width the outline is shown alone rather than beside the map.
 private val NARROW_WINDOW_WIDTH = 700.dp
@@ -592,6 +597,31 @@ internal class MindMapApp(
     }
 
     /**
+     * Adds a floating topic centered on [at], a point on the map, or below the map when it is null, and starts typing
+     * its text. It is styled as a new topic, a child of the root, is.
+     */
+    private fun addFloatingToType(at: Offset?) {
+        val root = state.tree.getRootNode()
+        // Adding to type starts from a selected node, which a click on blank map leaves none of.
+        if (state.selectedNode == null) state.select(root)
+        val kind = state.tree.childTopicKindOf(root.id)
+        val number = nextNodeNumber(state.tree, kind, createdNodeCount[kind] ?: 0)
+        val style = newNodeStyle(state.tree, root, LayoutSide.RIGHT, defaultShape = preferences.topicOf(kind).shape)
+        arrowLinkSourceId = null
+        state.addNodeForTextEdit {
+            addFloatingNode(
+                "${kind.label} $number"
+                , style.shape
+                , style.color
+                , style.textColor
+                , at = at
+                , border = style.border
+            )
+        }
+        typedNewNode = state.textEditNodeId?.let { Triple(it, kind, number) }
+    }
+
+    /**
      * Adds a summary of the selected nodes and starts typing its text, as Ctrl+] does. It is styled as a new node
      * of its siblings' level is, and its text is selected for typing to replace it.
      */
@@ -778,6 +808,15 @@ internal class MindMapApp(
             !isDialogOpen && !isFindFocused && error == null && event.isAltPressed && event.isShiftPressed &&
                 !event.isCtrlPressed && (event.key == Key.DirectionUp || event.key == Key.DirectionDown) -> {
                 state.moveAmongSiblings(isUp = event.key == Key.DirectionUp)
+                true
+            }
+            // Floating topics are nudged with Alt and the arrow keys, as they are placed by hand.
+            !isDialogOpen && !isFindFocused && error == null && event.isAltPressed && !event.isShiftPressed &&
+                !event.isCtrlPressed && event.arrowDirection() != null &&
+                state.selectedNodes.any { state.tree.isFloating(it.id) } -> {
+                event.arrowDirection()?.let { direction ->
+                    state.moveFloating(DpOffset(LibraryDp(direction.x * NUDGE_DP), LibraryDp(direction.y * NUDGE_DP)))
+                }
                 true
             }
             // The File menu goes through its items with the arrow keys while it is open.
@@ -986,6 +1025,7 @@ internal class MindMapApp(
             onPaste = ::pasteFromClipboard,
             onAddNodeToType = ::addNodeToType,
             onAddSummary = ::addSummaryToType,
+            onAddFloating = ::addFloatingToType,
             onMapPress = onMapPress,
             findBar = {
                 if (isFindOpen) {
@@ -1122,6 +1162,7 @@ private fun MindMapScreen(
     onAddNodeToType: (NewNodePlace) -> Unit,
     // Adds a summary of the selected nodes and starts typing its text, as Ctrl+] does.
     onAddSummary: () -> Unit,
+    onAddFloating: (at: Offset?) -> Unit,
     onMapPress: () -> Unit,
     findBar: @Composable () -> Unit,
     viewMode: ViewMode,
@@ -1311,6 +1352,7 @@ private fun MindMapScreen(
                             onAddArrowLink = { onArrowLinkSourceIdChange(selectedNode?.id) },
                             onAddBoundary = { state.addBoundary() },
                             onAddSummary = onAddSummary,
+                            onAddFloating = { onAddFloating(null) },
                             task = { selectedNode?.let { state.tree.taskOf(it.id) } ?: NodeTask() },
                             onPriority = { state.setPriority(it) },
                             onProgress = { state.setProgress(it) },
@@ -1434,6 +1476,8 @@ private fun MindMapScreen(
                                 , onNodeClick = onLinkTargetClick
                                 // As in XMind, the text is typed on the map; the dialog has the rest of the node.
                                 , onNodeDoubleClick = { state.startTextEdit() }
+                                // As in XMind, a double click on blank map adds a floating topic there.
+                                , onBlankDoubleClick = { position -> onAddFloating(position) }
                                 , onAddChildClick = { _, side -> addChild(side) }
                                 , onArrowLinkMenu = { link, position ->
                                     arrowLinkMenu = link.id to position + mapOffset
@@ -1485,8 +1529,9 @@ private fun MindMapScreen(
                         state.tree.nodes[nodeId]?.let { node ->
                             NodeMenu(
                                 position = position,
-                                // The root is on neither side of itself, so it is not moved.
-                                side = if (node.parentId == null) null else state.tree.sideOf(nodeId),
+                                // The root is on neither side of itself, nor is a floating topic, so they are not moved.
+                                side = if (node.parentId == null || state.tree.isFloating(nodeId)) null
+                                    else state.tree.sideOf(nodeId),
                                 onEdit = { operation = Operation.Update },
                                 onEditText = { state.startTextEdit() },
                                 onAddNodeToType = onAddNodeToType,
@@ -1501,6 +1546,9 @@ private fun MindMapScreen(
                                 onAddSummary = onAddSummary.takeIf {
                                     node.parentId != null && !state.tree.isSummary(nodeId)
                                 },
+                                onMakeFloating = if (node.parentId == null || state.tree.isFloating(nodeId)) null
+                                    else ({ state.makeFloating() }),
+                                onAttachToRoot = if (state.tree.isFloating(nodeId)) ({ state.attachToRoot() }) else null,
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
@@ -1821,6 +1869,8 @@ private fun NodeMenu(
     onPriority: (Int?) -> Unit,
     onProgress: (TaskProgress?) -> Unit,
     onToggleDone: () -> Unit,
+    onMakeFloating: (() -> Unit)?,
+    onAttachToRoot: (() -> Unit)?,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -1893,6 +1943,24 @@ private fun NodeMenu(
                     onClick = {
                         onDismiss()
                         addSummary()
+                    },
+                )
+            }
+            onMakeFloating?.let { makeFloating ->
+                DropdownMenuItem(
+                    text = { Text("Make Floating Topic") },
+                    onClick = {
+                        onDismiss()
+                        makeFloating()
+                    },
+                )
+            }
+            onAttachToRoot?.let { attachToRoot ->
+                DropdownMenuItem(
+                    text = { Text("Attach to Root") },
+                    onClick = {
+                        onDismiss()
+                        attachToRoot()
                     },
                 )
             }

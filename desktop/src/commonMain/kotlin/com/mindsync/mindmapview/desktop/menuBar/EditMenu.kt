@@ -54,6 +54,7 @@ import kotlin.collections.forEach
  * @param onAddArrowLink Callback function invoked when the "Add Arrow Link" action is selected.
  * @param onAddBoundary Callback function invoked when the "Add Boundary" action is selected.
  * @param onAddSummary Callback function invoked when the "Add Summary" action is selected.
+ * @param onAddFloating Callback function invoked when the "Add Floating Topic" action is selected.
  * @param task Function that provides the task of the selected node, read when the Task menu opens.
  * @param onPriority Callback function invoked when a priority, or none, is chosen in the Task menu.
  * @param onProgress Callback function invoked when a progress, or none, is chosen in the Task menu.
@@ -88,6 +89,7 @@ fun EditMenu(
     , onAddArrowLink: () -> Unit
     , onAddBoundary: () -> Unit
     , onAddSummary: () -> Unit
+    , onAddFloating: () -> Unit
     , task: () -> NodeTask
     , onPriority: (Int?) -> Unit
     , onProgress: (TaskProgress?) -> Unit
@@ -310,6 +312,14 @@ fun EditMenu(
                     onAddSummary()
                 }
                 , enabled = enabled
+            )
+            // A floating topic belongs to no node, so it can be added with none selected.
+            DropdownMenuItem(
+                text = { Text("Add Floating Topic") }
+                , onClick = {
+                    expanded = false
+                    onAddFloating()
+                }
             )
             val nodeLinks = links()
             Box {

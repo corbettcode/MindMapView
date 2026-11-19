@@ -40,7 +40,7 @@ the outline; phase D documents them.
 | Making one | Double-click on blank map adds one there and starts typing its text (XMind's gesture). Also Edit › Add Floating Topic, which puts it below the map's lowest node, and the node menu's **Add Floating Topic** on blank map. No key. |
 | Detaching a topic | The node menu's **Make Floating Topic** for any topic but the root: it keeps its branch, leaves its parent, and stays where it is drawn now. Alt+drag to blank map does the same where it is dropped. |
 | Attaching one | Dragging a floating topic onto a topic makes it a child of that topic, as for any topic. The node menu's **Attach to Root** makes it an attached child of the root on the right. |
-| Moving one | Dragging it on blank map moves it and its branch there, one undo step. Arrow keys still select by direction; Alt+arrow keys nudge it 10 dp (Shift: 50 dp) — proposed, as nudging otherwise needs the mouse. |
+| Moving one | Dragging it on blank map moves it and its branch there, one undo step. Arrow keys still select by direction; Alt+arrow keys nudge it 10 dp (no Shift variant, as Alt+Shift+Up / Down move topics among their siblings). |
 | Selecting from it | Ctrl+Left (select parent) does nothing from a floating topic, as it has no line to the root; Ctrl+Right goes to its first child. |
 | Boundaries and summaries | A floating topic can't be in a boundary or summary with attached topics (they are grouped by side of the root); inside its own branch both work. |
 | Arrow links | To and from floating topics, as any topic. |
@@ -151,17 +151,18 @@ test `FloatingDragTest.kt`
 
 ### Task B3: In the app
 
-**Files:** `MindMapApp.kt` (node menu, blank-map menu, double-click, Alt+arrows), `menuBar/EditMenu.kt`,
-`KeyboardShortcuts.kt`, test `FloatingAppTest.kt`
+**Files:** `MindMapApp.kt` (`addFloatingToType`, node menu, double-click, Alt+arrows), `menuBar/EditMenu.kt`, test
+`FloatingAppTest.kt`
 
-- [ ] Double-click on blank map adds a floating topic there and types its text, styled as a new Topic.
-- [ ] Edit › Add Floating Topic; the node menu's Make Floating Topic / Attach to Root; a right click on blank map
-  offers Add Floating Topic there.
-- [ ] Alt+arrow keys nudge the selected floating topics (Shift: further). On attached topics they do nothing.
-- [ ] Tests (5): double-click on blank map and type; Edit menu; Make Floating Topic then undo; Attach to Root;
-  Alt+Right nudges.
-
----
+- [x] Double-click on blank map adds a floating topic there and types its text, styled and numbered as a new Topic.
+- [x] Edit › Add Floating Topic (with or without a selection) puts one below the map; the node menu has Make
+  Floating Topic (not on the root or a floating topic) and Attach to Root (on a floating topic), and no Move
+  Clockwise for a floating topic. A right click on blank map has no menu yet (a follow-up).
+- [x] Alt+arrow keys nudge the selected floating topics 10 dp; with only attached topics selected they do nothing.
+  No Shift variant: Alt+Shift+Up / Down already move topics among their siblings.
+- [x] Tests (5): double-click on blank map, type, then undo; Edit menu, then Esc takes it away; Make Floating Topic
+  and Attach to Root from the node menu; Alt+Right and Alt+Up nudge; Alt+Right on an attached topic does nothing.
+  The shortcut rows come with the docs (D1), as the shortcut test keeps the dialog and the manual alike.
 
 ## Phase C: Other formats and the outline
 
