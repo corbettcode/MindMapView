@@ -111,7 +111,7 @@ fun MindMapScreen() {
 - Drag empty space to move, pinch or use the mouse wheel to zoom, and drag a node onto another node to re-attach it.
 
 ### MindMapView files
-`MindMapViewFile` converts a tree to and from the text of a `.mmv` file, this library's own format, which keeps all there is of a mind map: the shapes, colors, rich text, notes and attributes and how they are shown, and folds of the nodes, the side of the root each of its children is on, the arrow links, and where the root is when it was dragged. Reading and writing the file itself is up to the app.
+`MindMapViewFile` converts a tree to and from the text of a `.ccmm` file, this library's own format, which keeps all there is of a mind map: the shapes, colors, rich text, notes and attributes and how they are shown, and folds of the nodes, the side of the root each of its children is on, the arrow links, and where the root is when it was dragged. Reading and writing the file itself is up to the app.
 
 The app's preferences can be stored in the file too, as names and values the library leaves to the app: `MindMapViewFile.write(tree, preferences = ...)` writes them, and `MindMapViewFile.readPreferences(content)` returns them, or null for a file without any. The desktop and web app saves the preferences of how the map looks with it, and opening the map brings them back; a map saved before takes those of its theme.
 
@@ -124,7 +124,7 @@ state.setTree(MindMapViewFile.read(content))
 state.animateTreeChange() // only a dragged root's position is stored, so arrange the tree
 ```
 
-The desktop app saves to `.mmv` files. Tool › Import › Folder... makes a map of a folder on the computer, with a node for each folder in it, built with `Outline.toTree(OutlineItem(...))`, which makes a map of any hierarchy of names. It also opens FreeMind `.mm` files, which are saved as a `.mmv` file next to them, and can export a map to one. It exports a map as a PNG image, an SVG drawing, a PDF document, an HTML outline, an OPML outline, Markdown or a FreeMind map. The PDF is made from the SVG drawing by Apache FOP, with the fonts of the app and of the computer embedded; color emoji are left blank in it, as a PDF font cannot hold their pictures.
+The desktop app saves to `.ccmm` files. Tool › Import › Folder... makes a map of a folder on the computer, with a node for each folder in it, built with `Outline.toTree(OutlineItem(...))`, which makes a map of any hierarchy of names. It also opens FreeMind `.mm` files, which are saved as a `.ccmm` file next to them, and can export a map to one. It exports a map as a PNG image, an SVG drawing, a PDF document, an HTML outline, an OPML outline, Markdown or a FreeMind map. The PDF is made from the SVG drawing by Apache FOP, with the fonts of the app and of the computer embedded; color emoji are left blank in it, as a PDF font cannot hold their pictures.
 
 ### FreeMind files
 `FreeMind` converts a tree to and from the text of a FreeMind `.mm` file. Reading and writing the file itself is up to the app. FreeMind only has a left and a right side, so a child of the root above or below it is written as on the left or right.

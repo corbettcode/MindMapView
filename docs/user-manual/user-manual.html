@@ -216,11 +216,11 @@
         </li>
     </ul>
     <p>
-        Maps are saved in MindMapView's own <b>.mmv</b> format, which keeps everything about a map. MindMapView
+        Maps are saved in MindMapView's own <b>.ccmm</b> format, which keeps everything about a map. MindMapView
         also opens and exports <b>FreeMind (.mm)</b> maps.
     </p>
     <div class="tip">
-        The map <b>feature_tour.mmv</b>, which comes with the source code, shows each feature of the app. Open it
+        The map <b>feature_tour.ccmm</b>, which comes with the source code, shows each feature of the app. Open it
         to explore while you read.
     </div>
 </section>
@@ -620,7 +620,7 @@
     <p>
         To put a picture from your computer in a note, click the picture button (&#x1F5BC;) in the note's
         toolbar and choose a PNG, JPEG, GIF, WebP or BMP file. The picture goes where the cursor is, and is saved
-        in the map's .mmv file, so the original file is no longer needed.
+        in the map's .ccmm file, so the original file is no longer needed.
         A note can also show a picture from the web with Markdown like <code>![description](https://example.com/picture.png)</code>.
         The note's pop-up appears once its pictures have loaded.
     </p>
@@ -885,7 +885,7 @@
     <table>
         <tr><th>Item</th><th>Keys</th><th>Effect</th></tr>
         <tr><td>New</td><td><kbd>Ctrl+N</kbd></td><td>Starts an empty map.</td></tr>
-        <tr><td>Open...</td><td><kbd>Ctrl+O</kbd></td><td>Opens a MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
+        <tr><td>Open...</td><td><kbd>Ctrl+O</kbd></td><td>Opens a MindMapView (.ccmm) or FreeMind (.mm) map.</td></tr>
         <tr><td>Recent</td><td></td><td>Lists the maps opened or saved most recently.</td></tr>
         <tr><td>Save</td><td><kbd>Ctrl+S</kbd></td><td>Saves the map to its file.</td></tr>
         <tr><td>Save As...</td><td><kbd>Ctrl+Shift+S</kbd></td><td>Saves the map to a new file.</td></tr>
@@ -895,12 +895,12 @@
 
     <h3>Saving</h3>
     <p>
-        Maps are always saved as <b>.mmv</b> files. The first time you save a new map, MindMapView suggests a file
-        name based on the root's text. A FreeMind map you opened is saved as a .mmv file next to the original,
+        Maps are always saved as <b>.ccmm</b> files. The first time you save a new map, MindMapView suggests a file
+        name based on the root's text. A FreeMind map you opened is saved as a .ccmm file next to the original,
         leaving the original as it was.
     </p>
     <p>
-        The images in a map's notes are saved in the .mmv file with it, so the map shows them even when the
+        The images in a map's notes are saved in the .ccmm file with it, so the map shows them even when the
         web pages they came from are gone or you are offline. An image that cannot be loaded when the map is
         saved keeps only its web address.
     </p>
@@ -923,7 +923,7 @@
     </p>
     <table>
         <tr><th>Item</th><th>Reads</th></tr>
-        <tr><td>Map...</td><td>A MindMapView (.mmv) or FreeMind (.mm) map.</td></tr>
+        <tr><td>Map...</td><td>A MindMapView (.ccmm) or FreeMind (.mm) map.</td></tr>
         <tr><td>Markdown (md)...</td><td>A Markdown document, as a map of its headings and lists (see below).</td></tr>
         <tr><td>XMind (xmind)...</td><td>An XMind map, from XMind 8 or a later XMind (see below).</td></tr>
         <tr><td>Folder...</td><td>A folder on your computer, as a map of the folders in it (desktop app only; see below).</td></tr>
