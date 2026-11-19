@@ -128,6 +128,8 @@ badge and note marker drawing), test `MindMapOutlineTest.kt` (JVM, Compose UI)
   background and text colours so dark themes read.
 - [x] Click selects (`state.select`), Ctrl+click and Shift+click as on the map (`toggleSelected`, `selectRange`), a
   click on the chevron folds, a right click calls `onRowMenu` with the topic, so the app shows its node menu.
+- [x] A click then calls `onRowClick`, as the map's `onNodeClick`, which the app shares with the map, so while an
+  arrow link is being added (Ctrl+L) a click on a row picks its target. Test: one in `OutlineAppTest`.
 - [x] When the selected topic changes, its row is scrolled into view (`animateScrollToItem` only when it is off the
   screen, so clicking doesn't jump).
 - [x] Rows that don't match `state.taskFilter` are drawn at 30% alpha, unless a topic below them matches, from the

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -254,5 +255,26 @@ class OutlineAppTest {
         waitForIdle()
         onNodeWithText("Ann").assertDoesNotExist()
         onNodeWithText("Remember the milk", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun clickOnARowPicksTheTargetOfANewArrowLink() = runComposeUiTest {
+        val state = shownApp()
+        nextViewMode()
+        state.selectTopic("One")
+        press(Key.L, listOf(Key.CtrlLeft))
+        onNodeWithText("Click the node or row", substring = true).assertExists()
+
+        onNodeWithTag(outlineRowTag(state.idOf("Three"))).performClick()
+        waitForIdle()
+
+        val link = state.arrowLinks.single()
+        assertEquals(state.idOf("One"), link.sourceId)
+        assertEquals(state.idOf("Three"), link.targetId)
+        onNodeWithText("Click the node or row", substring = true).assertDoesNotExist()
+
+        onNodeWithTag(outlineRowTag(state.idOf("Two"))).performClick()
+        waitForIdle()
+        assertEquals(1, state.arrowLinks.size, "a click with no link being added adds none")
     }
 }

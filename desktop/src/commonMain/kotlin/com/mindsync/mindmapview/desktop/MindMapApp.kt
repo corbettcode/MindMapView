@@ -1360,12 +1360,21 @@ private fun MindMapScreen(
                         state.commitTextEdit()
                         state.textEditHost = if (shownMode == ViewMode.MAP) TextEditHost.MAP else TextEditHost.OUTLINE
                     }
+                    // While an arrow link is being added, the next click on the map or the outline chooses the node it
+                    // leads to, or none.
+                    val onLinkTargetClick: (NodeData<*>?) -> Unit = { node ->
+                        arrowLinkSourceId?.let { sourceId ->
+                            if (node != null) state.addArrowLink(sourceId, node.id)
+                            onArrowLinkSourceIdChange(null)
+                        }
+                    }
                     val outline = @Composable { modifier: Modifier ->
                         MindMapOutline(
                             state = state
                             , modifier = modifier.testTag(OUTLINE_PANE_TAG)
                             , topicFontFamilies = topicFontFamilies
                             , emojiFontFamily = LocalEmojiFontFamily.current
+                            , onRowClick = onLinkTargetClick
                             , onRowDoubleClick = { state.startTextEdit() }
                             , onAddSiblingToType = { isAbove ->
                                 onAddNodeToType(if (isAbove) NewNodePlace.SIBLING_ABOVE else NewNodePlace.SIBLING_BELOW)
@@ -1422,14 +1431,7 @@ private fun MindMapScreen(
                                 , modifier = Modifier.fillMaxSize().testTag(MIND_MAP_TAG)
                                 , topicFontFamilies = topicFontFamilies
                                 , emojiFontFamily = LocalEmojiFontFamily.current
-                                // While an arrow link is being added, the next click chooses the node it leads to, or
-                                // none.
-                                , onNodeClick = { node ->
-                                    arrowLinkSourceId?.let { sourceId ->
-                                        if (node != null) state.addArrowLink(sourceId, node.id)
-                                        onArrowLinkSourceIdChange(null)
-                                    }
-                                }
+                                , onNodeClick = onLinkTargetClick
                                 // As in XMind, the text is typed on the map; the dialog has the rest of the node.
                                 , onNodeDoubleClick = { state.startTextEdit() }
                                 , onAddChildClick = { _, side -> addChild(side) }
@@ -1465,7 +1467,7 @@ private fun MindMapScreen(
                             modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
                         ) {
                             Text(
-                                "Click the node the arrow should point to. Esc cancels.",
+                                "Click the node or row the arrow should point to. Esc cancels.",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
                         }

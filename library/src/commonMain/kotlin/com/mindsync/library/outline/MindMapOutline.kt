@@ -40,8 +40,9 @@ fun outlineRowTag(id: String): String = "com.mindsync.library.outlineRow.$id"
  * selection, folding, undo and the task filter are those of the map, and a change in either shows in both.
  *
  * A click on a row selects its topic, with Ctrl adds it to the selection or takes it out, and with Shift selects a
- * range, as on the map. A click on the arrow before a topic folds or unfolds it. A second click soon after calls
- * [onRowDoubleClick], a click on a link in the text [onLinkClick], and a right click [onRowMenu] with where it was,
+ * range, as on the map, and then calls [onRowClick] with the topic, as a click on a node calls
+ * [com.mindsync.library.MindMap]'s `onNodeClick`. A click on the arrow before a topic folds or unfolds it. A second
+ * click soon after calls [onRowDoubleClick], a click on a link in the text [onLinkClick], and a right click [onRowMenu] with where it was,
  * in the outline. The selected topic's row is scrolled into view whenever the selection changes. While the pointer
  * is on the note or attribute mark of a row, [onNoteHover] or [onAttributeHover] is called with the topic and where
  * the pointer is, in the outline, for showing them, and with null once it leaves the mark.
@@ -61,6 +62,7 @@ fun MindMapOutline(
     , modifier: Modifier = Modifier
     , topicFontFamilies: Map<TopicKind, FontFamily?> = emptyMap()
     , emojiFontFamily: FontFamily? = null
+    , onRowClick: (node: NodeData<*>) -> Unit = {}
     , onRowDoubleClick: (node: NodeData<*>) -> Unit = { state.startTextEdit() }
     , onAddSiblingToType: (isAbove: Boolean) -> Unit = { isAbove ->
         state.addNodeForTextEdit { addSiblingNode("", isAbove = isAbove) }
@@ -81,6 +83,7 @@ fun MindMapOutline(
     val selectedId = state.selectedNode?.id
     val fadedIds = state.taskFilterView().fadedIds
     val textColor = if (state.isDark) DARK_TEXT else LIGHT_TEXT
+    val currentOnRowClick by rememberUpdatedState(onRowClick)
     val currentOnRowDoubleClick by rememberUpdatedState(onRowDoubleClick)
     val currentOnLinkClick by rememberUpdatedState(onLinkClick)
     val currentOnRowMenu by rememberUpdatedState(onRowMenu)
@@ -131,10 +134,17 @@ fun MindMapOutline(
                             val position = outlineCoordinates?.localPositionOf(press.coordinates, press.position)
                             currentOnRowMenu(state.selectedNode ?: node, position ?: press.position)
                         }
-                        press.isShift -> state.selectRange(node.id)
-                        press.isCtrl && press.link == null -> state.toggleSelected(node.id)
+                        press.isShift -> {
+                            state.selectRange(node.id)
+                            currentOnRowClick(node)
+                        }
+                        press.isCtrl && press.link == null -> {
+                            state.toggleSelected(node.id)
+                            currentOnRowClick(node)
+                        }
                         else -> {
                             state.select(node)
+                            currentOnRowClick(node)
                             press.link?.let { currentOnLinkClick(node, it) }
                             if (clicks.isSecondClick(node.id, press.uptimeMillis, press.doubleClickMillis)) {
                                 currentOnRowDoubleClick(node)
