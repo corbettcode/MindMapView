@@ -82,14 +82,15 @@ the outline; phase D documents them.
 
 **Files:** `data/Tree.kt`, `data/TreeSnapshot.kt`, `MindMapState.kt` (`CopiedNode`), test `FloatingTreeTest.kt`
 
-- [ ] `Tree.floatingOffsetOf(id): DpOffset?`, `isFloating(id)`, and `setFloating(id, offset: DpOffset?)`, which only
+- [x] `Tree.floatingOffsetOf(id): DpOffset?`, `isFloating(id)`, and `setFloating(id, offset: DpOffset?)`, which only
   takes a child of the root (it throws for another) and keeps floating topics last among the root's children; null
   makes it attached again, placed last among the attached ones. `moveNode` and `removeNode` drop the flag of a topic
   that leaves the root.
-- [ ] Offsets are in the snapshot, `restore` and `hasSameContentAs`; `CopiedNode` carries them, so a floating topic
-  cut and pasted onto the root stays floating, and pasted onto another topic becomes attached.
-- [ ] `sideOf` a floating topic or below it is `RIGHT`; the root's `rootChildSides` has no entry for it.
-- [ ] Tests (8): set and clear; only children of the root; order kept last; moved under another topic, it is no
+- [x] Offsets are in the snapshot, `restore` and `hasSameContentAs`; `CopiedNode` carries them, so a floating topic
+  pasted onto the root floats again (24 dp off the original while that is still there), and pasted onto another
+  topic is attached. `DpOffset(x, y)` is new, in `data`.
+- [x] `sideOf` a floating topic or below it is `RIGHT`; the root's `rootChildSides` has no entry for it.
+- [x] Tests (9): set and clear; only children of the root; order kept last; moved under another topic, it is no
   longer floating; snapshot and restore; copy and paste onto the root and onto a topic; side; a map without any
   is unchanged.
 

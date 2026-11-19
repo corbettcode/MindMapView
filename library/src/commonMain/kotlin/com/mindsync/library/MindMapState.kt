@@ -31,6 +31,7 @@ import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
@@ -777,6 +778,7 @@ class MindMapState(
         , task = tree.taskOf(node.id)
         , noteDisplay = tree.noteDisplayOf(node.id)
         , attributeDisplay = tree.attributeDisplayOf(node.id)
+        , floatingOffset = tree.floatingOffsetOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -803,6 +805,12 @@ class MindMapState(
                 tree.setTask(id, branch.task)
                 tree.setNoteDisplay(id, branch.noteDisplay)
                 tree.setAttributeDisplay(id, branch.attributeDisplay)
+                // A floating topic pasted onto the root floats again, a little off the one it is a copy of when that
+                // is still there; pasted onto another topic, it is attached to it.
+                val offset = branch.floatingOffset?.takeIf { parentId == tree.getRootNode().id }
+                if (offset != null) {
+                    tree.setFloating(id, if (node.id in tree.nodes) offset + PASTED_FLOATING_SHIFT else offset)
+                }
                 pastedIds[node.id] = id
                 branch.children.forEach { paste(it, id) }
             }
@@ -2296,8 +2304,12 @@ private class CopiedNode(
     , val task: NodeTask
     , val noteDisplay: NoteDisplay?
     , val attributeDisplay: AttributeDisplay?
+    , val floatingOffset: DpOffset?
     , val children: List<CopiedNode>
 )
+
+// How far a pasted floating topic is put from the one it is a copy of, so it doesn't hide it.
+private val PASTED_FLOATING_SHIFT = DpOffset(Dp(24f), Dp(24f))
 
 // A node off to the side of an arrow key's way counts this many times as far as one straight ahead.
 private const val SIDEWAYS_WEIGHT = 3f
@@ -2314,14 +2326,14 @@ private class ArrowLinkDrag(
     , val t: Float
 )
 
-// A node's text being typed: the map as it was before, and what to put back when the typing is cancelled.
-// A node added to be typed into has no original text, and the node that was selected before it is selected again.
 /** A view the text of a node is typed in. */
 enum class TextEditHost {
     MAP
     , OUTLINE
 }
 
+// A node's text being typed: the map as it was before, and what to put back when the typing is cancelled.
+// A node added to be typed into has no original text, and the node that was selected before it is selected again.
 private class TextEdit(
     val nodeId: String
     , val before: TreeSnapshot

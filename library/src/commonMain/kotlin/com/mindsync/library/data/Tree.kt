@@ -40,6 +40,9 @@ class Tree<T> {
 
     private val foldedIds = mutableSetOf<String>()
 
+    // The children of the root that float, each with how far its center is from the root's.
+    private val floatingOffsets = mutableMapOf<String, DpOffset>()
+
     /** The look of the map, which the nodes follow where they have no colors or border of their own. */
     var theme: MapTheme = MapThemes.CLASSIC
 
@@ -120,6 +123,46 @@ class Tree<T> {
     fun sideOf(id: String): LayoutSide = rootChildSides[branchOf(id).id] ?: LayoutSide.RIGHT
 
     /**
+     * Returns how far the center of the floating topic [id] is from the root's, or null when it is no floating
+     * topic. A floating topic is a child of the root that is placed where it was put, with no line to the root, as
+     * XMind's floating topics and Freeplane's free nodes are; the nodes below it are laid out to its right.
+     */
+    fun floatingOffsetOf(id: String): DpOffset? = floatingOffsets[id]?.takeIf { _nodes[id]?.parentId == ROOT_ID }
+
+    /** Whether the node is a floating topic, see [floatingOffsetOf]. */
+    fun isFloating(id: String): Boolean = floatingOffsetOf(id) != null
+
+    /**
+     * Makes the child of the root [id] a floating topic at [offset] from the root's center, or an attached one again
+     * when it is null. Floating topics come after the attached children of the root, so one that floats goes last,
+     * and one that is attached again goes after the other attached ones. It throws for a node that is not a child of
+     * the root.
+     */
+    fun setFloating(
+        id: String
+        , offset: DpOffset?
+    ) {
+        if (_nodes[id]?.parentId != ROOT_ID) {
+            throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        }
+        val wasFloating = isFloating(id)
+        if (offset == null) floatingOffsets.remove(id) else floatingOffsets[id] = offset
+        if (offset != null) rootChildSides.remove(id)
+        if (wasFloating != (offset != null)) {
+            val root = getRootNode()
+            _nodes[ROOT_ID] = root.withChildren(root.children - id + id)
+            orderRootChildren()
+        }
+    }
+
+    // The attached children of the root come first, then the floating topics, each in their order.
+    private fun orderRootChildren() {
+        val root = getRootNode()
+        val (floating, attached) = root.children.partition { it in floatingOffsets }
+        if (attached + floating != root.children) _nodes[ROOT_ID] = root.withChildren(attached + floating)
+    }
+
+    /**
      * Moves the branch the node is in, the child of the root it is or is below, to the other side of the
      * root, at the same height. The root itself is in no branch, and nothing is moved for it.
      */
@@ -145,7 +188,8 @@ class Tree<T> {
         childId: String
         , side: LayoutSide
     ) {
-        if (side != LayoutSide.RIGHT && _nodes[childId]?.parentId == ROOT_ID) {
+        // A floating topic is on no side of the root.
+        if (side != LayoutSide.RIGHT && _nodes[childId]?.parentId == ROOT_ID && childId !in floatingOffsets) {
             rootChildSides[childId] = side
         }
         else {
@@ -523,6 +567,7 @@ class Tree<T> {
         , nodeNoteDisplays = nodeNoteDisplays.toMap()
         , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
+        , floatingOffsets = floatingOffsets.toMap()
         , arrowLinks = _arrowLinks.toList()
         , boundaries = boundaries
         , summaries = summaries.mapValues { it.value.toSet() }
@@ -550,6 +595,8 @@ class Tree<T> {
         nodeAttributeDisplays.putAll(snapshot.nodeAttributeDisplays)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
+        floatingOffsets.clear()
+        floatingOffsets.putAll(snapshot.floatingOffsets)
         _arrowLinks.clear()
         _arrowLinks.addAll(snapshot.arrowLinks)
         _boundaries.clear()
@@ -659,6 +706,7 @@ class Tree<T> {
         // A folded node would hide the child it is given.
         foldedIds.remove(parentId)
         setRootChildSide(targetId, side)
+        if (parentId == ROOT_ID) orderRootChildren()
     }
 
     fun attachNode(
@@ -726,7 +774,9 @@ class Tree<T> {
         _nodes[targetId] = getNode(targetId).withParent(parentId)
         if (oldChildren.isEmpty()) foldedIds.remove(oldParent.id)
         foldedIds.remove(parentId)
+        if (parentId != ROOT_ID) floatingOffsets.remove(targetId)
         setRootChildSide(targetId, side)
+        if (parentId == ROOT_ID) orderRootChildren()
     }
 
     fun removeNode(targetId: String) {
@@ -753,6 +803,7 @@ class Tree<T> {
             _nodes[parentId] = newParent
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
         rootChildSides.remove(targetId)
+        floatingOffsets.remove(targetId)
     }
 
     /**
