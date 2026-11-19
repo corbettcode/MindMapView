@@ -139,22 +139,26 @@ stacking and main placement by box, `crossReach`, `arrangeBelow`), `layout/Timel
 
 ### Task B2: Directions in a branch
 
-**Files:** `MindMapManager.kt` (`arrangeBranchOf`, `measureBoxOf` with the probe and a per-pass cache, layouts by
-`structureOf`), `layout/MindMapLayoutManager.kt` (an owner child handed back to the manager), `MindMap.kt` (lines by
-`structureOf(parent)`), test `BranchDirectionTest.kt`
+**Files:** `MindMapManager.kt` (the side layouts' `OwnedBranches`: a box measured by laying the branch out around its
+topic and kept for the layout under way, `inPass`; `layoutManagerFor` by `structureOf`), `data/Tree.kt`
+(`placedDirectionOf`), `MindMap.kt` (lines by `placedDirectionOf`, add buttons and fold rings by `structureOf`), test
+`BranchDirectionTest.kt`
 
-- [ ] `arrangeBranchOf(node)` lays out a node's children by `structureOf(node.id)`; `arrangeTree` starts it at the
-  root, floating topics through it too. A layout meeting a child that owns a structure takes its box from
-  `measureBoxOf` (its branch laid out around a probe center and measured, cached for the pass), places the child, and
-  calls `arrangeBranchOf(child)` for what is below.
-- [ ] Logic and org charts in a branch: an org chart ↓ under a topic on the right of a mind map has its children in a
-  row below its topic, the topic pushed right of its parent by the row's half width, its siblings above and below it
-  clear of the whole row.
-- [ ] Lines out of a topic are drawn by `structureOf(that topic)`, so an org chart branch's lines leave the bottom of
-  its topics, and the line into its owner is the mind map's curve.
-- [ ] Tests (5): an org chart branch in a mind map is a row below its owner, clear of its parent and siblings; a logic
-  chart ← in a right branch reaches back past its owner, which is pushed clear; a nested owner (org ↑ under org ↓);
-  the lines' ends; clearing it gives every position back. The feature tour with a branch of each was rendered.
+- [x] A side layout meeting a topic with a structure of its own asks the manager for its box, which lays its branch
+  out around it and reads how far it reaches, once per layout (`arrangeTree`, `arrangeBranch`, `measureOverflow`,
+  `measureHeight`); placed, the topic's branch is laid out by `layoutManagerFor(it)`, which follows `structureOf`.
+- [x] Logic and org charts in a branch, nested too: an org chart ↓ under a topic on the right of a mind map has its
+  children in a row below it, the topic pushed right of its parent by the row's back half, its siblings clear of the
+  whole row.
+- [x] The line into a topic leaves its parent as its parent's structure places it (`placedDirectionOf`), and lines out
+  of it as its own grows; add buttons and fold rings by the structure of the topic's children. Braces, the timeline's
+  axis and tree chart elbows still go by the map's structure, until phase C.
+- [x] Tests (5): an org chart branch in a mind map, a row below its topic clear of its parent and siblings; a logic
+  chart ← in a right branch reaching back from its topic, which is pushed clear; an org chart ↑ under an org chart ↓;
+  placed and own directions; clearing it gives every position back. All 703 library and 251 desktop tests pass on a
+  full rerun. The tour was rendered with branches as org charts ↓ and ↑ and a logic chart ← in the mind map, and with
+  a logic chart → and an org chart ↑ in an org chart, and looked at: nothing overlaps. The lines from the root cross
+  the rows that reach back towards it, as in XMind.
 
 ## Phase C: Tree charts, brace maps and timelines in a branch
 

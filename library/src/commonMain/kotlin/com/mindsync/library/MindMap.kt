@@ -1179,7 +1179,7 @@ private fun DrawScope.drawLines(
         if (tree.structure == MapStructure.TIMELINE && node.parentId == null) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
-            val grow = tree.directionOf(toNode.id)
+            val grow = tree.placedDirectionOf(toNode.id)
             val isRightSide = grow != GrowDirection.LEFT
             val isSlanted = node.parentId == null && side.isSlanted && tree.structure == MapStructure.MIND_MAP
             // The lines to the children on a slanted side of the root leave it along that side's line.
@@ -1474,9 +1474,9 @@ internal fun Density.addButtonCenter(
     , node: NodeData<*>
     , side: LayoutSide = LayoutSide.RIGHT
 ): Offset {
-    if (tree.structure == MapStructure.MIND_MAP) return addButtonCenter(node, side)
+    if (tree.structureOf(node.id) == MapStructure.MIND_MAP) return addButtonCenter(node, side)
     // In a tree chart the rows below a topic hang off the spine below it, where its button is.
-    if (tree.structure.isTreeChart && node.parentId != null) {
+    if (tree.structureOf(node.id).isTreeChart && node.parentId != null) {
         val spineX = treeChartSpineX(tree, node)
         val bottom = node.path.centerY.toPx(this) + halfHeight(node).toPx(this)
         return Offset(spineX, bottom + ADD_BUTTON_RADIUS.toPx(this))

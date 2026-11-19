@@ -7,8 +7,10 @@ import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
+import com.mindsync.library.layout.BranchBox
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
+import com.mindsync.library.layout.OwnedBranches
 import com.mindsync.library.layout.TimelineLayout
 import com.mindsync.library.layout.TreeChartLayout
 import com.mindsync.library.model.AttributeDisplay
@@ -128,10 +130,63 @@ class MindMapManager {
         MindMapLayoutManager(LayoutSide.RIGHT, direction, isAllRootChildren = true)
     }
 
-    /** Returns the layout of the branch the node [id] is in, in the map's structure. */
+    /** Returns the layout of the branch the node [id] is in, in the structure its children are laid out in. */
     fun layoutManagerFor(id: String): MindMapLayoutManager =
-        if (tree.structure == MapStructure.MIND_MAP) getLayoutManager(tree.sideOf(id))
+        if (tree.structureOf(id) == MapStructure.MIND_MAP) getLayoutManager(tree.sideOf(id))
         else directionManagers.getValue(tree.directionOf(id))
+
+    // The boxes of the branches with a structure of their own measured in the layout under way, as one is measured by
+    // laying it out, or null between layouts, when the tree may have changed.
+    private var passBoxes: MutableMap<String, BranchBox>? = null
+
+    private inline fun <R> inPass(block: () -> R): R {
+        if (passBoxes != null) return block()
+        passBoxes = mutableMapOf()
+        try {
+            return block()
+        }
+        finally {
+            passBoxes = null
+        }
+    }
+
+    // A branch with a structure of its own is measured by laying it out around its topic, wherever that is, as how
+    // far it reaches from it does not depend on where it is.
+    private val ownedBranches = object : OwnedBranches {
+        override fun boxOf(
+            owner: NodeData<*>
+            , tree: Tree<*>
+        ): BranchBox {
+            passBoxes?.get(owner.id)?.let { return it }
+            arrangeBelow(owner, tree)
+            var left = 0f
+            var right = 0f
+            var top = 0f
+            var bottom = 0f
+            val centerX = owner.path.centerX.dpVal
+            val centerY = owner.path.centerY.dpVal
+            tree.doVisiblePreorderTraversal(owner) { node ->
+                val nodeX = node.path.centerX.dpVal
+                val nodeY = node.path.centerY.dpVal
+                left = maxOf(left, centerX - nodeX + halfWidth(node).dpVal)
+                right = maxOf(right, nodeX - centerX + halfWidth(node).dpVal)
+                top = maxOf(top, centerY - nodeY + halfHeight(node).dpVal)
+                bottom = maxOf(bottom, nodeY - centerY + halfHeight(node).dpVal)
+            }
+            return BranchBox(Dp(left), Dp(right), Dp(top), Dp(bottom)).also { passBoxes?.put(owner.id, it) }
+        }
+
+        override fun arrangeBelow(
+            owner: NodeData<*>
+            , tree: Tree<*>
+        ) {
+            layoutManagerFor(owner.id).arrangeChildren(owner, tree)
+        }
+    }
+
+    init {
+        (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
+    }
 
     // The layouts the root's children are arranged with: one for each side of a mind map, or the structure's one.
     private fun rootManagers(): Collection<MindMapLayoutManager> =
@@ -153,8 +208,8 @@ class MindMapManager {
         treeChartLayouts.getValue(tree.structure == MapStructure.TREE_RIGHT)
 
     /** Lays out the nodes below [node], where it is, as the map's structure has them: while it is dragged, say. */
-    fun arrangeBranch(node: NodeData<*>) {
-        if (tree.structure.isTreeChart) {
+    fun arrangeBranch(node: NodeData<*>) = inPass {
+        if (tree.structure.isTreeChart && tree.structureOwnerOf(node.id) == tree.getRootNode().id) {
             treeChartLayout().arrangeColumnAt(node, node.path.centerX.dpVal, node.path.centerY.dpVal, tree)
         }
         else {
@@ -164,7 +219,7 @@ class MindMapManager {
 
     // The root is placed once for all of its sets of children, then each side is arranged around it.
     // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
-    fun arrangeTree() {
+    fun arrangeTree(): Unit = inPass {
         if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return arrangeWhole()
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
@@ -240,18 +295,18 @@ class MindMapManager {
     /**
      * Returns how far the tree reaches to the left of and above where it fits, as its x and y.
      */
-    fun measureOverflow(): Pair<Dp, Dp> {
-        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return wholeOverflow()
+    fun measureOverflow(): Pair<Dp, Dp> = inPass {
+        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return@inPass wholeOverflow()
         val root = tree.getRootNode()
         val fittedRoot = fittedRoot()
-        return fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
+        fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
     }
 
     /**
      * Returns the height of the node and the nodes below it, as if they were centered on it: twice as far as
      * they reach above or below it.
      */
-    fun measureHeight(node: NodeData<*>): Dp {
+    fun measureHeight(node: NodeData<*>): Dp = inPass {
         val reach = layoutManagers.values.maxOf { manager ->
             if (node.parentId == null) {
                 maxOf(manager.reachAbove(node, tree).dpVal, manager.reachBelow(node, tree).dpVal)
@@ -260,7 +315,7 @@ class MindMapManager {
                 manager.measureChildHeight(node, tree).dpVal / 2
             }
         }
-        return Dp(reach * 2)
+        Dp(reach * 2)
     }
 
     fun measureWidth(node: NodeData<*>): Dp {

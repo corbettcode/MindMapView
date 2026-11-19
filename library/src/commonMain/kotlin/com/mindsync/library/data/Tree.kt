@@ -61,6 +61,16 @@ class Tree<T> {
     fun directionOf(id: String): GrowDirection = structureOf(id).directionOf(this, id, structureOwnerOf(id))
 
     /**
+     * Returns the way the node [id] is placed from its parent: the way its parent's branch grows, in the structure
+     * its parent is laid out in. It is [directionOf] the node but for a topic with a structure of its own, whose
+     * children may grow another way than it was placed. The root is placed from nothing, and its own is returned.
+     */
+    fun placedDirectionOf(id: String): GrowDirection {
+        val parentId = getNode(id).parentId ?: return directionOf(id)
+        return structureOf(parentId).directionOf(this, id, structureOwnerOf(parentId))
+    }
+
+    /**
      * Returns the structure set on the topic [id] for its branch, or null when its branch is laid out in its
      * parent's, as it is to start with. The root's is the map's [structure], not this.
      */
