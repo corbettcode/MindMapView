@@ -95,20 +95,26 @@ own.
 ### Task A1: Owners
 
 **Files:** `data/Tree.kt` (`branchStructures`, `branchStructureOf`, `setBranchStructure`, `structureOwnerOf`,
-`structureOf`, `directionOf`), `data/TreeSnapshot.kt`, `model/MapStructure.kt` (owner instead of root),
-`MindMapState.kt` (`setBranchStructure(ids, structure)`), test `BranchStructureTest.kt`
+`structureOf`, `directionOf`, `isStackedAlongX`, `summaryDirectionOf`), `data/TreeSnapshot.kt`, `model/MapStructure.kt`
+(an `owner` in place of the root, the root by default), `layout/SummaryGeometry.kt`, `MindMapState.kt`
+(`setBranchStructure(structure)`, the clipboard), test `BranchStructureTest.kt`
 
-- [ ] `branchStructures: Map<String, MapStructure>` kept beside the floating offsets; removed with the node, carried
-  by cut and paste and copies (find how the clipboard carries per-node data such as tasks and attributes), in the
-  snapshot and `hasSameContentAs`. `setBranchStructure(id, null)` clears; the root and `MIND_MAP` are refused.
-- [ ] `MapStructure.directionOf(tree, id, owner)`, `isStackedAlongX` and `summaryDirectionOf` read "child of the root"
-  as "child of `owner`"; the timeline's turns count the owner's attached children. `tree.directionOf(id)` passes
-  `structureOwnerOf(id)` — for the root, `tree.structure` and the root as now, so nothing changes yet.
-- [ ] `state.setBranchStructure(ids, structure)` is one change that re-lays out the map. Until phase B the layouts
-  still lay everything out in the map's structure.
-- [ ] Tests (6): none by default; set, undo, redo; the owner of a topic, its grandchild and a topic below a nested
-  owner; directions by owner (an org chart branch in a mind map grows down below its owner, the mind map around it
-  by sides); kept through cut and paste and the map's structure change; refused for the root and the mind map.
+- [x] `branchStructures: Map<String, MapStructure>` kept beside the floating offsets; removed with the node, carried
+  by copy, cut and paste (`CopiedNode.branchStructure`), in the snapshot and `hasSameContentAs`.
+  `setBranchStructure(id, null)` clears; the root and `MIND_MAP` throw.
+- [x] `MapStructure.directionOf`, `isStackedAlongX` and `summaryDirectionOf` take an `owner` (the root by default) and
+  read "child of the root" as "child of `owner`"; the timeline's turns count the owner's attached children.
+  `tree.directionOf(id)` passes `structureOwnerOf(id)`; `tree.isStackedAlongX(id)` and `tree.summaryDirectionOf(id)`
+  ask the structure of the node's parent, as they are about it among its siblings. Maps without branch structures
+  get the same answers as before.
+- [x] `state.setBranchStructure(structure)` sets it on the selected topics but the root, as one change that re-lays
+  out the map; the mind map is refused. Until phase B the layouts don't follow it everywhere, but nothing in the app
+  or the files sets one yet.
+- [x] Tests (6): none by default; set, undo, redo, clear; the owner of a topic and below a nested owner; directions
+  by owner (an org chart branch in a mind map grows down, the mind map around it by sides, a timeline branch up and
+  down by turns, stacking by the parent's structure); kept through the map's structure change and cut and paste;
+  refused for the root and the mind map. All 695 library and 251 desktop tests pass on a full rerun, the golden
+  images among them.
 
 ## Phase B: Boxes, and directions in a branch
 

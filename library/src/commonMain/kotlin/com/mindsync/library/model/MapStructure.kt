@@ -54,20 +54,23 @@ enum class MapStructure(
     }
 
     /**
-     * Returns the way the branch the node [id] is in grows: the way its children are placed from it. In the mind map
-     * it is by the side of the root the branch is on; in a timeline the branches below the root grow up and down by
-     * turns. The root, and a floating topic's branch, grow the way the structure's root children are placed.
+     * Returns the way the branch the node [id] is in grows when this structure is laid out from [owner]: the way the
+     * children of [id] are placed from it. [owner] is the topic the structure is set on, the root for the map's own,
+     * and [id] is it or a node below it. In the mind map it is by the side of the root the branch is on; in a
+     * timeline the branches below the owner grow up and down by turns. The owner, and a floating topic's branch, grow
+     * the way the structure's first children are placed.
      */
     fun directionOf(
         tree: Tree<*>
         , id: String
+        , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
         LOGIC_RIGHT, BRACE_RIGHT -> GrowDirection.RIGHT
         LOGIC_LEFT -> GrowDirection.LEFT
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
-        TIMELINE -> timelineDirectionOf(tree, id)
+        TIMELINE -> timelineDirectionOf(tree, id, owner)
     }
 
     /** Whether the map is a tree chart, laid out in indented columns rather than by a direction. */
@@ -75,45 +78,48 @@ enum class MapStructure(
 
     /**
      * Returns whether the node [id] and its siblings are stacked along x, side by side, rather than along y, one
-     * above the other: across the way their branch grows, but for the rows of a tree chart's columns, which are one
-     * above the other below the root's row.
+     * above the other, when their parent is laid out in this structure from [owner]: across the way their branch
+     * grows, but for the rows of a tree chart's columns, which are one above the other below the owner's row.
      */
     fun isStackedAlongX(
         tree: Tree<*>
         , id: String
+        , owner: String = tree.getRootNode().id
     ): Boolean {
-        val isRootChild = tree.getNode(id).parentId == tree.getRootNode().id
-        return if (isTreeChart) isRootChild else !directionOf(tree, id).isHorizontal
+        val isOwnerChild = tree.getNode(id).parentId == owner
+        return if (isTreeChart) isOwnerChild else !directionOf(tree, id, owner).isHorizontal
     }
 
     /**
-     * Returns the way the summary [id] is past the siblings it is about: as its branch grows, but in a tree chart's
-     * columns to their side, as the rows go down.
+     * Returns the way the summary [id] is past the siblings it is about, when their parent is laid out in this
+     * structure from [owner]: as their branch grows, but in a tree chart's columns to their side, as the rows go
+     * down.
      */
     fun summaryDirectionOf(
         tree: Tree<*>
         , id: String
+        , owner: String = tree.getRootNode().id
     ): GrowDirection {
-        val isRootChild = tree.getNode(id).parentId == tree.getRootNode().id
+        val isOwnerChild = tree.getNode(id).parentId == owner
         return when {
-            !isTreeChart || isRootChild -> directionOf(tree, id)
+            !isTreeChart || isOwnerChild -> directionOf(tree, id, owner)
             this == TREE_RIGHT -> GrowDirection.RIGHT
             else -> GrowDirection.LEFT
         }
     }
 
-    // The root's children are along the axis, to its right; the branch of every other one goes up, and of the rest
+    // The owner's children are along the axis, to its right; the branch of every other one goes up, and of the rest
     // down.
     private fun timelineDirectionOf(
         tree: Tree<*>
         , id: String
+        , owner: String
     ): GrowDirection {
-        val root = tree.getRootNode()
-        if (id == root.id) return GrowDirection.RIGHT
-        val branchId = tree.branchOf(id).id
-        // Floating topics, and summaries of the root's children, are below the axis.
+        if (id == owner) return GrowDirection.RIGHT
+        val branchId = generateSequence(id) { tree.getNode(it).parentId }.first { tree.getNode(it).parentId == owner }
+        // Floating topics, and summaries of the owner's children, are below the axis.
         if (tree.isFloating(branchId) || tree.isSummary(branchId)) return GrowDirection.DOWN
-        val index = root.children.filterNot { tree.isFloating(it) || tree.isSummary(it) }.indexOf(branchId)
-        return if (index % 2 == 0) GrowDirection.UP else GrowDirection.DOWN
+        val axisIds = tree.getNode(owner).children.filterNot { tree.isFloating(it) || tree.isSummary(it) }
+        return if (axisIds.indexOf(branchId) % 2 == 0) GrowDirection.UP else GrowDirection.DOWN
     }
 }

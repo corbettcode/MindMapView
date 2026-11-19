@@ -45,14 +45,63 @@ class Tree<T> {
     // The children of the root that float, each with how far its center is from the root's.
     private val floatingOffsets = mutableMapOf<String, DpOffset>()
 
+    // The topics laid out in a structure of their own, rather than in their parent's, each with that structure.
+    private val branchStructures = mutableMapOf<String, MapStructure>()
+
     /** The look of the map, which the nodes follow where they have no colors or border of their own. */
     var theme: MapTheme = MapThemes.CLASSIC
 
     /** How the map is laid out: as a mind map, a logic chart, an org chart, and so on. */
     var structure: MapStructure = MapStructure.MIND_MAP
 
-    /** Returns the way the branch the node [id] is in grows in the map's [structure]. */
-    fun directionOf(id: String): GrowDirection = structure.directionOf(this, id)
+    /**
+     * Returns the way the branch the node [id] is in grows: the way its children are placed from it, in the
+     * structure they are laid out in, [structureOf].
+     */
+    fun directionOf(id: String): GrowDirection = structureOf(id).directionOf(this, id, structureOwnerOf(id))
+
+    /**
+     * Returns the structure set on the topic [id] for its branch, or null when its branch is laid out in its
+     * parent's, as it is to start with. The root's is the map's [structure], not this.
+     */
+    fun branchStructureOf(id: String): MapStructure? = branchStructures[id]?.takeIf { id in _nodes }
+
+    /**
+     * Lays out the children of the topic [id], and the nodes below them, in [structure], or in its parent's when it
+     * is null. The mind map is not one a branch can have, as it needs the root's six sides, and the root's
+     * structure is the map's; it throws for either.
+     */
+    fun setBranchStructure(
+        id: String
+        , structure: MapStructure?
+    ) {
+        if (getNode(id).parentId == null || structure == MapStructure.MIND_MAP) {
+            throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_INVALID_NODE_ID.message)
+        }
+        if (structure == null) branchStructures.remove(id) else branchStructures[id] = structure
+    }
+
+    /**
+     * Returns the topic the structure the children of [id] are laid out in is set on: [id] itself, or the nearest
+     * topic above it with a structure of its own, or else the root.
+     */
+    fun structureOwnerOf(id: String): String =
+        generateSequence(id) { getNode(it).parentId }.firstOrNull { it in branchStructures } ?: ROOT_ID
+
+    /** Returns the structure the children of the node [id] are laid out in: its owner's, see [structureOwnerOf]. */
+    fun structureOf(id: String): MapStructure = branchStructures[structureOwnerOf(id)] ?: structure
+
+    /** Whether the node [id] and its siblings are stacked along x, in the structure their parent is laid out in. */
+    internal fun isStackedAlongX(id: String): Boolean {
+        val parentId = getNode(id).parentId ?: return false
+        return structureOf(parentId).isStackedAlongX(this, id, structureOwnerOf(parentId))
+    }
+
+    /** Returns the way the summary [id] is past the siblings it is about, in the structure of their parent. */
+    internal fun summaryDirectionOf(id: String): GrowDirection {
+        val parentId = getNode(id).parentId ?: return directionOf(id)
+        return structureOf(parentId).summaryDirectionOf(this, id, structureOwnerOf(parentId))
+    }
 
     /**
      * How the app draws each kind of topic, in place of the theme's style for its level. A kind without one is
@@ -591,6 +640,7 @@ class Tree<T> {
         , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
         , floatingOffsets = floatingOffsets.toMap()
+        , branchStructures = branchStructures.toMap()
         , arrowLinks = _arrowLinks.toList()
         , boundaries = boundaries
         , summaries = summaries.mapValues { it.value.toSet() }
@@ -621,6 +671,8 @@ class Tree<T> {
         foldedIds.addAll(snapshot.foldedIds)
         floatingOffsets.clear()
         floatingOffsets.putAll(snapshot.floatingOffsets)
+        branchStructures.clear()
+        branchStructures.putAll(snapshot.branchStructures)
         _arrowLinks.clear()
         _arrowLinks.addAll(snapshot.arrowLinks)
         _boundaries.clear()
@@ -829,6 +881,7 @@ class Tree<T> {
         } ?: throw IllegalArgumentException(ExceptionMessage.ERROR_MESSAGE_ROOT_CANT_REMOVE.message)
         rootChildSides.remove(targetId)
         floatingOffsets.remove(targetId)
+        branchStructures.remove(targetId)
     }
 
     /**
@@ -841,7 +894,7 @@ class Tree<T> {
         , centerX: Dp
         , centerY: Dp
     ): Boolean {
-        val isAcrossX = structure.isStackedAlongX(this, targetId)
+        val isAcrossX = isStackedAlongX(targetId)
         val center = if (isAcrossX) centerX else centerY
         fun crossOf(node: NodeData<*>) = if (isAcrossX) node.path.centerX else node.path.centerY
         val parent = _nodes[_nodes[targetId]?.parentId] ?: return false

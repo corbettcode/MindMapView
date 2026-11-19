@@ -25,6 +25,7 @@ import com.mindsync.library.model.NoteDisplay
  * @property nodeAttributeDisplays The map of node IDs to the way of showing their attributes they have of their own.
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
  * @property floatingOffsets The floating topics, each with how far it is from the root.
+ * @property branchStructures The topics laid out in a structure of their own, each with it.
  * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
  * annotations or relationships.
  * @property boundaries The boundaries around groups of children, each with only the children it is still around.
@@ -46,6 +47,7 @@ internal class TreeSnapshot(
     , val nodeAttributeDisplays: Map<String, AttributeDisplay>
     , val foldedIds: Set<String>
     , val floatingOffsets: Map<String, DpOffset>
+    , val branchStructures: Map<String, MapStructure>
     , val arrowLinks: List<ArrowLink>
     , val boundaries: List<Boundary>
     , val summaries: Map<String, Set<String>>
@@ -70,6 +72,7 @@ internal class TreeSnapshot(
             && nodeAttributeDisplays == other.nodeAttributeDisplays
             && foldedIds == other.foldedIds
             && floatingOffsets == other.floatingOffsets
+            && branchStructures == other.branchStructures
             && arrowLinks == other.arrowLinks
             && boundaries == other.boundaries
             && summaries == other.summaries

@@ -694,6 +694,21 @@ class MindMapState(
         }
     }
 
+    /**
+     * Lays out the branches of the selected topics in [structure], or in their parents' when it is null, as one
+     * change. The root is left out, as its structure is the map's ([setStructure]), and so is the mind map, which
+     * only the root can be laid out in. As with [setStructure], only how the map is drawn changes.
+     */
+    fun setBranchStructure(structure: MapStructure?) {
+        if (structure == MapStructure.MIND_MAP) return
+        val ids = selectedNodes.filter { it.parentId != null }.map { it.id }
+        if (ids.isEmpty()) return
+        recordChange {
+            ids.forEach { tree.setBranchStructure(it, structure) }
+            animateTreeChange()
+        }
+    }
+
     /** Makes the selected floating topics attached children of the root again, on its right, as one change. */
     fun attachToRoot() {
         recordChange {
@@ -879,6 +894,7 @@ class MindMapState(
         , noteDisplay = tree.noteDisplayOf(node.id)
         , attributeDisplay = tree.attributeDisplayOf(node.id)
         , floatingOffset = tree.floatingOffsetOf(node.id)
+        , branchStructure = tree.branchStructureOf(node.id)
         , children = node.children.map { copyBranch(tree.getNode(it)) }
     )
 
@@ -905,6 +921,7 @@ class MindMapState(
                 tree.setTask(id, branch.task)
                 tree.setNoteDisplay(id, branch.noteDisplay)
                 tree.setAttributeDisplay(id, branch.attributeDisplay)
+                tree.setBranchStructure(id, branch.branchStructure)
                 // A floating topic pasted onto the root floats again, a little off the one it is a copy of when that
                 // is still there; pasted onto another topic, it is attached to it.
                 val offset = branch.floatingOffset?.takeIf { parentId == tree.getRootNode().id }
@@ -2440,6 +2457,7 @@ private class CopiedNode(
     , val noteDisplay: NoteDisplay?
     , val attributeDisplay: AttributeDisplay?
     , val floatingOffset: DpOffset?
+    , val branchStructure: MapStructure?
     , val children: List<CopiedNode>
 )
 
