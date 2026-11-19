@@ -16,6 +16,8 @@ import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
 import com.mindsync.library.layout.OwnedBranches
 import com.mindsync.library.layout.TimelineLayout
+import com.mindsync.library.layout.TreeTableGrid
+import com.mindsync.library.layout.TreeTableLayout
 import com.mindsync.library.layout.TreeChartLayout
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.GrowDirection
@@ -198,6 +200,7 @@ class MindMapManager {
                 structure == MapStructure.TIMELINE -> timelineLayout.arrange(owner, tree)
                 structure.isFishbone -> fishboneLayout(structure).arrange(owner, tree)
                 structure.isMatrix -> matrixLayout(structure).arrange(owner, tree)
+                structure == MapStructure.TREE_TABLE -> treeTableLayout.arrange(owner, tree)
                 else -> layoutManagerFor(owner.id).arrangeChildren(owner, tree)
             }
         }
@@ -249,20 +252,35 @@ class MindMapManager {
         return matrixLayout(structure).gridOf(owner, tree)
     }
 
+    private val treeTableLayout = TreeTableLayout(directionManagers.getValue(GrowDirection.RIGHT))
+
+    /**
+     * Returns the grid of the tree table laid out from [owner], as its topics are now, or null when it is no tree
+     * table's.
+     */
+    internal fun treeTableGridOf(owner: NodeData<*>): TreeTableGrid? {
+        if (tree.structureOf(owner.id) != MapStructure.TREE_TABLE || tree.structureOwnerOf(owner.id) != owner.id) {
+            return null
+        }
+        return treeTableLayout.gridOf(owner, tree)
+    }
+
     /** Returns the cells of the table laid out from [owner], as its topics are now, or null when it is no table's. */
-    internal fun tableCellsOf(owner: NodeData<*>): TableCells? = matrixGridOf(owner)?.toCells()
+    internal fun tableCellsOf(owner: NodeData<*>): TableCells? =
+        matrixGridOf(owner)?.toCells() ?: treeTableGridOf(owner)?.toCells()
 
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
         treeChartLayouts.values.forEach { it.ownedBranches = ownedBranches }
         fishboneLayouts.values.forEach { it.ownedBranches = ownedBranches }
+        treeTableLayout.ownedBranches = ownedBranches
     }
 
     // Whether the map is laid out as a whole around its root and then moved clear of the top and left of the map,
     // rather than placed where its branches fit, as those laid out by a direction are.
     private val isLaidOutWhole: Boolean
         get() = tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE || tree.structure.isFishbone ||
-            tree.structure.isMatrix
+            tree.structure.isMatrix || tree.structure == MapStructure.TREE_TABLE
 
     private val timelineLayout = TimelineLayout(
         directionManagers.getValue(GrowDirection.UP)
@@ -279,7 +297,7 @@ class MindMapManager {
         when {
             // A tree chart's or a timeline's own topic has its branch laid out from it, wherever it is.
             isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE || structure.isFishbone ||
-                structure.isMatrix) -> {
+                structure.isMatrix || structure == MapStructure.TREE_TABLE) -> {
                 ownedBranches.arrangeBelow(node, tree)
             }
             // A cause of a fishbone has its ribs along its bone, from where it is.
@@ -347,6 +365,13 @@ class MindMapManager {
     }
 
     private fun layOutWhole(root: NodeData<*>) {
+        if (tree.structure == MapStructure.TREE_TABLE) {
+            treeTableLayout.arrange(root, tree)
+            floatingTopics().forEach { (node, offset) ->
+                directionManagers.getValue(GrowDirection.RIGHT).arrangeFloating(root, node, offset, tree)
+            }
+            return
+        }
         if (tree.structure.isMatrix) {
             matrixLayout(tree.structure).arrange(root, tree)
             floatingTopics().forEach { (node, offset) ->
