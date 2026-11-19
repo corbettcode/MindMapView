@@ -9,6 +9,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.BranchBox
 import com.mindsync.library.layout.FishboneLayout
+import com.mindsync.library.layout.MatrixGrid
 import com.mindsync.library.layout.MatrixLayout
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
@@ -175,6 +176,13 @@ class MindMapManager {
                 top = maxOf(top, centerY - nodeY + halfHeight(node).dpVal)
                 bottom = maxOf(bottom, nodeY - centerY + halfHeight(node).dpVal)
             }
+            // A matrix's table reaches past the topics at its edges by the padding of its cells.
+            matrixGridOf(tree.getNode(owner.id))?.let { grid ->
+                left = maxOf(left, centerX - grid.columnEdges.first())
+                right = maxOf(right, grid.columnEdges.last() - centerX)
+                top = maxOf(top, centerY - grid.rowEdges.first())
+                bottom = maxOf(bottom, grid.rowEdges.last() - centerY)
+            }
             return BranchBox(Dp(left), Dp(right), Dp(top), Dp(bottom)).also { passBoxes?.put(owner.id, it) }
         }
 
@@ -232,6 +240,13 @@ class MindMapManager {
 
     private fun matrixLayout(structure: MapStructure): MatrixLayout =
         matrixLayouts.getValue(structure == MapStructure.MATRIX_ROWS)
+
+    /** Returns the grid of the matrix laid out from [owner], as its topics are now, or null when it is no matrix. */
+    internal fun matrixGridOf(owner: NodeData<*>): MatrixGrid? {
+        val structure = tree.structureOf(owner.id)
+        if (!structure.isMatrix || tree.structureOwnerOf(owner.id) != owner.id) return null
+        return matrixLayout(structure).gridOf(owner, tree)
+    }
 
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }

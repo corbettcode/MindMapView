@@ -119,6 +119,29 @@ internal fun matrixGrid(
     return MatrixGrid(owner.id, isRows, columnEdges, rowEdges, groupIds, labels, cells)
 }
 
+/** Returns how far the branch of the node [id] reaches from its center, as it is laid out now. */
+internal fun reachOf(
+    tree: Tree<*>
+    , id: String
+): Reach {
+    val node = tree.getNode(id)
+    val centerX = node.path.centerX.dpVal
+    val centerY = node.path.centerY.dpVal
+    var left = 0f
+    var right = 0f
+    var top = 0f
+    var bottom = 0f
+    tree.doVisiblePreorderTraversal(node) { each ->
+        val x = each.path.centerX.dpVal
+        val y = each.path.centerY.dpVal
+        left = maxOf(left, centerX - x + halfWidth(each).dpVal)
+        right = maxOf(right, x - centerX + halfWidth(each).dpVal)
+        top = maxOf(top, centerY - y + halfHeight(each).dpVal)
+        bottom = maxOf(bottom, y - centerY + halfHeight(each).dpVal)
+    }
+    return Reach(left, right, top, bottom)
+}
+
 /**
  * The children of [owner] that are the rows or columns of its matrix: its shown ones, but floating topics and
  * summaries.
@@ -203,27 +226,19 @@ internal class MatrixLayout(
         }
     }
 
+    /** Returns the grid of the matrix of [owner] as its topics are laid out now, as it is drawn. */
+    fun gridOf(
+        owner: NodeData<*>
+        , tree: Tree<*>
+    ): MatrixGrid = matrixGrid(tree, owner, isRows, headerSize) { reachOf(tree, it) }
+
     // Lays out the branch of [node] around it where it is, and returns how far it reaches from its center.
     private fun layOutAndReach(
         node: NodeData<*>
         , tree: Tree<*>
     ): Reach {
         right.arrangeBelow(node, tree)
-        val centerX = node.path.centerX.dpVal
-        val centerY = node.path.centerY.dpVal
-        var left = 0f
-        var rightReach = 0f
-        var top = 0f
-        var bottom = 0f
-        tree.doVisiblePreorderTraversal(tree.getNode(node.id)) { each ->
-            val x = each.path.centerX.dpVal
-            val y = each.path.centerY.dpVal
-            left = maxOf(left, centerX - x + halfWidth(each).dpVal)
-            rightReach = maxOf(rightReach, x - centerX + halfWidth(each).dpVal)
-            top = maxOf(top, centerY - y + halfHeight(each).dpVal)
-            bottom = maxOf(bottom, y - centerY + halfHeight(each).dpVal)
-        }
-        return Reach(left, rightReach, top, bottom)
+        return reachOf(tree, node.id)
     }
 
     // Moves the node and the shown nodes below it by ([dx], [dy]).

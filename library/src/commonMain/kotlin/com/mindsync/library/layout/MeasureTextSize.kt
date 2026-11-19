@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.CircleNodeData
 import com.mindsync.library.data.LineNodeData
+import com.mindsync.library.data.LABELS_ATTRIBUTE
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.OvalNodeData
@@ -129,7 +130,12 @@ class MeasureTextSize(
         , noteDisplay: NoteDisplay = NoteDisplay.FLYOVER
     ): NodeContent {
         val isTableShown = tree.shownAttributeDisplayOf(node.id, attributeDisplay) == AttributeDisplay.INLINE
-        val attributes = if (isTableShown) tree.attributesOf(node.id) else emptyList()
+        val attributes = when {
+            !isTableShown -> emptyList()
+            // A topic in a matrix is in the column of its label, whose header shows it.
+            tree.isMatrixCell(node.id) -> tree.attributesOf(node.id).filterNot { it.name == LABELS_ATTRIBUTE }
+            else -> tree.attributesOf(node.id)
+        }
         val images = RichText
             .imageSources(node.description)
             .mapNotNull { imageOf(it) }

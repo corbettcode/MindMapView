@@ -111,6 +111,44 @@ class ThemeDrawingTest {
         assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
     }
 
+    // A project by rows Plan, Build and Ship, their topics in quarters by their labels, Ideas with none, and a branch
+    // in a cell.
+    private fun projectMatrix(): Tree<Any> = Tree<Any>().apply {
+        val root = getRootNode()
+        setRootNode(root.copy(description = "<p>Project</p>"))
+        listOf("Plan", "Build", "Ship").forEach { addNode(it, root.id, it) }
+        mapOf(
+            "Goals" to ("Plan" to "Q1"), "Risks" to ("Plan" to "Q2"), "Library" to ("Build" to "Q1")
+            , "App" to ("Build" to "Q1"), "Docs" to ("Build" to "Q2"), "Ideas" to ("Build" to null)
+            , "Release" to ("Ship" to "Q3")
+        ).forEach { (id, place) ->
+            addNode(id, place.first, id)
+            setLabel(id, place.second)
+        }
+        addNode("Beta", "Release", "Beta")
+        addNode("Launch", "Release", "Launch")
+        structure = MapStructure.MATRIX_ROWS
+    }
+
+    @Test
+    fun projectMatrixLooksAsBefore() = runComposeUiTest {
+        val golden: BufferedImage = ImageIO.read(File("src/jvmTest/resources/matrix-project.png"))
+        val state = shownState(projectMatrix())
+
+        val image = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        assertEquals(golden.width, image.width)
+        assertEquals(golden.height, image.height)
+        var differing = 0
+        for (y in 0 until image.height) for (x in 0 until image.width) {
+            val a = golden.getRGB(x, y)
+            val b = image.getRGB(x, y)
+            val isDifferent = listOf(0, 8, 16, 24).any { shift -> abs((a shr shift and 0xFF) - (b shr shift and 0xFF)) > 8 }
+            if (isDifferent) differing++
+        }
+        assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
+    }
+
     @Test
     fun oceanColorsTheNodes() = runComposeUiTest {
         val state = shownState(treeWithChildren())

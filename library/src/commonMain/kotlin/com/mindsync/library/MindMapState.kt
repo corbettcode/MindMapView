@@ -2210,10 +2210,15 @@ class MindMapState(
                 }
                 mindMapManager.setSelectedNode(tree.nodes[selectedNode.id])
             }
-            // A node dropped on no other node takes the place among its siblings that it was dropped at.
+            // A node dropped on no other node takes the place among its siblings that it was dropped at, and a topic in
+            // a cell of a matrix the label of the column, or row, it was dropped in.
             else if (selectedNode != null) {
                 val dropped = tree.getNode(selectedNode.id).path
-                recordChange { tree.moveAmongSiblings(selectedNode.id, dropped.centerX, dropped.centerY) }
+                val label = droppedMatrixLabel(selectedNode.id, dropped.centerX.dpVal, dropped.centerY.dpVal)
+                recordChange {
+                    label?.let { tree.setLabel(selectedNode.id, it.value) }
+                    tree.moveAmongSiblings(selectedNode.id, dropped.centerX, dropped.centerY)
+                }
             }
         }
         // Where the root is is not part of what is compared for a change, so the drag is recorded on its own.
@@ -2224,6 +2229,28 @@ class MindMapState(
         attachedNode = null
         animateTreeChange()
     }
+
+    // The label of the column, or row, of a matrix that the topic [id] in one of its cells is dropped in at ([x], [y]),
+    // or null when it is in no cell of one, or dropped beside the table or by the headers. The label is wrapped so
+    // that the column with no header, whose label is null, can be told from no column.
+    private fun droppedMatrixLabel(
+        id: String
+        , x: Float
+        , y: Float
+    ): DroppedLabel? {
+        val groupId = tree.getNode(id).parentId ?: return null
+        val ownerId = tree.getNode(groupId).parentId ?: return null
+        if (tree.isSummary(id) || tree.isSummary(groupId)) return null
+        val grid = mindMapManager.matrixGridOf(tree.getNode(ownerId)) ?: return null
+        val across = if (grid.isRows) x else y
+        val edges = if (grid.isRows) grid.columnEdges else grid.rowEdges
+        val index = (1 until edges.size - 1)
+            .firstOrNull { across >= edges[it] && across < edges[it + 1] }
+            ?: return null
+        return DroppedLabel(grid.labels[index - 1])
+    }
+
+    private class DroppedLabel(val value: String?)
 
     // An arrow link is dragged from the selected node, which stays where it is.
     internal fun onLinkDrag(position: Offset) {

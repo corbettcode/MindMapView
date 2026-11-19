@@ -188,15 +188,26 @@ test `FishboneLayoutTest.kt`
 
 ### Task C2: Drawing the matrix
 
-**Files:** `MindMap.kt` (`drawMatrix`: the grid and the column headers' text, no lines from rows to cells, buttons),
-`MindMapState.kt` (a cell topic dropped in another column takes its label), test `MatrixDrawTest.kt`, the golden
-`matrix-feature-tour.png`
+**Files:** `MindMap.kt` (`drawMatrices`, the lines to rows and cells left out), `MindMapManager.kt` (`matrixGridOf`,
+the grid in a matrix branch's box), `layout/MatrixLayout.kt` (`gridOf`, `reachOf`), `MindMapState.kt` (a dropped cell
+topic takes its column's label), `data/Tree.kt` (`isMatrixCell`), `layout/MeasureTextSize.kt` (the label left out of
+a cell topic's attribute table), tests `MatrixDrawTest.kt`, `ThemeDrawingTest.projectMatrixLooksAsBefore` with the
+golden `matrix-project.png`
 
-- [ ] The grid in the map's line color; the headers' text in the topic text style; lines inside cells as logic charts.
-- [ ] Dropping a cell topic in another cell of its row sets its label to that column's, as one change; between rows it
-  moves to that row, as dropping on a topic does.
-- [ ] Tests: the grid's lines; the headers' text in an SVG export; a drop between columns sets the label and undoes;
-  a golden image of a small project matrix, rendered and looked at.
+- [x] The grid is worked out once, by `matrixGridOf`, from where the topics are, for the drawing and for drops alike.
+  Lines between the rows and columns in the map's line color, twice as wide past the headers; each label's text in its
+  header, as a topic's text on one line. No lines from the matrix's topic to its rows, nor from a row to its cells;
+  a cell topic's own branch has its lines.
+- [x] A topic in a cell doesn't show its label in its table of attributes, as its column's header shows it. **Added to
+  the plan:** without it every cell repeated its header.
+- [x] A cell topic dropped on no other topic, in another column (row, for a matrix by columns) takes that column's
+  label, or loses its labels in the column with no header, as one change with its new place among its siblings.
+  Dropped on a topic, it moves there as any topic does.
+- [x] A matrix branch's box takes in its grid, which reaches past the topics at its edges.
+- [x] Tests (3 + the golden): the grid has a column for each label and a row for each row, around all the topics, a
+  topic in its cell; an SVG export has the headers' text and no "Labels" table; a drop in another column sets the
+  label, and undo takes it back. A project matrix was rendered by rows, by columns and as a branch of a mind map, and
+  looked at. All 738 library and 254 desktop tests pass on a full rerun.
 
 ## Phase D: The app and the docs
 
