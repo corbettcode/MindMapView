@@ -122,16 +122,25 @@ own files. Each phase can ship on its own.
 ### Task B1: The fishbone layout
 
 **Files:** new `layout/FishboneLayout.kt`, `MindMapManager.kt` (laid out from the owner, `arrangeWhole` for a map,
-`arrangeBranch`), `model/MapStructure.kt` (`isStackedAlongX` for bones), test `FishboneLayoutTest.kt`
+`arrangeBranch`), `model/MapStructure.kt` (`fishboneDirectionOf`), `layout/MindMapLayoutManager.kt` (`backReach`),
+test `FishboneLayoutTest.kt`
 
-- [ ] The head is the owner; the spine runs from its far edge away from it. Bones by turns above and below, each topic
-  at the far end of its bone at 60° back towards the tail, each bone as far along as it needs to be clear of the last
-  on its side and of the last topic on the spine.
-- [ ] Ribs: a bone's children along it, one after another from the spine out, each joined to the bone by a horizontal
-  rib, the topic past the rib's end; their children slanted again, and past the third level a logic chart.
-- [ ] Measured as a box when it is a branch's; folded bones take no room for their ribs.
-- [ ] Tests: bones by turns above and below, in order; each clear of the one before on its side; ribs along their bone,
-  horizontal; head left and head right mirror each other; a fishbone branch clear of its siblings; folding.
+- [x] The head is the owner; the spine runs from its far edge away from it. Causes by turns above and below, each at
+  the far end of its bone at 60° back towards the tail; each bone as far along as it needs to be clear of the last on
+  its side, its joint at least 30 dp past the last joint on the spine, so bones above and below interleave.
+- [x] Ribs: a cause's children along its bone, the first nearest the cause, each joined to the bone by a horizontal rib
+  long enough for the bone, slanting on past it, to be clear of the rib's whole branch. **Changed from the plan:** the
+  topics below a rib are a logic chart growing towards the tail, not slanted again. Three levels of slants crowd the
+  bones, and XMind advises against deep fishbones; this keeps every level readable.
+- [x] Directions (`fishboneDirectionOf`): the head and the topics below the ribs grow towards the tail; a cause's ribs
+  grow from the cause towards the spine (down above it, up below it), so drop order is by x for causes and by y for
+  ribs, and add buttons sit at the bone's end of a cause. A summary of causes is below the whole fishbone, centered on
+  them, its branch growing down; a summary of ribs is past them towards the tail.
+- [x] A cause with a structure of its own has its branch laid out in that past a short bone; a dragged cause has its
+  ribs laid out from where it is; floating topics grow towards the tail; folded causes have a short bone.
+- [x] Tests (6): causes by turns, in order; each clear of the one before on its side and of the head; ribs along their
+  bone, past it, the first nearest the cause; head right mirrors head left; a folded cause; a fishbone branch clear of
+  its siblings. All 724 library and 254 desktop tests pass on a full rerun.
 
 ### Task B2: Drawing the fishbone
 

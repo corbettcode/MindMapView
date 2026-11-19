@@ -375,6 +375,15 @@ open class MindMapLayoutManager(
         return before(box) to after(box)
     }
 
+    /**
+     * Returns how far [node] and the nodes below it reach back from its center towards its parent, the way this side
+     * grows: half of the node, or more for one with a structure of its own.
+     */
+    internal fun backReach(
+        node: NodeData<*>
+        , tree: Tree<*>
+    ): Dp = mainBack(node, tree)
+
     private fun crossBefore(
         node: NodeData<*>
         , tree: Tree<*>

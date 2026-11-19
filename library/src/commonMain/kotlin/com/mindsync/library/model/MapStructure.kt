@@ -90,12 +90,13 @@ enum class MapStructure(
         , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
-        LOGIC_RIGHT, BRACE_RIGHT, FISHBONE_LEFT, MATRIX_ROWS -> GrowDirection.RIGHT
-        LOGIC_LEFT, FISHBONE_RIGHT -> GrowDirection.LEFT
+        LOGIC_RIGHT, BRACE_RIGHT, MATRIX_ROWS -> GrowDirection.RIGHT
+        LOGIC_LEFT -> GrowDirection.LEFT
         MATRIX_COLUMNS -> GrowDirection.DOWN
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
         TIMELINE -> timelineDirectionOf(tree, id, owner)
+        FISHBONE_LEFT, FISHBONE_RIGHT -> fishboneDirectionOf(tree, id, owner)
     }
 
     /** Whether the map is a tree chart, laid out in indented columns rather than by a direction. */
@@ -137,6 +138,24 @@ enum class MapStructure(
             this == TREE_RIGHT -> GrowDirection.RIGHT
             else -> GrowDirection.LEFT
         }
+    }
+
+    // The spine runs from the head, the owner, to the tail. A cause's ribs are along its bone, from the cause towards
+    // the spine: down from one above the spine and up from one below it. The topics below a rib grow towards the tail,
+    // and those below a summary of the causes, which is below them all, down.
+    private fun fishboneDirectionOf(
+        tree: Tree<*>
+        , id: String
+        , owner: String
+    ): GrowDirection {
+        val tail = if (this == FISHBONE_LEFT) GrowDirection.RIGHT else GrowDirection.LEFT
+        if (id == owner) return tail
+        val branchId = generateSequence(id) { tree.getNode(it).parentId }.first { tree.getNode(it).parentId == owner }
+        if (tree.isFloating(branchId)) return tail
+        if (tree.isSummary(branchId)) return GrowDirection.DOWN
+        if (id != branchId) return tail
+        val boneIds = tree.getNode(owner).children.filterNot { tree.isFloating(it) || tree.isSummary(it) }
+        return if (boneIds.indexOf(branchId) % 2 == 0) GrowDirection.DOWN else GrowDirection.UP
     }
 
     // The owner's children are along the axis, to its right; the branch of every other one goes up, and of the rest

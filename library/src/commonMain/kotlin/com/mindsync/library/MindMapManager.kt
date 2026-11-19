@@ -8,6 +8,7 @@ import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.layout.BranchBox
+import com.mindsync.library.layout.FishboneLayout
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
 import com.mindsync.library.layout.OwnedBranches
@@ -185,6 +186,7 @@ class MindMapManager {
                 structure.isTreeChart -> treeChartLayouts.getValue(structure == MapStructure.TREE_RIGHT)
                     .arrange(owner, tree)
                 structure == MapStructure.TIMELINE -> timelineLayout.arrange(owner, tree)
+                structure.isFishbone -> fishboneLayout(structure).arrange(owner, tree)
                 else -> layoutManagerFor(owner.id).arrangeChildren(owner, tree)
             }
         }
@@ -201,10 +203,27 @@ class MindMapManager {
 
     private val treeChartLayouts = listOf(true, false).associateWith { TreeChartLayout(isRight = it) }
 
+    private val fishboneLayouts = listOf(true, false).associateWith { isHeadLeft ->
+        FishboneLayout(
+            isHeadLeft
+            , directionManagers.getValue(if (isHeadLeft) GrowDirection.RIGHT else GrowDirection.LEFT)
+            , directionManagers.getValue(GrowDirection.DOWN)
+        )
+    }
+
+    private fun fishboneLayout(structure: MapStructure): FishboneLayout =
+        fishboneLayouts.getValue(structure == MapStructure.FISHBONE_LEFT)
+
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }
         treeChartLayouts.values.forEach { it.ownedBranches = ownedBranches }
+        fishboneLayouts.values.forEach { it.ownedBranches = ownedBranches }
     }
+
+    // Whether the map is laid out as a whole around its root and then moved clear of the top and left of the map,
+    // rather than placed where its branches fit, as those laid out by a direction are.
+    private val isLaidOutWhole: Boolean
+        get() = tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE || tree.structure.isFishbone
 
     private val timelineLayout = TimelineLayout(
         directionManagers.getValue(GrowDirection.UP)
@@ -220,8 +239,19 @@ class MindMapManager {
         val isOwner = tree.branchStructureOf(node.id) != null
         when {
             // A tree chart's or a timeline's own topic has its branch laid out from it, wherever it is.
-            isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE) -> {
+            isOwner && (structure.isTreeChart || structure == MapStructure.TIMELINE || structure.isFishbone) -> {
                 ownedBranches.arrangeBelow(node, tree)
+            }
+            // A cause of a fishbone has its ribs along its bone, from where it is.
+            structure.isFishbone && node.parentId == tree.structureOwnerOf(node.id) && !tree.isSummary(node.id)
+                && !tree.isFloating(node.id) -> {
+                fishboneLayout(structure).arrangeBoneAt(
+                    node
+                    , node.path.centerX.dpVal
+                    , node.path.centerY.dpVal
+                    , isAbove = tree.directionOf(node.id) == GrowDirection.DOWN
+                    , tree = tree
+                )
             }
             structure.isTreeChart -> treeChartLayouts.getValue(structure == MapStructure.TREE_RIGHT)
                 .arrangeColumnAt(node, node.path.centerX.dpVal, node.path.centerY.dpVal, tree)
@@ -232,7 +262,7 @@ class MindMapManager {
     // The root is placed once for all of its sets of children, then each side is arranged around it.
     // A root the user dragged stays where it was put, even where the tree reaches above or left of the mind map.
     fun arrangeTree(): Unit = inPass {
-        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return arrangeWhole()
+        if (isLaidOutWhole) return arrangeWhole()
         val root = if (tree.isRootDragged) tree.getRootNode() else fittedRoot()
         tree.setRootNode(root)
         rootManagers().forEach { it.arrangeChildren(root, tree) }
@@ -277,6 +307,14 @@ class MindMapManager {
     }
 
     private fun layOutWhole(root: NodeData<*>) {
+        if (tree.structure.isFishbone) {
+            fishboneLayout(tree.structure).arrange(root, tree)
+            val tail = if (tree.structure == MapStructure.FISHBONE_LEFT) GrowDirection.RIGHT else GrowDirection.LEFT
+            floatingTopics().forEach { (node, offset) ->
+                directionManagers.getValue(tail).arrangeFloating(root, node, offset, tree)
+            }
+            return
+        }
         if (tree.structure == MapStructure.TIMELINE) {
             timelineLayout.arrange(root, tree)
             floatingTopics().forEach { (node, offset) ->
@@ -308,7 +346,7 @@ class MindMapManager {
      * Returns how far the tree reaches to the left of and above where it fits, as its x and y.
      */
     fun measureOverflow(): Pair<Dp, Dp> = inPass {
-        if (tree.structure.isTreeChart || tree.structure == MapStructure.TIMELINE) return@inPass wholeOverflow()
+        if (isLaidOutWhole) return@inPass wholeOverflow()
         val root = tree.getRootNode()
         val fittedRoot = fittedRoot()
         fittedRoot.path.centerX - root.path.centerX to fittedRoot.path.centerY - root.path.centerY
