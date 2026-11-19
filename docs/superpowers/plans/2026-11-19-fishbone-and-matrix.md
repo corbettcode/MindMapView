@@ -100,17 +100,22 @@ own files. Each phase can ship on its own.
 
 ### Task A1: Four more structures
 
-**Files:** `model/MapStructure.kt` (the four entries, `directionOf`, `isFishbone`, `isMatrix`), `io/MindMapViewFile.kt`
-(names only), desktop `menuBar/StructureMenu.kt` (labels and pictures), tests `MapStructureTest.kt`,
-`MapStructureFilesTest.kt`
+**Files:** `model/MapStructure.kt` (the four entries, `directionOf`, `isFishbone`, `isMatrix`), desktop
+`menuBar/StructureMenu.kt` (labels and pictures), tests `MapStructureTest.kt`, `MapStructureFilesTest.kt`,
+`BranchStructureFilesTest.kt`, `XMindTest.kt`
 
-- [ ] `FISHBONE_LEFT("fishbone-left", "org.xmind.ui.fishbone.leftHeaded")`, `FISHBONE_RIGHT(…rightHeaded)`,
-  `MATRIX_ROWS("matrix-rows", "org.xmind.ui.spreadsheet")`, `MATRIX_COLUMNS("matrix-columns", <to confirm>)`.
-  `directionOf`: a fishbone's spine grows away from the head; a matrix's rows grow right (down for columns), so the
-  logic chart lays them out until B and C.
-- [ ] Every `when` over the structures handles them; the View › Structure and Branch Structure submenus list them, each
-  with a picture.
-- [ ] Tests: kept in files for the map and a branch; their directions; the existing tests unchanged.
+- [x] `FISHBONE_LEFT("fishbone-left", "org.xmind.ui.fishbone.leftHeaded")`, `FISHBONE_RIGHT(…rightHeaded)`,
+  `MATRIX_ROWS("matrix-rows", "org.xmind.ui.spreadsheet")`, `MATRIX_COLUMNS("matrix-columns",
+  "org.xmind.ui.spreadsheet.column")`, the XMind names marked in the code as not yet confirmed. `directionOf`: a
+  fishbone's spine grows away from the head (right for head left, left for head right); a matrix's rows grow right,
+  its columns down. Until phases B and C the side layout lays them out that way, as a logic chart (an org chart for
+  the columns).
+- [x] The `.ccmm` names come with the entries, for the map and for branches. View › Structure, Edit › Branch
+  Structure and Preferences › New maps list them as "Fishbone, Head Left / Right" and "Matrix, Rows / Columns", each
+  with a picture; the menu was rendered and looked at.
+- [x] Tests: their directions and kinds; their XMind names; kept in files for the map and a branch (the existing tests
+  over every structure). The tests that used a fishbone as an unknown structure now use XMind's tree table. All 718
+  library and 254 desktop tests pass on a full rerun, and the web app builds.
 
 ## Phase B: Fishbone
 

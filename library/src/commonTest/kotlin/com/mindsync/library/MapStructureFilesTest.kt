@@ -28,7 +28,7 @@ class MapStructureFilesTest {
     @Test
     fun unknownStructureIsAMindMap() {
         val text = MindMapViewFile.write(tree().apply { structure = MapStructure.ORG_DOWN })
-            .replace("org-chart-down", "fishbone-left")
+            .replace("org-chart-down", "tree-table")
 
         assertEquals(MapStructure.MIND_MAP, MindMapViewFile.read(text).structure)
     }
@@ -39,7 +39,10 @@ class MapStructureFilesTest {
         assertEquals(MapStructure.ORG_DOWN, MapStructure.fromXMindClass("org.xmind.ui.org-chart.down"))
         assertEquals(MapStructure.TIMELINE, MapStructure.fromXMindClass("org.xmind.ui.timeline.horizontal"))
         assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass("org.xmind.ui.map.clockwise"))
-        assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass("org.xmind.ui.fishbone.leftHeaded"))
+        assertEquals(MapStructure.FISHBONE_LEFT, MapStructure.fromXMindClass("org.xmind.ui.fishbone.leftHeaded"))
+        assertEquals(MapStructure.FISHBONE_RIGHT, MapStructure.fromXMindClass("org.xmind.ui.fishbone.rightHeaded"))
+        assertEquals(MapStructure.MATRIX_ROWS, MapStructure.fromXMindClass("org.xmind.ui.spreadsheet"))
+        assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass("org.xmind.ui.treetable"))
         assertEquals(MapStructure.MIND_MAP, MapStructure.fromXMindClass(null))
     }
 }

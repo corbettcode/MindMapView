@@ -36,7 +36,7 @@ class BranchStructureFilesTest {
     fun unknownStructureAndTheMindMapAreReadAsNone() {
         val text = MindMapViewFile.write(tree().apply { setBranchStructure("b", MapStructure.TIMELINE) })
 
-        listOf("fishbone", "mind-map").forEach { name ->
+        listOf("tree-table", "mind-map").forEach { name ->
             val read = MindMapViewFile.read(text.replace("structure=\"timeline\"", "structure=\"$name\""))
             assertNull(read.branchStructureOf("b"), name)
         }

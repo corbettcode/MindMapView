@@ -487,7 +487,7 @@ class XMindTest {
               {"id": "a", "title": "Team", "structureClass": "org.xmind.ui.org-chart.down",
                 "children": {"attached": [{"id": "a1", "title": "Ann"}]}},
               {"id": "b", "title": "Ideas", "structureClass": "org.xmind.ui.map.unbalanced"},
-              {"id": "c", "title": "Bones", "structureClass": "org.xmind.ui.fishbone.leftHeaded"}
+              {"id": "c", "title": "Bones", "structureClass": "org.xmind.ui.treetable"}
             ]}}}]
         """.trimIndent()
         val xmind8 = """

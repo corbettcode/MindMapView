@@ -37,6 +37,10 @@ val MapStructure.label: String
         MapStructure.TREE_LEFT -> "Tree Chart ←"
         MapStructure.BRACE_RIGHT -> "Brace Map"
         MapStructure.TIMELINE -> "Timeline"
+        MapStructure.FISHBONE_LEFT -> "Fishbone, Head Left"
+        MapStructure.FISHBONE_RIGHT -> "Fishbone, Head Right"
+        MapStructure.MATRIX_ROWS -> "Matrix, Rows"
+        MapStructure.MATRIX_COLUMNS -> "Matrix, Columns"
     }
 
 /**
@@ -204,6 +208,29 @@ private fun DrawScope.drawStructure(
             listOf(0.4f to 0.18f, 0.62f to 0.82f, 0.84f to 0.18f).forEach { (x, y) ->
                 line(x * w, h / 2, x * w, y * h)
                 box(x * w, y * h, false)
+            }
+        }
+        MapStructure.FISHBONE_LEFT, MapStructure.FISHBONE_RIGHT -> {
+            // Drawn head left, and mirrored for head right.
+            val isLeft = structure == MapStructure.FISHBONE_LEFT
+            fun x(fraction: Float) = (if (isLeft) fraction else 1f - fraction) * w
+            box(x(0.14f), h / 2, true)
+            line(x(0.14f), h / 2, x(0.97f), h / 2)
+            // Each cause is further from the head than where its bone meets the spine, as the bones slant back.
+            listOf(0.42f to 0.15f, 0.55f to 0.85f, 0.72f to 0.15f, 0.85f to 0.85f).forEach { (along, y) ->
+                line(x(along - 0.13f), h / 2, x(along), y * h)
+                box(x(along), y * h, false)
+            }
+        }
+        MapStructure.MATRIX_ROWS, MapStructure.MATRIX_COLUMNS -> {
+            // A grid of three by three cells, the corner filled; the headers' side is all that differs.
+            val edges = listOf(0.04f, 0.36f, 0.68f, 0.96f)
+            edges.forEach { line(it * w, edges.first() * h, it * w, edges.last() * h) }
+            edges.forEach { line(edges.first() * w, it * h, edges.last() * w, it * h) }
+            box(w * 0.2f, h * 0.2f, true)
+            val isRows = structure == MapStructure.MATRIX_ROWS
+            listOf(0.52f, 0.84f).forEach { along ->
+                if (isRows) box(w * 0.2f, along * h, false) else box(along * w, h * 0.2f, false)
             }
         }
     }

@@ -39,7 +39,20 @@ enum class MapStructure(
     , TREE_RIGHT("tree-right", "org.xmind.ui.tree.right")
     , TREE_LEFT("tree-left", "org.xmind.ui.tree.left")
     , BRACE_RIGHT("brace-right", "org.xmind.ui.brace.right")
-    , TIMELINE("timeline", "org.xmind.ui.timeline.horizontal");
+    , TIMELINE("timeline", "org.xmind.ui.timeline.horizontal")
+
+    // XMind's class names for the fishbones and the matrices are not confirmed by a file saved from XMind.
+    /** An Ishikawa diagram with its head, the effect, on the left and the causes on bones to its right. */
+    , FISHBONE_LEFT("fishbone-left", "org.xmind.ui.fishbone.leftHeaded")
+
+    /** An Ishikawa diagram with its head on the right and the causes on bones to its left, the classic way. */
+    , FISHBONE_RIGHT("fishbone-right", "org.xmind.ui.fishbone.rightHeaded")
+
+    /** A table whose rows are the root's topics, with the topics below them in columns by their labels. */
+    , MATRIX_ROWS("matrix-rows", "org.xmind.ui.spreadsheet")
+
+    /** A table whose columns are the root's topics, with the topics below them in rows by their labels. */
+    , MATRIX_COLUMNS("matrix-columns", "org.xmind.ui.spreadsheet.column");
 
     companion object {
         /** Returns the structure kept as [name] in a map file, or the mind map for one that is not known. */
@@ -47,7 +60,7 @@ enum class MapStructure(
 
         /**
          * Returns the structure of XMind's [structureClass], or the mind map for one this library has no layout for,
-         * as a fishbone, and for XMind's other mind maps, as the clockwise one.
+         * as a tree table, and for XMind's other mind maps, as the clockwise one.
          */
         fun fromXMindClass(structureClass: String?): MapStructure =
             entries.firstOrNull { it.xmindClass == structureClass } ?: MIND_MAP
@@ -77,8 +90,9 @@ enum class MapStructure(
         , owner: String = tree.getRootNode().id
     ): GrowDirection = when (this) {
         MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
-        LOGIC_RIGHT, BRACE_RIGHT -> GrowDirection.RIGHT
-        LOGIC_LEFT -> GrowDirection.LEFT
+        LOGIC_RIGHT, BRACE_RIGHT, FISHBONE_LEFT, MATRIX_ROWS -> GrowDirection.RIGHT
+        LOGIC_LEFT, FISHBONE_RIGHT -> GrowDirection.LEFT
+        MATRIX_COLUMNS -> GrowDirection.DOWN
         ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
         ORG_UP -> GrowDirection.UP
         TIMELINE -> timelineDirectionOf(tree, id, owner)
@@ -86,6 +100,12 @@ enum class MapStructure(
 
     /** Whether the map is a tree chart, laid out in indented columns rather than by a direction. */
     val isTreeChart: Boolean get() = this == TREE_RIGHT || this == TREE_LEFT
+
+    /** Whether the map is a fishbone, with its causes on bones off a spine from the head. */
+    val isFishbone: Boolean get() = this == FISHBONE_LEFT || this == FISHBONE_RIGHT
+
+    /** Whether the map is a matrix, a table of its topics. */
+    val isMatrix: Boolean get() = this == MATRIX_ROWS || this == MATRIX_COLUMNS
 
     /**
      * Returns whether the node [id] and its siblings are stacked along x, side by side, rather than along y, one
