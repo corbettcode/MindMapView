@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.github.hegleB"
-version = "1.7.1"
+version = "2.0.0"
 
 val generateEmojiData by tasks.registering {
     val emojiTest = file("emoji/emoji-test.txt")
