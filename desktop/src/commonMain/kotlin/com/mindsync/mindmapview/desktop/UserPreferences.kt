@@ -2,18 +2,18 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.mindsync.library.data.NodeBorder
-import com.mindsync.library.data.NodeBorderStyle
-import com.mindsync.library.data.NodeLineWidth
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.emoji.EmojiCatalog
-import com.mindsync.library.model.AttributeDisplay
-import com.mindsync.library.model.LevelStyle
-import com.mindsync.library.model.MapStructure
-import com.mindsync.library.model.MapTheme
-import com.mindsync.library.model.MapThemes
-import com.mindsync.library.model.NoteDisplay
-import com.mindsync.library.model.TopicKind
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.data.NodeBorderStyle
+import com.corbettcode.mindmapview.library.data.NodeLineWidth
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.emoji.EmojiCatalog
+import com.corbettcode.mindmapview.library.model.AttributeDisplay
+import com.corbettcode.mindmapview.library.model.LevelStyle
+import com.corbettcode.mindmapview.library.model.MapStructure
+import com.corbettcode.mindmapview.library.model.MapTheme
+import com.corbettcode.mindmapview.library.model.MapThemes
+import com.corbettcode.mindmapview.library.model.NoteDisplay
+import com.corbettcode.mindmapview.library.model.TopicKind
 import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 

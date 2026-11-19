@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.NodeLineStyle
+import com.corbettcode.mindmapview.library.data.NodeLineStyle
 import com.mindsync.mindmapview.desktop.component.LINE_STYLE_LABELS
 import com.mindsync.mindmapview.desktop.component.LINE_WIDTH_LABELS
 import kotlin.test.Test

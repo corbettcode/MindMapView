@@ -195,7 +195,7 @@ In the browser the app works as on the desktop, except:
 
 1. Add the MindMapView to your XML layout
 ```kotlin
-<com.mindsync.library.MindMapView
+<com.corbettcode.mindmapview.library.MindMapView
     android:id="@+id/mind_map_view"
     android:layout_width="0dp"
     android:layout_height="0dp"

@@ -1,0 +1,87 @@
+package com.corbettcode.mindmapview.library.data
+
+import com.corbettcode.mindmapview.library.model.AttributeDisplay
+import com.corbettcode.mindmapview.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.model.MapStructure
+import com.corbettcode.mindmapview.library.model.MapTheme
+import com.corbettcode.mindmapview.library.model.NoteDisplay
+
+/**
+ * All there is of a [Tree] at one time, to put it back as it was.
+ *
+ * Represents a snapshot of a tree's current state, holding data related to its nodes, layout, attributes,
+ * and visual representations (e.g., arrow links). This snapshot is utilized for operations involving
+ * comparison or recreation of the tree's state.
+ *
+ * @property nodes The map of node IDs to their respective data, detailing the content and structure of the tree.
+ * @property rootChildSides The map of node IDs to their respective child placement sides, indicating where
+ * children of each node are laid out.
+ * @property nodeAttributes The map of node IDs to their attributes, organizing metadata associated
+ * with individual nodes.
+ * @property nodeLines The map of node IDs to the line settings they have of their own.
+ * @property nodeBorders The map of node IDs to the borders they have; a node without one has none.
+ * @property nodeTasks The map of node IDs to what they hold of a task; a node without one is no task.
+ * @property nodeNoteDisplays The map of node IDs to the way of showing their note they have of their own.
+ * @property nodeAttributeDisplays The map of node IDs to the way of showing their attributes they have of their own.
+ * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
+ * @property floatingOffsets The floating topics, each with how far it is from the root.
+ * @property branchStructures The topics laid out in a structure of their own, each with it.
+ * @property gridColumns The topics a grid is laid out from, each with how many columns it has.
+ * @property arrowLinks The list of arrow links defining visual connections between nodes, such as directed
+ * annotations or relationships.
+ * @property boundaries The boundaries around groups of children, each with only the children it is still around.
+ * @property summaries The siblings each summary node is about, by its id, for those that are still summaries.
+ * @property theme The look of the map.
+ * @property structure How the map is laid out.
+ * @property isRootPlaced Flag indicating whether the root node has been placed within the layout.
+ * @property isRootCentered Flag indicating whether the root node is vertically and horizontally centered in the layout.
+ * @property isRootDragged Flag indicating whether the root node is currently being dragged.
+ */
+internal class TreeSnapshot(
+    val nodes: Map<String, NodeData<*>>
+    , val rootChildSides: Map<String, LayoutSide>
+    , val nodeAttributes: Map<String, List<NodeAttribute>>
+    , val nodeLines: Map<String, NodeLine>
+    , val nodeBorders: Map<String, NodeBorder>
+    , val nodeTasks: Map<String, NodeTask>
+    , val nodeNoteDisplays: Map<String, NoteDisplay>
+    , val nodeAttributeDisplays: Map<String, AttributeDisplay>
+    , val foldedIds: Set<String>
+    , val floatingOffsets: Map<String, DpOffset>
+    , val branchStructures: Map<String, MapStructure>
+    , val gridColumns: Map<String, Int>
+    , val arrowLinks: List<ArrowLink>
+    , val boundaries: List<Boundary>
+    , val summaries: Map<String, Set<String>>
+    , val theme: MapTheme
+    , val structure: MapStructure
+    , val isRootPlaced: Boolean
+    , val isRootCentered: Boolean
+    , val isRootDragged: Boolean
+) {
+    /**
+     * Whether the two hold the same map. Where the nodes are is left out, as the tree is arranged again
+     * after a change and that is no change of its own.
+     */
+    fun hasSameContentAs(other: TreeSnapshot): Boolean =
+        nodes.mapValues { it.value.content() } == other.nodes.mapValues { it.value.content() }
+            && rootChildSides == other.rootChildSides
+            && nodeAttributes == other.nodeAttributes
+            && nodeLines == other.nodeLines
+            && nodeBorders == other.nodeBorders
+            && nodeTasks == other.nodeTasks
+            && nodeNoteDisplays == other.nodeNoteDisplays
+            && nodeAttributeDisplays == other.nodeAttributeDisplays
+            && foldedIds == other.foldedIds
+            && floatingOffsets == other.floatingOffsets
+            && branchStructures == other.branchStructures
+            && gridColumns == other.gridColumns
+            && arrowLinks == other.arrowLinks
+            && boundaries == other.boundaries
+            && summaries == other.summaries
+            && theme == other.theme
+            && structure == other.structure
+
+    private fun NodeData<*>.content(): List<Any?> =
+        listOf(this::class, id, parentId, children, description, note, color, textColor)
+}

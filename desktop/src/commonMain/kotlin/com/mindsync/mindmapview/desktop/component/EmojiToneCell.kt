@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
-import com.mindsync.library.emoji.Emoji
+import com.corbettcode.mindmapview.library.emoji.Emoji
 
 private val TONE_POPUP_PADDING = 4.dp
 private val TONE_POPUP_GAP = 4.dp

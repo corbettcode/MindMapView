@@ -28,11 +28,11 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.MindMapState
-import com.mindsync.library.data.TaskDate
-import com.mindsync.library.data.TaskProgress
-import com.mindsync.library.NODE_TEXT_EDITOR_TAG
-import com.mindsync.library.util.RichText
+import com.corbettcode.mindmapview.library.MindMapState
+import com.corbettcode.mindmapview.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskProgress
+import com.corbettcode.mindmapview.library.NODE_TEXT_EDITOR_TAG
+import com.corbettcode.mindmapview.library.util.RichText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

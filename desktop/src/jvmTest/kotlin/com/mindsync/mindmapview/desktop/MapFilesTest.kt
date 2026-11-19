@@ -1,9 +1,9 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.Tree
-import com.mindsync.library.io.FreeMind
-import com.mindsync.library.io.MindMapViewFile
-import com.mindsync.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.io.FreeMind
+import com.corbettcode.mindmapview.library.io.MindMapViewFile
+import com.corbettcode.mindmapview.library.model.LayoutSide
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.window.PopupProperties
-import com.mindsync.library.util.RichTextSize
+import com.corbettcode.mindmapview.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.label
 
 // Like the toggles, the select does not take focus, so the editor keeps its selection while a size is chosen.

@@ -7,9 +7,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
-import com.mindsync.library.data.Tree
-import com.mindsync.library.layout.MeasureTextSize
-import com.mindsync.library.model.TopicKind
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.layout.MeasureTextSize
+import com.corbettcode.mindmapview.library.model.TopicKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals

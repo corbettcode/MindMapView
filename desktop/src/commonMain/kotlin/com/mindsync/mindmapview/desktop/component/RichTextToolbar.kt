@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.util.RichTextSize
+import com.corbettcode.mindmapview.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.dialog.LinkDialog
 import com.mindsync.mindmapview.desktop.setLink
 import com.mindsync.mindmapview.desktop.setSize

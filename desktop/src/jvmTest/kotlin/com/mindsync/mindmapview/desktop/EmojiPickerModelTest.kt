@@ -1,9 +1,9 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.Tree
-import com.mindsync.library.emoji.EmojiCatalog
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.emoji.EmojiCatalog
 import com.mindsync.mindmapview.desktop.component.GROUP_ICONS
 import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.component.shown

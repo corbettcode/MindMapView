@@ -1,0 +1,84 @@
+package com.corbettcode.mindmapview.library.util
+
+import com.corbettcode.mindmapview.library.data.CircleNodeData
+import com.corbettcode.mindmapview.library.data.CirclePath
+import com.corbettcode.mindmapview.library.data.NodeData
+import com.corbettcode.mindmapview.library.data.OvalPath
+import com.corbettcode.mindmapview.library.data.OvalNodeData
+import com.corbettcode.mindmapview.library.data.RectangleNodeData
+import com.corbettcode.mindmapview.library.data.RectanglePath
+import com.corbettcode.mindmapview.library.data.LineNodeData
+import com.corbettcode.mindmapview.library.data.SquareNodeData
+import com.corbettcode.mindmapview.library.data.StadiumNodeData
+import com.corbettcode.mindmapview.library.data.StadiumPath
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
+
+
+object NodeGenerator {
+    fun <N : NodeData<*>> makeNode(
+        nodeClass: KClass<N>,
+        description: String,
+        parentId: String
+    ): N {
+        val id = IdGenerator.makeRandomNodeId()
+
+        return when (nodeClass) {
+            CircleNodeData::class -> nodeClass.cast(
+                CircleNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = CirclePath(Dp(0f), Dp(0f), Dp(50f)),  // 예시로 CirclePath 설정
+                    description = description,
+                    children = listOf()
+                )
+            )
+            RectangleNodeData::class -> nodeClass.cast(
+                RectangleNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = RectanglePath(Dp(0f), Dp(0f), Dp(100f), Dp(50f)),  // 예시로 RectanglePath 설정
+                    description = description,
+                    children = listOf()
+                )
+            )
+            StadiumNodeData::class -> nodeClass.cast(
+                StadiumNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = StadiumPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            OvalNodeData::class -> nodeClass.cast(
+                OvalNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = OvalPath(Dp(0f), Dp(0f), Dp(50f), Dp(25f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            SquareNodeData::class -> nodeClass.cast(
+                SquareNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = RectanglePath(Dp(0f), Dp(0f), Dp(50f), Dp(50f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            LineNodeData::class -> nodeClass.cast(
+                LineNodeData(
+                    id = id,
+                    parentId = parentId,
+                    path = RectanglePath(Dp(0f), Dp(0f), Dp(50f), Dp(50f)),
+                    description = description,
+                    children = listOf()
+                )
+            )
+            else -> throw IllegalArgumentException("Unsupported Node type")
+        }
+    }
+}

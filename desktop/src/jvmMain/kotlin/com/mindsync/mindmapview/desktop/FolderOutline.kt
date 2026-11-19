@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.io.OutlineItem
-import com.mindsync.library.util.RichText
+import com.corbettcode.mindmapview.library.io.OutlineItem
+import com.corbettcode.mindmapview.library.util.RichText
 import java.io.File
 import java.nio.file.Files
 

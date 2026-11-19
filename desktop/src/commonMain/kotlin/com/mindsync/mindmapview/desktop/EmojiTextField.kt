@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import com.mindsync.library.util.withEmojiFont
+import com.corbettcode.mindmapview.library.util.withEmojiFont
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 /**

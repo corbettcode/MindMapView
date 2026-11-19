@@ -129,10 +129,10 @@ val generateEmojiData by tasks.registering {
                 }
             }
         }
-        val file = outputDir.get().file("com/mindsync/library/emoji/EmojiData.kt").asFile
+        val file = outputDir.get().file("com/corbettcode/mindmapview/library/emoji/EmojiData.kt").asFile
         file.parentFile.mkdirs()
         file.writeText(
-            "package com.mindsync.library.emoji\n\n" +
+            "package com.corbettcode.mindmapview.library.emoji\n\n" +
                 "internal val EMOJI_DATA: List<String> = listOf(\n" +
                 chunked(lines).joinToString(",\n") { "    \"${literal(it)}\"" } +
                 "\n)\n\n" +
@@ -147,7 +147,7 @@ kotlin {
     jvmToolchain(21)
 
     android {
-        namespace = "com.mindsync.library"
+        namespace = "com.corbettcode.mindmapview.library"
         compileSdk {
             version = release(37) {
                 minorApiLevel = 0

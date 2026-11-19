@@ -8,7 +8,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.mindsync.library.util.RichTextSize
+import com.corbettcode.mindmapview.library.util.RichTextSize
 import com.mindsync.mindmapview.desktop.dialog.leadingTextScale
 import com.mindsync.mindmapview.desktop.dialog.withFirstLineIndent
 import kotlin.test.Test

@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
-import com.mindsync.library.io.OutlineItem
+import com.corbettcode.mindmapview.library.io.OutlineItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Desktop

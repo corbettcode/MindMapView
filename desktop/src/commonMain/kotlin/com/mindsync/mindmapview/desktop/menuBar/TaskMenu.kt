@@ -11,8 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.mindsync.library.data.NodeTask
-import com.mindsync.library.data.TaskProgress
+import com.corbettcode.mindmapview.library.data.NodeTask
+import com.corbettcode.mindmapview.library.data.TaskProgress
 
 /** How a progress is named in the menus and the edit dialog. */
 val TaskProgress.label: String

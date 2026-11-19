@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.MindMapState
-import com.mindsync.library.data.Tree
+import com.corbettcode.mindmapview.library.MindMapState
+import com.corbettcode.mindmapview.library.data.Tree
 
 internal enum class FindDirection { NEXT, PREVIOUS }
 

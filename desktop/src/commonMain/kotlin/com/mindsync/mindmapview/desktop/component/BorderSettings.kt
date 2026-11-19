@@ -8,9 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.data.NodeBorder
-import com.mindsync.library.data.NodeBorderStyle
-import com.mindsync.library.data.NodeLineWidth
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.data.NodeBorderStyle
+import com.corbettcode.mindmapview.library.data.NodeLineWidth
 import com.mindsync.mindmapview.desktop.dialog.ChoicePicker
 
 private val BORDER_STYLE_LABELS = mapOf(

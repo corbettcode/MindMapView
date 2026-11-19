@@ -1,8 +1,8 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.MindMapState
-import com.mindsync.library.data.Tree
-import com.mindsync.library.model.MapThemes
+import com.corbettcode.mindmapview.library.MindMapState
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.model.MapThemes
 import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test

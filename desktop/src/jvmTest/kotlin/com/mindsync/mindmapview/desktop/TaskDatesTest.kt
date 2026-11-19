@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskDate
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.Test

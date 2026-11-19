@@ -26,7 +26,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.data.NodeAttribute
+import com.corbettcode.mindmapview.library.data.NodeAttribute
 import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 
 /** The rows to edit a node's [attributes] in: a node without attributes starts with an empty row to fill in. */

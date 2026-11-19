@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.data.NodeTask
-import com.mindsync.library.model.ProgressFilter
-import com.mindsync.library.model.TaskFilter
+import com.corbettcode.mindmapview.library.data.NodeTask
+import com.corbettcode.mindmapview.library.model.ProgressFilter
+import com.corbettcode.mindmapview.library.model.TaskFilter
 
 /** The days on from today the "Due in 7 days" chip of the filter bar keeps the tasks due within. */
 internal const val FILTER_DUE_DAYS = 7

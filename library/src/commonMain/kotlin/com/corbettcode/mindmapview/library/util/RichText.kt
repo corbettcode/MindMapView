@@ -1,0 +1,157 @@
+package com.corbettcode.mindmapview.library.util
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.unit.em
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
+import com.mohamedrejeb.richeditor.model.RichSpanStyle
+import com.mohamedrejeb.richeditor.model.RichTextState
+
+/**
+ * A link in rich text: the [text] it is shown as and the [url] it leads to.
+ */
+data class RichTextLink(
+    val text: String
+    , val url: String
+)
+
+/**
+ * A node's description is rich text held as an HTML string. Plain text without markup is valid HTML,
+ * but `<` and `&` must be escaped and line breaks need `<br>` or separate `<p>` paragraphs.
+ */
+object RichText {
+    /** The tag of the string annotations [parse] puts on links; the annotation's item is the URL. */
+    const val LINK_TAG = "com.corbettcode.mindmapview.library.link"
+
+    /**
+     * Returns [html] as text to draw. Links are drawn in [linkColor], or blue when none is given, and
+     * each carries a string annotation tagged [LINK_TAG] with its URL.
+     */
+    fun parse(
+        html: String
+        , linkColor: Color = Color.Unspecified
+    ): AnnotatedString {
+        val state = RichTextState()
+        if (linkColor.isSpecified) state.config.linkColor = linkColor
+        val richText = state.setHtml(html).annotatedString
+        // List items come with a text indent, which makes a node's text wrap when it is measured at its own width.
+        val text = AnnotatedString(
+            text = richText.text,
+            // Font sizes are read as absolute ones, which would not follow the size of a node's text.
+            spanStyles = richText.spanStyles.map { span ->
+                val scale = RichTextSize.scaleOf(span.item.fontSize)
+                if (scale == null) span else span.copy(item = span.item.copy(fontSize = scale.em))
+            },
+            paragraphStyles = richText.paragraphStyles.map { it.copy(item = it.item.copy(textIndent = TextIndent.None)) },
+        )
+        val links = linkRanges(state)
+        if (links.isEmpty()) return text
+        return AnnotatedString.Builder(text).apply {
+            links.forEach { (range, url) -> addStringAnnotation(LINK_TAG, url, range.start, range.end) }
+        }.toAnnotatedString()
+    }
+
+    /** Returns [html] with [style] over all of its text, as an editor gives it when all of it is styled so. */
+    fun withStyle(
+        html: String
+        , style: SpanStyle
+    ): String {
+        val state = RichTextState().setHtml(html)
+        state.addSpanStyle(style, TextRange(0, state.annotatedString.text.length))
+        return state.toHtml()
+    }
+
+    /**
+     * Returns the lines of [html] as text to draw, one for each paragraph, line break or list item, leaving out
+     * those that are blank. [parse] puts a space between them instead, which cannot be told from one in the text.
+     */
+    fun lines(html: String): List<AnnotatedString> {
+        if (html.isBlank()) return emptyList()
+        // The editor's own HTML closes the styles at each line break, so each piece of it is whole on its own.
+        return RichTextState()
+            .setHtml(html)
+            .toHtml()
+            .split(LINE_BOUNDARY)
+            .map { it.replace(LIST_TAG, "") }
+            .filter { it.isNotBlank() }
+            .map { parse(it) }
+            .filter { it.text.isNotBlank() }
+    }
+
+    private val LINE_BOUNDARY = Regex("""<br\s*/?>|</?(?:p|li|div|h[1-6])(?:\s[^>]*)?>""")
+    private val LIST_TAG = Regex("""</?(?:ul|ol)(?:\s[^>]*)?>""")
+
+    private val IMAGE = Regex("""<img\b[^>]*>""", RegexOption.IGNORE_CASE)
+    private val IMAGE_SOURCE = Regex("""<img\s[^>]*?src="([^"]*)"""", RegexOption.IGNORE_CASE)
+
+    /** Returns the addresses of the images in [html], in the order they are in it. */
+    fun imageSources(html: String): List<String> {
+        return IMAGE_SOURCE.findAll(html).map { it.groupValues[1].replace("&amp;", "&") }.toList()
+    }
+
+    /** Returns [html] without its images. */
+    fun withoutImages(html: String): String = html.replace(IMAGE, "")
+
+    /**
+     * Whether [first] and [second] are the same text in the same styles. An editor writes its own HTML for the
+     * text it was given, as `<p>` around plain text, which is no change of the text.
+     */
+    fun isSameText(
+        first: String
+        , second: String
+    ): Boolean = first == second
+        || RichTextState().setHtml(first).toHtml() == RichTextState().setHtml(second).toHtml()
+
+    /** Whether [html] shows nothing: no text but white space, and no image. */
+    fun isBlank(html: String): Boolean = imageSources(html).isEmpty() && parse(html).text.isBlank()
+
+    /** Returns [text] as rich text that shows it as it is, its line breaks included. */
+    fun fromPlainText(text: String): String {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br>")
+    }
+
+    /** Returns the links in [html], in the order they are in the text. */
+    fun links(html: String): List<RichTextLink> {
+        val state = RichTextState().setHtml(html)
+        val text = state.annotatedString.text
+        return linkRanges(state).map { (range, url) -> RichTextLink(text.substring(range.start, range.end), url) }
+    }
+
+    /** Returns the URL of the link the character at [offset] of text returned by [parse] is in, or null. */
+    fun linkAt(
+        text: AnnotatedString
+        , offset: Int
+    ): String? {
+        if (offset !in text.indices) return null
+        return text.getStringAnnotations(LINK_TAG, offset, offset + 1).firstOrNull()?.item
+    }
+
+    // The editor only tells what a given range of its text is, so the links are found a character at a time.
+    // The rich text library has the style of a range as experimental, and it is the only way to the links.
+    @OptIn(ExperimentalRichTextApi::class)
+    private fun linkRanges(state: RichTextState): List<Pair<TextRange, String>> {
+        val length = state.annotatedString.text.length
+        val ranges = mutableListOf<Pair<TextRange, String>>()
+        var start = 0
+        var url: String? = null
+        for (index in 0..length) {
+            val current =
+                if (index < length) (state.getRichSpanStyle(TextRange(index, index + 1)) as? RichSpanStyle.Link)?.url
+                else null
+            if (current != url) {
+                url?.let { ranges.add(TextRange(start, index) to it) }
+                start = index
+                url = current
+            }
+        }
+        return ranges
+    }
+}

@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.mindsync.library.model.MapStructure
+import com.corbettcode.mindmapview.library.model.MapStructure
 import com.mindsync.mindmapview.desktop.FOLD_COMMANDS
 import com.mindsync.mindmapview.desktop.FoldCommand
 import com.mindsync.mindmapview.desktop.ViewMode

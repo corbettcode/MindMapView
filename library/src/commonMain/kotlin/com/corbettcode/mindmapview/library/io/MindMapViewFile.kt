@@ -1,0 +1,441 @@
+package com.corbettcode.mindmapview.library.io
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import com.corbettcode.mindmapview.library.data.ArrowLink
+import com.corbettcode.mindmapview.library.data.ArrowLinkInclination
+import com.corbettcode.mindmapview.library.data.Boundary
+import com.corbettcode.mindmapview.library.data.BoundaryStyle
+import com.corbettcode.mindmapview.library.data.DpOffset
+import com.corbettcode.mindmapview.library.data.NodeTask
+import com.corbettcode.mindmapview.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskProgress
+import com.corbettcode.mindmapview.library.data.ArrowLinkLineStyle
+import com.corbettcode.mindmapview.library.data.ArrowLinkThickness
+import com.corbettcode.mindmapview.library.data.NodeAttribute
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.data.NodeBorderStyle
+import com.corbettcode.mindmapview.library.data.NodeData
+import com.corbettcode.mindmapview.library.data.NodeLine
+import com.corbettcode.mindmapview.library.data.NodeLineStyle
+import com.corbettcode.mindmapview.library.data.NodeLineWidth
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.data.shape
+import com.corbettcode.mindmapview.library.model.AttributeDisplay
+import com.corbettcode.mindmapview.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.model.MapStructure
+import com.corbettcode.mindmapview.library.model.MapThemes
+import com.corbettcode.mindmapview.library.model.NoteDisplay
+import com.corbettcode.mindmapview.library.util.Dp
+import com.corbettcode.mindmapview.library.util.IdGenerator
+import kotlin.io.encoding.Base64
+
+/**
+ * Reads and writes mind maps in this library's own `.ccmm` format, which keeps all there is of a [Tree]:
+ * each node's shape, colors, rich text, note and attributes and how they are shown, whether it is folded, the side of the root each
+ * of its children is on, the arrow links, and where the root is when the user dragged it there.
+ *
+ * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
+ * order, then the `<arrowlink>` elements, then the `<boundary>` elements, then the `<preference>` elements, and then
+ * the `<image>` elements. A boundary's `children` are the ids of the children it is around, separated by spaces, as
+ * are the ids of the siblings a summary node is about in its `summaryOf`.
+ * A node's text and note are the HTML they are kept as. Where the other nodes are is not stored: a map that was read
+ * needs to be arranged, as one read with [FreeMind] does.
+ *
+ * The images of the HTML are stored in the file, so the map shows them where their addresses cannot be reached.
+ * An `<image>` holds the bytes of the image at its `src` address in Base64; the HTML keeps the address.
+ *
+ * The preferences of the app the map was saved with are kept too, each in a `<preference>` with its `name` and
+ * `value`, for the map to be opened as it was. What a value means is the app's to know.
+ */
+object MindMapViewFile {
+    const val EXTENSION = "ccmm"
+
+    private const val FORMAT_VERSION = 1
+    private const val ROOT_ELEMENT = "mindmapview"
+
+    /**
+     * Returns [tree] in this format, with [images], the bytes of each image by its address, and [preferences],
+     * each value by its name.
+     */
+    fun write(
+        tree: Tree<*>
+        , images: Map<String, ByteArray> = emptyMap()
+        , preferences: Map<String, String> = emptyMap()
+    ): String = buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append('"')
+        // A map in the Classic theme looks as one saved before there were themes, so it is written as one.
+        if (tree.theme != MapThemes.CLASSIC) append(" theme=\"").append(escapeAttribute(tree.theme.id)).append('"')
+        // A mind map is written as maps were before there were structures.
+        if (tree.structure != MapStructure.MIND_MAP) append(" structure=\"").append(tree.structure.fileName).append('"')
+        append(">\n")
+        val root = tree.getRootNode()
+        if (tree.isRootDragged) {
+            append("  <rootposition x=\"").append(root.path.centerX.dpVal)
+            append("\" y=\"").append(root.path.centerY.dpVal).append("\"/>\n")
+        }
+        writeNode(tree, root, depth = 1)
+        // A node that was removed is not written, so neither is an arrow link to or from one.
+        val writtenIds = mutableSetOf<String>()
+        tree.doPreorderTraversal { node -> writtenIds.add(node.id) }
+        tree.arrowLinks
+            .filter { it.sourceId in writtenIds && it.targetId in writtenIds }
+            .forEach { writeArrowLink(it) }
+        tree.boundaries.filter { it.parentId in writtenIds }.forEach { writeBoundary(it) }
+        preferences.forEach { (name, value) ->
+            append("  <preference name=\"").append(escapeAttribute(name))
+            append("\" value=\"").append(escapeAttribute(value)).append("\"/>\n")
+        }
+        images.forEach { (src, bytes) ->
+            append("  <image src=\"").append(escapeAttribute(src)).append("\">")
+            append(Base64.encode(bytes)).append("</image>\n")
+        }
+        append("</").append(ROOT_ELEMENT).append(">\n")
+    }
+
+    /**
+     * Returns the bytes of the images stored in [content], by their addresses. An image that cannot be read is
+     * left out, as is any of a [content] that is not a mind map in this format.
+     */
+    fun readImages(content: String): Map<String, ByteArray> {
+        val map = XmlParser(content).parse().firstOrNull { it.name == ROOT_ELEMENT } ?: return emptyMap()
+        return map
+            .children
+            .filter { it.name == "image" }
+            .mapNotNull { element ->
+                val src = element.attributes["src"]?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val bytes = try {
+                    Base64.decode(element.text.filterNot { it.isWhitespace() })
+                } catch (e: IllegalArgumentException) {
+                    return@mapNotNull null
+                }
+                src to bytes
+            }
+            .toMap()
+    }
+
+    /**
+     * Returns the preferences stored in [content], each value by its name, or null when it has none, as a map saved
+     * before maps kept them has not, or when [content] is not a mind map in this format.
+     */
+    fun readPreferences(content: String): Map<String, String>? {
+        val map = XmlParser(content).parse().firstOrNull { it.name == ROOT_ELEMENT } ?: return null
+        return map
+            .children
+            .filter { it.name == "preference" }
+            .mapNotNull { element ->
+                val name = element.attributes["name"]?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                name to element.attributes["value"].orEmpty()
+            }
+            .toMap()
+            .takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * @throws IllegalArgumentException when [content] is not a mind map in this format.
+     */
+    fun read(content: String): Tree<Any> {
+        val map = XmlParser(content).parse().firstOrNull { it.name == ROOT_ELEMENT }
+            ?: throw IllegalArgumentException("Not a MindMapView map: no <$ROOT_ELEMENT> element")
+        val rootElement = map.children.firstOrNull { it.name == "node" }
+            ?: throw IllegalArgumentException("Not a MindMapView map: no root <node> element")
+
+        val tree = Tree<Any>()
+        tree.theme = MapThemes.byId(map.attributes["theme"])
+        tree.structure = MapStructure.fromFileName(map.attributes["structure"])
+        val root = tree.getRootNode()
+        val usedIds = mutableSetOf(root.id)
+        // The root is given this library's own id, whatever id it has in the file.
+        val fileIds = mutableMapOf(rootElement.attributes["id"].orEmpty() to root.id)
+        val children = rootElement.childNodes().map { readNode(tree, it, root.id, usedIds, fileIds) }
+        tree.setRootNode(
+            root.copy(
+                children = children
+                , color = rootElement.color("color") ?: root.color
+                , description = rootElement.attributes["text"].orEmpty()
+                , note = rootElement.attributes["note"].orEmpty()
+                , textColor = rootElement.color("textColor") ?: root.textColor
+            )
+        )
+        tree.setAttributes(root.id, rootElement.nodeAttributes())
+        tree.setLine(root.id, rootElement.line())
+        tree.setBorder(root.id, rootElement.border(tree.getRootNode().textColor))
+        tree.setNoteDisplay(root.id, rootElement.noteDisplay())
+        tree.setAttributeDisplay(root.id, rootElement.attributeDisplay())
+        tree.setTask(root.id, rootElement.task())
+        tree.setGridColumns(root.id, rootElement.gridColumns())
+        rootElement.childNodes().zip(children).forEach { (element, id) ->
+            val side = LayoutSide.entries.firstOrNull { it.name.equals(element.attributes["side"], ignoreCase = true) }
+            if (side != null) tree.setRootChildSide(id, side)
+            // A floating topic without where it is is read as an attached one, rather than put anywhere.
+            val dx = element.attributes["dx"]?.toFloatOrNull()
+            val dy = element.attributes["dy"]?.toFloatOrNull()
+            if (element.attributes["floating"] == "true" && dx != null && dy != null) {
+                tree.setFloating(id, DpOffset(Dp(dx), Dp(dy)))
+            }
+        }
+        map.children.firstOrNull { it.name == "rootposition" }?.let { position ->
+            val x = position.attributes["x"]?.toFloatOrNull()
+            val y = position.attributes["y"]?.toFloatOrNull()
+            if (x != null && y != null) tree.moveRoot(Dp(x), Dp(y))
+        }
+        val usedArrowLinkIds = mutableSetOf<String>()
+        map.children.filter { it.name == "arrowlink" }.forEach { element ->
+            val sourceId = fileIds[element.attributes["source"]] ?: return@forEach
+            val targetId = fileIds[element.attributes["target"]] ?: return@forEach
+            if (sourceId == targetId) return@forEach
+            val id = element.attributes["id"]?.takeIf { it.isNotEmpty() && usedArrowLinkIds.add(it) }
+                ?: IdGenerator.makeRandomNodeId()
+            tree.addArrowLink(
+                ArrowLink(
+                    id = id
+                    , sourceId = sourceId
+                    , targetId = targetId
+                    , color = element.color("color") ?: ArrowLink.DEFAULT_COLOR
+                    , hasStartArrow = element.attributes["startArrow"] == "true"
+                    , hasEndArrow = element.attributes["endArrow"] != "false"
+                    , lineStyle = ArrowLinkLineStyle
+                        .entries
+                        .firstOrNull { it.name.lowercase() == element.attributes["lineStyle"] }
+                        ?: ArrowLinkLineStyle.SOLID
+                    , thickness = ArrowLinkThickness
+                        .entries
+                        .firstOrNull { it.name.lowercase() == element.attributes["thickness"] }
+                        ?: ArrowLinkThickness.NORMAL
+                    , startInclination = element.inclination("startInclination")
+                    , endInclination = element.inclination("endInclination")
+                )
+            )
+        }
+        // A summary is about siblings that are only all in the tree once the whole tree is.
+        rootElement.descendantNodes().forEach { element ->
+            val summaryOf = element.attributes["summaryOf"]?.takeIf { it.isNotBlank() } ?: return@forEach
+            val summaryId = fileIds[element.attributes["id"]] ?: return@forEach
+            val childIds = summaryOf.split(' ').mapNotNull { fileIds[it] }.toSet()
+            try {
+                tree.setSummary(summaryId, childIds)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
+        map.children.filter { it.name == "boundary" }.forEach { element ->
+            val parentId = fileIds[element.attributes["parent"]] ?: return@forEach
+            val childIds = element.attributes["children"]
+                .orEmpty()
+                .split(' ')
+                .mapNotNull { fileIds[it] }
+                .toSet()
+            val boundary = Boundary(
+                id = element.attributes["id"]?.takeIf { it.isNotEmpty() && tree.boundaries.none { b -> b.id == it } }
+                    ?: IdGenerator.makeRandomNodeId()
+                , parentId = parentId
+                , childIds = childIds
+                , color = element.color("color")
+                , style = BoundaryStyle.entries.firstOrNull { it.name.lowercase() == element.attributes["style"] }
+                    ?: BoundaryStyle.DASHED
+                , isFilled = element.attributes["filled"] != "false"
+            )
+            // A boundary around none of its parent's children is left out, as the tree would have none such.
+            try {
+                tree.addBoundary(boundary)
+            } catch (e: IllegalArgumentException) {
+                return@forEach
+            }
+        }
+        return tree
+    }
+
+    private fun StringBuilder.writeBoundary(boundary: Boundary) {
+        append("  <boundary")
+        attribute("id", boundary.id)
+        attribute("parent", boundary.parentId)
+        attribute("children", boundary.childIds.joinToString(" "))
+        boundary.color?.let { attribute("color", it.toHex()) }
+        attribute("style", boundary.style.name.lowercase())
+        attribute("filled", boundary.isFilled.toString())
+        append("/>\n")
+    }
+
+    private fun StringBuilder.writeNode(
+        tree: Tree<*>
+        , node: NodeData<*>
+        , depth: Int
+    ) {
+        val indent = "  ".repeat(depth)
+        append(indent).append("<node")
+        attribute("id", node.id)
+        // The root is always an oval.
+        if (node.parentId != null) attribute("shape", node.shape.name.lowercase())
+        if (node.parentId == tree.getRootNode().id) attribute("side", tree.sideOf(node.id).name.lowercase())
+        tree.floatingOffsetOf(node.id)?.let { offset ->
+            attribute("floating", "true")
+            attribute("dx", offset.x.dpVal.toString())
+            attribute("dy", offset.y.dpVal.toString())
+        }
+        if (tree.isFolded(node.id)) attribute("folded", "true")
+        tree.branchStructureOf(node.id)?.let { attribute("structure", it.fileName) }
+        tree.gridColumnsOf(node.id)?.let { attribute("columns", it.toString()) }
+        tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
+        val task = tree.taskOf(node.id)
+        task.priority?.let { attribute("priority", it.toString()) }
+        task.progress?.let { attribute("progress", it.name.lowercase()) }
+        task.start?.let { attribute("start", it.toIsoString()) }
+        task.due?.let { attribute("due", it.toIsoString()) }
+        attribute("color", node.color.toHex())
+        attribute("textColor", node.textColor.toHex())
+        attribute("text", node.description)
+        if (node.note.isNotEmpty()) attribute("note", node.note)
+        tree.noteDisplayOf(node.id)?.let { attribute("noteDisplay", it.name.lowercase()) }
+        tree.attributeDisplayOf(node.id)?.let { attribute("attributeDisplay", it.name.lowercase()) }
+        val line = tree.lineOf(node.id)
+        line.style?.let { attribute("lineStyle", it.freeMindName) }
+        line.color?.let { attribute("lineColor", it.toHex()) }
+        line.width?.let { attribute("lineWidth", it.label) }
+        tree.borderOf(node.id).takeIf { !it.isNone }?.let { border ->
+            attribute("border", border.style.name.lowercase())
+            attribute("borderWidth", border.width.label)
+            attribute("borderColor", border.color.toHex())
+        }
+        val attributes = tree.attributesOf(node.id)
+        if (attributes.isEmpty() && node.children.isEmpty()) {
+            append("/>\n")
+            return
+        }
+        append(">\n")
+        attributes.forEach { nodeAttribute ->
+            append(indent).append("  <attribute")
+            attribute("name", nodeAttribute.name)
+            attribute("value", nodeAttribute.value)
+            append("/>\n")
+        }
+        node.children.forEach { writeNode(tree, tree.getNode(it), depth + 1) }
+        append(indent).append("</node>\n")
+    }
+
+    private fun StringBuilder.writeArrowLink(link: ArrowLink) {
+        append("  <arrowlink")
+        attribute("id", link.id)
+        attribute("source", link.sourceId)
+        attribute("target", link.targetId)
+        attribute("color", link.color.toHex())
+        attribute("startArrow", link.hasStartArrow.toString())
+        attribute("endArrow", link.hasEndArrow.toString())
+        attribute("lineStyle", link.lineStyle.name.lowercase())
+        attribute("thickness", link.thickness.name.lowercase())
+        link.startInclination?.let { attribute("startInclination", "${it.x.dpVal};${it.y.dpVal}") }
+        link.endInclination?.let { attribute("endInclination", "${it.x.dpVal};${it.y.dpVal}") }
+        append("/>\n")
+    }
+
+    private fun StringBuilder.attribute(
+        name: String
+        , value: String
+    ) {
+        append(' ').append(name).append("=\"").append(escapeAttribute(value)).append('"')
+    }
+
+    private fun readNode(
+        tree: Tree<Any>
+        , element: XmlElement
+        , parentId: String
+        , usedIds: MutableSet<String>
+        , fileIds: MutableMap<String, String>
+    ): String {
+        val fileId = element.attributes["id"].orEmpty()
+        val id = fileId.takeIf { it.isNotEmpty() && usedIds.add(it) }
+            ?: IdGenerator.makeRandomNodeId().also { usedIds.add(it) }
+        if (fileId.isNotEmpty() && fileId !in fileIds) fileIds[fileId] = id
+        val shape = NodeShape.entries.firstOrNull { it.name.equals(element.attributes["shape"], ignoreCase = true) }
+            ?: NodeShape.RECTANGLE
+        val children = element.childNodes().map { readNode(tree, it, id, usedIds, fileIds) }
+        val node = unplacedNode(
+            shape
+            , id
+            , parentId
+            , element.attributes["text"].orEmpty()
+            , children
+            , element.color("color") ?: shape.defaultColor
+            , element.color("textColor") ?: shape.defaultTextColor
+            , element.attributes["note"].orEmpty()
+        )
+        tree.setNode(id, node)
+        tree.setAttributes(id, element.nodeAttributes())
+        tree.setLine(id, element.line())
+        tree.setBorder(id, element.border(node.textColor))
+        tree.setNoteDisplay(id, element.noteDisplay())
+        tree.setAttributeDisplay(id, element.attributeDisplay())
+        tree.setFolded(id, element.attributes["folded"] == "true")
+        tree.setTask(id, element.task())
+        tree.setBranchStructure(id, MapStructure.branchFromFileName(element.attributes["structure"]))
+        tree.setGridColumns(id, element.gridColumns())
+        return id
+    }
+
+    private fun XmlElement.childNodes() = children.filter { it.name == "node" }
+
+    // A count that is no number of columns is left out, rather than the map not being read.
+    private fun XmlElement.gridColumns(): Int? = attributes["columns"]?.toIntOrNull()?.takeIf { it >= 1 }
+
+    // A priority, progress or date that is not one this library has is left out, rather than the map not being read.
+    private fun XmlElement.task(): NodeTask = NodeTask(
+        priority = attributes["priority"]?.toIntOrNull()?.takeIf { it in NodeTask.PRIORITIES }
+        , progress = TaskProgress.entries.firstOrNull { it.name.lowercase() == attributes["progress"] }
+        , start = attributes["start"]?.let { TaskDate.parse(it) }
+        , due = attributes["due"]?.let { TaskDate.parse(it) }
+    )
+
+    private fun XmlElement.descendantNodes(): List<XmlElement> =
+        childNodes().flatMap { listOf(it) + it.descendantNodes() }
+
+    private fun XmlElement.noteDisplay(): NoteDisplay? =
+        NoteDisplay.entries.firstOrNull { it.name.equals(attributes["noteDisplay"], ignoreCase = true) }
+
+    private fun XmlElement.attributeDisplay(): AttributeDisplay? =
+        AttributeDisplay.entries.firstOrNull { it.name.equals(attributes["attributeDisplay"], ignoreCase = true) }
+
+    // A border saved without a color of its own was drawn in the color of the node's text.
+    private fun XmlElement.border(textColor: Color): NodeBorder = NodeBorder(
+        style = NodeBorderStyle.entries.firstOrNull { it.name.equals(attributes["border"], ignoreCase = true) }
+            ?: NodeBorderStyle.NONE
+        , width = NodeLineWidth.entries.firstOrNull { it.label == attributes["borderWidth"] } ?: NodeBorder().width
+        , color = color("borderColor") ?: textColor
+    )
+
+    private fun XmlElement.nodeAttributes(): List<NodeAttribute> =
+        children
+            .filter { it.name == "attribute" }
+            .map { NodeAttribute(it.attributes["name"].orEmpty(), it.attributes["value"].orEmpty()) }
+
+    private fun XmlElement.line() = NodeLine(
+        NodeLineStyle.entries.firstOrNull { it.freeMindName == attributes["lineStyle"] }
+        , color("lineColor")
+        , NodeLineWidth.entries.firstOrNull { it.label == attributes["lineWidth"] }
+    )
+
+    private fun XmlElement.inclination(attribute: String): ArrowLinkInclination? {
+        val parts = attributes[attribute]?.split(';')?.mapNotNull { it.trim().toFloatOrNull() } ?: return null
+        return if (parts.size == 2) ArrowLinkInclination(Dp(parts[0]), Dp(parts[1])) else null
+    }
+
+    // Colors are written with their alpha, as #AARRGGBB.
+    private fun XmlElement.color(attribute: String): Color? {
+        val hex = attributes[attribute]?.removePrefix("#")?.takeIf { it.length == 8 } ?: return null
+        return hex.toLongOrNull(16)?.let { Color(it) }
+    }
+
+    private fun Color.toHex(): String = "#" + (toArgb().toLong() and 0xFFFFFFFFL).toString(16).padStart(8, '0')
+
+    // Line breaks and tabs are escaped too, as XML would otherwise read them as spaces.
+    private fun escapeAttribute(text: String): String {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("\n", "&#xa;")
+            .replace("\r", "&#xd;")
+            .replace("\t", "&#x9;")
+    }
+}

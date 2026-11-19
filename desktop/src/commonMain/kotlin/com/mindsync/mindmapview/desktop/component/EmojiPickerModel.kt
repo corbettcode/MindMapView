@@ -1,10 +1,10 @@
 package com.mindsync.mindmapview.desktop.component
 
-import com.mindsync.library.data.Tree
-import com.mindsync.library.emoji.Emoji
-import com.mindsync.library.emoji.EmojiCatalog
-import com.mindsync.library.emoji.EmojiGroup
-import com.mindsync.library.util.DescriptionEmoji
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.emoji.Emoji
+import com.corbettcode.mindmapview.library.emoji.EmojiCatalog
+import com.corbettcode.mindmapview.library.emoji.EmojiGroup
+import com.corbettcode.mindmapview.library.util.DescriptionEmoji
 
 fun emojisInMap(tree: Tree<*>): List<String> {
     val emojis = linkedSetOf<String>()

@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.io.MindMapViewFile
+import com.corbettcode.mindmapview.library.io.MindMapViewFile
 import java.io.File
 
 /** Whether the mind map in [file] is saved back to it: only a file in this app's own format is. */

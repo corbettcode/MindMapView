@@ -4,7 +4,7 @@ package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
-import com.mindsync.library.io.OutlineItem
+import com.corbettcode.mindmapview.library.io.OutlineItem
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 import org.jetbrains.skia.EncodedImageFormat

@@ -1,12 +1,12 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
-import com.mindsync.library.data.NodeBorder
-import com.mindsync.library.data.NodeData
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.Tree
-import com.mindsync.library.data.shape
-import com.mindsync.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.data.NodeData
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.data.shape
+import com.corbettcode.mindmapview.library.model.LayoutSide
 
 /**
  * What a node that is added starts with, before any of it is changed in the dialog it is added in.

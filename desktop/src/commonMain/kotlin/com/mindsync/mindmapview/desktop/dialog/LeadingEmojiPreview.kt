@@ -21,10 +21,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
-import com.mindsync.library.util.EMOJI_RAISE
-import com.mindsync.library.util.EMOJI_SCALE
-import com.mindsync.library.util.RichTextSize
-import com.mindsync.library.util.withEmojiFont
+import com.corbettcode.mindmapview.library.util.EMOJI_RAISE
+import com.corbettcode.mindmapview.library.util.EMOJI_SCALE
+import com.corbettcode.mindmapview.library.util.RichTextSize
+import com.corbettcode.mindmapview.library.util.withEmojiFont
 import com.mindsync.mindmapview.desktop.LocalEmojiFontFamily
 import com.mohamedrejeb.richeditor.model.RichTextState
 

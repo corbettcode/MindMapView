@@ -3,7 +3,7 @@ package com.mindsync.mindmapview.desktop
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.mindsync.library.model.MapTheme
+import com.corbettcode.mindmapview.library.model.MapTheme
 
 /** A bundled font [file] with the [weight] and [style] it draws. */
 data class NodeFontFile(

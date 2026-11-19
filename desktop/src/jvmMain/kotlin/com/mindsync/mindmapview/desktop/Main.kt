@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.mindsync.library.rememberMindMapState
+import com.corbettcode.mindmapview.library.rememberMindMapState
 import org.jetbrains.skia.Image
 import java.awt.Frame
 

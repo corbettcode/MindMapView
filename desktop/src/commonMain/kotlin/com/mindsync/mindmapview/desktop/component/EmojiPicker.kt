@@ -39,8 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mindsync.library.emoji.Emoji
-import com.mindsync.library.emoji.EmojiCatalog
+import com.corbettcode.mindmapview.library.emoji.Emoji
+import com.corbettcode.mindmapview.library.emoji.EmojiCatalog
 import com.mindsync.mindmapview.desktop.LocalEmojiFontFamily
 import com.mindsync.mindmapview.desktop.emojiVisualTransformation
 

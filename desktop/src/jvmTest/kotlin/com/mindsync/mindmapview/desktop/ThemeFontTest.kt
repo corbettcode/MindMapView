@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.model.MapThemes
+import com.corbettcode.mindmapview.library.model.MapThemes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

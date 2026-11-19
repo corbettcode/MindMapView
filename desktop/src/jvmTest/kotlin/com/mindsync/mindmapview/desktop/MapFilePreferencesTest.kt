@@ -1,15 +1,15 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.Tree
-import com.mindsync.library.io.FreeMind
-import com.mindsync.library.io.MindMapViewFile
-import com.mindsync.library.model.AttributeDisplay
-import com.mindsync.library.model.MapThemes
-import com.mindsync.library.model.LevelStyle
-import com.mindsync.library.model.NoteDisplay
-import com.mindsync.library.model.TopicKind
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.io.FreeMind
+import com.corbettcode.mindmapview.library.io.MindMapViewFile
+import com.corbettcode.mindmapview.library.model.AttributeDisplay
+import com.corbettcode.mindmapview.library.model.MapThemes
+import com.corbettcode.mindmapview.library.model.LevelStyle
+import com.corbettcode.mindmapview.library.model.NoteDisplay
+import com.corbettcode.mindmapview.library.model.TopicKind
 import com.mindsync.mindmapview.desktop.dialog.TopicPreferences
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import kotlin.test.Test

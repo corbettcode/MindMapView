@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskDate
 
 /** Returns the date it is where the app runs, in the local time zone. */
 internal expect fun today(): TaskDate

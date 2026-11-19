@@ -23,9 +23,9 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.MindMapState
-import com.mindsync.library.model.LayoutSide
-import com.mindsync.library.model.MapStructure
+import com.corbettcode.mindmapview.library.MindMapState
+import com.corbettcode.mindmapview.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.model.MapStructure
 import com.mindsync.mindmapview.desktop.dialog.UserPreferences
 import com.mindsync.mindmapview.desktop.menuBar.label
 import kotlin.test.Test

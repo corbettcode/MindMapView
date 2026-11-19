@@ -1,0 +1,36 @@
+package com.corbettcode.mindmapview.library.node
+
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.drawText
+import com.corbettcode.mindmapview.library.data.CircleNodeData
+import com.corbettcode.mindmapview.library.util.toPx
+
+class CircleNodeDrawer(
+    private val node: CircleNodeData
+    , private val color: Color
+    , private val style: DrawStyle
+) : NodeDrawer {
+    override fun drawNode(drawScope: DrawScope) {
+        drawScope.drawCircle(
+            color = color
+            , radius = node.path.radius.toPx(drawScope)
+            , center = Offset(node.path.centerX.toPx(drawScope), node.path.centerY.toPx(drawScope))
+            , style = style
+        )
+    }
+
+    override fun drawText(drawScope: DrawScope, text: TextLayoutResult) {
+        drawScope.drawText(
+            textLayoutResult = text
+            , color = node.textColor
+            , topLeft = Offset(
+                node.path.centerX.toPx(drawScope) - text.size.width / 2f
+                , node.path.centerY.toPx(drawScope) - text.size.height / 2f
+            )
+        )
+    }
+}

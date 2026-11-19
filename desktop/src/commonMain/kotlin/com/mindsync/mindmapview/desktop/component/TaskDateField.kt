@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskDate
 import com.mindsync.mindmapview.desktop.shortDate
 import com.mindsync.mindmapview.desktop.taskDateOfUtcMillis
 import com.mindsync.mindmapview.desktop.toUtcMillis

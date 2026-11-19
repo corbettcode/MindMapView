@@ -1,8 +1,8 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.OutlineNode
-import com.mindsync.library.data.Tree
-import com.mindsync.library.util.RichText
+import com.corbettcode.mindmapview.library.data.OutlineNode
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.util.RichText
 
 private val WHITESPACE = Regex("\\s+")
 private const val TAB_WIDTH = 4

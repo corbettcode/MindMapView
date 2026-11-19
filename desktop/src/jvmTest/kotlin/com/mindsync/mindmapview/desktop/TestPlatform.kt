@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
-import com.mindsync.library.io.OutlineItem
+import com.corbettcode.mindmapview.library.io.OutlineItem
 
 /** A platform for tests of the app, with no files, an empty clipboard and preferences kept only while it runs. */
 internal class TestPlatform : AppPlatform {

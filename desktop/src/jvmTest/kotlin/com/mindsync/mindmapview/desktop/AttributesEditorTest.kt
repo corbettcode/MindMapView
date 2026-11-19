@@ -9,7 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
-import com.mindsync.library.data.NodeAttribute
+import com.corbettcode.mindmapview.library.data.NodeAttribute
 import com.mindsync.mindmapview.desktop.component.AttributesEditor
 import com.mindsync.mindmapview.desktop.component.attributeRowsOf
 import com.mindsync.mindmapview.desktop.component.attributesToKeep

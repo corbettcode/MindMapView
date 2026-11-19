@@ -1,11 +1,11 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.Tree
-import com.mindsync.library.io.FreeMind
-import com.mindsync.library.io.Markdown
-import com.mindsync.library.io.MindMapViewFile
-import com.mindsync.library.io.Opml
-import com.mindsync.library.io.XMind
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.io.FreeMind
+import com.corbettcode.mindmapview.library.io.Markdown
+import com.corbettcode.mindmapview.library.io.MindMapViewFile
+import com.corbettcode.mindmapview.library.io.Opml
+import com.corbettcode.mindmapview.library.io.XMind
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 /** The extension of the files mind maps are saved in, which keep all there is of a mind map. */

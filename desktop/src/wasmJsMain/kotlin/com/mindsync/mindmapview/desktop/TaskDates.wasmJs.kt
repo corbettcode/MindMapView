@@ -1,6 +1,6 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.TaskDate
+import com.corbettcode.mindmapview.library.data.TaskDate
 
 internal actual fun today(): TaskDate = TaskDate(jsLocalYear(), jsLocalMonth() + 1, jsLocalDay())
 

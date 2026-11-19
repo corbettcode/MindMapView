@@ -15,11 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.NodeTask
-import com.mindsync.library.data.TaskProgress
-import com.mindsync.library.model.MapStructure
-import com.mindsync.library.util.RichTextLink
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.NodeTask
+import com.corbettcode.mindmapview.library.data.TaskProgress
+import com.corbettcode.mindmapview.library.model.MapStructure
+import com.corbettcode.mindmapview.library.util.RichTextLink
 import com.mindsync.mindmapview.desktop.LINK_MENU_MAX_WIDTH
 import com.mindsync.mindmapview.desktop.NEW_NODE_ITEMS
 import com.mindsync.mindmapview.desktop.NewNodePlace

@@ -1,0 +1,107 @@
+package com.corbettcode.mindmapview.library
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.model.DrawInfo
+import com.corbettcode.mindmapview.library.model.MapThemes
+import com.corbettcode.mindmapview.library.model.attachHighlightColor
+import com.corbettcode.mindmapview.library.model.contrastRatio
+import com.corbettcode.mindmapview.library.util.Dp
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+class MapThemeTest {
+    @Test
+    fun classicIsTodaysLook() {
+        val classic = MapThemes.CLASSIC
+
+        assertEquals("classic", classic.id)
+        listOf(classic.root, classic.mainTopic, classic.subtopic).forEach { level ->
+            assertNull(level.fill)
+            assertNull(level.text)
+            assertEquals(NodeBorder(), level.border)
+        }
+        assertNull(classic.lineNodeText)
+        assertEquals(Color.Black, classic.lineColor)
+        assertEquals(DrawInfo().rootLineColors, classic.branchColors)
+        assertEquals(Dp(5f), classic.lineWidth)
+        assertEquals(Color.White, classic.background)
+        assertNull(classic.fontName)
+    }
+
+    @Test
+    fun thereAreSixThemesWithUniqueIds() {
+        val ids = MapThemes.all.map { it.id }
+
+        assertEquals(6, ids.size)
+        assertEquals(ids.size, ids.toSet().size)
+        assertEquals(MapThemes.CLASSIC, MapThemes.all.first())
+        assertTrue(ids.containsAll(listOf("ocean", "night", "paper")), ids.toString())
+    }
+
+    @Test
+    fun unknownIdIsClassic() {
+        assertEquals(MapThemes.CLASSIC, MapThemes.byId(null))
+        assertEquals(MapThemes.CLASSIC, MapThemes.byId("nope"))
+        assertEquals("ocean", MapThemes.byId("ocean").id)
+    }
+
+    @Test
+    fun nodeTextReadsOnItsFill() {
+        MapThemes.all.forEach { theme ->
+            listOf(theme.root, theme.mainTopic, theme.subtopic).forEach { level ->
+                val fill = level.fill
+                val text = level.text
+                if (fill != null && text != null) {
+                    val ratio = contrastRatio(fill, text)
+                    assertTrue(ratio >= 4.5f, "${theme.id}: $ratio between $fill and $text")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun lineNodeTextReadsOnTheBackground() {
+        MapThemes.all.drop(1).forEach { theme ->
+            val text = assertNotNull(theme.lineNodeText, theme.id)
+            val ratio = contrastRatio(text, theme.background)
+            assertTrue(ratio >= 4.5f, "${theme.id}: $ratio")
+        }
+    }
+
+    @Test
+    fun arrowLinkColorsShowOnTheBackground() {
+        MapThemes.all.drop(1).forEach { theme ->
+            val colors = assertNotNull(theme.arrowLinkColors, theme.id)
+            colors.forEach { color ->
+                val ratio = contrastRatio(color, theme.background)
+                assertTrue(ratio >= 3f, "${theme.id}: $ratio for $color")
+            }
+        }
+    }
+
+    @Test
+    fun attachHighlightShowsOnEveryBackground() {
+        MapThemes.all.forEach { theme ->
+            val highlight = attachHighlightColor(theme.background).compositeOver(theme.background)
+            assertTrue(contrastRatio(highlight, theme.background) >= 1.15f, theme.id)
+        }
+    }
+
+    @Test
+    fun nightIsDark() {
+        assertTrue(MapThemes.byId("night").isDark)
+        assertFalse(MapThemes.CLASSIC.isDark)
+    }
+
+    @Test
+    fun fontsAreBundledOnes() {
+        val bundled = setOf("Inter", "Lora", "Nunito", "Caveat", "JetBrains Mono")
+        MapThemes.all.mapNotNull { it.fontName }.forEach { assertTrue(it in bundled, it) }
+    }
+}

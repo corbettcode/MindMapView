@@ -15,7 +15,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.window.ComposeViewport
-import com.mindsync.library.rememberMindMapState
+import com.corbettcode.mindmapview.library.rememberMindMapState
 
 // The recent mind maps are loaded first, as the app reads them once to start with.
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalWasmJsInterop::class)

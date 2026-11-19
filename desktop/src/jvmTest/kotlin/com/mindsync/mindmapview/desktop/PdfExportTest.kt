@@ -5,10 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.MindMap
-import com.mindsync.library.MindMapState
-import com.mindsync.library.data.Tree
-import com.mindsync.library.util.Dp
+import com.corbettcode.mindmapview.library.MindMap
+import com.corbettcode.mindmapview.library.MindMapState
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.util.Dp
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.test.Test

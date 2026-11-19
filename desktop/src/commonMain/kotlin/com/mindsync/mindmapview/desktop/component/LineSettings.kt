@@ -22,9 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.mindsync.library.data.NodeLine
-import com.mindsync.library.data.NodeLineStyle
-import com.mindsync.library.data.NodeLineWidth
+import com.corbettcode.mindmapview.library.data.NodeLine
+import com.corbettcode.mindmapview.library.data.NodeLineStyle
+import com.corbettcode.mindmapview.library.data.NodeLineWidth
 import com.mindsync.mindmapview.desktop.dialog.ChoicePicker
 
 private const val INHERITED = "Inherited"

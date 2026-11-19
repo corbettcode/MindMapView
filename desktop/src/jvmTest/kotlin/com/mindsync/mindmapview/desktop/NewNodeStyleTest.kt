@@ -1,13 +1,13 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
-import com.mindsync.library.data.NodeBorder
-import com.mindsync.library.data.NodeBorderStyle
-import com.mindsync.library.data.NodeLineWidth
-import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.Tree
-import com.mindsync.library.model.LayoutSide
-import com.mindsync.library.util.Dp
+import com.corbettcode.mindmapview.library.data.NodeBorder
+import com.corbettcode.mindmapview.library.data.NodeBorderStyle
+import com.corbettcode.mindmapview.library.data.NodeLineWidth
+import com.corbettcode.mindmapview.library.data.NodeShape
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.model.LayoutSide
+import com.corbettcode.mindmapview.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

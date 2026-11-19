@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.Color
-import com.mindsync.library.model.MapTheme
+import com.corbettcode.mindmapview.library.model.MapTheme
 
 /**
  * Returns the fill colors offered for a map in [theme]: those of its levels and then its branch colors. A theme

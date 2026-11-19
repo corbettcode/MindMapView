@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
 import androidx.compose.ui.graphics.ImageBitmap
-import com.mindsync.library.io.OutlineItem
+import com.corbettcode.mindmapview.library.io.OutlineItem
 
 /**
  * A file a mind map is opened from, saved to or exported to: on the desktop a file on disk, and in a browser

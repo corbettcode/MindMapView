@@ -1,7 +1,7 @@
 package com.mindsync.mindmapview.desktop
 
-import com.mindsync.library.data.Tree
-import com.mindsync.library.model.TopicKind
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.model.TopicKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

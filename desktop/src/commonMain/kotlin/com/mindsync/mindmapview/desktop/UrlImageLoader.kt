@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import com.mindsync.library.data.Tree
-import com.mindsync.library.util.RichText
+import com.corbettcode.mindmapview.library.data.Tree
+import com.corbettcode.mindmapview.library.util.RichText
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.ImageData
 import com.mohamedrejeb.richeditor.model.ImageLoader
