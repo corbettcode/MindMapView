@@ -17,21 +17,47 @@ The map above is [`desktop/feature_tour.ccmm`](desktop/feature_tour.ccmm): open 
 View › Map and Outliner (Ctrl+Shift+O) shows the same map as an outline beside it, where it can be typed as a list:
 Enter goes on to the next topic, Tab and Shift+Tab indent and outdent.
 
+## Installation
+The library is published as `com.corbettcode.mindmapview:MindMapView`. Publish it to the local Maven repository with:
+
 ```
+./gradlew :library:publishToMavenLocal
+```
+
+and add the repositories it needs in `settings.gradle.kts`:
+
+```kotlin
 dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-  repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
-  }
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
 }
 ```
 
-```
-dependencies {
-  implementation 'com.github.hegleB:MindMapView:0.1.0'
+In a Kotlin Multiplatform project, depend on it from `commonMain`; Gradle picks the variant of each target:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.corbettcode.mindmapview:MindMapView:2.0.0")
+        }
+    }
 }
 ```
+
+In an Android-only project:
+
+```kotlin
+dependencies {
+    implementation("com.corbettcode.mindmapview:MindMapView:2.0.0")
+}
+```
+
+The project using it needs the Compose Multiplatform plugin (or Jetpack Compose on Android) and, on Android, a `minSdk` of 26 or more.
 
 ## Funtions
 - zoom, move
@@ -45,17 +71,7 @@ dependencies {
 |![add](https://github.com/hegleB/MindMapView/assets/39490416/e8bf4cc8-253a-4a7b-9270-9048959cb2f2)|![remove](https://github.com/hegleB/MindMapView/assets/39490416/83283bdc-f704-4f89-8af4-27c2d5c8a771)|![edit](https://github.com/hegleB/MindMapView/assets/39490416/da752563-a85d-440a-948a-4e625fedfed1)|![move](https://github.com/hegleB/MindMapView/assets/39490416/5e226f2e-2420-4356-8473-7f9be5af2471)|![zoom_and_fit](https://github.com/hegleB/MindMapView/assets/39490416/1241982a-b7b9-499c-8b6b-37141bfa61d0)|
 
 ## Compose Multiplatform
-The library is a Kotlin Multiplatform library built on Compose Multiplatform. It supports Android, Desktop (JVM), iOS (`iosArm64`, `iosSimulatorArm64`) and Web (`wasmJs`).
-
-```kotlin
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation("com.github.hegleB:MindMapView:<version>")
-        }
-    }
-}
-```
+The library is a Kotlin Multiplatform library built on Compose Multiplatform. It supports Android, Desktop (JVM), iOS (`iosArm64`, `iosSimulatorArm64`) and Web (`wasmJs`); see [Installation](#installation) for adding it to `commonMain`.
 
 ```kotlin
 @Composable
