@@ -11,6 +11,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.Inflater
 import com.mindsync.library.io.XMind
 import com.mindsync.library.io.ZipArchive
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.util.Dp
 import java.io.File
 import java.io.ByteArrayOutputStream
@@ -465,6 +466,17 @@ class XMindTest {
 
         assertTrue(tree.nodes.keys.none { tree.isFloating(it) })
         assertEquals("both\n  One\n    One loose\n  Two\n    Two loose\n", tree.outline())
+    }
+
+    @Test
+    fun mapOfOneSheetIsLaidOutAsItsCentralTopic() {
+        val content = """
+            [{"title": "Sheet", "rootTopic": {"id": "r", "title": "Plan", "structureClass": "org.xmind.ui.org-chart.down",
+              "children": {"attached": [{"id": "a", "title": "A"}]}}}]
+        """.trimIndent()
+
+        assertEquals(MapStructure.ORG_DOWN, XMind.read(zip("content.json" to content), title = "plan").structure)
+        assertEquals(MapStructure.MIND_MAP, XMind.read(repositoryFile("docs/xmind_2026.xmind").readBytes(), "t").structure)
     }
 }
 

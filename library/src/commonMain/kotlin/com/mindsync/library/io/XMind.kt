@@ -9,6 +9,7 @@ import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.RichText
@@ -111,6 +112,8 @@ object XMind {
         , val summaries: List<Pair<IntRange, String>> = emptyList()
         // Where a floating topic is, from the center of its parent, or null for a topic that is not floating.
         , val floatingAt: DpOffset? = null
+        // How the topic's branch is laid out, as XMind names it, when it has a structure of its own.
+        , val structureClass: String? = null
     )
 
     private class Sheet(
@@ -210,6 +213,7 @@ object XMind {
             , attachedCount = attachedCount
             , boundaries = boundaries.map { it.range }
             , summaries = summaries
+            , structureClass = topic.string("structureClass")
         )
     }
 
@@ -299,6 +303,7 @@ object XMind {
             , attachedCount = attachedCount
             , boundaries = boundaries.map { it.range }
             , summaries = summaries
+            , structureClass = topic.attributes["structure-class"]
         )
     }
 
@@ -346,6 +351,8 @@ object XMind {
             )
         )
         rootTopic?.let {
+            // A map of one sheet is laid out as its central topic is; one of several sheets is a mind map.
+            tree.structure = MapStructure.fromXMindClass(it.structureClass)
             tree.setAttributes(root.id, attributes(it))
             tree.setTask(root.id, task(it))
             // Only the root has floating topics here, so those of the central topic of a map of one sheet float.

@@ -205,12 +205,18 @@ out and fitted, `arrangeBranch` for dragging), `model/MapStructure.kt` (`isTreeC
 
 ### Task E1: In files
 
-**Files:** `io/MindMapViewFile.kt`, `io/XMind.kt`, tests `MapStructureFilesTest.kt`, `XMindTest.kt`
+**Files:** `model/MapStructure.kt` (`fileName`, `fromFileName`, `fromXMindClass`), `io/MindMapViewFile.kt`,
+`io/XMind.kt`, tests `MapStructureFilesTest.kt`, `XMindTest.kt`
 
-- [ ] `.ccmm` keeps the structure; a map in the mind map is written as before.
-- [ ] XMind's `structureClass` of the central topic, once the names are confirmed with sample files; unknown ones are
-  the mind map.
-- [ ] Tests (4): round trip; nothing written for the mind map; XMind names; an unknown one.
+- [x] `.ccmm` keeps the structure as `<mindmapview structure="org-chart-down">`; a mind map is written as before, and
+  an unknown name is read as a mind map.
+- [x] XMind: the `structureClass` (XMind 2020+) or `structure-class` (XMind 8) of the central topic of a map of one
+  sheet. `org.xmind.ui.map.unbalanced` / `…clockwise` are confirmed by the repo's tests and samples; `…logic.right`,
+  `…org-chart.down` and `…timeline.horizontal` by a third-party XMind guide found on the web; `…logic.left`,
+  `…org-chart.up`, `…tree.right/left` and `…brace.right` follow their pattern but are **not confirmed**. Any name not
+  known, as a fishbone, is the mind map, so a wrong guess only falls back.
+- [x] Tests (5): every structure kept; nothing written for the mind map; an unknown one; XMind names; an XMind map read
+  as an org chart, and the repo's sample as a mind map.
 
 ### Task E2: In the app
 

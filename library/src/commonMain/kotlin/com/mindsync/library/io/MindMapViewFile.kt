@@ -24,6 +24,7 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.data.shape
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.util.Dp
@@ -67,6 +68,8 @@ object MindMapViewFile {
         append("<").append(ROOT_ELEMENT).append(" version=\"").append(FORMAT_VERSION).append('"')
         // A map in the Classic theme looks as one saved before there were themes, so it is written as one.
         if (tree.theme != MapThemes.CLASSIC) append(" theme=\"").append(escapeAttribute(tree.theme.id)).append('"')
+        // A mind map is written as maps were before there were structures.
+        if (tree.structure != MapStructure.MIND_MAP) append(" structure=\"").append(tree.structure.fileName).append('"')
         append(">\n")
         val root = tree.getRootNode()
         if (tree.isRootDragged) {
@@ -141,6 +144,7 @@ object MindMapViewFile {
 
         val tree = Tree<Any>()
         tree.theme = MapThemes.byId(map.attributes["theme"])
+        tree.structure = MapStructure.fromFileName(map.attributes["structure"])
         val root = tree.getRootNode()
         val usedIds = mutableSetOf(root.id)
         // The root is given this library's own id, whatever id it has in the file.

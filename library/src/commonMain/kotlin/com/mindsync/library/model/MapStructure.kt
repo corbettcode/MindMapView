@@ -24,17 +24,34 @@ enum class GrowDirection {
  * How a map is laid out, as XMind's structures. Only the drawing changes with it: the topics, their order and all
  * there is of them stay as they are, and the sides of the root a mind map has are kept for when it is one again.
  */
-enum class MapStructure {
+enum class MapStructure(
+    /** The name the structure is kept under in a map file. */
+    val fileName: String
+    /** The structure class XMind names it by. */
+    , private val xmindClass: String
+) {
     /** The root in the middle with branches on its six sides, as the map has been laid out all along. */
-    MIND_MAP
-    , LOGIC_RIGHT
-    , LOGIC_LEFT
-    , ORG_DOWN
-    , ORG_UP
-    , TREE_RIGHT
-    , TREE_LEFT
-    , BRACE_RIGHT
-    , TIMELINE;
+    MIND_MAP("mind-map", "org.xmind.ui.map.unbalanced")
+    , LOGIC_RIGHT("logic-right", "org.xmind.ui.logic.right")
+    , LOGIC_LEFT("logic-left", "org.xmind.ui.logic.left")
+    , ORG_DOWN("org-chart-down", "org.xmind.ui.org-chart.down")
+    , ORG_UP("org-chart-up", "org.xmind.ui.org-chart.up")
+    , TREE_RIGHT("tree-right", "org.xmind.ui.tree.right")
+    , TREE_LEFT("tree-left", "org.xmind.ui.tree.left")
+    , BRACE_RIGHT("brace-right", "org.xmind.ui.brace.right")
+    , TIMELINE("timeline", "org.xmind.ui.timeline.horizontal");
+
+    companion object {
+        /** Returns the structure kept as [name] in a map file, or the mind map for one that is not known. */
+        fun fromFileName(name: String?): MapStructure = entries.firstOrNull { it.fileName == name } ?: MIND_MAP
+
+        /**
+         * Returns the structure of XMind's [structureClass], or the mind map for one this library has no layout for,
+         * as a fishbone, and for XMind's other mind maps, as the clockwise one.
+         */
+        fun fromXMindClass(structureClass: String?): MapStructure =
+            entries.firstOrNull { it.xmindClass == structureClass } ?: MIND_MAP
+    }
 
     /**
      * Returns the way the branch the node [id] is in grows: the way its children are placed from it. In the mind map
@@ -85,7 +102,8 @@ enum class MapStructure {
         }
     }
 
-    // The root's children are along the axis, to its right; the branch of every other one goes up, and of the rest down.
+    // The root's children are along the axis, to its right; the branch of every other one goes up, and of the rest
+    // down.
     private fun timelineDirectionOf(
         tree: Tree<*>
         , id: String
