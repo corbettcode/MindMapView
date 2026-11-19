@@ -11,6 +11,7 @@ import com.mindsync.library.layout.BranchBox
 import com.mindsync.library.layout.FishboneLayout
 import com.mindsync.library.layout.MatrixGrid
 import com.mindsync.library.layout.MatrixLayout
+import com.mindsync.library.layout.TableCells
 import com.mindsync.library.layout.MeasureTextSize
 import com.mindsync.library.layout.MindMapLayoutManager
 import com.mindsync.library.layout.OwnedBranches
@@ -176,12 +177,12 @@ class MindMapManager {
                 top = maxOf(top, centerY - nodeY + halfHeight(node).dpVal)
                 bottom = maxOf(bottom, nodeY - centerY + halfHeight(node).dpVal)
             }
-            // A matrix's table reaches past the topics at its edges by the padding of its cells.
-            matrixGridOf(tree.getNode(owner.id))?.let { grid ->
-                left = maxOf(left, centerX - grid.columnEdges.first())
-                right = maxOf(right, grid.columnEdges.last() - centerX)
-                top = maxOf(top, centerY - grid.rowEdges.first())
-                bottom = maxOf(bottom, grid.rowEdges.last() - centerY)
+            // A table reaches past the topics at its edges by the padding of its cells.
+            tableCellsOf(tree.getNode(owner.id))?.bounds?.let { bounds ->
+                left = maxOf(left, centerX - bounds.left)
+                right = maxOf(right, bounds.right - centerX)
+                top = maxOf(top, centerY - bounds.top)
+                bottom = maxOf(bottom, bounds.bottom - centerY)
             }
             return BranchBox(Dp(left), Dp(right), Dp(top), Dp(bottom)).also { passBoxes?.put(owner.id, it) }
         }
@@ -247,6 +248,9 @@ class MindMapManager {
         if (!structure.isMatrix || tree.structureOwnerOf(owner.id) != owner.id) return null
         return matrixLayout(structure).gridOf(owner, tree)
     }
+
+    /** Returns the cells of the table laid out from [owner], as its topics are now, or null when it is no table's. */
+    internal fun tableCellsOf(owner: NodeData<*>): TableCells? = matrixGridOf(owner)?.toCells()
 
     init {
         (layoutManagers.values + directionManagers.values).forEach { it.ownedBranches = ownedBranches }

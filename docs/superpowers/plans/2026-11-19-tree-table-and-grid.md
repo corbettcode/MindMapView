@@ -163,12 +163,12 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 **Files:** `layout/TableCells.kt` (new), `layout/MatrixLayout.kt`, `MindMap.kt`; tests `MatrixDrawTest`,
 `ThemeDrawingTest`
 
-- [ ] `TableCells(rects, rules)` in dp. `MatrixGrid.toCells()` gives the matrix's grid lines and its heavier header
-  rules as cells.
-- [ ] `drawTables` draws every table owner's cells: the matrix's through it now. Header text stays in
+- [x] `TableCells.of(cells, rules)` in dp: each cell edge drawn once, edges along one line joined, and none under a
+  heavier rule; `bounds` takes in every cell. `MatrixGrid.toCells()` gives the matrix's cells and header rules.
+- [x] `drawTables` draws every table owner's cells: the matrix's through it now. Header text stays in
   `drawMatrices`.
-- [ ] `isTableLine(tree, id)` replaces `isMatrixLine`, skipping a line between two topics of one table.
-- [ ] Tests: the matrix draws as before, and `matrix-project.png` is unchanged or, if not, understood.
+- [x] `isTableLine(tree, parent, child)` replaces `isMatrixLine`, skipping a line between two topics of one table.
+- [x] Tests: the matrix draws as before; a render of `matrix-project` is byte-identical to the one before.
 
 ## Phase C: Tree table
 

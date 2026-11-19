@@ -50,6 +50,18 @@ internal class MatrixGrid(
         , row: Int
     ): Pair<Float, Float> =
         (columnEdges[column] + columnEdges[column + 1]) / 2 to (rowEdges[row] + rowEdges[row + 1]) / 2
+
+    /** The table this grid is drawn as: every cell, with heavier rules past the headers. */
+    fun toCells(): TableCells {
+        val cells = columnEdges.zipWithNext().flatMap { (left, right) ->
+            rowEdges.zipWithNext().map { (top, bottom) -> CellRect(left, top, right, bottom) }
+        }
+        val rules = listOf(
+            TableLine(columnEdges[1], rowEdges.first(), columnEdges[1], rowEdges.last())
+            , TableLine(columnEdges.first(), rowEdges[1], columnEdges.last(), rowEdges[1])
+        )
+        return TableCells.of(cells, rules)
+    }
 }
 
 /**

@@ -81,6 +81,7 @@ import com.mindsync.library.layout.FISHBONE_HEAD_GAP
 import com.mindsync.library.layout.FISHBONE_SLANT
 import com.mindsync.library.layout.MatrixGrid
 import com.mindsync.library.layout.MeasureTextSize
+import com.mindsync.library.layout.TableCells
 import com.mindsync.library.layout.TASK_BADGE_SIZE
 import com.mindsync.library.layout.TaskBadge
 import com.mindsync.library.layout.drawnBoundaries
@@ -123,8 +124,9 @@ internal val TASK_BADGE_STROKE = 1.5.dp
 private const val BOUNDARY_FILL_ALPHA = 0.12f
 private val BOUNDARY_CORNER_RADIUS = 12.dp
 
-// The width of the lines between the cells of a matrix; the one past its headers is twice as wide.
-private val MATRIX_LINE_WIDTH = 1.dp
+// The width of the lines between the cells of a table; its heavier rules, as past a matrix's headers, are twice as
+// wide.
+private val TABLE_LINE_WIDTH = 1.dp
 private val BOUNDARY_LINE_WIDTH = 1.5.dp
 private val BOUNDARY_DASH = 6.dp
 private val BOUNDARY_DASH_GAP = 4.dp
@@ -573,7 +575,8 @@ internal fun DrawScope.drawMap(
     drawBraces(state, drawInfo, lineColor, fadedIds)
     drawTimelineAxis(state, drawInfo, lineColor)
     drawFishbones(state, drawInfo, lineColor, fadedIds)
-    drawMatrices(state, measureTextSize, lineColor)
+    drawTables(state, lineColor)
+    drawMatrixHeaders(state, measureTextSize, lineColor)
     drawArrowLinks(state, fadedIds)
     underNodes()
     drawFoldMarkers(state, drawInfo, lineColor, filterView)
@@ -750,28 +753,34 @@ internal fun Density.fishboneLines(
     return FishboneLines(spineStart to spineEnd, bones, ribs)
 }
 
-// A matrix is drawn as a table: thin lines between its rows and columns, a heavier one past its headers, and the text
-// of each label in its header, in the color lines are drawn in when they have none of their own.
-private fun DrawScope.drawMatrices(
+// A table, as a matrix is drawn, has thin lines between and around its cells and heavier rules, as past a matrix's
+// headers, in the color lines are drawn in when they have none of their own.
+private fun DrawScope.drawTables(
+    state: MindMapState
+    , lineColor: Color
+) {
+    val tables = mutableListOf<TableCells>()
+    state.tree.doVisiblePreorderTraversal { node -> state.mindMapManager.tableCellsOf(node)?.let(tables::add) }
+    val thin = TABLE_LINE_WIDTH.toPx()
+    tables.flatMap { it.lines }.forEach { line ->
+        drawLine(
+            lineColor
+            , Offset(Dp(line.x1).toPx(this), Dp(line.y1).toPx(this))
+            , Offset(Dp(line.x2).toPx(this), Dp(line.y2).toPx(this))
+            , if (line.isHeavy) thin * 2 else thin
+        )
+    }
+}
+
+// The text of each label of a matrix in its header, in the color lines are drawn in when they have none of their own.
+private fun DrawScope.drawMatrixHeaders(
     state: MindMapState
     , measureTextSize: MeasureTextSize
     , lineColor: Color
 ) {
-    val tree = state.tree
     val grids = mutableListOf<MatrixGrid>()
-    tree.doVisiblePreorderTraversal { node -> state.mindMapManager.matrixGridOf(node)?.let(grids::add) }
-    val thin = MATRIX_LINE_WIDTH.toPx()
+    state.tree.doVisiblePreorderTraversal { node -> state.mindMapManager.matrixGridOf(node)?.let(grids::add) }
     grids.forEach { grid ->
-        val xs = grid.columnEdges.map { Dp(it).toPx(this) }
-        val ys = grid.rowEdges.map { Dp(it).toPx(this) }
-        xs.forEachIndexed { index, x ->
-            val width = if (index == 1) thin * 2 else thin
-            drawLine(lineColor, Offset(x, ys.first()), Offset(x, ys.last()), width)
-        }
-        ys.forEachIndexed { index, y ->
-            val width = if (index == 1) thin * 2 else thin
-            drawLine(lineColor, Offset(xs.first(), y), Offset(xs.last(), y), width)
-        }
         grid.labels.forEachIndexed { index, label ->
             if (label == null) return@forEachIndexed
             val layout = measureTextSize.header(label)
@@ -786,9 +795,9 @@ private fun DrawScope.drawMatrices(
     }
 }
 
-// Whether the line from [parent] to [child] is one a matrix's table shows instead: from its topic to its rows, and
-// from a row to the topics in its cells.
-private fun isMatrixLine(
+// Whether the line from [parent] to [child] is one a table shows by its cells instead. In a matrix, those are from its
+// topic to its rows, and from a row to the topics in its cells.
+private fun isTableLine(
     tree: Tree<*>
     , parent: NodeData<*>
     , child: NodeData<*>
@@ -1370,7 +1379,7 @@ private fun DrawScope.drawLines(
         if (tree.structureOf(node.id) == MapStructure.BRACE_RIGHT) return@forEachNodeWithLine
         if (isTimelineOwner(tree, node)) return@forEachNodeWithLine
         if (isFishboneLine(tree, node, toNode)) return@forEachNodeWithLine
-        if (isMatrixLine(tree, node, toNode)) return@forEachNodeWithLine
+        if (isTableLine(tree, node, toNode)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
             val grow = tree.placedDirectionOf(toNode.id)

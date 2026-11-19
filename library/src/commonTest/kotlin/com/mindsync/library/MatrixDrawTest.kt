@@ -14,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
@@ -60,6 +61,23 @@ class MatrixDrawTest {
         assertTrue(goals.centerY.dpVal > grid.rowEdges[1] && goals.centerY.dpVal < grid.rowEdges[2])
         assertTrue(tree.isMatrixCell("goals"))
         assertFalse(tree.isMatrixCell("plan"))
+    }
+
+    @Test
+    fun tableOfAMatrixIsALineAlongEachEdgeOfItsGridHeavierPastTheHeaders() = runComposeUiTest {
+        val state = shownState()
+        val root = state.tree.getRootNode()
+        val grid = assertNotNull(state.mindMapManager.matrixGridOf(root))
+
+        val cells = assertNotNull(state.mindMapManager.tableCellsOf(root))
+        assertEquals(grid.columnEdges.size + grid.rowEdges.size, cells.lines.size)
+        assertEquals(
+            setOf(grid.columnEdges[1] to true, grid.rowEdges[1] to false)
+            , cells.lines.filter { it.isHeavy }.map { if (it.x1 == it.x2) it.x1 to true else it.y1 to false }.toSet()
+        )
+        assertEquals(grid.columnEdges.first(), cells.bounds.left)
+        assertEquals(grid.rowEdges.last(), cells.bounds.bottom)
+        assertNull(state.mindMapManager.tableCellsOf(state.tree.getNode("plan")))
     }
 
     @Test
