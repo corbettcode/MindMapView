@@ -111,11 +111,11 @@ phase B adds typing and the outliner keys; phase C adds the app's view modes, me
 
 **Files:** new `library/.../outline/OutlineRows.kt`, test `OutlineRowsTest.kt`
 
-- [ ] `data class OutlineRow(id, depth, hasChildren, isFolded, isSummary)` and `outlineRows(tree): List<OutlineRow>`,
+- [x] `data class OutlineRow(id, depth, hasChildren, isFolded, isSummary)` and `outlineRows(tree): List<OutlineRow>`,
   the visible topics in preorder from the root (depth 0). Summaries come after the siblings they are about, which is
   where they are in `children`.
-- [ ] `rowIndexOf(rows, id)` and `rowAbove/rowBelow(rows, id)` for the arrow keys, which skip nothing that is shown.
-- [ ] Tests (6): order and depth; folded branches left out; a summary's place; the root alone; after a move; after a
+- [x] `rowIndexOf(rows, id)` and `rowAbove/rowBelow(rows, id)` for the arrow keys, which skip nothing that is shown.
+- [x] Tests (6): order and depth; folded branches left out; a summary's place; the root alone; after a move; after a
   fold change.
 
 ### Task A4: The outline composable
