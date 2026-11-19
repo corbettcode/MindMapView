@@ -45,7 +45,7 @@ the outline; phase D documents them.
 | Boundaries and summaries | A floating topic can't be in a boundary or summary with attached topics (they are grouped by side of the root); inside its own branch both work. |
 | Arrow links | To and from floating topics, as any topic. |
 | Outline view | Floating topics are rows at depth 1 after the attached topics, with a dashed bullet. Indent makes one an attached child of the row above. Outdenting a child of a floating topic makes it an **attached** topic of the root, on the right. |
-| FreeMind / Freeplane | Written as Freeplane writes a free node, a child of the root with `<hook NAME="FreeNode"/>` and its position as `HGAP_QUANTITY` / `VSHIFT_QUANTITY`. **To confirm against Freeplane 1.11's source or a saved file before A3 is done**; FreeMind itself ignores the hook and shows an ordinary child. |
+| FreeMind / Freeplane | Written as ordinary children of the root for now: Freeplane's marker for a free node could not be confirmed (see C1). |
 | OPML, Markdown, HTML | Written after the attached topics as ordinary branches. OPML marks them `_floating="true"` with `_x`, `_y`; Markdown and HTML lose that they float. |
 | Exports | PNG, SVG and PDF draw them as on screen; the image bounds already come from all the nodes drawn. |
 
@@ -168,15 +168,21 @@ test `FloatingDragTest.kt`
 
 ### Task C1: XMind, Freeplane, OPML, Markdown, HTML
 
-**Files:** `io/XMind.kt`, `io/FreeMind.kt`, `io/Opml.kt`, `io/Markdown.kt`, `io/HtmlOutline.kt`, tests `XMindTest.kt`
-(JVM), `FloatingFilesTest.kt`
+**Files:** `io/XMind.kt`, `io/Opml.kt`, tests `XMindTest.kt` (JVM), `FloatingFilesTest.kt`
 
-- [ ] XMind 2020+: the central topic's `children.detached` with `position`; XMind 8: `<topics type="detached">` with
-  `<position svg:x svg:y>`. Detached topics of other topics stay ordinary children (this library floats only under
-  the root). Both repo samples read with their floating topics at their positions.
-- [ ] Freeplane: once the format is confirmed (see the decisions), write and read the free-node hook and position.
-- [ ] OPML `_floating`, `_x`, `_y`; Markdown and HTML write them after the attached topics.
-- [ ] Tests (6): the two XMind samples; an XMind 8 snippet; Freeplane round trip; OPML round trip; Markdown order.
+- [x] XMind 2020+: the central topic's `children.detached` with `position`; XMind 8: `<topics type="detached">` with
+  `<position svg:x svg:y>`. Detached topics of other topics, and those of a map of several sheets, stay ordinary
+  children (this library floats only under the root). Both repo samples read with their floating topics at their
+  positions.
+- [ ] Freeplane: **not done, the format is not confirmed.** Freeplane 1.11's source writes `HGAP_QUANTITY` and
+  `VSHIFT_QUANTITY` on `<node>` as `"<number> pt"` (`Quantity.toString()`), and its predefined style
+  `defaultstyle.floating` hides the edge, but neither the source files read nor `doc/latestFreeplaneFeatures.mm` show
+  what marks a node as free positioned (no `FreeNode` hook was found), nor what the offsets are measured from. Until
+  that is confirmed, floating topics are written to FreeMind files as ordinary children of the root, as they were.
+- [x] OPML writes `_floating="true"`, `_x` and `_y` (export only; this library reads no OPML). Markdown, HTML and
+  FreeMind write floating topics after the attached ones, as the tree keeps them last.
+- [x] Tests (5): the two XMind samples; an XMind 8 snippet; floating topics of a map of two sheets stay children;
+  OPML attributes; the order in Markdown, HTML and FreeMind.
 
 ### Task C2: The outline
 
@@ -204,6 +210,8 @@ test `FloatingDragTest.kt`
 
 ## Out of scope / follow-ups
 
+- Floating topics in Freeplane files, once a file saved by Freeplane with a free node confirms the format.
+- A right click on blank map offering Add Floating Topic there.
 - Floating topics under topics other than the root (XMind allows them; they are read as ordinary children).
 - XMind's own floating-topic style and callouts.
 - Snapping or aligning floating topics to each other.

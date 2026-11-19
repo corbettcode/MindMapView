@@ -1,6 +1,7 @@
 package com.mindsync.library
 
 import androidx.compose.ui.graphics.Color
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeTask
@@ -10,6 +11,8 @@ import com.mindsync.library.data.Tree
 import com.mindsync.library.io.Inflater
 import com.mindsync.library.io.XMind
 import com.mindsync.library.io.ZipArchive
+import com.mindsync.library.util.Dp
+import java.io.File
 import java.io.ByteArrayOutputStream
 import java.util.zip.CRC32
 import java.util.zip.Deflater
@@ -401,4 +404,67 @@ class XMindTest {
         val error = assertFailsWith<IllegalArgumentException> { XMind.read(encrypted, title = "x") }
         assertEquals("The map is password-protected", error.message)
     }
+
+    // A file the repository has, found from wherever the tests run.
+    private fun repositoryFile(path: String): File = generateSequence(File("").absoluteFile) { it.parentFile }
+        .map { File(it, path) }
+        .first { it.exists() }
+
+    private fun Tree<Any>.floatingOffsetOfNamed(start: String): DpOffset? =
+        floatingOffsetOf(nodes.values.single { it.description.startsWith(start) }.id)
+
+    @Test
+    fun floatingTopicsOfTheSampleMapsFloatAtTheirPositions() {
+        val test = XMind.read(repositoryFile("docs/xmind_2026.xmind").readBytes(), title = "test")
+        val workout = XMind.read(
+            repositoryFile("desktop/71080cba-16f4-47fc-a104-527c78557f2d.xmind").readBytes()
+            , title = "workout"
+        )
+
+        assertEquals(DpOffset(Dp(121.953125f), Dp(443.56640625f)), test.floatingOffsetOfNamed("floating test"))
+        assertEquals(DpOffset(Dp(0f), Dp(203.5f)), workout.floatingOffsetOfNamed("xmind.net"))
+    }
+
+    @Test
+    fun floatingTopicOfXMind8FloatsAtItsPosition() {
+        val content = """
+            <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:svg="http://www.w3.org/2000/svg" version="2.0">
+              <sheet id="s1">
+                <topic id="root">
+                  <title>Root</title>
+                  <children>
+                    <topics type="attached"><topic id="a"><title>Attached</title></topic></topics>
+                    <topics type="detached">
+                      <topic id="f"><position svg:x="-120" svg:y="85"/><title>Loose</title></topic>
+                    </topics>
+                  </children>
+                </topic>
+              </sheet>
+            </xmap-content>
+        """.trimIndent()
+
+        val tree = XMind.read(zip("content.xml" to content), title = "map")
+
+        assertEquals(DpOffset(Dp(-120f), Dp(85f)), tree.floatingOffsetOfNamed("Loose"))
+        assertEquals(null, tree.floatingOffsetOfNamed("Attached"))
+    }
+
+    @Test
+    fun floatingTopicsBelowOtherTopicsAreOrdinaryChildren() {
+        val sheet = { title: String ->
+            """
+                {"title": "$title", "rootTopic": {"id": "$title", "title": "$title", "children": {
+                  "detached": [{"id": "$title-f", "title": "$title loose", "position": {"x": 10, "y": 20}}]
+                }}}
+            """.trimIndent()
+        }
+        val content = "[${sheet("One")}, ${sheet("Two")}]"
+
+        val tree = XMind.read(zip("content.json" to content), title = "both")
+
+        assertTrue(tree.nodes.keys.none { tree.isFloating(it) })
+        assertEquals("both\n  One\n    One loose\n  Two\n    Two loose\n", tree.outline())
+    }
 }
+

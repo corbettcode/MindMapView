@@ -2,7 +2,11 @@ package com.mindsync.library
 
 import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.Tree
+import com.mindsync.library.io.FreeMind
+import com.mindsync.library.io.HtmlOutline
+import com.mindsync.library.io.Markdown
 import com.mindsync.library.io.MindMapViewFile
+import com.mindsync.library.io.Opml
 import com.mindsync.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -60,4 +64,25 @@ class FloatingFilesTest {
 
         assertFalse(read.isFloating(read.idOf("F")))
     }
+
+    @Test
+    fun opmlMarksAFloatingTopicWithItsOffset() {
+        val text = Opml.write(tree())
+
+        assertTrue("<outline text=\"F\" _floating=\"true\" _x=\"120.5\" _y=\"-80.0\">" in text, text)
+        assertFalse("<outline text=\"A\" _floating" in text)
+    }
+
+    @Test
+    fun outlinesListFloatingTopicsAfterTheAttachedOnes() {
+        val tree = tree().apply { addNode("b", getRootNode().id, "B") }
+
+        val markdown = Markdown.write(tree)
+        val html = HtmlOutline.write(tree)
+
+        assertTrue(markdown.indexOf("B") < markdown.indexOf("F"), markdown)
+        assertTrue(html.indexOf(">B<") < html.indexOf(">F<"), html)
+        assertTrue(FreeMind.write(tree).let { it.indexOf("TEXT=\"B\"") < it.indexOf("TEXT=\"F\"") })
+    }
 }
+

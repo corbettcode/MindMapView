@@ -3,11 +3,13 @@ package com.mindsync.library.io
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.Boundary
+import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeShape
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.TaskProgress
 import com.mindsync.library.data.Tree
+import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.RichText
 
@@ -17,7 +19,9 @@ import com.mindsync.library.util.RichText
  *
  * Each topic becomes a node, with its title as the node's text and its notes as the node's note. Attached
  * topics come first among a topic's children, followed by its floating topics and callouts; a summary topic comes
- * right after the attached topics it is about, and is a summary of them. A
+ * right after the attached topics it is about, and is a summary of them. The floating topics of a map's central topic
+ * float at their positions from it; those of other topics, which this library has no floating topics for, are
+ * ordinary children. A
  * map with one sheet has that sheet's central topic as its root. A map with several sheets gets a root named
  * after its title, with each sheet's central topic as a branch.
  *
@@ -39,6 +43,7 @@ object XMind {
     private val MANIFESTS = listOf("manifest.json", "META-INF/manifest.xml")
     private const val ENCRYPTION = "encryption-data"
     private const val ATTACHED = "attached"
+    private const val DETACHED = "detached"
     private const val MASTER = "master"
     private const val LABELS_ATTRIBUTE = "Labels"
 
@@ -104,6 +109,8 @@ object XMind {
         , val boundaries: List<IntRange?> = emptyList()
         // The attached children each summary is about, by their places among them, and the id of its topic.
         , val summaries: List<Pair<IntRange, String>> = emptyList()
+        // Where a floating topic is, from the center of its parent, or null for a topic that is not floating.
+        , val floatingAt: DpOffset? = null
     )
 
     private class Sheet(
@@ -158,9 +165,15 @@ object XMind {
         val notes = topic["notes"] as? Map<*, *>
         val properties = (topic["style"] as? Map<*, *>)?.get("properties") as? Map<*, *>
         val childLists = (topic["children"] as? Map<*, *>)?.entries.orEmpty().sortedBy { it.key != ATTACHED }
-        val children = childLists
-            .flatMap { (it.value as? List<*>).orEmpty().filterIsInstance<Map<*, *>>() }
-            .map(::jsonTopic)
+        val children = childLists.flatMap { (key, topics) ->
+            (topics as? List<*>).orEmpty().filterIsInstance<Map<*, *>>().map { child ->
+                val position = (child["position"] as? Map<*, *>)?.takeIf { key == DETACHED }
+                val x = (position?.get("x") as? Number)?.toFloat()
+                val y = (position?.get("y") as? Number)?.toFloat()
+                val floatingAt = if (x != null && y != null) DpOffset(Dp(x), Dp(y)) else null
+                jsonTopic(child).copy(floatingAt = floatingAt)
+            }
+        }
         val attachedCount = childLists
             .firstOrNull { it.key == ATTACHED }
             ?.let { (it.value as? List<*>).orEmpty().filterIsInstance<Map<*, *>>().size }
@@ -244,9 +257,15 @@ object XMind {
             .orEmpty()
             .filter { it.name == "topics" }
             .sortedBy { it.attributes["type"] != ATTACHED }
-        val children = childLists
-            .flatMap { topics -> topics.children.filter { it.name == "topic" } }
-            .map { xmlTopic(it, styles) }
+        val children = childLists.flatMap { topics ->
+            topics.children.filter { it.name == "topic" }.map { child ->
+                val position = child.child("position")?.takeIf { topics.attributes["type"] == DETACHED }
+                val x = position?.attributes?.get("svg:x")?.toFloatOrNull()
+                val y = position?.attributes?.get("svg:y")?.toFloatOrNull()
+                val floatingAt = if (x != null && y != null) DpOffset(Dp(x), Dp(y)) else null
+                xmlTopic(child, styles).copy(floatingAt = floatingAt)
+            }
+        }
         val attachedCount = childLists
             .firstOrNull { it.attributes["type"] == ATTACHED }
             ?.children
@@ -329,6 +348,8 @@ object XMind {
         rootTopic?.let {
             tree.setAttributes(root.id, attributes(it))
             tree.setTask(root.id, task(it))
+            // Only the root has floating topics here, so those of the central topic of a map of one sheet float.
+            branches.zip(branchIds).forEach { (topic, id) -> topic.floatingAt?.let { tree.setFloating(id, it) } }
         }
         sheets.flatMap { it.relationships }.forEach { (from, to) ->
             val sourceId = nodeIds[from] ?: return@forEach
