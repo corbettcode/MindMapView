@@ -93,6 +93,8 @@ import com.mindsync.library.model.DrawInfo
 import com.mindsync.library.model.TopicKind
 import com.mindsync.library.model.attachHighlightColor
 import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.GrowDirection
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.node.NodeDrawerFactory
@@ -609,16 +611,24 @@ private fun DrawScope.drawSummaryBrackets(
         val halfWidth = (bracket.pointX - bracket.backX) / 2
         val middleX = bracket.backX + halfWidth
         val curl = minOf(abs(halfWidth), (bracket.bottom - bracket.top) / 4)
+        // The bracket is worked out along the way its branch grows and across it, and turned onto the screen.
+        fun moveTo(along: Float, across: Float) = bracket.at(along, across).let { path.moveTo(it.x, it.y) }
+        fun lineTo(along: Float, across: Float) = bracket.at(along, across).let { path.lineTo(it.x, it.y) }
+        fun cubicTo(control: Pair<Float, Float>, end: Pair<Float, Float>) {
+            val c = bracket.at(control.first, control.second)
+            val e = bracket.at(end.first, end.second)
+            path.cubicTo(c.x, c.y, c.x, c.y, e.x, e.y)
+        }
         path.reset()
-        path.moveTo(bracket.backX, bracket.top)
-        path.cubicTo(middleX, bracket.top, middleX, bracket.top, middleX, bracket.top + curl)
-        path.lineTo(middleX, bracket.pointY - curl)
-        path.cubicTo(middleX, bracket.pointY, middleX, bracket.pointY, bracket.pointX, bracket.pointY)
-        path.cubicTo(middleX, bracket.pointY, middleX, bracket.pointY, middleX, bracket.pointY + curl)
-        path.lineTo(middleX, bracket.bottom - curl)
-        path.cubicTo(middleX, bracket.bottom, middleX, bracket.bottom, bracket.backX, bracket.bottom)
-        path.moveTo(bracket.pointX, bracket.pointY)
-        path.lineTo(bracket.nodeX, bracket.pointY)
+        moveTo(bracket.backX, bracket.top)
+        cubicTo(middleX to bracket.top, middleX to bracket.top + curl)
+        lineTo(middleX, bracket.pointY - curl)
+        cubicTo(middleX to bracket.pointY, bracket.pointX to bracket.pointY)
+        cubicTo(middleX to bracket.pointY, middleX to bracket.pointY + curl)
+        lineTo(middleX, bracket.bottom - curl)
+        cubicTo(middleX to bracket.bottom, bracket.backX to bracket.bottom)
+        moveTo(bracket.pointX, bracket.pointY)
+        lineTo(bracket.nodeX, bracket.pointY)
         drawPath(
             path
             , line.color.fadedIf(summaryId in fadedIds)
@@ -1104,13 +1114,12 @@ private fun DrawScope.drawLines(
         if (tree.isSummary(toNode.id) || tree.isFloating(toNode.id)) return@forEachNodeWithLine
         if (manager.getMovingState().not() || manager.getSelectedNode()?.id != toNode.id) {
             val side = tree.sideOf(toNode.id)
-            val isRightSide = !side.isLeft
-            val isSlanted = node.parentId == null && side.isSlanted
+            val grow = tree.directionOf(toNode.id)
+            val isRightSide = grow != GrowDirection.LEFT
+            val isSlanted = node.parentId == null && side.isSlanted && tree.structure == MapStructure.MIND_MAP
             // The lines to the children on a slanted side of the root leave it along that side's line.
-            val start =
-                if (isSlanted) rootEdgePoint(node, side, Dp(0f))
-                else Offset(getNodeEdgeX(node, isRightEdge = isRightSide), lineEndY(node))
-            val end = Offset(getNodeEdgeX(toNode, isRightEdge = isRightSide.not()), lineEndY(toNode))
+            val start = if (isSlanted) rootEdgePoint(node, side, Dp(0f)) else lineAnchor(node, grow, isOutgoing = true)
+            val end = lineAnchor(toNode, grow, isOutgoing = false)
             val curve =
                 if (isSlanted) {
                     // The line turns up or down right by the root, before the children straight out to that side,
@@ -1118,9 +1127,13 @@ private fun DrawScope.drawLines(
                     val bend = Offset(start.x + (if (isRightSide) 1f else -1f) * SLANTED_LINE_BEND.toPx(this), end.y)
                     LineCurve(start, bend, bend, end)
                 }
-                else {
+                else if (grow.isHorizontal) {
                     val midX = (start.x + end.x) / 2
                     LineCurve(start, Offset(midX, start.y), Offset(midX, end.y), end)
+                }
+                else {
+                    val midY = (start.y + end.y) / 2
+                    LineCurve(start, Offset(start.x, midY), Offset(end.x, midY), end)
                 }
             val width = line.width.toPx(this)
             path.reset()
@@ -1336,7 +1349,7 @@ private fun DrawScope.drawAddButtons(
     forEachNodeWithLine(state.tree, drawInfo, lineColor) { node, line ->
         if (node.id !in shownIds) return@forEachNodeWithLine
         state.addButtonSides(node).forEach { side ->
-            val center = addButtonCenter(node, side)
+            val center = addButtonCenter(state.tree, node, side)
             drawCircle(color = line.color, radius = radius, center = center)
             drawLine(iconColor, center - Offset(arm, 0f), center + Offset(arm, 0f), strokeWidth)
             drawLine(iconColor, center - Offset(0f, arm), center + Offset(0f, arm), strokeWidth)
@@ -1375,20 +1388,46 @@ private const val HIDDEN_MATCH_DOT_SCALE = 0.45f
 internal fun Density.foldMarkerCenter(
     tree: Tree<*>
     , node: NodeData<*>
-): Offset = addButtonCenter(node, tree.sideOf(node.id))
+): Offset = addButtonCenter(tree, node, tree.sideOf(node.id))
 
 // The button touches the node's edge where its lines start, so it covers the start of the lines, not the node.
+internal fun Density.addButtonCenter(
+    tree: Tree<*>
+    , node: NodeData<*>
+    , side: LayoutSide = LayoutSide.RIGHT
+): Offset {
+    if (tree.structure == MapStructure.MIND_MAP) return addButtonCenter(node, side)
+    val grow = tree.directionOf(node.id)
+    val radius = ADD_BUTTON_RADIUS.toPx(this) * grow.sign
+    val edge = lineAnchor(node, grow, isOutgoing = true)
+    return if (grow.isHorizontal) edge + Offset(radius, 0f) else edge + Offset(0f, radius)
+}
+
+// The button of a node of a mind map, on [side] of it.
 internal fun Density.addButtonCenter(
     node: NodeData<*>
     , side: LayoutSide = LayoutSide.RIGHT
 ): Offset {
     // The root's buttons are each on the line of their side, so they are evenly spaced around it.
     if (node.parentId == null) return rootEdgePoint(node, side, ADD_BUTTON_RADIUS)
-    val radius = ADD_BUTTON_RADIUS.toPx(this)
-    val centerX =
-        if (side.isLeft) getNodeEdgeX(node, isRightEdge = false) - radius
-        else getNodeEdgeX(node, isRightEdge = true) + radius
-    return Offset(centerX, lineEndY(node))
+    val grow = if (side.isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
+    return lineAnchor(node, grow, isOutgoing = true) + Offset(ADD_BUTTON_RADIUS.toPx(this) * grow.sign, 0f)
+}
+
+// Where the lines of a branch growing [grow] leave the node, to its children, or come into it, from its parent: halfway
+// down its side for a branch growing left or right, and halfway along its bottom or top for one growing down or up.
+internal fun Density.lineAnchor(
+    node: NodeData<*>
+    , grow: GrowDirection
+    , isOutgoing: Boolean
+): Offset {
+    if (grow.isHorizontal) {
+        return Offset(getNodeEdgeX(node, isRightEdge = (grow == GrowDirection.RIGHT) == isOutgoing), lineEndY(node))
+    }
+    val isBottom = (grow == GrowDirection.DOWN) == isOutgoing
+    val centerY = node.path.centerY.toPx(this)
+    val halfHeight = halfHeight(node).toPx(this)
+    return Offset(node.path.centerX.toPx(this), if (isBottom) centerY + halfHeight else centerY - halfHeight)
 }
 
 // The lines of a node meet it halfway down its sides, but those of a line node meet the ends of its line.

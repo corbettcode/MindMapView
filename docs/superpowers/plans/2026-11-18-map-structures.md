@@ -109,15 +109,18 @@ subclasses stay as they are, being public), test `DirectionLayoutTest.kt`
 
 ### Task A3: Geometry by direction
 
-**Files:** `MindMap.kt` (`drawLines`, `getNodeEdgeX`, `addButtonCenter`, `foldMarkerCenter`),
-`layout/SummaryGeometry.kt`, `data/Tree.kt` (`moveAmongSiblings` along the cross axis), `MindMapState.kt`
-(`addButtonSides`), tests `DirectionGeometryTest.kt`
+**Files:** `MindMap.kt` (`drawLines`, `lineAnchor`, `addButtonCenter(tree, …)` beside the mind map's own,
+`foldMarkerCenter`, the bracket drawn through `SummaryBracket.at`), `layout/SummaryGeometry.kt`, `data/Tree.kt`
+(`directionOf`, `moveAmongSiblings` along the cross axis), `MindMapState.kt` (`addButtonSides`, the drop), test
+`DirectionGeometryTest.kt`
 
-- [ ] Line ends on the parent's edge facing the direction and the child's edge facing back; the curve's bend along
-  the main axis. Summary brackets past the range along the main axis, spanning it along the cross axis. Add buttons
-  and fold rings on the growing edge. Dropping among siblings compares the cross axis.
-- [ ] No change for `RIGHT` and `LEFT`: the golden image and all drawing tests pass unchanged.
-- [ ] Tests (6): each piece for `DOWN` (line end points, bracket, add button, fold ring, drop order), and the golden.
+- [x] Line ends on the parent's edge facing the direction and the child's edge facing back (`lineAnchor`); the
+  curve's bend along the main axis. Summary brackets past the range along the main axis, spanning it across. Add
+  buttons and fold rings on the growing edge; the root has one button outside the mind map. Dropping among siblings
+  compares the cross axis. The slanted sides' lines only in the mind map.
+- [x] No change for `RIGHT` and `LEFT`: all 651 library tests pass on a full rerun, the golden image among them.
+- [x] Tests (5): line ends down and up; add button, fold ring and the root's one button below; the summary bracket
+  below the branches it sums up; drop order by x; a mind map's buttons where they were.
 
 ### Task A4: The logic chart
 

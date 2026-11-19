@@ -1,5 +1,9 @@
 package com.mindsync.library.layout
 
+import com.mindsync.library.data.NodeData
+
+import androidx.compose.ui.geometry.Offset
+
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.mindsync.library.data.Tree
@@ -20,9 +24,10 @@ internal val SUMMARY_SPACE = 24.dp
 internal val SUMMARY_OFFSET = SUMMARY_BRACKET_GAP + SUMMARY_BRACKET_WIDTH + SUMMARY_SPACE
 
 /**
- * Where the bracket of a summary is, in the pixels of the tree: along [backX] from [top] to [bottom], the top to the
- * bottom of the shown nodes it is about, with its point at ([pointX], [pointY]), and a line from there to the summary
- * node at [nodeX].
+ * Where the bracket of a summary is, in the pixels of the tree, along the way its branch grows ("x") and across it
+ * ("y"), which are the screen's x and y when it [isHorizontal], and turned when it grows down or up: along [backX]
+ * from [top] to [bottom], the first to the last across of the shown nodes it is about, with its point at ([pointX],
+ * [pointY]), and a line from there to the summary node at [nodeX].
  */
 internal class SummaryBracket(
     val top: Float
@@ -31,7 +36,14 @@ internal class SummaryBracket(
     , val pointX: Float
     , val pointY: Float
     , val nodeX: Float
-)
+    , val isHorizontal: Boolean = true
+) {
+    /** The point of the screen [along] the way the branch grows and [across] it. */
+    fun at(
+        along: Float
+        , across: Float
+    ): Offset = if (isHorizontal) Offset(along, across) else Offset(across, along)
+}
 
 /**
  * Returns the bracket of the summary [summaryId], past the furthest out of the shown nodes it is about and the nodes
@@ -43,28 +55,31 @@ internal fun Density.summaryBracket(
 ): SummaryBracket? {
     if (!tree.isVisible(summaryId)) return null
     val rangeIds = tree.summaryChildIds(summaryId).takeIf { it.isNotEmpty() } ?: return null
-    val isLeft = tree.sideOf(summaryId).isLeft
+    val grow = tree.directionOf(summaryId)
+    val isHorizontal = grow.isHorizontal
+    val isBack = grow.sign < 0f
+    // Along the way the branch grows, and across it, in pixels.
+    fun along(node: NodeData<*>) = (if (isHorizontal) node.path.centerX else node.path.centerY).toPx(this)
+    fun across(node: NodeData<*>) = (if (isHorizontal) node.path.centerY else node.path.centerX).toPx(this)
+    fun halfAlong(node: NodeData<*>) = (if (isHorizontal) halfWidth(node) else halfHeight(node)).toPx(this)
+    fun halfAcross(node: NodeData<*>) = (if (isHorizontal) halfHeight(node) else halfWidth(node)).toPx(this)
     var top = Float.MAX_VALUE
     var bottom = -Float.MAX_VALUE
-    var edge = if (isLeft) Float.MAX_VALUE else -Float.MAX_VALUE
+    var edge = if (isBack) Float.MAX_VALUE else -Float.MAX_VALUE
     rangeIds.forEach { id ->
         tree.doVisiblePreorderTraversal(tree.getNode(id)) { node ->
-            val centerX = node.path.centerX.toPx(this)
-            val centerY = node.path.centerY.toPx(this)
-            val halfWidth = halfWidth(node).toPx(this)
-            val halfHeight = halfHeight(node).toPx(this)
-            top = minOf(top, centerY - halfHeight)
-            bottom = maxOf(bottom, centerY + halfHeight)
-            edge = if (isLeft) minOf(edge, centerX - halfWidth) else maxOf(edge, centerX + halfWidth)
+            top = minOf(top, across(node) - halfAcross(node))
+            bottom = maxOf(bottom, across(node) + halfAcross(node))
+            edge = if (isBack) minOf(edge, along(node) - halfAlong(node)) else maxOf(edge, along(node) + halfAlong(node))
         }
     }
     val summary = tree.getNode(summaryId)
-    val direction = if (isLeft) -1f else 1f
-    val backX = edge + direction * SUMMARY_BRACKET_GAP.toPx()
-    val pointX = backX + direction * SUMMARY_BRACKET_WIDTH.toPx()
-    val nodeX = summary.path.centerX.toPx(this) - direction * halfWidth(summary).toPx(this)
+    val sign = if (isBack) -1f else 1f
+    val backX = edge + sign * SUMMARY_BRACKET_GAP.toPx()
+    val pointX = backX + sign * SUMMARY_BRACKET_WIDTH.toPx()
+    val nodeX = along(summary) - sign * halfAlong(summary)
     // The point faces the summary node, which is centered on the siblings, but is kept off the bracket's ends.
     val end = minOf(SUMMARY_BRACKET_WIDTH.toPx(), (bottom - top) / 2)
-    val pointY = summary.path.centerY.toPx(this).coerceIn(top + end, bottom - end)
-    return SummaryBracket(top, bottom, backX, pointX, pointY, nodeX)
+    val pointY = across(summary).coerceIn(top + end, bottom - end)
+    return SummaryBracket(top, bottom, backX, pointX, pointY, nodeX, isHorizontal)
 }

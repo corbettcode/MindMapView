@@ -2,6 +2,7 @@ package com.mindsync.library.data
 
 import androidx.compose.ui.graphics.Color
 import com.mindsync.library.model.AttributeDisplay
+import com.mindsync.library.model.GrowDirection
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.LevelStyle
 import com.mindsync.library.model.MapStructure
@@ -49,6 +50,9 @@ class Tree<T> {
 
     /** How the map is laid out: as a mind map, a logic chart, an org chart, and so on. */
     var structure: MapStructure = MapStructure.MIND_MAP
+
+    /** Returns the way the branch the node [id] is in grows in the map's [structure]. */
+    fun directionOf(id: String): GrowDirection = structure.directionOf(this, id)
 
     /**
      * How the app draws each kind of topic, in place of the theme's style for its level. A kind without one is
@@ -822,18 +826,23 @@ class Tree<T> {
 
     /**
      * Moves [targetId] among the children of its parent that are on its side, to the place its center at
-     * [centerY] falls in when they are stacked top down. Returns whether the order of the children changed.
+     * ([centerX], [centerY]) falls in when they are stacked across the way their branch grows: top down for one
+     * growing left or right, left to right for one growing down or up. Returns whether the order changed.
      */
     internal fun moveAmongSiblings(
         targetId: String
+        , centerX: Dp
         , centerY: Dp
     ): Boolean {
+        val isAcrossX = !directionOf(targetId).isHorizontal
+        val center = if (isAcrossX) centerX else centerY
+        fun crossOf(node: NodeData<*>) = if (isAcrossX) node.path.centerX else node.path.centerY
         val parent = _nodes[_nodes[targetId]?.parentId] ?: return false
         val side = sideOf(targetId)
         val others = parent.children - targetId
         val sameSide = others.filter { sideOf(it) == side }
         if (sameSide.isEmpty()) return false
-        val below = sameSide.firstOrNull { getNode(it).path.centerY.dpVal > centerY.dpVal }
+        val below = sameSide.firstOrNull { crossOf(getNode(it)).dpVal > center.dpVal }
         val index = if (below != null) others.indexOf(below) else others.indexOf(sameSide.last()) + 1
         val newChildren = others.toMutableList().apply { add(index, targetId) }
         if (newChildren == parent.children) return false

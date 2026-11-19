@@ -1970,7 +1970,9 @@ class MindMapState(
         , point: Offset
     ): Boolean {
         val radius = ADD_BUTTON_RADIUS.toPx(density)
-        return addButtonSides(node).any { side -> (point - density.addButtonCenter(node, side)).getDistance() <= radius }
+        return addButtonSides(node).any { side ->
+            (point - density.addButtonCenter(tree, node, side)).getDistance() <= radius
+        }
     }
 
     internal fun findNodeAt(position: Offset): NodeData<*>? = findNode(toTreePoint(position))
@@ -2075,7 +2077,9 @@ class MindMapState(
 
     // The root has an add button for each of its sets of children; other nodes have one on their own side.
     internal fun addButtonSides(node: NodeData<*>): List<LayoutSide> {
-        return if (node.parentId == null) LayoutSide.entries else listOf(tree.sideOf(node.id))
+        // Only the root of a mind map has children on its six sides; in another structure it has one way to grow.
+        val isMindMapRoot = node.parentId == null && tree.structure == MapStructure.MIND_MAP
+        return if (isMindMapRoot) LayoutSide.entries else listOf(tree.sideOf(node.id))
     }
 
     internal fun findAddButton(position: Offset): Pair<NodeData<*>, LayoutSide>? {
@@ -2084,7 +2088,7 @@ class MindMapState(
         var button: Pair<NodeData<*>, LayoutSide>? = null
         addButtonNodes().forEach { node ->
             addButtonSides(node).forEach { side ->
-                if ((point - density.addButtonCenter(node, side)).getDistance() <= radius) {
+                if ((point - density.addButtonCenter(tree, node, side)).getDistance() <= radius) {
                     button = node to side
                 }
             }
@@ -2185,7 +2189,8 @@ class MindMapState(
             }
             // A node dropped on no other node takes the place among its siblings that it was dropped at.
             else if (selectedNode != null) {
-                recordChange { tree.moveAmongSiblings(selectedNode.id, tree.getNode(selectedNode.id).path.centerY) }
+                val dropped = tree.getNode(selectedNode.id).path
+                recordChange { tree.moveAmongSiblings(selectedNode.id, dropped.centerX, dropped.centerY) }
             }
         }
         // Where the root is is not part of what is compared for a change, so the drag is recorded on its own.
