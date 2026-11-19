@@ -226,7 +226,8 @@ the section numbers that point at them one on, rows in the shortcut tables), the
   rearranging, with the side rule for the root's topics; boundaries and arrow links are only on the map.
 - [x] Shortcuts: "In the outliner" and "While typing in the outliner" groups, Alt+Shift+Up / Down under Editing,
   Ctrl+Shift+O under View, and two Mouse rows, in the dialog and the manual alike.
-- [ ] A screenshot of Map and Outliner on `desktop/feature_tour.mmv` for the README and the manual (left for later).
+- [x] A screenshot of Map and Outliner on `desktop/feature_tour.ccmm` in the README (`docs/outliner_split_view.png`),
+  rendered at 2x from the app in a test with some branches folded. The manual has no screenshot of it yet.
 
 ## Out of scope / follow-ups
 
