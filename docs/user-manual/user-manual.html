@@ -569,6 +569,8 @@
         <figure class="structure"><img class="screenshot" src="../structures/tree-right.png" alt="Tree Chart →"><figcaption>Tree Chart →</figcaption></figure>
         <figure class="structure"><img class="screenshot" src="../structures/brace-right.png" alt="Brace Map"><figcaption>Brace Map</figcaption></figure>
         <figure class="structure"><img class="screenshot" src="../structures/timeline.png" alt="Timeline"><figcaption>Timeline</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/fishbone-right.png" alt="Fishbone, Head Right"><figcaption>Fishbone, Head Right</figcaption></figure>
+        <figure class="structure"><img class="screenshot" src="../structures/matrix-rows.png" alt="Matrix, Rows"><figcaption>Matrix, Rows</figcaption></figure>
     </div>
     <ul>
         <li><b>Logic chart</b> (→ or ←): every branch to one side of the root.</li>
@@ -576,11 +578,26 @@
         <li><b>Tree chart</b> (→ or ←): columns below the root, each topic's subtopics indented below it.</li>
         <li><b>Brace map</b>: as the logic chart, with each topic joined to its subtopics by a brace.</li>
         <li><b>Timeline</b>: the root's topics along an axis, their branches up and down by turns.</li>
+        <li><b>Fishbone</b> (head left or right): a cause-and-effect diagram. The root is the effect, at the head of a
+            spine; its topics are causes, at the ends of bones slanting off the spine, above and below it by turns;
+            their subtopics sit along the bone, each on a short rib, and the topics below them grow on away from the
+            head.</li>
+        <li><b>Matrix</b> (rows or columns): a table. The root is in the corner and its topics are the rows (or the
+            columns); their subtopics are in the cells, in the column of their label.</li>
     </ul>
     <p>
         Move Clockwise and the root's six add buttons are only in the mind map; the sides of its branches are kept for
         when it is one again. Summaries, boundaries, folding and floating topics work in every structure. XMind maps
         open in their structure where MindMapView has it, and as a mind map otherwise.
+    </p>
+    <p>
+        A matrix takes its columns (its rows, by columns) from labels. A topic's label is the first value of its
+        <b>Labels</b> attribute, with several separated by commas, which is where the labels of an XMind map are read
+        into. The columns are the labels in the order they first come, and the topics without a label share a last
+        column with no header. To move a topic to another column, drag it into a cell of that column: it takes that
+        column's label, as one step to undo. Editing a topic in a matrix, its attributes say so and offer
+        <span class="menu">+ Labels</span>. A topic in a cell doesn't show its label in its table of attributes, as
+        the column's header does.
     </p>
     <h3>A structure for a branch</h3>
     <p>

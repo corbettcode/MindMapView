@@ -227,10 +227,14 @@ golden `matrix-project.png`
 
 ### Task D2: Docs
 
-**Files:** `docs/user-manual/user-manual.html` (the two structures in "Structures", with pictures in
-`docs/structures/`; how labels make a matrix's columns), PDF, `README.md`
+**Files:** `docs/user-manual/user-manual.html` (the two in "Structures", with `docs/structures/fishbone-right.png` and
+`matrix-rows.png`, and a paragraph on how labels make a matrix's columns), `desktop/manual/MindMapView-User-Manual.pdf`,
+`README.md`, pictures `docs/structures/fishbone-left.png`, `matrix-columns.png` for later use
 
-- [ ] What each is for, how a matrix takes its columns from labels, how both are kept in files and read from XMind.
+- [x] What each is for and how it is laid out, how a matrix takes its columns from labels and how a topic is moved to
+  another column, what the edit dialog offers, and that XMind's names are not yet confirmed. The pictures are a
+  cause-and-effect fishbone for a late delivery and the project table; the PDF was printed again and its pages looked
+  at.
 
 ## Phase E: Against XMind's files
 
