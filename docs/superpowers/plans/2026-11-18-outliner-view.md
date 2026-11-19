@@ -123,18 +123,22 @@ phase B adds typing and the outliner keys; phase C adds the app's view modes, me
 **Files:** new `library/.../outline/MindMapOutline.kt`, new `outline/OutlineRowView.kt`, `MindMap.kt` (share the task
 badge and note marker drawing), test `MindMapOutlineTest.kt` (JVM, Compose UI)
 
-- [ ] `MindMapOutline(state, modifier, topicFontFamilies, emojiFontFamily, dateLabel, onLinkClick, onRowMenu)`: a
+- [x] `MindMapOutline(state, modifier, topicFontFamilies, emojiFontFamily, dateLabel, onLinkClick, onRowMenu)`: a
   `LazyColumn` of `outlineRows`, 24 dp per level, with the parts of a row from the decisions table, in the theme's
   background and text colours so dark themes read.
-- [ ] Click selects (`state.select`), Ctrl+click and Shift+click as on the map (`toggleSelected`, `selectRange`), a
+- [x] Click selects (`state.select`), Ctrl+click and Shift+click as on the map (`toggleSelected`, `selectRange`), a
   click on the chevron folds, a right click calls `onRowMenu` with the topic, so the app shows its node menu.
-- [ ] When the selected topic changes, its row is scrolled into view (`animateScrollToItem` only when it is off the
+- [x] When the selected topic changes, its row is scrolled into view (`animateScrollToItem` only when it is off the
   screen, so clicking doesn't jump).
-- [ ] Rows that don't match `state.taskFilter` are drawn at 30% alpha, unless a topic below them matches, from the
+- [x] Rows that don't match `state.taskFilter` are drawn at 30% alpha, unless a topic below them matches, from the
   same `taskFilterView()` the map uses.
-- [ ] Tests (7): rows in order with their indentation; a click selects and the map's `selectedNode` is it; the chevron
-  folds and the rows below go; a change on the map (add, remove, edit text) shows in the outline; a selection made in
-  the state scrolls its row into view; filtered rows faded; a right click calls `onRowMenu`.
+- [x] The note and attribute markers are shown, but hovering them opens no flyover yet (a follow-up); the edit dialog
+  shows both.
+- [x] Tests (7): rows in order with their indentation; a click selects and the map's `selectedNode` is it; a second
+  click is a double click; the arrow folds and the rows below go, and undo brings them back; a change on the map (add,
+  remove) shows in the outline; a selection made in the state scrolls its row into view; a right click calls
+  `onRowMenu`. The fading of filtered rows uses the map's `taskFilterView()`, which `TaskFilterTest` covers, and
+  needs a check by eye here.
 
 ---
 

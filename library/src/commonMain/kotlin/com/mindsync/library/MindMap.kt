@@ -47,6 +47,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
@@ -107,7 +108,7 @@ import kotlin.math.sqrt
 private const val ATTACH_CIRCLE_NODE_RANGE_VALUE = 15f
 private const val SCROLL_ZOOM_STEP = 1.1f
 private const val TEXT_CACHE_SIZE = 64
-private val TASK_BADGE_STROKE = 1.5.dp
+internal val TASK_BADGE_STROKE = 1.5.dp
 // A boundary is filled with its color this much, so the nodes in it stay easy to read.
 private const val BOUNDARY_FILL_ALPHA = 0.12f
 private val BOUNDARY_CORNER_RADIUS = 12.dp
@@ -708,38 +709,56 @@ private fun DrawScope.drawTaskBadges(
     // A line node has no fill, so the tick is in the color behind it.
     val tickColor = if (node is LineNodeData) state.background else node.color
     badges.zip(taskBadgeCenters(node, content, badges.size)).forEach { (badge, center) ->
-        when (badge) {
-            is TaskBadge.Priority -> {
-                drawCircle(priorityColor(badge.priority), radius, center)
-                val number = measureTextSize.badgeNumber(badge.priority)
+        val number = (badge as? TaskBadge.Priority)?.let { measureTextSize.badgeNumber(it.priority) }
+        drawTaskBadge(badge, center, radius, strokeWidth, node.textColor, tickColor, number)
+    }
+}
+
+/**
+ * Draws one task [badge] around [center]: a priority as a disc of its color with its [number] on it, progress as a
+ * ring in [color] that fills like a clock as it goes, and a full disc with a tick in [tickColor] when done.
+ */
+internal fun DrawScope.drawTaskBadge(
+    badge: TaskBadge
+    , center: Offset
+    , radius: Float
+    , strokeWidth: Float
+    , color: Color
+    , tickColor: Color
+    , number: TextLayoutResult?
+) {
+    when (badge) {
+        is TaskBadge.Priority -> {
+            drawCircle(priorityColor(badge.priority), radius, center)
+            if (number != null) {
                 drawText(
                     number
                     , priorityNumberColor(badge.priority)
                     , center - Offset(number.size.width / 2f, number.size.height / 2f)
                 )
             }
-            is TaskBadge.Progress -> when (badge.progress) {
-                TaskProgress.DONE -> {
-                    drawCircle(node.textColor, radius, center)
-                    val tick = Path().apply {
-                        moveTo(center.x - radius * 0.45f, center.y)
-                        lineTo(center.x - radius * 0.1f, center.y + radius * 0.35f)
-                        lineTo(center.x + radius * 0.5f, center.y - radius * 0.35f)
-                    }
-                    drawPath(tick, tickColor, style = Stroke(strokeWidth * 1.4f, cap = StrokeCap.Round))
+        }
+        is TaskBadge.Progress -> when (badge.progress) {
+            TaskProgress.DONE -> {
+                drawCircle(color, radius, center)
+                val tick = Path().apply {
+                    moveTo(center.x - radius * 0.45f, center.y)
+                    lineTo(center.x - radius * 0.1f, center.y + radius * 0.35f)
+                    lineTo(center.x + radius * 0.5f, center.y - radius * 0.35f)
                 }
-                else -> {
-                    drawCircle(node.textColor, radius - strokeWidth / 2, center, style = Stroke(strokeWidth))
-                    if (badge.progress.percent > 0) {
-                        drawArc(
-                            color = node.textColor
-                            , startAngle = -90f
-                            , sweepAngle = 360f * badge.progress.percent / 100
-                            , useCenter = true
-                            , topLeft = center - Offset(radius, radius)
-                            , size = Size(radius * 2, radius * 2)
-                        )
-                    }
+                drawPath(tick, tickColor, style = Stroke(strokeWidth * 1.4f, cap = StrokeCap.Round))
+            }
+            else -> {
+                drawCircle(color, radius - strokeWidth / 2, center, style = Stroke(strokeWidth))
+                if (badge.progress.percent > 0) {
+                    drawArc(
+                        color = color
+                        , startAngle = -90f
+                        , sweepAngle = 360f * badge.progress.percent / 100
+                        , useCenter = true
+                        , topLeft = center - Offset(radius, radius)
+                        , size = Size(radius * 2, radius * 2)
+                    )
                 }
             }
         }

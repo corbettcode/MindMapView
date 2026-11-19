@@ -1,0 +1,1359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mindmapview version="1" theme="contrast">
+  <node id="root" color="#ff336770" textColor="#ff000000" text="corbettcode" note="&lt;p&gt;/home/pcorbett/corbettcode&lt;/p&gt;&lt;p&gt;Only the first 1000 folders are in the map.&lt;/p&gt;">
+    <node id="d6c11c63-f9e3-414a-936a-4258a8c2d9c5" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="development">
+      <node id="de7f9852-8dd3-4741-baac-4cff69eca04a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+        <node id="93282f46-7adb-4ecd-81de-ce617ee9bf76" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcodeDomain">
+          <node id="e83d1074-a823-4313-b305-8e423f6fb325" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-activitytrack">
+            <node id="fb5bb319-13e1-4f52-afc3-cb283b89553f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="df2df411-dbdd-496f-898b-858554c63830" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="6997c64d-c6e2-4b1b-8b0b-bf28539b3ae0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="d07baf1b-ffbd-4be1-b910-4d23d89d51c3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="6d1f5572-3294-4365-aa0b-7dbb324d5deb" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="2e81ff67-df85-4b0e-8552-4ca8a2494285" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="e0621f32-4f44-4c6b-8cc9-209e6cd3be77" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="ad13522e-ed15-45cd-9687-b602a947f5bc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="7119644f-8ef4-4ed7-a37d-2c44f884ebbc" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-auditlog">
+            <node id="806f9f64-c86a-4bda-89f6-174a3467e103" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="dcbc531a-fdac-45bb-a0a9-f8b84ba12337" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="7f8b8b19-9e04-47d6-a801-5be4dac15ee5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="78b62868-5159-49ff-8957-83026d591b23" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="e75dc638-3d5b-47ae-8b47-37480836d531" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="22548b7e-203b-4630-a89f-8154aea4fddb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="META-INF"/>
+                </node>
+              </node>
+              <node id="56ab6b9d-217f-4933-b708-cbd376e35c2d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="0e5d3fbf-c5dd-4b6b-8d54-876420959bf0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="6ff163b1-9bac-43e6-919c-d94a02b32fbc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="3ca37c55-d476-4842-9b20-796ebc427af0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="c3ccb2a3-be58-40e8-86fc-03abfeb7e4b8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-common">
+            <node id="3813e9f0-6f77-4ac5-828a-8cab7eccc62a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="ad78d520-31c2-413f-a937-a50de59edf9c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="1c766b36-b40b-4ddb-a73f-ccbbe0e38c4f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="68ef5ad8-5959-4094-9024-feabf9881ddf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="391f0e45-c9d0-4e3f-91d7-8fe83f48f68a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="d3113dcf-58a9-461f-80d0-949c1587fbfe" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                  <node id="80e6efec-c0a4-4e29-b0dd-11ccb5a37b6f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="db"/>
+                </node>
+              </node>
+              <node id="034e5898-2511-4e5d-88ab-f1813ab7b070" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="a74e12f4-8615-4150-8eff-ba8d4be00845" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="185a015c-19af-4daf-958d-05db93bee17f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="bcce5426-7856-4be6-97a7-27855ae9aeb0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin">
+                  <node id="cb71d0f3-3730-49cb-b662-6556e7f4a075" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="ef608ee7-495d-474b-8907-7d3b25f149dd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="791961ab-133f-4bd7-90df-00222b5ec069" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-eav">
+            <node id="084b414c-07da-4ced-8e8b-d65ff005a59a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="3f582702-9541-4fd0-94e9-293e6ccdf4de" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="b80bd408-20e4-4bb4-8c9a-512c55080c0f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="c7da9768-e220-4cf9-a12e-c2e8d23b145e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="1fe5b169-367e-43a8-8727-1450e9521a85" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="cf667b74-7147-44d5-9467-056852d0f21c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                </node>
+              </node>
+              <node id="fa7d9909-2273-4173-bea8-0a6cb0f58d09" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="0eb4dc62-10c0-4bd0-9e74-e361f3af3762" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="03425523-2069-47bd-9f4a-5acd7bc2b880" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="2dfb1b31-9ecc-4e27-acb4-36a431ac5a9c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="af0f56c0-f55f-47df-8d61-f98ae2bf62f9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-enterprise">
+            <node id="55039048-ad5f-48c9-92f9-14c8131cdacd" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="e684fe9f-4872-4964-893a-0e6136a75b38" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="bad576fb-ff75-4bc2-a47c-ddd80c08c7d5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="14012465-5155-4e3c-b032-a1cf39f321e1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="eaebcbb6-25e8-4d40-8e7a-fa844c20674a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="d08adb30-b2d8-4437-93eb-c2553bef0ce5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                  <node id="860e2bf8-b94a-43ee-92b2-250d13eb452a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="META-INF"/>
+                </node>
+              </node>
+              <node id="a496124d-82b7-45c4-b5f3-c34178ed5780" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="4d2a701d-36f6-424f-bad7-a41407662b4a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="c3d104d4-9ef4-492b-8072-950497059daa" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="38435288-b7e5-4d59-99b1-7539cd15b661" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="e1a2c3a9-c9d0-4da4-8d27-e96c63f15951" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-faq">
+            <node id="63473ea3-2e08-49bc-af54-9c857bfa795a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="af94a86d-c803-4f0d-bad4-89e4bfc51cb5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="93504cf7-fb4f-4a13-913c-9b974772e345" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="ed1f00c7-9efa-4dad-9105-04048561ff01" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="ffddaa76-4674-4229-a3a1-3ab89d94e602" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="53ebbb18-22cd-4abe-a3b6-1dacb9c8799b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="3e975986-53ed-47fc-a4ba-6257fa5df2fb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="d435ce0a-8c90-4221-ad65-b355790cdbfd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="d1198691-97c9-4d33-8bef-ceb7f4198638" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-notification">
+            <node id="29cb5496-0bda-4b09-8148-aee235c91173" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="ed9e0522-227b-432c-9419-be5ab6d31e3f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="e101aec4-38bd-4a02-a4d5-5796bfa3e806" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="bdac9821-93aa-4d90-9809-b66079336ec0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="32a44c34-0af9-442e-b3f6-081a37d76d0d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="40ba922d-22c9-4432-9c3e-c1078c5271fc" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="ad1e1127-aab8-4246-9340-e298484abb78" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="870b5a4d-7d4c-42b3-8023-37d2ffa2e2e4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="d3203112-9239-49d8-b398-acfa159edcd1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-organizationalspace">
+            <node id="9dc7f4d5-b6d4-48da-9ac7-be3570f9d5d9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="d83b0a23-64d5-423f-ad9d-e570866b8db2" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="4a82a73e-91ee-4fd8-852f-b6a17b400d15" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="83fcee3e-f354-40bc-9dd1-ab1b783b179f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="4496453c-2944-4612-974a-83424b634a79" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="fb0815c8-b1ec-4665-a951-648b531df985" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="eb0bb630-a99b-40a3-89a0-d9ecde3c3adf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="ca92f714-207d-4a49-96a7-5e805c1cd347" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="c5dd90ab-5477-4abe-9276-25695ec4eeb3" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-party">
+            <node id="a3fbc985-6e4e-4342-b1eb-9879611526b2" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="2933e312-e617-449b-94c7-5b27be84d03c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="afc72d88-68ad-4e87-887f-d1a46dbf22da" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="432f88ab-5626-480a-a5d9-8b70ffe797ef" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="6842cf42-0f89-4fd8-b269-8cdedfb99a93" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="12a02cf1-635c-4b19-8314-c2fd6db77226" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                </node>
+              </node>
+              <node id="38b0c77c-3017-4d68-8df8-f1348ffacc85" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="ab6aceab-dfb8-4ca8-9c1a-dfc13db2f85a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="5fd6f2e5-591c-43e8-b3bc-d4a8b826920c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="e111989b-eb4d-4c94-a750-6e7a7ffa67ab" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="29fd4b29-0b0f-484a-970a-1dd1864e8a69" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-paymentgateway">
+            <node id="f3f2c496-0e49-448d-af58-114051183ad5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="00dd86f2-574f-4f17-9467-0002f80ba993" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="204b0905-4cd7-4f86-bbd4-1928c29ffe7b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="b685f2c3-f917-433f-918c-a6acfd2b0ba4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="ee43d5b1-5341-4c09-b848-5909bd6a470d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="9f144afc-bbaa-4707-8b43-6fbd69559d6d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="PayPal code"/>
+                </node>
+              </node>
+              <node id="2a5f63e8-69b1-4415-8b05-8c04e5d5abd9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="79b9c83b-0d07-4ec7-aff6-8ab2f3435b7f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="fe589dd7-8f19-4686-9ada-ae00ad315b03" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="a8cb6fed-16f0-403a-884d-45869cb79895" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="8592a8fd-dadd-48d5-8b28-220f6f8db7f8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-rea">
+            <node id="a58b6458-05a2-48c0-9480-659ae33cf6f8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="3faab493-0e63-477f-9f55-b67a2692b73d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="48619b93-44df-4b5d-9f5e-53b1f04323db" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="37ae54a6-6f4e-40c7-ba5f-924b95c028fc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="ea70e263-f5d9-40b1-8426-5d58d20ddd86" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="9f1421c0-ee65-4004-a88d-85155647439c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="4f662ed1-f578-4613-97a3-6cb63d3d0e5d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="5c8f1403-e73b-410d-af26-73a354d16f5f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="a02758c7-9f64-4f28-b0e8-8e4934778c47" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-rfc5545">
+            <node id="80c699b9-57d3-4a8a-a91e-f4747acf7c1c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="5c5262c0-c2a7-4df4-b8a7-cd960378b5c7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="2ddc4604-8d6f-45b2-9deb-214acaa37f71" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="f14e4553-ee62-44a3-ad48-72b97ef083d9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="cc02fe41-3616-4f68-b6cf-80904368df8a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="9df9cdfe-fd84-4f9f-acbe-7b7cea5f185e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                </node>
+              </node>
+              <node id="9d666fdd-07da-4518-8b53-7e426af114ba" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="b7118f26-6a25-42ff-8e96-829a0a07780d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="9dea27ec-36ed-45d7-aad2-93eb7d77a1c5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="cbc7f612-319e-422d-9354-afa82a1f378e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="dadd7791-066f-466d-89a6-abcf5001c7c8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-survey">
+            <node id="dcbc91de-4c2f-4a5d-8dc5-581f81109522" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="05f346cf-3077-486f-8b15-798fbaacd6d4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="b090d465-2d1a-4ac7-a9f2-67afb3a2fb70" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="303b3d3b-07d1-491d-964d-5dcee83968ca" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="bf21a728-77a1-4576-80d5-cb8f2c7197b9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="3f2112ba-a830-4a21-b042-97cb224d4b5f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="8ace1471-2895-4248-bde8-ec56144e8652" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="d1f55c76-8d53-4028-970b-6a6051ac4e27" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="01b13091-ce23-46d2-8992-817c235b8e6a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-system">
+            <node id="8288d713-b28e-4848-961b-51cebd09ca09" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="4fc05317-5717-46d0-81d8-c81f86c3c3c7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="ae0e5b35-60b8-4eec-adb6-c1d050204f1e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="6128902f-5fde-4749-ae0f-c55309acb5e5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+              </node>
+              <node id="0514dbcd-3aa3-4aed-a77f-f881ea2add2c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="3e2e1cd1-2162-49be-b282-c84f1cf45319" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="cca85a15-d935-49cc-83f6-d610ca34669d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="66c58592-369d-4c68-a4be-398c19cee209" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="55c2c6b0-8733-46e5-8cfc-615998c51155" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-usercredentials">
+            <node id="73aef1c5-62a0-44d4-b6b4-abd26b7bf2ee" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="7410242b-b039-41bf-94ef-2d4cbea357ce" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="2659d76a-00c5-40ec-a920-2d9b360384c5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="4d4cb89f-da7f-4eaa-8c4c-aa1e0379422a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="ddd02c93-6332-4ab3-aea9-fd7c7990132c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="bfd6c92b-7a38-43a0-83a4-3f08ea0a69b3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                  <node id="f9bd16e3-eaf2-456b-b3d5-e1fc4ce8c8a1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="PayPal code"/>
+                </node>
+              </node>
+              <node id="9396f54a-70d0-4c7c-b385-8a148bde65e7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="c33a0090-53d5-46e9-aad2-699aca5f57b8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="b14e2a39-99ab-438e-9d7d-17ca74d240b0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="5bbe8367-4edf-4c2d-9c5c-14f79a3569a4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+          <node id="d850e395-c403-46c7-a66f-13b08b99bb55" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-website">
+            <node id="66f68225-df5e-46ee-9e51-45ca66afe678" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+              <node id="dea309e2-0a01-4952-8460-787a451839d6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main">
+                <node id="9bba008a-27ad-4fb3-a885-be6ca802d033" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="2d5b3d43-15bb-43b7-9b20-c3b370f20df1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="fea25be1-b590-4865-818d-a4ad56f15e6b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources">
+                  <node id="0db593d1-b182-4e6c-883a-533fcb1636e4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bdd"/>
+                </node>
+              </node>
+              <node id="7eac968e-b65a-4cd7-9d03-b560b23bd6d1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test">
+                <node id="dcca9f6a-687f-48ac-ad95-1203a2d57c26" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="java">
+                  <node id="91b7513b-e866-4013-bcd3-e7fef8ced29e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="com"/>
+                </node>
+                <node id="46884214-35df-45a6-9580-3013a1d5b2ab" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+              </node>
+            </node>
+          </node>
+        </node>
+      </node>
+      <node id="cf93f263-a6f5-42de-bb44-33d7b2e601f5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin">
+        <node id="814f7814-c6e2-487c-9f9a-9e61475f6aa9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb">
+          <node id="bb26e5e8-e72e-4a59-a8ac-43870a590c8b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="examples"/>
+          <node id="c35a027d-8ee9-4379-a92b-31ba21455dcd" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="playground">
+            <node id="a251b910-b2d8-4e69-baed-231e046125ef" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="landingpage">
+              <node id="16d9b506-70d4-45df-b52b-650dc79405b4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="thegeneralist">
+                <node id="42088b8c-430e-4a4d-924c-7e3cf6c6be3a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="ea8dd506-4593-48de-bb27-b02cf7b5ba13" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js"/>
+                  <node id="5fca7eb3-f890-423d-8b00-fee23480deac" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                </node>
+                <node id="8c13ab75-f513-46b8-9b43-3540d79f0cb6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                  <node id="9441a7f1-5eaa-401d-a159-4fee3ae81ed2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+                </node>
+                <node id="c373eab2-1d0e-4a1f-9115-3883d5282e49" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+                <node id="92a92193-8d75-429a-a3f2-67c1a60c2b96" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                  <node id="3537d3ea-9141-4fc7-86e7-a74e42fc0274" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="02d2d2dd-01c4-4b39-bedb-9cc3ba129cd7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="e81138de-4863-4ba9-a67e-560fea107aae" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="projects">
+            <node id="4fe4a8a6-a8bf-4a6e-997c-a57470c4386e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="allaboutrocks">
+              <node id="0c586e81-3791-409f-9858-747ba7952966" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="ee585d90-e6d1-41c7-bb2a-1f6512d1fd77" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="08c2c752-b7e3-40ae-bfc1-d23b7edc48eb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="78d5cda5-dd82-4f24-88b7-3d17afd17455" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="103fb1b1-808f-4ca4-aa69-1fd689dc4d69" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="5e605116-dc57-4e5d-9734-b9833e575939" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="be92d26d-668c-4c18-b014-c3caf16f4c5c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="3f552ae9-d265-4fd6-a536-7fff06d270ed" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="215acadc-94e5-45e6-ac8b-5e0ffe68ce45" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="08273dd9-ad43-405a-9a95-367936a3d39b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="a6f4c39c-0569-4a8c-8504-d0ef0d5261db" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="ef124aca-5f5a-4bef-bcfc-bb0fc49881bd" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="894b503d-9ba2-456e-b110-8d0156c7657b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="600cb428-220c-47a8-9d07-d98507505b8b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="704e5d8f-588a-4fbf-9324-6a0a9ba0082a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="0a9715b3-c650-44f0-8e90-6bd36f34454e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="453986c3-11fc-4cb4-b180-d1d95e3aa7d6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="3651e014-d065-4159-9991-46241c6313f7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="2437fa02-66ef-4e45-8ea0-97269cd647bc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="c4011a30-ed61-4f15-98dd-e96379a2c11f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="149902be-706e-4efc-a1d9-665e56f236a2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="2e73a450-64e0-4df5-8728-35514939e4e0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="0b6bc161-077c-4840-90cc-1e3df00bd91d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="37936eaf-68cc-4fc0-95ed-365dddf5498e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="26739dd3-da34-4cbe-92e0-3a98cc71e80c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                </node>
+              </node>
+            </node>
+            <node id="30b18edc-b403-464a-bb4a-8aa782bb81db" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-website">
+              <node id="62720deb-6016-406b-9e8b-6a35a8b42b7d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="c4bc1ec3-6c99-4222-94c3-93a34417ce8e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="c7813dca-515b-4116-8ce5-5f9dc75a226b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="36cd3a73-5aab-4edb-b41b-10a55e6e364b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="0817a57c-bc4c-4e8c-8269-c92b70f80071" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="1a300443-1fc7-4c74-b905-19d197c335f4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="0433a89e-d797-4431-80be-2072fb371497" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="13554c88-4fb0-4a6a-82e9-d525e4e1a458" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="1f36f71c-444b-44bf-975e-802099139f88" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs"/>
+              <node id="f6f811db-3121-4734-8a0c-8697db3124ae" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="513f2028-9bd7-447a-92c9-7ef9f63b02f1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="60c10f01-0cb5-4a97-86d6-b942417e69f2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="76feb76b-9904-4445-821e-126422d6da19" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="b037b05b-1931-4817-afae-86bac126914a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="5e3cae02-d8a3-41e7-92ba-17086eed1a33" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="5dc8d4ef-e9fb-4323-adb2-3b24d345c4b4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="0501cc4b-e9a8-4e84-9236-e72273ab0a81" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="1e821458-5d4f-44a4-ab7f-62ce16b66543" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="0d1720af-f51e-422d-88d4-f0ac7720a558" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="20d932f8-336e-4a33-a083-3db58dca89e1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="2995e299-e8a4-4204-b958-6379293884a5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="c1aa3682-6c30-443a-b86d-0b790de97c01" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="2c82831f-5842-4253-b1ff-7bb5348e3664" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="f04f18de-c0f8-4af8-83a0-480d09bbaf4e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="dcaea157-521e-4ee2-b311-3ac5b492f7bb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="772efd6a-df60-4516-b5ec-292620d985ea" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="a536ab1f-8d0f-404f-aaba-6977291354be" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                </node>
+              </node>
+            </node>
+            <node id="94ce4fea-3aae-47a9-b372-8c7ccc872e86" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="drofficelandingpage">
+              <node id="71e17b8d-2997-4a4d-bcbd-ea3691cc72ec" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="50d73286-1ed7-4a7a-82e3-4f6fb8efbcad" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="12424e80-96b9-46f1-96c3-6d2040787b9a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="cd7dd1d5-2ae6-45dd-b0a8-a52011fae9d5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="e0d8569d-74f7-4373-ad3b-a6b281d47220" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="0fec6971-0217-4b13-9c4d-29765eb7fe89" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="03f051bc-823d-4fc8-be33-900c02ce6503" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="34bea644-e6ac-49e9-9cdd-875dc730849e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="ee9934c1-1db3-426c-b45e-33cc154e0c54" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs"/>
+              <node id="ec8f0f0b-1743-482a-9821-f1efc0f632f0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="75350059-385e-4b3f-8ca3-24d19989db67" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="95618ea0-a412-4eb7-83a8-dbcecff217dd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="af02c6d2-00b3-4afe-9eb1-9b37a981edd5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="7505184e-52e9-4630-a4e7-1ffefe26d974" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="fe6be58d-4e94-4ea0-9c79-39eba70f0eb7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="8b847831-45b8-45f9-8c46-fe7251ae7f1e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="5310c75f-4775-46fa-a331-14aa4bba62a2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dist"/>
+                  <node id="48b54f4b-0508-4f82-b25f-00a5c0bcf56d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="6c0c67ce-23b4-4a55-92fb-efea848f96e4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="d0952153-1b64-40fc-94c6-1334f3c91798" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="c880f872-298f-4c1a-ad5b-ee371fb02189" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="d1e49120-637c-46e8-9416-7d67774407d9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="128fffe0-9b44-4511-9a13-d13280172f2e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="bbfd5332-07d5-4858-9167-5bccc156fae3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="1344b034-8d29-46c4-92d0-d52e8a0427c1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="446d9ad3-f271-4606-be44-dcc9e6b5b277" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="5dd4bba9-bcd2-49a4-b390-97cd1de8abcd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="760f5e13-53d0-419c-be8d-7d2879ce9a8a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="3559826e-3555-44e9-b675-17d20963c1a6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="a54d4ba8-58a7-4f18-9185-a5e17b7b4409" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                </node>
+              </node>
+            </node>
+            <node id="88b9e026-84ca-4d36-997c-b3a483553088" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="host2048game">
+              <node id="502b54c7-0944-4344-bdb4-8ebc003a95c7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="3730803c-3db8-4391-8641-c3ec16ce965e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="4ffb3a2c-bc0c-416c-af41-9efb7c1eb502" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="5ae05aae-9505-4824-bf29-feb1ecc5c96a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="63796c69-206c-4bdd-92df-8f6b5d728d1a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="3c1cfdc8-8833-44af-a8bb-905ad5c62fc5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="88639351-bfb1-48de-87df-62fd047a44dd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="0740e340-3e0f-43f2-8421-5606cc772f0f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="6a2fe632-5cda-468e-9091-3632704d0b9b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs"/>
+              <node id="b035c343-76db-4f3a-a33d-0dff3fa053d8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="a4b0801e-bdfb-4cf6-b45f-7c5cf0dee401" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="1c4bdb6f-ae0b-46e1-acf9-2d4c493a1fa1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="c4fc4391-39fe-44b7-9454-9585f0409725" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="4742a720-57d5-4729-8f7a-f567833e147e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="dcc34b7a-9620-4a4b-a205-731a6ac7772c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="57ee09b9-b4fb-4416-bad7-1892d0370113" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="6986972b-517d-4e27-8166-153ee01908a9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="4513f0b6-7955-43cd-b393-70ade7b7b2ec" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="f70a056a-9128-4650-aabc-99dfc7c4e0f1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="c075abf9-d4c6-44e7-bb76-3f063e92828e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="43277788-8bd3-4dbe-884e-8c68f3c83393" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="b3e34d1d-0bb3-45f7-a9af-caee3f551e35" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="0bce8e30-f1c8-45a5-912c-d3544b5fe82b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="9537a031-705c-4d6a-9ee6-2c13c10e2849" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="87946fd9-6f29-4476-b59f-d979c22fa222" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="705646d4-60d9-45e7-9852-e4a1debf4b46" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="a1b8e069-0ec7-4106-ac8f-d591f2d5d3ca" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="875d8493-5739-48da-a1e4-6407a27cd138" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                  <node id="6a922830-74d5-46c9-8d16-e06e7427b7d3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsTest"/>
+                </node>
+              </node>
+            </node>
+            <node id="c2d9da52-8f7b-472b-98dc-8656653b8ef6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kmp-wizard">
+              <node id="8f012c62-72f3-4c4f-b273-6b31c13c3035" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="38227306-3bc1-4253-9bc8-529211976a13" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="9d958b78-188c-418f-b03d-248216a53a4d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="ad75d52d-88ff-4145-b9e9-f7f9ced7ce63" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="9764ddbb-2b41-45e8-ab5d-665223195327" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="6715f4a4-5c1f-4aec-bd21-be33f22800c2" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="2e80928e-faab-40cb-882e-ff0f1ec10a1a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="d6079791-e0cf-4f4d-acea-2e3fb0994cd0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="ea6cad88-9e21-4dd7-8feb-9dda52fa67f4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs"/>
+              <node id="dcccbac7-6d9f-47ee-8c40-4f2b7b322ad5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="2b7ea1e1-db4e-409d-9f0e-5308cf14f78d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="86ab873b-2dcb-45ea-9184-afe725a005be" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="9e3ec6ef-5ca7-4600-91fd-0b7074787d33" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="scripts"/>
+              <node id="87ae95b2-18b9-4486-a6ea-2f0516e47523" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="1aa471e3-6139-4f8b-b1a6-4f4309b6a759" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="75c75597-504d-49d5-b84f-c9ca12ea0ad7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="78ca0013-a608-4e14-891d-2783622f77c1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="7ff9b2b2-1e26-488e-9031-e00363931f49" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="610daacd-fc2b-4357-8b7d-cdbb1bcb6ef0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="44743f80-9da0-4b5b-ab77-85b3905eff45" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="7fdcd147-0998-4af1-a289-f54aa8ebf3f7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="8172ecd8-a044-4390-ab10-adda3f5368e3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="ecdce768-1cfd-4d50-ada3-fc8cc330c07e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="580e2b32-b40a-4eef-a2a5-2bb9ad86f3b8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="8dba5f8f-33c5-41f9-8093-1282a3137b0a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="a7592019-4162-4b1a-b523-b3b4f7c9e77c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="4dac5de5-6a5b-4a56-8358-497c5f5617ed" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="2c87df57-c260-47d7-ae51-65b8b92de13f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="44eb1320-56a7-4aac-a24a-a962d421511f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                  <node id="140d3dcd-75d3-4d27-950b-0eb13709a284" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmMain"/>
+                </node>
+              </node>
+            </node>
+            <node id="257714a3-8cc4-49eb-94f4-dc392257a876" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="loanmaster"/>
+            <node id="d56f46ad-c58e-4134-b10b-4e459584ce8f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="playgames4fun">
+              <node id="81afb977-dc9c-40c7-bc54-077b91759e4e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="b09d1727-4953-4cfc-85cf-90b4ebdb66d4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="81c1c3d3-8d98-4415-b0ca-a8a7dade90cd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="d42a9073-0377-4c82-bd94-23a16d22f2ac" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="f214eafe-eeda-47e7-8818-c8ae3cc1e19b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="57ccc634-06e7-4744-8d03-9b8c93bbd653" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="6561b07f-deb1-4671-b758-82818e07d98e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="a994a77c-aa07-4ea6-86da-acaf031b9157" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="c002f6f8-1dcd-47a1-b9a1-3a8b30eaa673" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="2e893a60-3565-4c8f-ae11-2a5446016753" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="5198b5f5-5713-4e28-965b-132b0da50122" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="a85d4d8e-57ed-4553-9029-d1e14595ddf0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="efe1eab4-7fbc-4dd7-a977-549646e9a429" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="5b624632-79c3-4b07-9a88-0399602ed418" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="b5dbe1d7-a725-4a8f-99d7-84288ba07665" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="1f9d2e74-a7eb-48c3-8892-3d10488c9046" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="b8805d6d-8cc4-4039-968d-140cdd37b5ed" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="f47697f8-6b3b-41a8-9e20-a63eb6750b01" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="ac5741f4-ff0c-4380-b6d0-0500709bacc2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="d0089cdf-7e15-4ee8-aa92-c86c366412ff" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="8d19e302-c0e0-4992-9084-d9171263ed84" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="b93579be-f688-404f-9d4a-19122b3043c0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="ba84c645-ef82-457a-9565-8b334e797660" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="156f121d-3d05-410c-96a2-7db3c481fe9b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="d2c27557-e931-4194-84df-d9ffe269b021" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="06a6b009-5305-48ec-8ac8-cb9608ec4815" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="4d4e8410-5a47-4ea5-bbc9-b9662ace76c2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                  <node id="71a93357-52f8-4b23-adc1-0b1228a9adca" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsTest"/>
+                </node>
+              </node>
+              <node id="ac948779-52af-46c8-87b7-ad785d644f24" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="worker">
+                <node id="8d4610a3-18f2-4121-a7f7-c283f0d4ca35" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="2f28ae7e-288e-41d1-aad7-d6e36082c76b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="ad48500c-4c69-4b48-8ed9-93acd9341bd5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="99d2e51a-e343-4f43-9694-b552cbc5a761" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dist"/>
+                  <node id="4103e496-69c2-4fb0-95f9-bfdffd6f384d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="4081b9a9-bf8a-4998-937e-e06cd0ae367d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="362feb5a-ccad-4dc7-941b-b2af9b7a2796" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="7f3e0e76-7965-4d51-a45c-52774f478709" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="a6de548e-ea4d-48b9-8fb3-f909489b1e5a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="604377ec-97b5-4007-a5af-61f330bfae43" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="a217d581-3797-4b46-a8fd-9bf00344768d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="763cf817-2a50-42d4-84a4-626e7d65a309" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="858f96b4-df18-4ea2-a965-15fb44fb1f0d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                </node>
+              </node>
+            </node>
+            <node id="2b76f9b8-6596-4c47-ae72-884f5894a85a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="SRAMS_website">
+              <node id="9007c743-8788-4daf-b2f7-e01f12e66c32" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="fd072357-d79c-42bd-8e06-a235320db082" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="04a084b3-5dc6-4e7c-b3c5-3b87675e9095" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="57bb3dcd-0bd2-4ec6-be8a-3cd0765d4c8d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="7575dc73-8a9a-4450-8d22-d91a281c795c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="da617059-4733-4561-8313-3c06e1225353" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="7283160a-b701-4710-b62f-be3f7e73f943" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="d94a8e0b-6c45-42fe-876f-64c41256daae" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="7e8abe30-8a8a-4e70-9b7d-97c51d78050d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="56da1060-e3c6-4bcc-808b-e27c94850b36" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="469379a3-6b60-4c96-9c83-1e939a0b0d5b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store"/>
+              <node id="390cd74f-646e-447d-b24e-a8530b5c70a7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="site">
+                <node id="cee1ea3d-931d-4834-8099-c88f21346fef" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="d18ea81c-f714-41cb-8820-b3c14fbdb239" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="13d60adc-5d3d-46f0-b45f-03bcf8d6282c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="750d9db6-b28a-4d12-a104-69687d102197" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dist"/>
+                  <node id="81bc790c-ba4b-47ec-a087-fb28c94c331e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="6818274b-230c-4771-af34-1f5eef6c8c7b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="45aef297-41da-4af3-825e-d88c6260e372" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="76ba2d7e-e9e4-441e-b735-19d05b3e0a55" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kobweb"/>
+                  <node id="9e4ab61f-df6c-4736-bdf9-595162ddfa53" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="c75ac0eb-def3-4203-9083-5a092cce55f2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-webpack"/>
+                  <node id="56c6351d-e643-44aa-91d0-b1a8370eb419" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="64062b4a-3de7-4dee-bb7f-cdd6cff8850d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="d8b09820-128b-4d5c-8a39-9dc7d7847764" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="0a2cab7a-c6a7-44d2-8547-b13c4cecb551" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                  <node id="2c486276-0d29-443e-9824-200025f41b4f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="ae35908c-b80e-4629-a23a-2e688869bbc5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="d6b7933b-b136-4044-970a-4849b8ba1856" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="81876522-e363-4d47-9e55-94b6184ea004" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="study"/>
+        </node>
+        <node id="a31d8586-414a-4152-83da-3162b0a842d1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="projects">
+          <node id="c0c823a6-6c30-4fe4-9c18-2072c5f42d9d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kmp">
+            <node id="dd1b9cfc-59e1-4ba1-97a8-1272bf4642b2" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="examples">
+              <node id="03d63272-c81f-421d-8442-0df96d3aead8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="my-kmp-app">
+                <node id="833402ec-8b6d-40a2-a6c9-1338055cf860" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="app">
+                  <node id="0106651c-be7c-41d2-a883-7579800337dc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="androidApp"/>
+                  <node id="c856c6b7-0806-4cdd-b7b1-5fce5af058b7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="desktopApp"/>
+                  <node id="cfc235d5-e354-4bcc-aced-59e3c861717b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosApp"/>
+                  <node id="9d5e901e-c7f1-4e71-bb3a-a2451dcc8b04" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="sharedUI"/>
+                  <node id="2d580528-9992-4ab2-90c7-83e45849b49d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="webApp"/>
+                </node>
+                <node id="91cc2b6d-c4a3-4b43-8541-78bbb606f311" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                  <node id="57293db1-4c18-4509-a907-3ba4dffc508e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="47b9afd0-cff4-49ce-a64d-015345e29551" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="coreUI">
+                  <node id="8914173b-0a22-4b9a-bc0e-74c4b451e85a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="75369dd5-b64e-4d32-807f-76a64da99be7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="feature">
+                  <node id="162ff913-9d3d-4d56-8ab5-e46d9c4dd409" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="greeting"/>
+                  <node id="5332584a-f897-42a9-9084-4bfe4f5394f7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="order"/>
+                  <node id="176e257b-d6c4-4d81-92da-5089079ef284" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="todo"/>
+                </node>
+                <node id="55cd9523-5e56-4e83-a06d-20a4ab3e3f11" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                  <node id="002237bc-ee8a-4e5b-9962-a1ea7d288e53" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+                </node>
+                <node id="7cc30906-7771-4295-9d3e-332e9f496370" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                  <node id="4f16e00d-12d7-4f81-8e8d-7e7f7bfaffaf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+            </node>
+            <node id="2c5f618c-bd16-4a76-abf6-35ae82f64635" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="projects">
+              <node id="1e32a560-62d5-46ea-82cd-f56dac49a8aa" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="yakmsa">
+                <node id="7df7ad73-3dc9-4e11-a25c-21013d7dd1ab" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="app">
+                  <node id="59f56d9f-9792-4206-8192-0edca208a1e0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="androidApp"/>
+                  <node id="c0d8a8ba-3cbb-453f-ac14-39dec416878e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="desktopApp"/>
+                  <node id="bf8b928c-6b3f-4885-8471-cf8815a06e8d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosApp"/>
+                  <node id="a3d6e77c-4752-4553-ac12-2a5fa914562f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="shared"/>
+                  <node id="c2008b16-84a3-4976-96ed-44779628f3a7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="webApp"/>
+                </node>
+                <node id="96f41013-1071-4d2b-a86c-d39ba56e740f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="58daa43f-003a-4ef3-a573-44fef46cb206" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js"/>
+                  <node id="819d929b-6bca-4839-86b2-7bbf520b38e2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="23a7cca0-2e90-48a4-bb40-dfcdd68fafb9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm"/>
+                </node>
+                <node id="39fa6e72-8e5b-49e2-be92-fb9c25516147" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                  <node id="709f47db-48f2-45c9-a76f-e90c36158f2b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="9abe9db9-c080-4e4f-ae9c-d15bfd718c5e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="389bb8f5-bae1-4d0f-918f-c8f582a01fb9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+                  <node id="e856d1e7-7d58-43eb-b3de-c1a656456844" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="esdm"/>
+                  <node id="c44e15fe-669e-4a40-bbbe-64e19078cb70" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers"/>
+                </node>
+                <node id="7828d967-c3b4-4c03-ba43-a3eb91c338c4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                  <node id="0c186f01-e071-4382-ab81-cdc8914a30d5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+                </node>
+                <node id="15542772-6532-4232-837c-4ac14f512c1c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store">
+                  <node id="13081a6d-c2c4-44ef-9d1d-b1161610d2fe" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm"/>
+                </node>
+                <node id="f6c89f01-584d-4eb8-bdb6-86bdf16affdf" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                  <node id="7093e428-686b-414c-90c3-cfa003d9d307" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="37c4e167-1815-47b4-9dd2-acbcd97bdae7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node id="55859b3b-2e0f-4108-8061-86d7684f6c2f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library">
+            <node id="9d0a3b39-ab99-4777-964f-e9f610b0c312" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-email-verification-library">
+              <node id="e3c57b2d-9c9c-4429-bb7d-781e84ab013a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="59b580e5-819e-4a47-90fd-18990beb5759" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="5da20f25-08d8-457a-bbbf-5075e313b3ab" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="4ef3bc16-5b4e-420e-9e22-637a6cf9d3f2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="d788d0ac-adcd-4ec1-8eac-195f94ad7136" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-email-verification-library">
+                <node id="5b42e838-c074-41fb-a5b6-76c7a8c2ccfa" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="emailverification">
+                  <node id="52d027e0-a92c-41df-acc9-6ca52ec8bdb5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="b2de2c15-0aac-454a-9abc-93eb61137701" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                  <node id="ac80d93b-02da-43d9-9f04-cb835bbfd56c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+                </node>
+              </node>
+              <node id="97e54073-0f7a-40bb-bcae-7efb974464ca" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                <node id="494382e7-afb9-4166-8f31-ce4c1cd67401" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="4e9ed279-4596-4061-9828-a0dc72d0373c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="3e91495a-1590-4631-ab3c-4e7b48e0144a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="f83b161d-d190-46e5-91c6-81e0e2364855" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="7c697b4a-a4c2-4dd2-affc-2fa63b5a93e6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="33a9d3e6-fa26-4dd9-a7cc-cddf499df437" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="ae7c3db7-e75f-41d5-bd52-c95572dadace" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="59ed90fa-af56-4224-b7e3-f1910c9aa963" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="5bd440ef-fd52-485b-a5cb-e7bd72d20eef" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="500343ba-627a-4d5f-95a0-07e3e8cd1b2c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="2eb0cd44-d3e9-47a8-80d6-5c91ec784918" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonTest"/>
+                </node>
+              </node>
+              <node id="c852791d-42f6-446c-9490-2aa82afcda27" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+                <node id="1d844357-23d3-41c8-abc1-aa83705e3081" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers">
+                  <node id="1b8b6f33-5714-41f8-9504-9663aefa50af" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="plans"/>
+                  <node id="b35be226-27ad-4afb-bb1b-1c978a4dc797" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="specs"/>
+                </node>
+              </node>
+              <node id="525bfe9a-a025-428d-a6b7-62d429afebe1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="d524c512-7171-478f-99f1-41e3604eaef5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="91cba368-3d8a-430e-a14b-d0571ba65363" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                <node id="f8fc8ed3-b8eb-4fef-bcfe-8cea4465f3c5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="43bdbe3f-5117-4e16-9577-59557703bda6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="ea3e85b3-15b8-4627-bfba-50f7cd5b75f7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="14735ada-1973-4e08-b8a2-09caee54db33" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="6b747b78-ec8b-4a13-a636-2546bc77e53f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="d7ebf805-64c2-4b81-8bc1-c9f815c9e986" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="75cca8ad-d619-4ebc-91f1-e1d16f8f6a31" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main"/>
+                  <node id="e07d358a-e24e-4a95-811b-67a4e2ddd5c6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test"/>
+                </node>
+              </node>
+              <node id="db808853-c332-4c82-9520-de92234d5b70" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="shared">
+                <node id="b8f444fc-46cc-4dc5-a0f4-6b16995f78a9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="627bf725-8e62-4d59-80fd-b482767ccf47" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="89bc725a-0484-409a-8e75-0a9c7a4d0a23" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="76e68519-9c35-4198-8f42-a53b7f79b982" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="cf01d784-cf2f-4f72-bf82-c730c5bdd8f6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="e89c664d-3245-49d7-96ba-bc1920f65234" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+              </node>
+            </node>
+            <node id="426bff07-f876-49c9-ba05-0f63adec24e0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="corbettcode-kmp-library">
+              <node id="7675772f-1fd9-436f-a031-c0a1864da47b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="0ac131af-56c5-456e-bfc0-0ce8a987b2b5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="js">
+                  <node id="dbca87c4-e749-487b-86df-eb70c424c293" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="8a150051-6d2e-412a-934b-40d6d13e53f4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="84179588-c1f7-438b-acc8-b59bec34ace5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+                <node id="4a57fd20-0b70-49a9-9748-5e082daf6436" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="670d3977-7eef-48d4-beea-51a6429df904" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="398e2be0-4d02-406e-9859-5bce93b9cd84" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+                <node id="2ae5e27a-dfab-4d87-96e2-f014e786abc1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm">
+                  <node id="7b438d3a-71fa-4886-9952-f4e004f75e82" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="node_modules"/>
+                  <node id="c2d4a700-7a68-450d-9f0b-c66f9d8f2bd1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages"/>
+                  <node id="6b64a91a-2a62-4aec-b6ef-7fd5bc2afad5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="packages_imported"/>
+                </node>
+              </node>
+              <node id="0103399d-2477-4b27-ac49-e9a82787697f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+                <node id="06882ddd-67da-465d-ad9a-a8871219f0b6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers">
+                  <node id="e08dc7b6-2445-4ba8-8fb0-d01dc1b45200" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="plans"/>
+                  <node id="0b70d000-2c2d-491e-a4eb-dcdd0eb1d330" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="specs"/>
+                </node>
+              </node>
+              <node id="7003295f-ef00-46cc-a8ce-6ae3456c93d5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="a4b70c14-2034-4298-abc2-b42a52070815" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="98769644-b49a-4125-b61e-d18e7d5d76ea" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="images"/>
+              <node id="e532dbf5-effb-4b20-9805-d76c567901e2" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store">
+                <node id="e5c53f43-b946-44c7-93b0-5cc1e1d6f302" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm"/>
+              </node>
+              <node id="3142cb73-17de-41b3-bfe0-002d06d3258d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-common">
+                <node id="e9840c15-2fd5-4095-9337-633a4d74a04f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="c4c78539-df5f-4a68-9d75-e7720b82d729" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                  <node id="6227da6d-c88a-4e1d-b686-c28e27f8ed22" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="f84931d6-5e10-4960-bdd7-58922bfbd8bd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="696e3329-ed26-49a5-81e8-1bf7553b2cb7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dist"/>
+                  <node id="d70d1a0c-b703-47bc-8e73-e6b59bceec26" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="457f7290-0788-4180-8654-4e132f1f1ec4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="9d82f5b1-1b1b-42ba-84be-b00ba9af12c0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="e5881b2f-fb0f-4f30-9fff-8031b7dee7e0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="ad193c88-b6a4-47f0-bd76-d048a0d46a61" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="0c3e0389-0896-4929-b158-76a178ceaf8f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="31a3b15d-59b6-4756-9d84-15c36ed36f9a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="a234e5b7-c0bd-465e-bf64-87a1a8793aa8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="a84ed3f1-86bd-466c-8de1-1e105f84c9ed" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="947184c4-b605-499c-8b8b-ad21aae2edcc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="748c2e95-41e9-4650-9a67-94f9814df75b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="03729061-507c-4688-91ee-4ecdc51fc3d1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="dda5240f-c50e-4902-a670-796c5fba0477" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="de66884b-dc45-4ae2-bdaf-786a7d9d0683" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="6e3fec15-6b4e-4b22-b1a4-6759be35f3b6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonTest"/>
+                  <node id="066cafd6-a3ca-4266-a669-dccd015005dd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jsMain"/>
+                  <node id="cdb3a943-3be7-4a5f-9b72-bb2b03fd93fc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmAndAndroidMain"/>
+                  <node id="076766af-187f-491d-b972-deaa16539044" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmMain"/>
+                  <node id="3e65ba6e-2e11-423a-b4f8-be6c0f0fba9a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmTest"/>
+                  <node id="1e9d1535-134b-4eb7-be55-13aae63e3654" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasmJsMain"/>
+                </node>
+              </node>
+              <node id="5bc90d11-ac6d-498c-a197-f4a54b5462b6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-cqrs4kt">
+                <node id="9ebca505-aff4-42eb-82ee-7711b5ff71bf" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="db3ae111-6d79-459a-8d62-25187f8236af" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="1d3fab3c-6790-4912-a51e-a8b74f05044d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="e1dd3dc6-6586-433e-a285-825774e83959" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="cf04dc04-4fe0-4898-9dbd-7096c0d9fa0b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="31394a01-58de-40cb-bbee-d4dda1414fd2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="a64666dd-1653-40be-b276-34a74f6ce062" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="602ca73e-588a-4222-a569-2a8f4a48633c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinToolingMetadata"/>
+                  <node id="00fe5c63-5f8d-4816-bc01-960a169de1ed" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="b8b40154-2aca-4fe0-89d2-fea8396a69fd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="c5b8dd59-285c-4433-813e-d3c3316161ed" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="ac3a5a82-7bc8-4f0a-8286-2abd869996b8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="publications"/>
+                  <node id="36ee8132-b68c-4a9f-ae44-8cb39a2a2bd1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+              </node>
+              <node id="d54b91ca-87d9-4a62-93f0-c7ca4f707693" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-eventstore-occurrent">
+                <node id="80915123-10a9-44cb-bd07-317ef441adad" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="900e96d7-0d6a-455a-8919-1d4045fb1d53" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="b0083f71-3f57-48eb-a88c-4288d55f8e40" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="cdc2ff2f-c873-40ec-a68d-9e6ad360864c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="fe1732ea-44c3-4a3b-aac2-f3c9fdacf79c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="76ee276b-23c8-4952-a314-98de976fedbb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="2595feea-21d5-43e8-9250-1b9c02b737a0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="0ffa2b83-cdbc-45a3-8b12-22ccd54a66f7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="86230f77-5689-4347-8dc0-b3f10c6d47a5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="c6c46058-f4dd-4ad2-946e-776161597f22" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="adc0cee1-1501-40d1-a2bc-5c7fd1ac01c6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmMain"/>
+                  <node id="f32e7ba7-f537-47b7-b2c8-19a008b40998" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmTest"/>
+                </node>
+              </node>
+              <node id="8a4cf869-94f6-4b5a-9660-f938e846c56e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-ktor">
+                <node id="f372708d-93dd-438f-beae-fae5f20a9e11" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="86f4ff49-9632-4572-9b49-4e9a0bcc1747" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="f6b91d7c-4c86-4993-9764-e30a6972b8f2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="2ef1c4f8-c957-4786-bebf-fe0b9beebfe1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="8b39cd69-51bf-406b-aeb0-68cd054c4e1e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="13c257a8-e6a8-488f-beeb-4773bb7b224b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="b26d6c55-7b29-446a-ae71-ce5a39e85e67" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="cca8c413-2747-4b23-b3ac-7533e6d7d5bb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="7c9e595e-878d-4ef4-9dbc-e11e784e7382" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="71ab0820-b1a5-404d-b95e-8c4eb8d68b37" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="c1a63bdb-5a23-45fe-a421-299bc2eee59b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="d55872ea-37ef-4a7f-88ee-ba95051630d6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonTest"/>
+                </node>
+              </node>
+              <node id="0a55ad67-dafc-47b0-9e1d-9a22f34b162f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-party">
+                <node id="698e62d8-3334-4140-a903-1bb1b78dcdf8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="284ec6da-8d98-4d66-9337-892fa0049a1f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                  <node id="f73140bb-74ef-4e2a-b45a-eec9f898d856" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="0a4226d7-6f0d-48c3-90a4-840cd6feb94f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="compileSync"/>
+                  <node id="71f7939b-0efc-4593-b6a9-3ccdd63159db" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dist"/>
+                  <node id="a56b2669-8cdf-426f-b476-4b2dc0ec2b25" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="12c111a3-394a-4dcc-a0b9-a34f41b357ce" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="cac94bd3-a280-4259-9a3d-e5052a62c8df" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="090531c6-96d4-404d-98ba-cd3ccd349a9c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="klib"/>
+                  <node id="b77b8dc4-5c85-4696-91c9-337b9d371b8f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="7ae6cba5-64b8-42fc-bb7c-df284307f683" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="851ea338-0a58-45c9-83d8-30d7f25fa31b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="35a02952-618f-4c14-8c12-3630e8677436" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="8439a4f9-4c0d-4fd5-80d0-b88d2ede0f2d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="8dbe7964-741a-4008-b803-d4b19c36c822" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="76bc719f-1d81-4d7b-8a76-1f90689e6510" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="512a13c9-bfc2-411d-b182-b8f2d0c10b2d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="1925f231-5bc6-4c11-a892-1c7e26d59e87" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="5a469928-fa1d-4ccc-928a-34b00f42296f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="1f33136b-0f14-4637-9f44-b9c7d2c10e79" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="565b91c8-b341-4499-ad08-60848dbedb93" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonTest"/>
+                  <node id="3c27a2a5-953a-4244-aa19-f1a22b05a2fc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmMain"/>
+                  <node id="b118097d-2550-42fb-8164-211c65448075" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmTest"/>
+                </node>
+              </node>
+              <node id="7c05eaaa-4b53-49f6-a09d-5686d6c5bc95" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-tenant">
+                <node id="66c974aa-0cdc-4220-94ea-58f5ffcdb763" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="app">
+                  <node id="c36dc7c0-3378-4e3d-8ba2-8ab7140a7cd0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="d61766ba-eb63-470c-93e6-067842157544" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="b31e1032-7f04-4c35-a020-2151a5b4f9ae" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="db802da2-d9e8-4fc7-8fc0-f6f4b5cd4563" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                  <node id="46d8b2ab-2baa-4dd1-a1b0-992c93015efb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="2f8fc424-0ce3-41d4-972b-808b972bf5d7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="6d9afee6-0150-4809-a722-d007938718a4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="53c8c3fd-4f0a-4781-b0e1-b7032f6b9d38" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="5ee0f58f-99b4-48ef-b0a1-1982de341be1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="14db4122-3855-4bb5-aa05-30d598c53e99" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="2ed73b87-8e91-4c7d-855c-d666ba899036" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinToolingMetadata"/>
+                  <node id="299178b0-5224-4797-b340-431ef12370ab" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="56064086-fc1f-4b41-a23d-ffde3f664c01" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kspCaches"/>
+                  <node id="7ee27a15-b4ae-4a15-bf7a-2f88a62abde7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="f4265ec8-c875-4b5b-bbe9-442f4d129400" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="c9dc7f49-3a4a-46aa-b87f-4ac730850f4f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="publications"/>
+                  <node id="e71969e2-8eb8-4ece-940f-2bc265273274" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="66973103-efe3-4734-a139-6d7b0ddaa1e3" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                  <node id="3fe06a97-e0d6-47dd-97d1-59e3f7212d85" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="ffb87cf5-d3fa-494e-a90c-f14502bd3ace" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="9b3545c6-40c9-4f29-89a2-6d603f127998" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                  <node id="a773521c-aa89-4ad1-91bd-b198f4d5e14a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="894c7f5d-13db-4d21-add7-3e20a3f2efa0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="6085821f-822f-4ee0-8ba1-306bace69911" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui">
+                  <node id="bb7fe7a0-5abb-4a45-81e0-c179e052c297" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="8706d272-38b0-43d9-a0dd-621c9aa19de9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+              <node id="a6d3fd3c-a5cb-4154-8228-8e85f0831af4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-user">
+                <node id="427f364f-890f-4b3a-8fe9-ca3ab10bce4c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="app">
+                  <node id="22b126e2-7088-4bdf-ae65-685889ca63dc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="575b1060-5809-4868-b14a-5e1fe5fc6890" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="2a80447a-6f88-4f5a-ade2-421d2663f59f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="4a202c43-ad41-4219-b5e5-1b8b63c445f4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="3c692b65-6acb-4ada-bef9-21cb0bc23a8a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="4cad87d6-7aa0-425b-8ad2-b54ea738ec09" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="1c4996be-db5e-4b2d-a18b-89fa12c9055f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="7e932c84-c171-442b-90e7-44932da310df" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="58460a96-076f-407b-80f6-ca57565beeac" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="78d36377-cb6d-4969-92f8-721c1835df3f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinToolingMetadata"/>
+                  <node id="17ac93c5-cbc0-4910-9ca2-85c802482245" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="75b51a54-5ec9-49a9-95f8-dbabd54df345" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="eca2c46d-effc-4483-97db-9cbb411310ef" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="779c39bd-caf9-4446-a57c-1d3e79ae5b0f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="publications"/>
+                  <node id="aa58de39-b3ae-47d0-88fd-fbd2996a3a2c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="ba0b26f9-f3e4-440d-895d-0c7f43245592" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                  <node id="8950201d-5964-4cc1-a1d3-b9c651777ac1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="16873b16-cfc0-4c89-9e8b-3d9323764e51" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="cf43442a-64be-4294-852c-d79c66371e2a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                  <node id="34292a06-dfce-4b95-8f50-8e9a8bbb9b3f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="8d31db67-616e-4083-a5a1-01e77f3f5c1c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+                <node id="6b960c70-08a0-4868-a7f2-b726eb8e4618" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui">
+                  <node id="fef45c29-08fb-4121-960d-4bd2462807c7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="dddb5f34-71f6-4f36-bddd-b62f00d6e68b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+            </node>
+            <node id="cfab4d68-a614-4bc7-b559-4315776d9f04" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library-medical-data">
+              <node id="29c1fd6c-85f0-4241-9579-cf4ed0318d7d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="apps">
+                <node id="3af15488-d573-46f0-8e66-5086b46f41b6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="demo-desktop">
+                  <node id="e3c07bad-09e1-4441-8337-e1242b84aad0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                  <node id="8f8fac6f-f6ac-4e5d-b1b5-1f0fa76fa5f4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+                </node>
+              </node>
+              <node id="ce44ef6b-63ef-451e-bf18-bed37ea79630" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="60147685-3439-4640-bcae-7053e5f1f2de" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                  <node id="e8804c1d-f4cf-4038-a0fb-f97245cd861b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                  <node id="9b3e543d-e53f-4797-b11d-e86716e0d569" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+                </node>
+              </node>
+              <node id="3c20c09b-890a-47b5-82c3-2f8e0a156c11" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build-logic">
+                <node id="2867aac3-b53b-4fb0-b7f9-908788ba6bc3" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="418d3952-c771-48a1-8563-e726af8a9b8f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="62513049-d463-4f10-bdb8-57909fcbce85" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated-sources"/>
+                  <node id="20722f06-e6d0-4270-a588-f4d6966874b0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="e6f2580f-5630-4992-8efd-0643b03687a6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-dsl"/>
+                  <node id="cc033140-5830-4cdb-a633-1360b050764b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="224c0e5b-bcb9-4285-ad09-ade2b9f25060" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="pluginDescriptors"/>
+                  <node id="125caa05-9486-4d67-8a5e-18b780d7e729" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+                  <node id="bc51aea9-71cb-4601-9f11-9c05eda682be" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="323264ff-ac7d-4a84-a4ef-735840a4aff5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="d0d86681-c79a-49ef-acee-fd2f79378d32" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main"/>
+                </node>
+              </node>
+              <node id="09b42844-cd84-4270-9c35-412ccb7458e8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="client">
+                <node id="a0dacdc5-e419-49b1-be8f-ef97b887a84a" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="37f9678c-11f9-4c79-a8ab-2d10584f6e14" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                  <node id="405054b1-e261-4d4b-9119-8bfb481d5f21" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="f0f79d0a-2a8b-450a-800e-4e8870d8529f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="fc99211b-839c-4304-a065-d5ad42da6530" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="ab6e534c-eeaf-46b5-a31a-b6ddf1ed3d2b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="b25a63bd-124e-46c1-8c23-012f5d0d2451" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="d4280ac9-6e4a-4f97-812c-99ea20f607f1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="46c4ea3d-6d86-4cdb-9fdd-4c903775b623" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinToolingMetadata"/>
+                  <node id="8b2f99c2-dfdf-4f3e-99ae-f0fb70f73f43" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedCInteropMetadataLibraries"/>
+                  <node id="c08d70d7-f71a-4f86-9a70-d5e3d68e9be7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="afc11cc5-b7ff-47f1-b3c6-1dd3f2fe4e25" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                  <node id="7942bd04-d9ce-461d-b229-a398cbaabd8b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                  <node id="10d4fbe8-aa38-4ca0-8cbf-29ad65e430ee" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="publications"/>
+                  <node id="54cbd71e-2dc4-42b3-b6a5-932175b3f671" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                  <node id="6f89dd38-22ba-4525-b808-280ae583c603" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                  <node id="bb6166d9-12f8-4f53-9123-dec3f9e577b5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                </node>
+                <node id="1c47470f-75e4-48ca-bebc-91a59b706eea" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                  <node id="0b595c20-2fac-48d8-9c9e-e818175cfb76" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                  <node id="f3ed8c9a-0abe-4dd2-a90e-d0189309bce7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonTest"/>
+                </node>
+              </node>
+              <node id="17f4a2a5-ecf7-4b31-b49e-1b69a0fe13e3" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+                <node id="d6c47df7-5d6d-4fef-ad24-6f26785cd468" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                  <node id="0a90290f-f55f-4135-b053-62fdedff0060" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                  <node id="328b1dff-9319-4d46-b291-e3e96a34988a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                  <node id="d47bd910-8f34-4833-a68b-300e670e459c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                  <node id="fae90009-38e9-48ca-a8d0-4ecaeef5bc61" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                  <node id="12b809ea-0a32-4447-817f-8e1526babe1b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="internal"/>
+                  <node id="8a466e85-93ca-4019-b4a0-e78014f5fa04" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                  <node id="a36dafc3-50e8-42ce-affb-352b54327cb3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinProjectStructureMetadata"/>
+                  <node id="6649f213-0893-4bb5-baa7-9bd87e2a5161" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinToolingMetadata"/>
+                  <node id="75696fe8-cbff-4142-b08e-a692fd15018c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedCInteropMetadataLibraries"/>
+                  <node id="b1b713bb-2957-4e51-af93-834c30bea08f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlinTransformedMetadataLibraries"/>
+                  <node id="0f56653a-d833-49e7-be85-55d2afd587a9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                </node>
+                <node id="068bc450-4fce-46a0-9dcd-bab33c66353b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="5d386d6c-44ea-4c74-abf0-3972b04805cf" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core-fhir">
+                <node id="eb802891-2e7d-4103-8718-4e376413db19" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="e9c0c245-54b7-43fe-aba6-4872537379d3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="ccc81c4c-974c-4586-9a5b-ab817361abfc" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+                <node id="c647cf2e-c5cc-4611-94b4-8707fecd8ef9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="screenshots"/>
+                <node id="70314584-0299-4b9b-a208-34b892278f99" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers"/>
+              </node>
+              <node id="7ad9cc8d-db09-4357-85b8-6058b5ac73d7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="features">
+                <node id="f75e871d-e726-4575-aab2-216401ecdbfa" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="allergies"/>
+                <node id="3dc1daa4-40ba-41d9-b9c3-da1244fa1c6e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="appointments"/>
+                <node id="47771fde-f9b0-4e1b-9d93-3fe9a89767e1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="audit-events"/>
+                <node id="a7a98b11-f861-487e-9928-d1f43672f1c3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="conditions"/>
+                <node id="ba8c7097-5819-469d-9626-855ab4ba2202" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medication-administrations"/>
+                <node id="3310e62e-589b-4403-bf16-a9f7ca3de8b2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medication-dispenses"/>
+                <node id="4a16bde9-46c6-425c-80b9-c4397d7eefcc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medication-requests"/>
+                <node id="3ea5475f-45f2-4940-b21e-b799f3ea85ca" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medication-schedule"/>
+                <node id="15d5b357-fcee-4ed2-bc51-25ec94c773d8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medication-statements"/>
+                <node id="e0fb20bd-6e05-4ca2-8bec-0bdfcb4962a3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medications"/>
+                <node id="24ee625a-0a0c-440b-b90f-8819b74c8574" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="observations"/>
+                <node id="837fb823-8aff-434b-a0ac-bf7597a9b0f3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="organizations"/>
+                <node id="f7f46680-7dc7-4693-b8a2-e7cc091c0f6a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="patient"/>
+                <node id="3c44ecb8-3b68-40ad-92ce-4de24801ff9e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="practitioner-roles"/>
+                <node id="8446b324-1f90-421a-a8d2-7fe5d4d3e057" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="practitioners"/>
+                <node id="ecfc408b-a155-4cb3-afbe-06ffa5e3920d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="schedules"/>
+                <node id="d0c69538-b2d7-4d3c-984b-2d7ed8282cc2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="slots"/>
+              </node>
+              <node id="4545089e-360e-432e-b914-fef85ff583de" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="1b2b118d-2696-43f3-810a-30b67b614c9a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="cc83f1a0-1df6-463b-a3d6-a5365ffd491f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="images"/>
+              <node id="4585cbcc-06b8-4c42-a499-f674ea2665c1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                <node id="04c872f8-0dfe-40c6-8e6e-3aa5552e3d21" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="ebee1d68-2fa4-4809-8e0f-54c2e7af4f8b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="881830c3-918a-497c-b75d-d14dfad284b5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server-postgres">
+                <node id="d9d7a63a-58e2-4ec9-9275-ed5be680f732" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="bcb4b19c-e98e-4628-8543-81d507b2a3ab" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="842f7ed9-9665-47f3-a673-d6af5c039a90" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui">
+                <node id="81ea21fe-5b4c-4d81-b47e-836235cf6470" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="67d97c1e-04db-4910-a973-9c42af914e0c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+            </node>
+            <node id="c0aa7464-f76c-4443-a7d4-7dfb50d1dcd9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="MindMapView">
+              <node id="98a26db1-e4ce-485d-bdaf-bac6717fd790" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="app">
+                <node id="48b8524b-67bc-4718-88a5-cabc573e116b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="914b2e01-d5c5-4586-a93c-19cc1e698bd9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="c776d55c-e669-4bbe-8293-61b284d276c6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="0b89fab1-97bf-48d8-9a5b-59ced96802a6" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                <node id="c7b0a153-4293-479e-adbf-24310727971b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                <node id="230d6a1f-3b8d-4ae8-807d-b31e7eed838c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+                <node id="1faf6242-e529-46b7-bfb9-004d0e03d8b0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm"/>
+              </node>
+              <node id="20496e16-1075-4470-99ac-ae1810bfd003" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="desktop">
+                <node id="6e8c3a28-99e8-4a2d-80b4-fe52d43c0413" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="f8ba1550-e90c-4728-8f42-78eadcef08cd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="fonts"/>
+                <node id="167c3bd4-3f6b-48ee-9f55-b7e0ce525cbf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="manual"/>
+                <node id="27a69a99-f274-4ae7-914e-d701bd86279c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="3cdf4b28-e388-4ae3-b9df-e09a8921d84b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+                <node id="a454560e-d3df-40ab-bc8f-b4f098bc1b6c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers"/>
+                <node id="5f4af46d-48e6-4abf-9575-7a7ba12c3af3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="user-manual"/>
+              </node>
+              <node id="fb5d7316-4c61-47df-ae6f-2d13d10b79b6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+                <node id="a5f81398-9546-4597-b1b9-0c02da1abe1b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+              </node>
+              <node id="628a0d50-ffde-49bf-a223-c0ec09ee09a4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-js-store">
+                <node id="d48766e1-89c8-4a03-8fdd-777d594f77b5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wasm"/>
+              </node>
+              <node id="67eb5033-d1d3-4fe4-a4d4-1597f4e16876" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="library">
+                <node id="f5e5d517-fbe7-4f04-a577-212ab21cb5be" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="8ddea982-e6b9-486f-a27a-bd5a2db1d356" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="emoji"/>
+                <node id="08456b2d-c022-471d-96bf-f9b343d24d8a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="d2a2b29d-7e9a-42aa-9c24-750cc235a648" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="third_party">
+                <node id="584754f5-11cc-4dd6-865b-7aeaba49e200" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="richeditor"/>
+              </node>
+            </node>
+          </node>
+          <node id="a618e204-2023-4401-a3e2-2e6dafe0f632" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="my-medical-info">
+            <node id="91f63eef-8252-43b6-b4d2-16474233c479" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="androidApp">
+              <node id="c7a53c93-421d-418e-a3fe-336e669a49c6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="afc53dc9-663e-4760-9070-18a954e22a51" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                <node id="49938273-dbfc-4566-995c-cb36e17261ff" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                <node id="8cb2d19c-2d7f-4daa-95d9-2da02f130d40" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                <node id="9348ddfe-da03-4a84-8413-365293f5f990" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+              </node>
+              <node id="7b67512b-9d40-4c96-a3f5-c49c993862bb" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                <node id="40ce6910-a1ef-4535-96a2-4e54ee811c27" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="debug"/>
+                <node id="eed77529-e200-4583-8c58-ec3eee8d6a02" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main"/>
+              </node>
+            </node>
+            <node id="41a09b00-623f-445d-b652-2a6c5d0e3103" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+              <node id="3f9a3f24-4afb-4e98-9cdf-79e920bf6d72" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="dev"/>
+              <node id="61bc24ab-f5ff-48cb-9a17-dad0e3569fb5" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports">
+                <node id="33f5fa02-3549-4073-b475-5cc1172a4c15" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="configuration-cache"/>
+                <node id="3188946a-dbc3-4093-97a1-09a5beeee407" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="problems"/>
+              </node>
+            </node>
+            <node id="9ba252c6-66ff-4fd5-bc73-bc0c44ba59a9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build-logic">
+              <node id="5b7e5dd5-8a36-49db-8732-f829547b2762" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="convention">
+                <node id="09f18faa-8e46-4d00-ba62-c0c2d5fff7b7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="d6cf365b-214c-4444-a339-253cede9fc6a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+            </node>
+            <node id="43908006-dc8a-4a9c-ba18-4e5fd0154381" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="composeApp">
+              <node id="60134711-7a6b-4d64-8c5e-4b3cea079dc4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="1abb9b84-b564-4c09-9007-98a5663161dc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="bin"/>
+                <node id="251c36d1-5d2e-40c0-a2c1-4380e3511ff5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                <node id="69ef1636-90f6-4502-8ca5-845c3b163abb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                <node id="47234ac1-53a0-4fcf-b5e0-13316d6367e0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="intermediates"/>
+                <node id="9385a352-24af-41ad-8211-bf24e77b5497" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                <node id="36715771-4684-4f0c-92e0-d41feb96c144" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin-multiplatform-resources"/>
+                <node id="3bcd43ed-6ace-496b-91c8-3eb458b19ebf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                <node id="1037df57-3b8b-4093-9952-8b1263d5fc4e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="outputs"/>
+                <node id="838ddaa9-08c9-4ff9-8879-d005adfa121c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="processedResources"/>
+                <node id="dc743bdc-9b3e-46e1-a512-b4124d3e95fb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+              </node>
+              <node id="60372366-6c9e-4f3f-be5c-18cd73ea5423" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                <node id="00c58269-8b0a-4b7b-a04e-b80d33d3e896" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="androidHostTest"/>
+                <node id="4ce70604-07a0-42af-ae7c-4493d990f247" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="androidMain"/>
+                <node id="d5282149-6557-4d3f-aa8d-3059bfeafa0b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="commonMain"/>
+                <node id="4a3cf844-b461-438d-b071-64be4cbb14d1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosMain"/>
+                <node id="d2d55805-0218-4016-b58e-69f3f99f2d46" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmMain"/>
+                <node id="85748051-316f-431d-a7d9-4d08cc78a7a5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="jvmTest"/>
+              </node>
+            </node>
+            <node id="42ee37e3-bb94-447d-85ce-890358215be4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="core">
+              <node id="6978e85f-a525-40c1-ba13-17cb7db6c7d4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="charts">
+                <node id="ed4de478-2de3-418b-8c5d-6e371e8b3a2e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="58c63df9-6d23-4cd2-9e08-837e76f2c1ad" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="2a2b988a-4bc2-4d5a-8690-80a77c0667ec" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="designsystem">
+                <node id="89fceaf7-2180-4c61-90f4-8e491703f62a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="cd76ba26-7c3a-4864-adfb-7176c637cb7f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="0a42b790-2b00-47b0-a684-a6b5a9853edb" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="di">
+                <node id="9fd020d8-2d4c-4eaa-a60d-234eff6cf2d2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="744ff5c0-ba14-4de9-a7d8-7b66904b603a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="8ee5eedd-0eda-431a-97c6-6582d60d5b2f" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="httpclient">
+                <node id="63335c52-eb31-45ea-a2a1-8a0b059e9a08" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="a3df13c0-62dd-443c-b980-f9b831e5a7ae" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="0b2c49a9-42c0-4c0c-911e-504716d4ec3c" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="model">
+                <node id="88105688-2aa3-4b42-b46f-e24a3f958616" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="75a40bb4-7570-445d-9e3a-02f57078ebd1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="7a4a4d84-2251-4282-80da-c817a595881d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="navigation">
+                <node id="e348731b-f7f1-4c65-929e-59d4bdd13721" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="c7ac23f6-4ad9-4a94-98b6-edb0f9fe7437" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="f635c878-e781-45fb-af96-8f00f26dc853" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="notifications">
+                <node id="1276fa18-f717-43d8-8ace-08523521406a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="dbbef2f6-dccb-4881-9064-97d92fbac612" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+              <node id="f5d7245f-34ee-42eb-9253-5b88a3bd45da" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+                <node id="9d51bebd-5ca5-4a14-a87b-6ce29146972e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build"/>
+                <node id="429888d2-f4db-454a-93dd-24ca61af3331" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src"/>
+              </node>
+            </node>
+            <node id="e5e66ea9-d7b8-40ff-8d20-fc91b87d83be" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="desktopApp">
+              <node id="00942ba5-500e-4e63-81b3-fe7bf2231ab1" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="42246182-c76b-45ee-bde7-5ff681fc69e1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                <node id="39bd8f45-743d-4d15-bb41-24300e8fd99a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="generated"/>
+                <node id="7ab9f381-9e44-48dc-9b36-2b8b266d7df3" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                <node id="eef91ce8-8516-4a04-925e-58580d3d144e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                <node id="b4f35711-b26d-4518-8026-4179b0b5d425" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+                <node id="241b4f1f-f9a4-4e43-a634-561b12279801" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="run"/>
+                <node id="b1ff4b6b-72cd-4aef-be54-108386b87b80" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+              </node>
+              <node id="18d4d73b-ee1f-46e4-8dc9-386495af52d9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                <node id="2a3bd4bb-4df7-4494-a73e-9091a34fa353" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main"/>
+              </node>
+            </node>
+            <node id="7650cfab-4e45-419c-966d-c93a603c5bac" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="docs">
+              <node id="7ef9aeac-4ad0-409b-a861-106da73b0f94" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="images"/>
+              <node id="ece528a6-65c2-480a-8a09-c1f77a625e19" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="superpowers">
+                <node id="9c3b38cd-c94b-4603-b74f-6018bcf45ea7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="plans"/>
+                <node id="b105cdfc-a25d-4ff5-a42e-b2abd3317704" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="specs"/>
+              </node>
+            </node>
+            <node id="8db0b748-93ee-44b2-83a3-587533eaf52e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="features">
+              <node id="386d8da0-7013-4f7b-9933-5b4b575d0760" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="admin">
+                <node id="80b983e6-468b-4fdd-a895-318cc075468a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="5fba587b-65f3-40fc-9ec4-f5722e980e6d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="28021805-f05e-43ce-9efb-f9b1f6d3c8b9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="ef9323b1-6cf8-466e-8671-9278f2ac2026" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="b8f6d1dc-514d-42b3-a8b7-d1b21a714f7c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="1b727c79-38e4-4930-9e2a-656f99db1717" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="ab05e4f2-02ec-4007-ad32-85f30c0e65eb" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="6632fb54-d338-4691-88d6-5823b4ffcd24" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="administrations">
+                <node id="28556295-e68b-438c-92d6-4a903f1d50c2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="525dc62b-f557-43c4-b7c3-f37125b93d63" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="2f29ad0f-3896-4032-8b0b-0b629c127b7e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="f356bd56-edc4-4b34-bd55-4d56f31278cd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="78f1bc98-982b-4e64-8633-648efce83811" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="f98f3798-513c-4197-92ba-5596496d2b3d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="bfd21594-c535-4e17-9904-053cac0ede3b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="b125863b-67a6-4e14-9c19-c5f21a9e049e" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="allergies">
+                <node id="eac2df8c-3321-4f9e-b5ff-4bfc2bfda2b4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="c7d99d31-ac2a-4598-b2b2-3ea1194c7547" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="bed65623-7dec-4f9b-b90f-afe026bcbe18" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="48a984dc-863a-4445-b59b-7da080363dcc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="e9953080-5d1d-415d-994c-392c4d4351f4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="a07531d5-c9fd-4d44-bf2e-72591c612947" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="4d12de64-1b85-4cfa-9124-6e87e2638864" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="2f29da47-2a7c-4c7f-b7ac-8b0cb7bb685b" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="appointments">
+                <node id="14233f9b-5f56-456b-b04d-3af79106ebe8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="aed7ef50-aaaa-4724-9b3e-bbc64caf958f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="2bc7b6c9-c5fe-4f4c-834a-cda90cf14020" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="ea71192d-ca6b-4f46-87fc-e8ea6f3977cd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="33f83834-80fc-4dfa-99be-ba407cebeea7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="60ca913b-d453-4e02-9151-b3656d103f8a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="2f794ec3-15e4-42b1-8b16-0e42f3dd204d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="9217c28b-9a0c-4e8c-af1f-8edafa3cd094" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="auth">
+                <node id="9aca3910-c5b0-4591-bffc-f5e07be2dc1b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="db2fedcd-e877-44af-82f7-4bdf68f24336" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="e192edf0-e8a1-4469-991d-fd7024019357" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="eaa4377d-71c8-4ddd-bf4a-21d56969e86c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="28495d95-369f-401a-9449-2fa12b478993" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="d0e35601-ee54-4be1-a5b4-90e6817bc459" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="a19c4dce-a8ad-40c0-a3fb-68370f8e445f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="9b3771cf-6d94-4fa4-8c60-fef0144d5c2d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="healthlog">
+                <node id="77c0bd68-6724-429d-af25-81f3b6fb55f0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="ce5065f1-1aaa-433a-8e27-ecc9702ef538" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="a2e1a778-6e93-46e7-b282-ab0acfe71e96" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="55819d1e-b551-4bca-a385-cdbd98814b98" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="096783f8-2950-4de9-b5df-53f60631c04e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="560655e9-69f9-40da-8122-691844ee099f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="c72576ed-38e2-4d46-842c-404865c64847" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="27bb1e57-e2f3-44de-a06c-19a2ed3fc279" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="journal">
+                <node id="bad97cc9-15f6-4868-a205-a4c33ac21068" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="2c62f8ef-e9c7-48ea-954f-b3932861a53b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="0d11b2b2-7883-449b-9dc5-c74cacbb7422" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="927541cf-bc5b-4695-b315-d6eba5b4606e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="35d2e4c1-9d8d-4b0b-a65c-8dd8595df1ef" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="e24dd37d-47db-4e50-838b-4512c7505be0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="85e3543c-ce39-4055-86ea-29ca54917868" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="1090b483-9ff7-4ec9-bc16-cafd5cba87f0" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="medications">
+                <node id="355c2154-393b-4c8d-98c4-afe148613103" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="1c6fe8a8-7e64-40c9-b301-a8faa651937b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="d5df75ab-32c1-4926-b9cc-dbcf129dd7e7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="cff3bb09-6a7b-42fe-abb6-61d739ef1b7c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="b4b9fe65-fb23-4a40-8b58-325cca194023" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="9aae66df-d39b-43d5-b28b-0f44ff86f84f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="18b6140b-b5c8-40ea-b834-6ccf2ed69e1d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="4946dda0-06bb-436f-9f0f-6feaeb5d5bb8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="onboarding">
+                <node id="8318bf15-e57d-4bd8-9ced-04ba4e928b5f" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="a0a49de3-3b9f-47f7-992e-e535ee1272ec" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="99e99daf-f516-424e-a0bf-b4c1608b0a42" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="d7f53011-f31d-4df2-b89b-d07f548993fd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="9f7d29b3-d41d-4b51-b188-f6157b226c39" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="98338c73-fb37-4c60-9e1c-83a069af1d7e" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="baf33d8e-5e05-44e5-9f24-5e1848cd1c50" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="1c7d7ec4-6c02-4e9a-9439-f862f49621ca" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="practitioners">
+                <node id="1a69ad9f-28fa-4a04-a396-226196940ea0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="fe2a6e31-1700-47ff-b35f-9f3ce876a09c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="a871c996-719a-4b0e-8ff9-5f08c3de9ba5" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="c90d1058-c38f-4804-aef6-4266e1adeb3d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="9ee5c1bc-c791-48a4-97e2-25419721a869" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="57dfd850-4d2c-4939-9e03-48452c7d75f9" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="2097e976-6e6e-4e7c-baac-f13df5c6fd74" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="293c42ac-ad85-42f4-96ab-82e55b68fc1d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="prescriptions">
+                <node id="ec0be6f1-a4ea-44d9-9432-c75506225244" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="9bca40d9-68e1-4df0-aa65-bbc8be7d8fb0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="c5a26277-a7ae-421f-9d8d-18d3779d2d77" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="646d228f-4e2d-4186-b378-5458895f0131" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="e024fb05-8ac8-4962-a629-e3957a741568" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="d34fba55-fa7e-4314-a358-91d7c978b78a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="0eb860b5-81a1-4398-8640-249fb763f5fd" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="5da4634b-407c-4031-aa15-36a4608a6a5d" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="profile">
+                <node id="ac072f40-7c4b-46ea-98f6-cf39b0d2a12c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="3bd05433-def6-4e82-af16-45ab3e1f8e42" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="420dc605-e090-4253-8ae3-386beee0f015" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="fecaba0e-4eb1-44ff-b35b-ac130fd3860b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="77aa9964-7672-45ca-ad64-380f63942058" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="a7110c8c-3203-43b1-94dd-f1b4b4d6dd87" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="4af08338-8b33-41bb-8b47-c5cec96e7222" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="906987b3-8d3b-4d6d-be2a-bae147a97ed9" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="records">
+                <node id="c8f62845-f6bd-4302-853f-8218cbeedb56" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="c7eb598d-7947-4d45-b13c-9ca55ac13b93" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="c2f21870-b961-4e27-9216-0b3727f73bdf" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="0bd0ab89-603f-4424-87e8-4f660086ad4a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="aa0e99ad-5fbc-45f0-90bf-58834da6b4fc" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="a7149e24-8e4e-44a6-988d-9dad26930ca7" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="c8e4d92c-e375-44f9-bbe3-8b7d0324f181" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+              <node id="2c7ce05e-159c-4504-8a61-3229512d99a7" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="today">
+                <node id="ebf95a51-8807-410b-a931-08f9afddef08" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="api"/>
+                <node id="6f9908e7-1356-42b1-8eaa-87b81e4a0c4c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="data"/>
+                <node id="9dd250b8-3a9b-4c69-a044-1c140da902b8" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="presentation"/>
+                <node id="61d090b1-7b2c-4ea8-9962-c69b163f7ca1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server"/>
+                <node id="4a075ff8-da9a-4f5b-a361-526a552d3613" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="ui"/>
+                <node id="0bf86139-7126-49f0-b500-75b5749dd954" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring"/>
+                <node id="037ee9a1-7538-4e7d-aee1-191636fcfc3a" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wiring-ui"/>
+              </node>
+            </node>
+            <node id="15add7e5-d20d-44df-b667-366aaf5b72d4" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="gradle">
+              <node id="dd29cdb2-f5dc-4a61-ac1c-20c407e65464" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="wrapper"/>
+            </node>
+            <node id="95d10d07-e6df-498b-9cf4-636890a084d6" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosApp">
+              <node id="66c3a821-dd6a-4b4d-8e79-a381a41286f1" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="Configuration"/>
+              <node id="dd3a4792-1868-4dd7-b835-da60a885ff61" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosApp">
+                <node id="3da20f41-2cff-47fc-9833-6988adb83728" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="Assets.xcassets"/>
+                <node id="2a571637-29e1-4896-a2f5-92021f41056b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="Preview Content"/>
+              </node>
+              <node id="b8089591-c9cb-49f7-a839-ce448480f4fa" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="iosApp.xcodeproj">
+                <node id="fea4f2a6-2c9b-4ca8-943b-45570a323bfa" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="project.xcworkspace"/>
+              </node>
+            </node>
+            <node id="00e285f6-d5d6-47ce-b568-43cc64232468" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="server">
+              <node id="0fbcfb43-b11b-4e5b-885b-b0aa80ecf3d8" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="build">
+                <node id="80560845-ccd7-4af4-bc23-b84b878817a0" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="classes"/>
+                <node id="51eac591-f259-454e-b362-63ffdea5e786" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="kotlin"/>
+                <node id="b0592e82-b53f-4400-b78d-f966247e6e65" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="libs"/>
+                <node id="1d7cfb2a-bb08-4692-ac99-4830d5118a4b" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="reports"/>
+                <node id="5765e80b-6c33-4b79-9a80-46597591554c" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="resources"/>
+                <node id="e53227ef-d2b6-411e-9272-a45f57519f40" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test-results"/>
+                <node id="e74cebb6-af9a-47e6-8838-32ad2b16e610" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="tmp"/>
+              </node>
+              <node id="4c115aa6-1a65-4599-b3d4-f5f563163680" shape="line" folded="true" color="#ff3d7cc9" textColor="#ff3d7cc9" text="src">
+                <node id="6cb8be72-e535-4183-8777-6b75d47628f2" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="main"/>
+                <node id="2c0a8cd5-38f3-4f08-b1fa-3fa40f224447" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="test"/>
+                <node id="5b3efd3e-c15d-4254-8a10-44ac2fd3d077" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="testFixtures"/>
+              </node>
+            </node>
+          </node>
+        </node>
+        <node id="bc842a0f-21f0-491c-8238-e75e80c5006d" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="study"/>
+      </node>
+      <node id="2410d0ff-b721-4b5e-8bdf-21e7117911a4" shape="line" color="#ff3d7cc9" textColor="#ff3d7cc9" text="study"/>
+    </node>
+  </node>
+  <preference name="arrowLinkColors" value="#B0B0B0,#5C5C5C,#B3261E,#C98A4E,#274E13,#0B5394,#8A5FA3"/>
+  <preference name="backgroundColor" value="#A89B9B"/>
+  <preference name="rootTopic.font" value="INTER"/>
+  <preference name="rootTopic.noteDisplay" value="INLINE"/>
+  <preference name="rootTopic.attributeDisplay" value="INLINE"/>
+  <preference name="rootTopic.shape" value="RECTANGLE"/>
+  <preference name="rootTopic.fill" value=""/>
+  <preference name="rootTopic.text" value=""/>
+  <preference name="rootTopic.border" value="NONE,TWO,#000000"/>
+  <preference name="rootTopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="rootTopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="topic.font" value="INTER"/>
+  <preference name="topic.noteDisplay" value="INLINE"/>
+  <preference name="topic.attributeDisplay" value="INLINE"/>
+  <preference name="topic.shape" value="RECTANGLE"/>
+  <preference name="topic.fill" value=""/>
+  <preference name="topic.text" value=""/>
+  <preference name="topic.border" value="NONE,TWO,#000000"/>
+  <preference name="topic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="topic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.font" value="INTER"/>
+  <preference name="subtopic.noteDisplay" value="INLINE"/>
+  <preference name="subtopic.attributeDisplay" value="INLINE"/>
+  <preference name="subtopic.shape" value="LINE"/>
+  <preference name="subtopic.fill" value=""/>
+  <preference name="subtopic.text" value=""/>
+  <preference name="subtopic.border" value="NONE,TWO,#000000"/>
+  <preference name="subtopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
+  <preference name="subtopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+</mindmapview>
