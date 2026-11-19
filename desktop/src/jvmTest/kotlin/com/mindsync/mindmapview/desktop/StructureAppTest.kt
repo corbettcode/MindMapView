@@ -163,6 +163,38 @@ class StructureAppTest {
         }
     }
 
+    @Test
+    fun editMenuSetsTheColumnsOfTheGridTheSelectedTopicIsInAndUndoTakesThemBack() = runComposeUiTest {
+        val state = shownApp()
+        state.setStructure(MapStructure.GRID)
+        state.select(state.tree.getNode(state.tree.getRootNode().children.first()))
+        waitForIdle()
+
+        onNodeWithText("Edit").performClick()
+        onNodeWithText("Grid Columns").performScrollTo().performClick()
+        onNodeWithText("3").performClick()
+        waitForIdle()
+        assertEquals(3, state.tree.gridColumnsOf(state.tree.getRootNode().id))
+
+        onNodeWithText("Edit").performClick()
+        onNodeWithText("Grid Columns").performScrollTo().performClick()
+        onNodeWithText("As Many as Fit").performClick()
+        waitForIdle()
+        assertNull(state.tree.gridColumnsOf(state.tree.getRootNode().id))
+
+        press(Key.Z, Key.CtrlLeft)
+        assertEquals(3, state.tree.gridColumnsOf(state.tree.getRootNode().id))
+    }
+
+    @Test
+    fun gridColumnsAreOfferedOnlyInAGrid() = runComposeUiTest {
+        shownApp()
+
+        onNodeWithText("Edit").performClick()
+
+        onNodeWithText("Grid Columns").assertDoesNotExist()
+    }
+
     private fun ComposeUiTest.openAttributes() {
         onNodeWithText("Edit").performClick()
         onNodeWithText("Attributes...").performScrollTo().performClick()

@@ -714,15 +714,24 @@ class MindMapState(
      * change: the grid laid out from a selected topic, or else the one it is in. Topics in no grid are left out.
      */
     fun setGridColumns(count: Int?) {
-        val ownerIds = selectedNodes.mapNotNull { node ->
-            listOf(node.id, tree.structureOwnerOf(node.id)).firstOrNull { tree.isGridOwner(it) }
-        }.distinct()
+        val ownerIds = selectedGridOwners()
         if (ownerIds.isEmpty()) return
         recordChange {
             ownerIds.forEach { tree.setGridColumns(it, count) }
             animateTreeChange()
         }
     }
+
+    /**
+     * Returns how many columns each grid the selected topics are in has, null for as many as fit in a row: the grids
+     * [setGridColumns] would change. It is empty when none of them is in a grid.
+     */
+    fun selectedGridColumns(): Set<Int?> = selectedGridOwners().map { tree.gridColumnsOf(it) }.toSet()
+
+    // The topics the grids the selected topics own, or else are in, are laid out from.
+    private fun selectedGridOwners(): List<String> = selectedNodes.mapNotNull { node ->
+        listOf(node.id, tree.structureOwnerOf(node.id)).firstOrNull { tree.isGridOwner(it) }
+    }.distinct()
 
     // Whether a grid is laid out from the topic [id]: the root of a map that is one, or a topic with one of its own.
     private fun Tree<*>.isGridOwner(id: String): Boolean =

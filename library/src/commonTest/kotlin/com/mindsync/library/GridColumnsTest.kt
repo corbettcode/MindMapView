@@ -70,6 +70,18 @@ class GridColumnsTest {
     }
 
     @Test
+    fun columnsOfTheGridsOfTheSelectedTopicsAreToldAndNoneForTopicsInNoGrid() {
+        val state = state()
+        state.select(state.tree.getNode("c"))
+        assertEquals(emptySet(), state.selectedGridColumns())
+
+        state.setStructure(MapStructure.GRID)
+        assertEquals(setOf(null), state.selectedGridColumns())
+        state.setGridColumns(2)
+        assertEquals(setOf<Int?>(2), state.selectedGridColumns())
+    }
+
+    @Test
     fun topicsInNoGridAreLeftAlone() {
         val state = state()
         state.select(state.tree.getNode("c"))

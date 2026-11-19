@@ -87,6 +87,44 @@ fun BranchStructureSubmenu(
     )
 }
 
+/** The most columns a grid can be given in the menus. */
+const val MAX_GRID_COLUMNS = 8
+
+/**
+ * A "Grid Columns" item of a menu, for the grids the selected topics are in, which opens a menu of "As Many as Fit"
+ * and 1 to [MAX_GRID_COLUMNS]. [counts] are those of the grids, null for as many as fit; the one they share is ticked,
+ * and none when they differ.
+ */
+@Composable
+fun GridColumnsSubmenu(
+    counts: Set<Int?>
+    , onColumns: (Int?) -> Unit
+    , onClose: () -> Unit
+) {
+    var isOpen by remember { mutableStateOf(false) }
+    val ticked = counts.singleOrNull()
+    Box {
+        DropdownMenuItem(
+            text = { Text("Grid Columns") }
+            , trailingIcon = { Text("▸") }
+            , onClick = { isOpen = true }
+        )
+        DropdownMenu(expanded = isOpen, onDismissRequest = { isOpen = false }) {
+            (listOf(null) + (1..MAX_GRID_COLUMNS)).forEach { count ->
+                DropdownMenuItem(
+                    text = { Text(count?.toString() ?: "As Many as Fit") }
+                    , leadingIcon = { Text(if (counts.size == 1 && count == ticked) "✓" else "") }
+                    , onClick = {
+                        isOpen = false
+                        onClose()
+                        onColumns(count)
+                    }
+                )
+            }
+        }
+    }
+}
+
 // A submenu of [choices], null being "Same as Parent", each with a small picture of it, and a tick at those [ticked].
 @Composable
 private fun StructureChoices(

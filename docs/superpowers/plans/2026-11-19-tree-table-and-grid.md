@@ -247,8 +247,9 @@ tests `MapStructureTest`, `MapStructureFilesTest`, `BranchStructureFilesTest`, `
 
 - [x] "Tree Table" and "Grid" in View › Structure, Edit › Branch Structure, a topic's menu and Preferences › New
   maps, each with a picture (done in A1).
-- [ ] Edit › Grid Columns ▸ 1 to 8, and "As Many as Fit",, shown when the map or the selected branch is a grid.
-- [ ] Tests: each set from the menus, and that the column count is shown and set.
+- [x] Edit › Grid Columns ▸ "As Many as Fit" and 1 to 8, and the same in a topic's menu, shown when a selected topic
+  owns or is in a grid; the count the grids share is ticked. `state.selectedGridColumns()` tells the counts.
+- [x] Tests: each set from the menus, and that the column count is shown and set.
 
 ### Task E2: Docs
 

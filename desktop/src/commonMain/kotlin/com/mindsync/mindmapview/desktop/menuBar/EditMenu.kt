@@ -98,6 +98,8 @@ fun EditMenu(
     , onAddFloating: () -> Unit
     , branchStructures: () -> Set<MapStructure?>
     , onBranchStructure: (MapStructure?) -> Unit
+    , gridColumns: () -> Set<Int?>
+    , onGridColumns: (Int?) -> Unit
     , task: () -> NodeTask
     , onPriority: (Int?) -> Unit
     , onProgress: (TaskProgress?) -> Unit
@@ -335,6 +337,15 @@ fun EditMenu(
                 , onStructure = onBranchStructure
                 , onClose = { expanded = false }
             )
+            // Only the grids the selected topics are in have columns to set.
+            val counts = gridColumns()
+            if (counts.isNotEmpty()) {
+                GridColumnsSubmenu(
+                    counts = counts
+                    , onColumns = onGridColumns
+                    , onClose = { expanded = false }
+                )
+            }
             val nodeLinks = links()
             Box {
                 DropdownMenuItem(

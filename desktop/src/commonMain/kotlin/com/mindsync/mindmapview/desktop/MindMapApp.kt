@@ -67,6 +67,7 @@ import com.mindsync.mindmapview.desktop.component.SplitDivider
 import com.mindsync.mindmapview.desktop.component.emojisInMap
 import com.mindsync.mindmapview.desktop.dialog.*
 import com.mindsync.mindmapview.desktop.menuBar.BranchStructureSubmenu
+import com.mindsync.mindmapview.desktop.menuBar.GridColumnsSubmenu
 import com.mindsync.mindmapview.desktop.menuBar.EditMenu
 import com.mindsync.mindmapview.desktop.menuBar.HelpMenu
 import com.mindsync.mindmapview.desktop.menuBar.TaskSubmenu
@@ -1364,6 +1365,8 @@ private fun MindMapScreen(
                             // Read when the menu opens, as canMove is.
                             branchStructures = { state.selectedBranchStructures() },
                             onBranchStructure = { state.setBranchStructure(it) },
+                            gridColumns = { state.selectedGridColumns() },
+                            onGridColumns = { state.setGridColumns(it) },
                             task = { selectedNode?.let { state.tree.taskOf(it.id) } ?: NodeTask() },
                             onPriority = { state.setPriority(it) },
                             onProgress = { state.setProgress(it) },
@@ -1571,6 +1574,8 @@ private fun MindMapScreen(
                                 onAttachToRoot = if (state.tree.isFloating(nodeId)) ({ state.attachToRoot() }) else null,
                                 branchStructures = state.selectedBranchStructures(),
                                 onBranchStructure = { state.setBranchStructure(it) },
+                                gridColumns = state.selectedGridColumns(),
+                                onGridColumns = { state.setGridColumns(it) },
                                 onCenter = { state.centerNode(nodeId) },
                                 onMoveAround = { isClockwise -> state.moveNodeAround(isClockwise) },
                                 // Only a node with children that is not the root is folded.
@@ -1946,6 +1951,8 @@ private fun NodeMenu(
     onAttachToRoot: (() -> Unit)?,
     branchStructures: Set<MapStructure?>,
     onBranchStructure: (MapStructure?) -> Unit,
+    gridColumns: Set<Int?>,
+    onGridColumns: (Int?) -> Unit,
     onCenter: () -> Unit,
     onMoveAround: (isClockwise: Boolean) -> Unit,
     isFolded: Boolean?,
@@ -2044,6 +2051,13 @@ private fun NodeMenu(
                 BranchStructureSubmenu(
                     structures = branchStructures
                     , onStructure = onBranchStructure
+                    , onClose = onDismiss
+                )
+            }
+            if (gridColumns.isNotEmpty()) {
+                GridColumnsSubmenu(
+                    counts = gridColumns
+                    , onColumns = onGridColumns
                     , onClose = onDismiss
                 )
             }
