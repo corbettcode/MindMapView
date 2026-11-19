@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mindsync.library.MindMapState
 import com.mindsync.library.TASK_BADGE_STROKE
+import com.mindsync.library.TextEditHost
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.TaskDate
 import com.mindsync.library.drawTaskBadge
@@ -81,6 +82,7 @@ internal fun OutlineRowView(
     , topicFontFamily: FontFamily?
     , emojiFontFamily: FontFamily?
     , dateLabel: (date: TaskDate) -> String
+    , onAddSiblingToType: (isAbove: Boolean) -> Unit
     , onPress: (node: NodeData<*>, press: RowPress) -> Unit
     , onFoldClick: (node: NodeData<*>) -> Unit
 ) {
@@ -149,21 +151,37 @@ internal fun OutlineRowView(
         Bullet(tree.fillOf(row.id), textColor)
         Spacer(Modifier.width(8.dp))
         TaskBadges(state, row.id, textColor)
-        BasicText(
-            text = text
-            , style = TextStyle(
-                color = textColor
-                , fontSize = 14.sp
-                , fontFamily = topicFontFamily
-                , fontWeight = if (row.depth == 0) FontWeight.Bold else null
-                , fontStyle = if (row.isSummary) FontStyle.Italic else null
-            )
-            , onTextLayout = { textLayout = it }
-            , modifier = Modifier
-                .weight(1f, fill = false)
-                .padding(vertical = 4.dp)
-                .onGloballyPositioned { textCoordinates = it }
+        val textStyle = TextStyle(
+            color = textColor
+            , fontSize = 14.sp
+            , fontFamily = topicFontFamily
+            , fontWeight = if (row.depth == 0) FontWeight.Bold else null
+            , fontStyle = if (row.isSummary) FontStyle.Italic else null
         )
+        val isTyping = state.textEditNodeId == row.id && state.textEditHost == TextEditHost.OUTLINE
+        if (isTyping) {
+            OutlineTextEditor(
+                state = state
+                , id = row.id
+                , html = node.description
+                , textStyle = textStyle
+                , onNextTopic = { onAddSiblingToType(false) }
+                , modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(vertical = 4.dp)
+            )
+        }
+        else {
+            BasicText(
+                text = text
+                , style = textStyle
+                , onTextLayout = { textLayout = it }
+                , modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(vertical = 4.dp)
+                    .onGloballyPositioned { textCoordinates = it }
+            )
+        }
         if (node.note.isNotBlank()) NoteMark(textColor)
         if (attributeCount > 0) AttributeMark(attributeCount, textColor)
         task.due?.let { due ->

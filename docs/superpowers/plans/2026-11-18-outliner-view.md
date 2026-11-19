@@ -37,7 +37,7 @@ phase B adds typing and the outliner keys; phase C adds the app's view modes, me
 | Shortcut | Ctrl+Shift+O cycles Map → Outliner → Map and Outliner. It is free today (only Ctrl+O is used); check again before taking it. |
 | Order of the root's children | `root.children` order, which is the file order, whatever side each is on, as XMind's Outliner does. Moving up or down at that level changes that order and keeps the side, so on the map the topic may not seem to move when its neighbour is on another side. |
 | Side of a topic outdented to the root | The side of the branch it came from (`sideOf` before the move). A new root topic added with Enter takes its sibling's side. |
-| Enter while typing | Ends the typing and starts a new sibling below, so a list is typed without stopping (outliner habit, unlike the map, where Enter only ends the typing). Enter on a just-added row that is still empty removes it and ends the typing. Esc ends the typing. |
+| Enter while typing | Ends the typing and starts a new sibling below, so a list is typed without stopping (outliner habit, unlike the map, where Enter only ends the typing). Enter on a just-added row left as it was, or empty, removes it and ends the typing. Esc cancels the typing, as on the map. |
 | Tab / Shift+Tab | Indent / outdent the selected topics, whether typing or not; typing goes on in the same topic. On the map, Tab keeps adding a child. |
 | Move up / down | Alt+Shift+Up / Alt+Shift+Down, in both views, also in Edit › Move Up / Move Down. Indent and Outdent are also in the Edit menu for the map, without a key. |
 | Backspace on an empty row | While typing, a topic whose text is empty and that has no children is removed, and typing goes on at the end of the row above, as one undo step. |
@@ -144,37 +144,46 @@ badge and note marker drawing), test `MindMapOutlineTest.kt` (JVM, Compose UI)
 
 ## Phase B: Typing in the outline
 
-### Task B1: The row editor
+### Task B1: The row editor and its keys
 
-**Files:** `outline/OutlineRowView.kt`, new `outline/OutlineTextEditor.kt` (from `NodeTextEditor`'s editing part,
-without its map placement), `MindMapState.kt` (`textEditHost`), `MindMap.kt`, test `OutlineTypingTest.kt`
+**Files:** new `outline/OutlineTextEditor.kt` (`OutlineTextEditor`, `outlineEditorAction`), `outline/OutlineRowView.kt`,
+`outline/MindMapOutline.kt` (`onAddSiblingToType`), `MindMapState.kt` (`TextEditHost`, `textEditHost`,
+`isTextEditOfAddedNode`, `removeEmptyAndEditAbove`, `startTextEdit(isCaretAtEnd)`, moves while typing), `MindMap.kt`,
+test `OutlineTypingTest.kt`
 
-- [ ] `enum class TextEditHost { MAP, OUTLINE }` and `state.textEditHost`, set by whichever view starts the typing;
-  `MindMap` shows `NodeTextEditor` only for `MAP` and the outline its editor only for `OUTLINE`.
-- [ ] The row being typed in shows a `BasicRichTextEditor` in place of the text, in the row's style, with the same
-  Ctrl+B/I/U as the map's editor and `previewText` on each change, so the map grows as the text is typed.
-- [ ] Double click or F2 starts typing; typing a letter on a selected row replaces its text, as on the map.
-- [ ] Tests (5): double click, type, Enter: one undo step; typing a letter replaces the text; the map's editor isn't
-  shown; Esc gives back the old text; the map's node is the new text before the typing ends.
+The keys while typing in a row are the editor's own, in the library, as the editor is; the app only decides the keys
+while nothing is typed (B2).
 
-### Task B2: The outliner keys
+- [x] `enum class TextEditHost { MAP, OUTLINE }` and `state.textEditHost`: a press on the map makes it `MAP`, a press
+  in the outline or its focus `OUTLINE`. `MindMap` shows `NodeTextEditor` only for `MAP`, the outline its editor only
+  for `OUTLINE`.
+- [x] The row being typed in shows a `BasicRichTextEditor` in place of its text, in the row's style, with
+  `previewText` on each change, so the map grows as the text is typed.
+- [x] A double click starts typing (`onRowDoubleClick`, by default `startTextEdit`).
+- [x] Keys (`outlineEditorAction`): Enter ends the typing and goes on in a sibling below (`onAddSiblingToType`, which
+  the app gives to add it in its style); Enter in a new topic left as it was, or with no text, removes it and ends.
+  Shift+Enter is a new line. Tab / Shift+Tab indent / outdent, Alt+Shift+Up / Down move, Esc cancels as on the map,
+  Backspace in an empty topic with nothing below it removes it and types on at the end of the row above
+  (`removeEmptyAndEditAbove`). Ctrl+B / I / U as on the map.
+- [x] Moves while typing are part of the typing: one change with the text, which Esc takes back too.
+- [x] Tests (6): a double click types in the row and not on the map; typed text shows on the map and Esc gives back
+  the old text with nothing to undo; Enter goes on in a new sibling, Enter twice ends, two undos take both back; Tab
+  and Shift+Tab while typing, then one undo takes back the moves and the text; Alt+Shift+Up while typing; Backspace in
+  an empty topic removes it, types on above, and one undo brings it back.
 
-**Files:** new `desktop/.../OutlineKeys.kt` (`outlineKeyAction`), `MindMapApp.kt` (send keys by focused view),
-`MindMapState.kt` (`removeEmptyAndEditAbove`), tests `OutlineKeysTest.kt`, `OutlineAppTest.kt`
+### Task B2: The outline's keys in the app
 
-- [ ] `outlineKeyAction(key, codePoint, isShift, isCtrl, isAlt, isMeta, isEditing, isTextEmpty, hasSelectedNode)`
-  returning the existing `InlineKeyAction`s plus `Indent`, `Outdent`, `MoveUp`, `MoveDown`, `RemoveEmptyAndEditAbove`,
-  `SelectRow(isUp)`, `FoldOrParent`, `UnfoldOrChild`, with the keys in the decisions table.
-- [ ] Enter while typing commits and adds a sibling below to type in, through `addNodeForTextEdit`, so the new topic
-  and its text are one step. Enter on an empty row just added cancels it, which removes it.
-- [ ] Tab and Shift+Tab while typing commit, move, and start typing again in the same topic with the caret where it
-  was, all as one step (`groupChanges`).
-- [ ] `removeEmptyAndEditAbove()`: one step that removes the empty leaf and starts typing at the end of the row above.
-- [ ] Tests: `OutlineKeysTest` (12) for each key, typing and not; `OutlineAppTest` (6): type three topics with Enter,
-  indent the second with Tab while typing, outdent with Shift+Tab, Alt+Shift+Up, Backspace on an empty row, then undo
-  each step back to the start.
+**Files:** new `desktop/.../OutlineKeys.kt` (`outlineKeyAction`), `MindMapApp.kt` (send keys by the view that has
+the focus), tests `OutlineKeysTest.kt`, `OutlineAppTest.kt`
 
----
+- [ ] `outlineKeyAction(key, codePoint, isShift, isCtrl, isAlt, isMeta, hasSelectedNode)` for the outline while
+  nothing is typed: Enter / Shift+Enter add a sibling below / above to type in, Tab and Shift+Tab indent and outdent,
+  Alt+Shift+Up / Down move, Up / Down go to the row above / below, Left folds or goes to the parent, Right unfolds or
+  goes to the first child, F2 and a typed letter start typing as on the map, Alt+Enter opens the edit dialog.
+- [ ] While the outline has the focus and nothing is typed, the app acts on these instead of the map's keys; while a
+  row is typed in, the app leaves Enter, Tab, Esc and Backspace to the row's editor.
+- [ ] Tests: `OutlineKeysTest` for each key; `OutlineAppTest`: type three topics with Enter in the app's style,
+  indent with Tab, Up and Down between rows, Left and Right fold, a typed letter replaces the text.
 
 ## Phase C: In the app
 

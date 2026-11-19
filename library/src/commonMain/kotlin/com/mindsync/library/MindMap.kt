@@ -502,7 +502,7 @@ fun MindMap(
                 }
             }
         }
-        NodeTextEditor(state, measureTextSize)
+        if (state.textEditHost == TextEditHost.MAP) NodeTextEditor(state, measureTextSize)
     }
 }
 

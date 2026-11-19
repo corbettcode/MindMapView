@@ -59,6 +59,8 @@ import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TaskFilter
 import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.model.TopicKind
+import com.mindsync.library.outline.outlineRows
+import com.mindsync.library.outline.rowAbove
 import com.mindsync.library.util.Dp
 import com.mindsync.library.util.IdGenerator
 import com.mindsync.library.util.NodeGenerator
@@ -965,9 +967,10 @@ class MindMapState(
     }
 
     // Moves the selected branches but the root, those of each parent together, in the order of the tree, as one
-    // change, and keeps them selected.
+    // change, and keeps them selected. While a node's text is typed, as in an outliner, the move is part of the
+    // typing, which goes on: one change with it, which cancelling the typing takes back too.
     private fun moveSelectedBranches(move: (parentId: String, ids: List<String>) -> Unit) {
-        recordChange {
+        val moveAll = {
             selectedBranches
                 .filter { it.parentId != null }
                 .groupBy { it.parentId!! }
@@ -976,6 +979,7 @@ class MindMapState(
             mindMapManager.setSelectedNode(selectedNode?.let { tree.nodes[it.id] })
             animateTreeChange()
         }
+        if (textEdit != null) moveAll() else recordChange(moveAll)
     }
 
     /**
@@ -1071,11 +1075,23 @@ class MindMapState(
         private set
 
     /**
+     * The view the text of [textEditNodeId] is typed in: the map, or an outline of it. Each view sets it as it is
+     * used, so with both shown only the one in use shows a text field for it.
+     */
+    var textEditHost: TextEditHost by mutableStateOf(TextEditHost.MAP)
+
+    /** Whether the text being typed is that of a node added for it, which ending the typing without text removes. */
+    val isTextEditOfAddedNode: Boolean get() = textEdit?.let { it.originalText == null } == true
+
+    /**
      * Starts typing the text of the selected node. [text] replaces its text at once, for an edit started by typing
      * a character. While it is edited each [previewText] shows the text in the node; all of the typing is one change,
      * made by [commitTextEdit]. Selecting another node, undoing or making another change commits it first.
      */
-    fun startTextEdit(text: String? = null) {
+    fun startTextEdit(
+        text: String? = null
+        , isCaretAtEnd: Boolean = text != null
+    ) {
         val node = mindMapManager.getSelectedNode() ?: return
         if (textEditNodeId != node.id) {
             commitTextEdit()
@@ -1085,7 +1101,7 @@ class MindMapState(
                 , themeLook
                 , node.description
                 , selectedIdBefore = null
-                , isStartedByTyping = text != null
+                , isStartedByTyping = isCaretAtEnd
             )
             textEditNodeId = node.id
         }
@@ -1165,6 +1181,31 @@ class MindMapState(
         edit.selectedIdBefore?.let { mindMapManager.setSelectedNode(tree.nodes[it]) }
         historyTick++
         animateTreeChange()
+    }
+
+    /**
+     * Removes the node whose text is being typed, when the text is empty and no nodes are below it, and starts typing
+     * at the end of the text of the row above it in the outline, as Backspace does in an outliner. Removing it is
+     * one change; a node added for the typing just goes, as [cancelTextEdit] takes it away.
+     */
+    fun removeEmptyAndEditAbove() {
+        val edit = textEdit ?: return
+        val node = tree.nodes[edit.nodeId] ?: return
+        if (node.parentId == null || node.children.isNotEmpty() || !RichText.isBlank(node.description)) return
+        val aboveId = outlineRows(tree).rowAbove(node.id) ?: return
+        if (isTextEditOfAddedNode) {
+            cancelTextEdit()
+        }
+        else {
+            // The typing that emptied it is no change of its own, so the node is removed as it was before it.
+            closeTextEdit()
+            tree.restore(edit.before)
+            mindMapManager.setTree(tree)
+            select(tree.getNode(node.id))
+            removeNode()
+        }
+        select(tree.getNode(aboveId))
+        startTextEdit(isCaretAtEnd = true)
     }
 
     private fun closeTextEdit() {
@@ -1755,6 +1796,7 @@ class MindMapState(
         position: Offset
         , selectionChange: SelectionChange = SelectionChange.SELECT
     ): NodeData<*>? {
+        textEditHost = TextEditHost.MAP
         mindMapManager.setNotMoving()
         val touchedNode = findNode(toTreePoint(position))
         when {
@@ -2263,6 +2305,12 @@ private class ArrowLinkDrag(
 
 // A node's text being typed: the map as it was before, and what to put back when the typing is cancelled.
 // A node added to be typed into has no original text, and the node that was selected before it is selected again.
+/** A view the text of a node is typed in. */
+enum class TextEditHost {
+    MAP
+    , OUTLINE
+}
+
 private class TextEdit(
     val nodeId: String
     , val before: TreeSnapshot

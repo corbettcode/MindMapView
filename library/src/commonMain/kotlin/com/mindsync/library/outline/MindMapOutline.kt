@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import com.mindsync.library.MindMapState
+import com.mindsync.library.TextEditHost
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.TaskDate
 import com.mindsync.library.model.TopicKind
@@ -46,6 +47,11 @@ fun outlineRowTag(id: String): String = "com.mindsync.library.outlineRow.$id"
  * Each row shows the topic's fill as a bullet, its priority and progress, its text in the font of its kind from
  * [topicFontFamilies] with emojis in [emojiFontFamily], whether it has a note and how many attributes it has, and its
  * due date by [dateLabel]. Topics the task filter fades are faded here too.
+ *
+ * Using the outline makes it [MindMapState.textEditHost], so a topic's text is typed in its row, with the keys of an
+ * outliner: Enter ends the typing and goes on in a sibling below, which [onAddSiblingToType] adds and starts typing
+ * in; Tab and Shift+Tab indent and outdent the topic, Alt+Shift+Up and Down move it, and Backspace in an empty topic
+ * removes it and goes on at the end of the row above. All of it is undone a topic at a time.
  */
 @Composable
 fun MindMapOutline(
@@ -53,7 +59,10 @@ fun MindMapOutline(
     , modifier: Modifier = Modifier
     , topicFontFamilies: Map<TopicKind, FontFamily?> = emptyMap()
     , emojiFontFamily: FontFamily? = null
-    , onRowDoubleClick: (node: NodeData<*>) -> Unit = {}
+    , onRowDoubleClick: (node: NodeData<*>) -> Unit = { state.startTextEdit() }
+    , onAddSiblingToType: (isAbove: Boolean) -> Unit = { isAbove ->
+        state.addNodeForTextEdit { addSiblingNode("", isAbove = isAbove) }
+    }
     , onLinkClick: (node: NodeData<*>, url: String) -> Unit = { _, _ -> }
     , onRowMenu: (node: NodeData<*>, position: Offset) -> Unit = { _, _ -> }
     , onFocusChange: (isFocused: Boolean) -> Unit = {}
@@ -89,7 +98,10 @@ fun MindMapOutline(
             .background(state.background)
             .onGloballyPositioned { outlineCoordinates = it }
             .focusRequester(focusRequester)
-            .onFocusChanged { onFocusChange(it.hasFocus) }
+            .onFocusChanged {
+                if (it.hasFocus) state.textEditHost = TextEditHost.OUTLINE
+                onFocusChange(it.hasFocus)
+            }
             .focusable()
             .testTag(OUTLINE_TAG)
     ) {
@@ -103,7 +115,9 @@ fun MindMapOutline(
                 , topicFontFamily = topicFontFamilies[state.tree.topicKindOf(row.id)]
                 , emojiFontFamily = emojiFontFamily
                 , dateLabel = dateLabel
+                , onAddSiblingToType = onAddSiblingToType
                 , onPress = { node, press ->
+                    state.textEditHost = TextEditHost.OUTLINE
                     focusRequester.requestFocus()
                     when {
                         press.isSecondary -> {
