@@ -182,6 +182,7 @@
         <li><a href="#links">Web links</a></li>
         <li><a href="#attributes">Attributes</a></li>
         <li><a href="#folding">Folding</a></li>
+        <li><a href="#outliner">The outliner</a></li>
         <li><a href="#arrows">Arrow links</a></li>
         <li><a href="#clipboard">Cut, copy and paste</a></li>
         <li><a href="#find">Finding nodes</a></li>
@@ -208,7 +209,7 @@
         <li>
             <b>The web app</b>, in your browser at
             <a href="https://corbettcode.github.io/MindMapView/">corbettcode.github.io/MindMapView</a>, with nothing
-            to install. Section <a href="#web">16</a> lists where it differs.
+            to install. Section <a href="#web">18</a> lists where it differs.
         </li>
     </ul>
     <p>
@@ -308,7 +309,7 @@
         with the text <i>Topic 1</i>, <i>Topic 2</i> and so on, or <i>Subtopic 1</i>, <i>Subtopic 2</i> and so
         on: topics and subtopics are each counted on their own. It takes the shape, colors and border of the last
         child of the node it is added to, so siblings look alike. The first child of a node gets the shape set in
-        Preferences (section <a href="#preferences">16</a>).
+        Preferences (section <a href="#preferences">17</a>).
     </p>
     <p>
         Click <b>Save &amp; Close</b> to add the node, or <b>Add Another</b> to add it and open the dialog again
@@ -563,7 +564,7 @@
     <p>
         A note holds more than fits in a node: details, lists, links or pictures. How notes are shown is set by
         <b>Notes</b> for the root topic, the topics and the subtopics each in Preferences (section
-        <a href="#preferences">16</a>):
+        <a href="#preferences">17</a>):
     </p>
     <ul>
         <li>
@@ -619,7 +620,7 @@
     <p>
         Attributes are name-and-value pairs, such as <i>Status: In progress</i> or <i>Due: 2026-11-15</i>. How
         they are shown is set by <b>Attributes</b> for the root topic, the topics and the subtopics each in
-        Preferences (section <a href="#preferences">16</a>):
+        Preferences (section <a href="#preferences">17</a>):
     </p>
     <ul>
         <li>
@@ -679,8 +680,64 @@
     </p>
 </section>
 
+<section id="outliner">
+    <h2>11. The outliner</h2>
+    <p>
+        The outliner shows the map as an outline: a row for each topic, indented under the topic it is below, as in
+        XMind's Outliner or Workflowy. It is the same map, not a copy, so whatever you change in one shows in the
+        other at once, and undo, find, the filter, the menus and the edit dialog work in it as they do on the map.
+        Typing a long list of ideas is quicker here, as the map doesn't move around while you type.
+    </p>
+    <p>Choose what to show in the <span class="menu">View</span> menu, or go round them with <kbd>Ctrl+Shift+O</kbd>:</p>
+    <table>
+        <tr><th>View</th><th>Shows</th></tr>
+        <tr><td>Map</td><td>The map alone.</td></tr>
+        <tr><td>Outliner</td><td>The outline alone.</td></tr>
+        <tr><td>Map and Outliner</td><td>The outline on the left and the map on the right. Drag the line between them to share the width. In a narrow window, as on a phone, the outline is shown alone.</td></tr>
+    </table>
+    <p>
+        The app remembers your choice. In Map and Outliner, a topic you select in the outline is brought into view
+        on the map when it is off the screen.
+    </p>
+    <h3>What a row shows</h3>
+    <p>
+        Each row has an arrow to fold or unfold the topic, a dot in the topic's color, its priority and progress, its
+        text with its bold, italic, underline and links, a mark when it has a note, the number of its attributes, and
+        its due date. A picture in the text shows as &#x1F5BC;. A summary is in italics, after the topics it sums up.
+        Boundaries and arrow links are only on the map.
+    </p>
+    <h3>Typing an outline</h3>
+    <p>
+        Double-click a row, or select it and press <kbd>F2</kbd> or start typing, to type its text in the row. Then:
+    </p>
+    <ul>
+        <li><kbd>Enter</kbd> finishes the topic and goes on in a new one below it, so you can type a list without
+            stopping. <kbd>Enter</kbd> in the new topic before you type anything removes it and stops.</li>
+        <li><kbd>Tab</kbd> indents the topic: it goes under the topic above it. <kbd>Shift+Tab</kbd> outdents it:
+            it goes back out, right after the topic it was under.</li>
+        <li><kbd>Backspace</kbd> in an empty topic with nothing under it removes it and goes on at the end of the row
+            above.</li>
+        <li><kbd>Esc</kbd> cancels, as on the map.</li>
+    </ul>
+    <p>Each topic you type, with the moves you made while typing it, is one step to undo.</p>
+    <h3>Moving around and rearranging</h3>
+    <p>
+        When you're not typing, <kbd>Up</kbd> and <kbd>Down</kbd> go from row to row, <kbd>Left</kbd> folds the
+        topic, or goes to its parent, and <kbd>Right</kbd> unfolds it, or goes to its first child. <kbd>Tab</kbd> and
+        <kbd>Shift+Tab</kbd> indent and outdent the selected topics. <kbd>Alt+Shift+Up</kbd> and
+        <kbd>Alt+Shift+Down</kbd> move them up and down among their siblings, on the map as well. The
+        <span class="menu">Edit</span> menu also has <span class="menu">Move Up</span>, <span class="menu">Move Down</span>,
+        <span class="menu">Indent</span> and <span class="menu">Outdent</span>, which work on the map too.
+    </p>
+    <p>
+        The topics directly under the root are listed in their order whatever side of the root they're on, so moving
+        one up or down may not move it on the map when its neighbour is on another side. A topic outdented to the
+        root stays on the side it was on.
+    </p>
+</section>
+
 <section id="arrows">
-    <h2>11. Arrow links</h2>
+    <h2>12. Arrow links</h2>
     <p>
         An arrow link is a curved arrow from one node to any other node, drawn on top of the map. Use it to show a
         connection that isn't parent and child.
@@ -715,7 +772,7 @@
 </section>
 
 <section id="clipboard">
-    <h2>12. Cut, copy and paste</h2>
+    <h2>13. Cut, copy and paste</h2>
     <ul>
         <li><kbd>Ctrl+C</kbd> copies the selected nodes, with all the nodes below them.</li>
         <li><kbd>Ctrl+X</kbd> cuts them. Cut nodes can be pasted back, so they are removed without asking.</li>
@@ -744,7 +801,7 @@
 </section>
 
 <section id="find">
-    <h2>13. Finding nodes</h2>
+    <h2>14. Finding nodes</h2>
     <p>
         Press <kbd>Ctrl+F</kbd> or choose <span class="menu">Edit &rsaquo; Find...</span> to open the find bar, then
         type. MindMapView selects the first node whose text or note contains what you typed, ignoring capital
@@ -787,7 +844,7 @@
 </section>
 
 <section id="files">
-    <h2>14. Files: open, save, import and export</h2>
+    <h2>15. Files: open, save, import and export</h2>
 
     <h3>The File menu</h3>
     <table>
@@ -886,7 +943,7 @@
 </section>
 
 <section id="themes">
-    <h2>15. Map themes</h2>
+    <h2>16. Map themes</h2>
     <p>
         A theme gives the whole map a look in one step: its background, the colors of the root, the main topics
         (the nodes next to the root) and the nodes below them, the colors and width of the lines, borders, and the
@@ -909,7 +966,7 @@
 </section>
 
 <section id="preferences">
-    <h2>16. Preferences</h2>
+    <h2>17. Preferences</h2>
     <p>Choose <span class="menu">Edit &rsaquo; Preferences...</span> or press <kbd>Ctrl+,</kbd> to change:</p>
     <table>
         <tr><th>Setting</th><th>Choices</th></tr>
@@ -954,7 +1011,7 @@
 </section>
 
 <section id="web">
-    <h2>17. The web app</h2>
+    <h2>18. The web app</h2>
     <p>
         The web app at <a href="https://corbettcode.github.io/MindMapView/">corbettcode.github.io/MindMapView</a>
         is the same app, running in your browser. It needs a recent browser: Chrome or Edge 119, Firefox 120,
@@ -978,7 +1035,7 @@
 </section>
 
 <section id="shortcuts">
-    <h2>18. Keyboard shortcuts</h2>
+    <h2>19. Keyboard shortcuts</h2>
     <h3>Files</h3>
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
@@ -1012,6 +1069,7 @@
         <tr><td><kbd>Ctrl+D</kbd></td><td>Mark the selected nodes done, or not started</td></tr>
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
+        <tr><td><kbd>Alt+Shift+Up</kbd> / <kbd>Alt+Shift+Down</kbd></td><td>Move the selected nodes up / down among their siblings</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>
     </table>
     <h3>While typing on the map</h3>
@@ -1022,6 +1080,22 @@
         <tr><td><kbd>Esc</kbd></td><td>Cancel: a new node goes, and a node's old text comes back</td></tr>
         <tr><td><kbd>Shift+Enter</kbd></td><td>A new line</td></tr>
         <tr><td><kbd>Ctrl+B</kbd> / <kbd>Ctrl+I</kbd> / <kbd>Ctrl+U</kbd></td><td>Bold / italic / underline</td></tr>
+    </table>
+    <h3>In the outliner</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd></td><td>Indent / outdent the selected topics</td></tr>
+        <tr><td><kbd>Up</kbd> / <kbd>Down</kbd></td><td>Select the row above / below</td></tr>
+        <tr><td><kbd>Left</kbd></td><td>Fold the selected topic, or select its parent</td></tr>
+        <tr><td><kbd>Right</kbd></td><td>Unfold the selected topic, or select its first child</td></tr>
+    </table>
+    <h3>While typing in the outliner</h3>
+    <table>
+        <tr><th>Keys</th><th>Command</th></tr>
+        <tr><td><kbd>Enter</kbd></td><td>Finish typing and go on in a new sibling below</td></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd></td><td>Indent / outdent the topic</td></tr>
+        <tr><td><kbd>Backspace</kbd></td><td>In an empty topic: remove it and type on in the row above</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Cancel: a new topic goes, and a topic's old text comes back</td></tr>
     </table>
     <h3>In the edit dialog</h3>
     <table>
@@ -1047,6 +1121,7 @@
     <table>
         <tr><th>Keys</th><th>Command</th></tr>
         <tr><td><kbd>Ctrl+Alt+C</kbd></td><td>Center the selected node</td></tr>
+        <tr><td><kbd>Ctrl+Shift+O</kbd></td><td>Show the map, the outliner, or both</td></tr>
         <tr><td><kbd>Space</kbd></td><td>Fold or unfold the selected node</td></tr>
         <tr><td><kbd>Ctrl+Space</kbd></td><td>Fold or unfold its children</td></tr>
         <tr><td><kbd>Alt+PageUp</kbd> / <kbd>Alt+PageDown</kbd></td><td>Fold / unfold one level</td></tr>
@@ -1056,6 +1131,8 @@
     <table>
         <tr><th>Action</th><th>Result</th></tr>
         <tr><td>Double-click a node</td><td>Type its text</td></tr>
+        <tr><td>Double-click a row of the outline</td><td>Type its text in the row</td></tr>
+        <tr><td>Click the arrow before a row</td><td>Fold or unfold the topic</td></tr>
         <tr><td>Right-click a node</td><td>Its menu</td></tr>
         <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>
         <tr><td>Right-click inside a boundary</td><td>Its menu</td></tr>
@@ -1075,7 +1152,7 @@
 </section>
 
 <section id="licenses">
-    <h2>19. Open source licenses</h2>
+    <h2>20. Open source licenses</h2>
     <p>
         MindMapView is open source software under the MIT License. Its source code is at
         <a href="https://github.com/corbettcode/MindMapView">github.com/corbettcode/MindMapView</a>.

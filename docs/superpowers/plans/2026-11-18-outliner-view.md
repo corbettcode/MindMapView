@@ -214,15 +214,15 @@ while nothing is typed (B2).
 
 ### Task C2: Documentation
 
-**Files:** `docs/user-manual/user-manual.html` (new chapter "The outliner" after Folding, rows in the shortcut
-tables), PDF (`make-pdf.sh`), `README.md` (feature list and feature tour text), `KeyboardShortcuts.kt`, test
-`KeyboardShortcutsManualTest` (kept passing)
+**Files:** `docs/user-manual/user-manual.html` (new chapter 11 "The outliner" after Folding, the later chapters and
+the section numbers that point at them one on, rows in the shortcut tables), the PDF (`make-pdf.sh`), `README.md`,
+`KeyboardShortcuts.kt`, test `KeyboardShortcutsManualTest` (passing)
 
-- [ ] The chapter: what the outline is, the view modes, typing a list, indent, outdent and moving, what a row shows,
-  and that boundaries and arrow links are only on the map.
-- [ ] A screenshot of Map and Outliner on `desktop/feature_tour.mmv`, for the README and the manual.
-
----
+- [x] The chapter: what the outline is, the view modes, what a row shows, typing an outline, and moving around and
+  rearranging, with the side rule for the root's topics; boundaries and arrow links are only on the map.
+- [x] Shortcuts: "In the outliner" and "While typing in the outliner" groups, Alt+Shift+Up / Down under Editing,
+  Ctrl+Shift+O under View, and two Mouse rows, in the dialog and the manual alike.
+- [ ] A screenshot of Map and Outliner on `desktop/feature_tour.mmv` for the README and the manual (left for later).
 
 ## Out of scope / follow-ups
 

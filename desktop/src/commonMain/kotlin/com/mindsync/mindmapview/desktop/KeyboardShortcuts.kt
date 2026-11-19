@@ -55,6 +55,11 @@ val KEYBOARD_SHORTCUTS = listOf(
                 , "Move the branch clockwise / counterclockwise around the root"
                 , isPair = true
             )
+            , KeyboardShortcut(
+                listOf("Alt+Shift+Up", "Alt+Shift+Down")
+                , "Move the selected nodes up / down among their siblings"
+                , isPair = true
+            )
             , KeyboardShortcut(listOf("Ctrl+,"), "Open the Preferences")
         )
     )
@@ -66,6 +71,24 @@ val KEYBOARD_SHORTCUTS = listOf(
             , KeyboardShortcut(listOf("Esc"), "Cancel: a new node goes, and a node's old text comes back")
             , KeyboardShortcut(listOf("Shift+Enter"), "A new line")
             , KeyboardShortcut(listOf("Ctrl+B", "Ctrl+I", "Ctrl+U"), "Bold / italic / underline", isPair = true)
+        )
+    )
+    , KeyboardShortcutGroup(
+        "In the outliner"
+        , listOf(
+            KeyboardShortcut(listOf("Tab", "Shift+Tab"), "Indent / outdent the selected topics", isPair = true)
+            , KeyboardShortcut(listOf("Up", "Down"), "Select the row above / below", isPair = true)
+            , KeyboardShortcut(listOf("Left"), "Fold the selected topic, or select its parent")
+            , KeyboardShortcut(listOf("Right"), "Unfold the selected topic, or select its first child")
+        )
+    )
+    , KeyboardShortcutGroup(
+        "While typing in the outliner"
+        , listOf(
+            KeyboardShortcut(listOf("Enter"), "Finish typing and go on in a new sibling below")
+            , KeyboardShortcut(listOf("Tab", "Shift+Tab"), "Indent / outdent the topic", isPair = true)
+            , KeyboardShortcut(listOf("Backspace"), "In an empty topic: remove it and type on in the row above")
+            , KeyboardShortcut(listOf("Esc"), "Cancel: a new topic goes, and a topic's old text comes back")
         )
     )
     , KeyboardShortcutGroup(
@@ -94,6 +117,7 @@ val KEYBOARD_SHORTCUTS = listOf(
         "View and folding"
         , listOf(
             KeyboardShortcut(listOf("Ctrl+Alt+C"), "Center the selected node")
+            , KeyboardShortcut(listOf("Ctrl+Shift+O"), "Show the map, the outliner, or both")
             , KeyboardShortcut(listOf("Space"), "Fold or unfold the selected node")
             , KeyboardShortcut(listOf("Ctrl+Space"), "Fold or unfold its children")
             , KeyboardShortcut(listOf("Alt+PageUp", "Alt+PageDown"), "Fold / unfold one level", isPair = true)
