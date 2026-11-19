@@ -11,7 +11,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.github.hegleB"
+group = "com.corbettcode.mindmapview"
 version = "2.0.0"
 
 val generateEmojiData by tasks.registering {
