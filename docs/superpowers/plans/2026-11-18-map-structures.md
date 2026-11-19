@@ -84,15 +84,15 @@ the brace map; phase D the timeline; phase E files, the app and the docs. Each p
 **Files:** new `model/MapStructure.kt` (`MapStructure`, `GrowDirection`), `data/Tree.kt` (`structure`),
 `data/TreeSnapshot.kt`, `MindMapState.kt` (`setStructure`), test `MapStructureTest.kt`
 
-- [ ] `enum class GrowDirection { RIGHT, LEFT, DOWN, UP }` with `isHorizontal`, `sign` (+1 right and down) and the
-  turn between screen and main/cross coordinates.
-- [ ] `enum class MapStructure { MIND_MAP, LOGIC_RIGHT, LOGIC_LEFT, ORG_DOWN, ORG_UP, TREE_RIGHT, TREE_LEFT,
+- [x] `enum class GrowDirection { RIGHT, LEFT, DOWN, UP }` with `isHorizontal` and `sign` (+1 right and down); the
+  turn between screen and main/cross coordinates comes with the layout that uses it (A2).
+- [x] `enum class MapStructure { MIND_MAP, LOGIC_RIGHT, LOGIC_LEFT, ORG_DOWN, ORG_UP, TREE_RIGHT, TREE_LEFT,
   BRACE_RIGHT, TIMELINE }` with `directionOf(tree, id)`: the mind map by the root's sides as now, the others the one
   direction they have (the timeline's branches up and down by turn).
-- [ ] `tree.structure`, in the snapshot and `hasSameContentAs`; `state.setStructure(structure)` is one change that
+- [x] `tree.structure`, in the snapshot and `hasSameContentAs`; `state.setStructure(structure)` is one change that
   re-lays out the map. Only `MIND_MAP` is laid out differently until the later tasks; the others fall back to it.
-- [ ] Tests (5): default; set and undo; a structure change alone is a change; directions in the mind map by side;
-  directions in a logic chart are all right, also for floating topics.
+- [x] Tests (6): default; set and undo; a structure change alone is a change; directions in the mind map by side;
+  the other structures one way, floating topics too; the timeline up and down by turns.
 
 ### Task A2: The layout in main and cross coordinates
 

@@ -2,6 +2,7 @@ package com.mindsync.library.data
 
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.NoteDisplay
 
@@ -29,6 +30,7 @@ import com.mindsync.library.model.NoteDisplay
  * @property boundaries The boundaries around groups of children, each with only the children it is still around.
  * @property summaries The siblings each summary node is about, by its id, for those that are still summaries.
  * @property theme The look of the map.
+ * @property structure How the map is laid out.
  * @property isRootPlaced Flag indicating whether the root node has been placed within the layout.
  * @property isRootCentered Flag indicating whether the root node is vertically and horizontally centered in the layout.
  * @property isRootDragged Flag indicating whether the root node is currently being dragged.
@@ -48,6 +50,7 @@ internal class TreeSnapshot(
     , val boundaries: List<Boundary>
     , val summaries: Map<String, Set<String>>
     , val theme: MapTheme
+    , val structure: MapStructure
     , val isRootPlaced: Boolean
     , val isRootCentered: Boolean
     , val isRootDragged: Boolean
@@ -71,6 +74,7 @@ internal class TreeSnapshot(
             && boundaries == other.boundaries
             && summaries == other.summaries
             && theme == other.theme
+            && structure == other.structure
 
     private fun NodeData<*>.content(): List<Any?> =
         listOf(this::class, id, parentId, children, description, note, color, textColor)

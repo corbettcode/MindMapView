@@ -10,10 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.Density
 import com.mindsync.library.animator.AnimationStrategy
 import com.mindsync.library.animator.FitAnimation
@@ -26,17 +26,17 @@ import com.mindsync.library.data.ArrowLink
 import com.mindsync.library.data.ArrowLinkInclination
 import com.mindsync.library.data.Boundary
 import com.mindsync.library.data.CircleNodeData
+import com.mindsync.library.data.DpOffset
+import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.NodeAttribute
 import com.mindsync.library.data.NodeBorder
 import com.mindsync.library.data.NodeData
 import com.mindsync.library.data.NodeLine
 import com.mindsync.library.data.NodeShape
-import com.mindsync.library.data.DpOffset
 import com.mindsync.library.data.NodeTask
 import com.mindsync.library.data.OutlineNode
 import com.mindsync.library.data.OvalNodeData
 import com.mindsync.library.data.RectangleNodeData
-import com.mindsync.library.data.LineNodeData
 import com.mindsync.library.data.SquareNodeData
 import com.mindsync.library.data.StadiumNodeData
 import com.mindsync.library.data.TaskDate
@@ -54,12 +54,13 @@ import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.Direction
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.LevelStyle
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapTheme
-import com.mindsync.library.model.isDarkBackground
 import com.mindsync.library.model.NoteDisplay
 import com.mindsync.library.model.TaskFilter
 import com.mindsync.library.model.TaskFilterView
 import com.mindsync.library.model.TopicKind
+import com.mindsync.library.model.isDarkBackground
 import com.mindsync.library.outline.outlineRows
 import com.mindsync.library.outline.rowAbove
 import com.mindsync.library.util.Dp
@@ -69,10 +70,10 @@ import com.mindsync.library.util.Px
 import com.mindsync.library.util.RichText
 import com.mindsync.library.util.toDp
 import com.mindsync.library.util.toPx
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @Composable
 fun rememberMindMapState(tree: Tree<*> = remember { Tree<Any>() }): MindMapState {
@@ -676,6 +677,17 @@ class MindMapState(
                     tree.setFloating(node.id, offset)
                 }
             mindMapManager.setSelectedNode(selectedNode?.let { tree.nodes[it.id] })
+            animateTreeChange()
+        }
+    }
+
+    /**
+     * Lays the map out in [structure], as one change. Only how it is drawn changes: the topics, their order and the
+     * sides of the root they are on in a mind map stay as they are.
+     */
+    fun setStructure(structure: MapStructure) {
+        recordChange {
+            tree.structure = structure
             animateTreeChange()
         }
     }

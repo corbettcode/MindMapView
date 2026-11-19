@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.mindsync.library.model.AttributeDisplay
 import com.mindsync.library.model.LayoutSide
 import com.mindsync.library.model.LevelStyle
+import com.mindsync.library.model.MapStructure
 import com.mindsync.library.model.MapTheme
 import com.mindsync.library.model.MapThemes
 import com.mindsync.library.model.NoteDisplay
@@ -45,6 +46,9 @@ class Tree<T> {
 
     /** The look of the map, which the nodes follow where they have no colors or border of their own. */
     var theme: MapTheme = MapThemes.CLASSIC
+
+    /** How the map is laid out: as a mind map, a logic chart, an org chart, and so on. */
+    var structure: MapStructure = MapStructure.MIND_MAP
 
     /**
      * How the app draws each kind of topic, in place of the theme's style for its level. A kind without one is
@@ -580,6 +584,7 @@ class Tree<T> {
         , boundaries = boundaries
         , summaries = summaries.mapValues { it.value.toSet() }
         , theme = theme
+        , structure = structure
         , isRootPlaced = isRootPlaced
         , isRootCentered = isRootCentered
         , isRootDragged = isRootDragged
@@ -612,6 +617,7 @@ class Tree<T> {
         _summaries.clear()
         _summaries.putAll(snapshot.summaries)
         theme = snapshot.theme
+        structure = snapshot.structure
         isRootPlaced = snapshot.isRootPlaced
         isRootCentered = snapshot.isRootCentered
         isRootDragged = snapshot.isRootDragged

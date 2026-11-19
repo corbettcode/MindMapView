@@ -1,0 +1,68 @@
+package com.mindsync.library.model
+
+import com.mindsync.library.data.Tree
+
+/**
+ * The way a branch grows out of its parent on the screen: its children are placed that way from it, and stacked
+ * across it. A layout works along the [main][isHorizontal] axis, the way the branch grows, and the cross axis, the way
+ * siblings are stacked; [sign] is +1 when the branch grows right or down, the ways x and y grow on the screen.
+ */
+enum class GrowDirection {
+    RIGHT
+    , LEFT
+    , DOWN
+    , UP;
+
+    /** Whether the branch grows along x, so that siblings are stacked along y. */
+    val isHorizontal: Boolean get() = this == RIGHT || this == LEFT
+
+    /** +1 when the branch grows the way its axis grows on the screen, right or down, and -1 the other way. */
+    val sign: Float get() = if (this == RIGHT || this == DOWN) 1f else -1f
+}
+
+/**
+ * How a map is laid out, as XMind's structures. Only the drawing changes with it: the topics, their order and all
+ * there is of them stay as they are, and the sides of the root a mind map has are kept for when it is one again.
+ */
+enum class MapStructure {
+    /** The root in the middle with branches on its six sides, as the map has been laid out all along. */
+    MIND_MAP
+    , LOGIC_RIGHT
+    , LOGIC_LEFT
+    , ORG_DOWN
+    , ORG_UP
+    , TREE_RIGHT
+    , TREE_LEFT
+    , BRACE_RIGHT
+    , TIMELINE;
+
+    /**
+     * Returns the way the branch the node [id] is in grows: the way its children are placed from it. In the mind map
+     * it is by the side of the root the branch is on; in a timeline the branches below the root grow up and down by
+     * turns. The root, and a floating topic's branch, grow the way the structure's root children are placed.
+     */
+    fun directionOf(
+        tree: Tree<*>
+        , id: String
+    ): GrowDirection = when (this) {
+        MIND_MAP -> if (tree.sideOf(id).isLeft) GrowDirection.LEFT else GrowDirection.RIGHT
+        LOGIC_RIGHT, BRACE_RIGHT -> GrowDirection.RIGHT
+        LOGIC_LEFT -> GrowDirection.LEFT
+        ORG_DOWN, TREE_RIGHT, TREE_LEFT -> GrowDirection.DOWN
+        ORG_UP -> GrowDirection.UP
+        TIMELINE -> timelineDirectionOf(tree, id)
+    }
+
+    // The root's children are along the axis, to its right; the branch of every other one goes up, and of the rest down.
+    private fun timelineDirectionOf(
+        tree: Tree<*>
+        , id: String
+    ): GrowDirection {
+        val root = tree.getRootNode()
+        if (id == root.id) return GrowDirection.RIGHT
+        val branchId = tree.branchOf(id).id
+        if (tree.isFloating(branchId)) return GrowDirection.DOWN
+        val index = root.children.filterNot { tree.isFloating(it) }.indexOf(branchId)
+        return if (index % 2 == 0) GrowDirection.UP else GrowDirection.DOWN
+    }
+}
