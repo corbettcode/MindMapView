@@ -60,6 +60,7 @@ val KEYBOARD_SHORTCUTS = listOf(
                 , "Move the selected nodes up / down among their siblings"
                 , isPair = true
             )
+            , KeyboardShortcut(listOf("Alt+Arrow keys"), "Nudge the selected floating topics")
             , KeyboardShortcut(listOf("Ctrl+,"), "Open the Preferences")
         )
     )

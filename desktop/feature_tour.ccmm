@@ -81,7 +81,12 @@
       <node id="l_dashdot" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Dash-dot · no arrowheads&lt;/p&gt;"/>
       <node id="l_bent" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Bent by dragging&lt;/p&gt;"/>
     </node>
+    <node id="floating" shape="stadium" side="right" floating="true" dx="1250.0" dy="150.0" color="#ffb9bc81" textColor="#ff000000" text="&lt;p&gt;🎈 &lt;b&gt;Floating Topic&lt;/b&gt;&lt;/p&gt;" note="&lt;p&gt;A floating topic stays where it is put, with no line to the root. Double-click blank map to add one, or choose &lt;b&gt;Make Floating Topic&lt;/b&gt; in a topic's menu.&lt;/p&gt;">
+      <node id="f_drag" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Drag it anywhere&lt;/p&gt;"/>
+      <node id="f_attach" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Drop it on a topic to attach it&lt;/p&gt;"/>
+    </node>
   </node>
+  <arrowlink id="a_floating" source="floating" target="links" color="#ff9e9e9e" startArrow="false" endArrow="true" lineStyle="dotted" thickness="normal"/>
   <arrowlink id="a_solid" source="l_solid" target="circle" color="#ffb0b0b0" startArrow="false" endArrow="true" lineStyle="solid" thickness="normal"/>
   <arrowlink id="a_dashed" source="l_dashed" target="mint" color="#ffb3261e" startArrow="true" endArrow="true" lineStyle="dashed" thickness="thick" startInclination="362.70215;7.7116547" endInclination="446.0868;4.9694786"/>
   <arrowlink id="a_dotted" source="l_dotted" target="level3" color="#ff0b5394" startArrow="true" endArrow="false" lineStyle="dotted" thickness="thin"/>

@@ -519,6 +519,32 @@
         those, only the first is a summary in a FreeMind map. Summaries of an imported XMind or Freeplane map are
         kept, but a Freeplane summary of summaries is an ordinary node.
     </p>
+    <h3>Floating topics</h3>
+    <p>
+        A floating topic is a topic placed anywhere on the map, with no line to the root, as in XMind. Use one for a
+        side note, an idea that belongs to no branch yet, or a label; an arrow link can join it to any topic. Its own
+        subtopics grow to its right, as on any branch.
+    </p>
+    <ul>
+        <li>Double-click blank map to add one there and type its text, or choose
+            <span class="menu">Edit &rsaquo; Add Floating Topic</span> to add one below the map.</li>
+        <li>Right-click a topic and choose <span class="menu">Make Floating Topic</span> to take it, with its
+            subtopics, off its branch where it is. Dragging a topic to blank map with <kbd>Alt</kbd> held down does
+            the same where you drop it.</li>
+        <li>Drag a floating topic to move it; <kbd>Alt</kbd> and the arrow keys nudge the selected floating topics a
+            little. Drop it on a topic to make it a subtopic of that topic, or right-click it and choose
+            <span class="menu">Attach to Root</span>.</li>
+    </ul>
+    <p>
+        Floating topics keep their place in relation to the root, so they move with it when you drag the root.
+        <span class="menu">Fit</span> takes them in. In the outliner they are listed after the root's other topics,
+        with a dashed bullet. They can't be in a boundary or a summary with the root's branches.
+    </p>
+    <p>
+        They are saved in MindMapView files and exported in images, SVG drawings and PDF documents. The floating topics
+        of an imported XMind map float where they were; in outlines, Markdown and FreeMind maps they come after the
+        root's other topics as ordinary ones, and OPML marks them.
+    </p>
 </section>
 
 <section id="text">
@@ -1078,6 +1104,7 @@
         <tr><td><kbd>Ctrl+M</kbd></td><td>Move the branch clockwise around the root</td></tr>
         <tr><td><kbd>Ctrl+Shift+M</kbd></td><td>Move the branch counterclockwise around the root</td></tr>
         <tr><td><kbd>Alt+Shift+Up</kbd> / <kbd>Alt+Shift+Down</kbd></td><td>Move the selected nodes up / down among their siblings</td></tr>
+        <tr><td><kbd>Alt+Arrow keys</kbd></td><td>Nudge the selected floating topics</td></tr>
         <tr><td><kbd>Ctrl+,</kbd></td><td>Open the Preferences</td></tr>
     </table>
     <h3>While typing on the map</h3>
@@ -1140,6 +1167,8 @@
         <tr><th>Action</th><th>Result</th></tr>
         <tr><td>Double-click a node</td><td>Type its text</td></tr>
         <tr><td>Double-click a row of the outline</td><td>Type its text in the row</td></tr>
+        <tr><td>Double-click blank map</td><td>Add a floating topic there</td></tr>
+        <tr><td>Drag a topic to blank map with <kbd>Alt</kbd></td><td>Make it a floating topic there</td></tr>
         <tr><td>Click the arrow before a row</td><td>Fold or unfold the topic</td></tr>
         <tr><td>Right-click a node</td><td>Its menu</td></tr>
         <tr><td>Right-click an arrow link</td><td>Its menu</td></tr>

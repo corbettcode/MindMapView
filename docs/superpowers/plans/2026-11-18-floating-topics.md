@@ -201,13 +201,14 @@ the moves right with no change of their own)
 
 ### Task D1: Manual, README, shortcuts
 
-**Files:** `docs/user-manual/user-manual.html` (a "Floating topics" section in chapter 5, Arranging the map), PDF,
-`README.md`, `desktop/feature_tour.ccmm` (a floating topic with an arrow link to a branch), `KeyboardShortcuts.kt`
+**Files:** `docs/user-manual/user-manual.html` (a "Floating topics" section in chapter 5, Arranging the map, and two
+Mouse rows), PDF, `README.md`, `desktop/feature_tour.ccmm` (a floating topic with two subtopics and a dotted arrow
+link to Arrow Links, right of the map), `KeyboardShortcuts.kt`
 
-- [ ] What they are, making, moving, detaching and attaching them, and how they are kept in each format.
-- [ ] The Alt+arrow and Alt+drag rows in the shortcut tables, in the dialog and the manual alike.
-
----
+- [x] What they are, making, moving, detaching and attaching them, and how they are kept in each format.
+- [x] Alt+Arrow keys under Editing, in the dialog and the manual alike; double-click and Alt+drag to blank map in the
+  Mouse table. The tour was rendered from the app to check the floating topic is clear of the branches and that Fit
+  takes it in.
 
 ## Out of scope / follow-ups
 
