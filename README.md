@@ -43,7 +43,7 @@ In a Kotlin Multiplatform project, depend on it from `commonMain`; Gradle picks 
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.corbettcode.mindmapview:MindMapView:2.0.0")
+            implementation("com.corbettcode.mindmapview:MindMapView:2.0.1")
         }
     }
 }
@@ -53,7 +53,7 @@ In an Android-only project:
 
 ```kotlin
 dependencies {
-    implementation("com.corbettcode.mindmapview:MindMapView:2.0.0")
+    implementation("com.corbettcode.mindmapview:MindMapView:2.0.1")
 }
 ```
 
