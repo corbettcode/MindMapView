@@ -983,7 +983,13 @@ private fun DrawScope.drawNodeWithContent(
 ) {
     val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
     val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
-    if (node is RectangleNodeData && state.tree.isElevated(node.id)) drawElevationShadow(node.path)
+    if (state.tree.isElevated(node.id)) {
+        when (node) {
+            is RectangleNodeData -> drawElevationShadow(node.path)
+            is StadiumNodeData -> drawElevationShadow(node.path)
+            else -> {}
+        }
+    }
     nodeDrawer.drawNode(this)
     val border = state.tree.drawnBorderOf(node.id)
     if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)

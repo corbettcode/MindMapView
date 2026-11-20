@@ -69,7 +69,7 @@ class Tree<T> {
 
     private val foldedIds = mutableSetOf<String>()
 
-    // The rectangles drawn raised off the map, with a shadow below them.
+    // The rectangles and stadiums drawn raised off the map, with a shadow below them.
     private val elevatedIds = mutableSetOf<String>()
 
     // The children of the root that float, each with how far its center is from the root's.
@@ -393,8 +393,8 @@ class Tree<T> {
     }
 
     /**
-     * Returns whether the node [id] is drawn raised off the map, with a shadow below it. Only a rectangle is, but the
-     * setting is kept whatever the shape, for when the node is a rectangle again.
+     * Returns whether the node [id] is drawn raised off the map, with a shadow below it. Only a rectangle or a stadium
+     * is, but the setting is kept whatever the shape, for when the node is one of them again.
      */
     fun isElevated(id: String): Boolean = id in elevatedIds
 

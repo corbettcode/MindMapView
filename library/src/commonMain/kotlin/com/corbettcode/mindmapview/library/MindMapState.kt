@@ -1609,7 +1609,10 @@ class MindMapState(
         }
     }
 
-    /** Draws the selected node raised off the map, with a shadow below it, or flat again. Only a rectangle shows it. */
+    /**
+     * Draws the selected node raised off the map, with a shadow below it, or flat again. Only a rectangle or a stadium
+     * shows it.
+     */
     fun editNodeElevated(isElevated: Boolean) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->

@@ -44,34 +44,3 @@ class RectangleNodeDrawer(
     }
 }
 
-/**
- * Draws the shadow of a rectangle raised off the map at [path], to go below it: a little lower than the rectangle,
- * with an edge that fades out. A blur is not drawn the same on every platform, nor kept in an SVG, so the edge is
- * layers of faint rectangles, each a little wider, that are darker where more of them lie on one another.
- */
-internal fun DrawScope.drawElevationShadow(path: RectanglePath) {
-    val left = path.leftX().toPx(this)
-    val top = path.topY().toPx(this) + Dp(SHADOW_DROP).toPx(this)
-    val width = path.width.toPx(this)
-    val height = path.height.toPx(this)
-    val radius = Dp(RectangleNodeDrawer.ROUNDED_CORNER_RADIUS).toPx(this)
-    val reach = Dp(SHADOW_REACH).toPx(this)
-    val layerColor = SHADOW_COLOR.copy(alpha = SHADOW_ALPHA / SHADOW_LAYERS)
-    for (layer in 1..SHADOW_LAYERS) {
-        val spread = reach * layer / SHADOW_LAYERS
-        drawRoundRect(
-            color = layerColor
-            , topLeft = Offset(left - spread, top - spread)
-            , size = Size(width + spread * 2, height + spread * 2)
-            , cornerRadius = CornerRadius(radius + spread)
-        )
-    }
-}
-
-// How far below the rectangle its shadow is, and how far past its edges the shadow fades out, in dp.
-private const val SHADOW_DROP = 4f
-private const val SHADOW_REACH = 5f
-private const val SHADOW_LAYERS = 16
-// How dark the shadow is under the rectangle, where all its layers lie on one another.
-private const val SHADOW_ALPHA = 0.3f
-private val SHADOW_COLOR = Color.Black

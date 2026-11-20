@@ -259,6 +259,24 @@ class ThemeDrawingTest {
     }
 
     @Test
+    fun elevatedStadiumHasAShadowBelowIt() = runComposeUiTest {
+        val tree = Tree<Any>(Dp(150f), Dp(300f)).apply {
+            addNode("stadium", getRootNode().id, "stadium", shape = NodeShape.STADIUM)
+        }
+        val state = shownState(tree)
+        val flat = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        state.select(state.tree.getNode("stadium"))
+        state.editNodeElevated(true)
+        waitForIdle()
+        val elevated = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        val changed = changedPixels(flat, elevated)
+        assertTrue(changed.isNotEmpty(), "a shadow is drawn")
+        assertTrue(changed.all { (before, after) -> after.brightness() < before.brightness() }, "the shadow darkens")
+    }
+
+    @Test
     fun elevatedCircleIsDrawnFlat() = runComposeUiTest {
         val tree = Tree<Any>(Dp(150f), Dp(300f)).apply {
             addNode("circle", getRootNode().id, "circle", shape = NodeShape.CIRCLE)

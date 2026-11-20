@@ -123,7 +123,8 @@ private val DIALOG_GAP = 16.dp
  * @param textColor The text color for the node.
  * @param line The node's own line settings, whose null values are inherited from its parent.
  * @param border What is drawn around the node: nothing, or a line of a width and color.
- * @param isElevated Whether the node is drawn raised off the map, with a shadow below it, as a rectangle can be.
+ * @param isElevated Whether the node is drawn raised off the map, with a shadow below it, as a rectangle or a
+ * stadium can be.
  * @param noteDisplay How the node's note is shown when it has a way of its own; null when it follows
  * [defaultNoteDisplay], the way of the Preferences.
  * @param attributeDisplay How the node's attributes are shown when it has a way of its own; null when it follows
@@ -318,8 +319,8 @@ fun EditNodeDialog(
             , selectedTextColor
             , selectedLine
             , selectedBorder
-            // Only a rectangle is drawn elevated, so a node made another shape is flat again.
-            , isSelectedElevated && selectedShape == NodeShape.RECTANGLE
+            // Only a rectangle or a stadium is drawn elevated, so a node made another shape is flat again.
+            , isSelectedElevated && selectedShape in ELEVATED_SHAPES
             , attributesToKeep(attributeRows)
             , selectedNoteDisplay
             , selectedAttributeDisplay
@@ -387,7 +388,7 @@ fun EditNodeDialog(
                                     selectedShape = newShape
                                 }
                             )
-                            if (currentShape == NodeShape.RECTANGLE) {
+                            if (currentShape in ELEVATED_SHAPES) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                     , modifier = Modifier
@@ -757,3 +758,6 @@ fun EditNodeDialog(
         }
     }
 }
+
+// The shapes that can be drawn raised off the map, with a shadow below them.
+private val ELEVATED_SHAPES = setOf(NodeShape.RECTANGLE, NodeShape.STADIUM)
