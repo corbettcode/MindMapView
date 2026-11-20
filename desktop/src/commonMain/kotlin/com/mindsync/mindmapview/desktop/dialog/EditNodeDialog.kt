@@ -320,7 +320,7 @@ fun EditNodeDialog(
             , selectedLine
             , selectedBorder
             // Only a rectangle or a stadium is drawn elevated, so a node made another shape is flat again.
-            , isSelectedElevated && selectedShape in ELEVATED_SHAPES
+            , isSelectedElevated && selectedShape?.canBeElevated == true
             , attributesToKeep(attributeRows)
             , selectedNoteDisplay
             , selectedAttributeDisplay
@@ -388,7 +388,7 @@ fun EditNodeDialog(
                                     selectedShape = newShape
                                 }
                             )
-                            if (currentShape in ELEVATED_SHAPES) {
+                            if (currentShape.canBeElevated) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                     , modifier = Modifier
@@ -758,6 +758,3 @@ fun EditNodeDialog(
         }
     }
 }
-
-// The shapes that can be drawn raised off the map, with a shadow below them.
-private val ELEVATED_SHAPES = setOf(NodeShape.RECTANGLE, NodeShape.STADIUM)

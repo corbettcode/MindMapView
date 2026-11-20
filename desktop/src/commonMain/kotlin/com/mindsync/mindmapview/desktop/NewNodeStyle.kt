@@ -16,6 +16,7 @@ internal data class NewNodeStyle(
     val color: Color,
     val textColor: Color,
     val border: NodeBorder = NodeBorder(),
+    val isElevated: Boolean = false,
 )
 
 /**
@@ -24,7 +25,8 @@ internal data class NewNodeStyle(
  * children for each side, so it is the last one on [side] that counts for it.
  *
  * A [shape] that was chosen is kept, and only takes the colors of a last child of that shape. The border of the
- * last child is taken whatever its shape, as a border looks alike around any shape.
+ * last child is taken whatever its shape, as a border looks alike around any shape. So is its being elevated, for a
+ * shape that can be elevated.
  */
 internal fun newNodeStyle(
     tree: Tree<*>,
@@ -38,8 +40,9 @@ internal fun newNodeStyle(
         ?.let { tree.getNode(it) }
     val newShape = shape ?: lastChild?.shape ?: defaultShape
     val border = lastChild?.let { tree.borderOf(it.id) } ?: NodeBorder()
+    val isElevated = newShape.canBeElevated && lastChild?.let { tree.isElevated(it.id) } == true
     return lastChild
         ?.takeIf { it.shape == newShape }
-        ?.let { NewNodeStyle(newShape, it.color, it.textColor, border) }
-        ?: NewNodeStyle(newShape, newShape.defaultColor, newShape.defaultTextColor, border)
+        ?.let { NewNodeStyle(newShape, it.color, it.textColor, border, isElevated) }
+        ?: NewNodeStyle(newShape, newShape.defaultColor, newShape.defaultTextColor, border, isElevated)
 }

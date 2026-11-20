@@ -523,6 +523,7 @@ class MindMapState(
         border: NodeBorder = NodeBorder(),
         noteDisplay: NoteDisplay? = null,
         attributeDisplay: AttributeDisplay? = null,
+        isElevated: Boolean = false,
     ) {
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
@@ -540,6 +541,7 @@ class MindMapState(
                     , border
                     , noteDisplay
                     , attributeDisplay
+                    , isElevated = isElevated
                 )
             }
             animateTreeChange()
@@ -561,11 +563,12 @@ class MindMapState(
         , note: String = ""
         , line: NodeLine = NodeLine()
         , border: NodeBorder = NodeBorder()
+        , isElevated: Boolean = false
     ) {
         val node = mindMapManager.getSelectedNode() ?: return
         val parentId = node.parentId
         if (parentId == null) {
-            addNode(description, shape, color, textColor, side, note, line, border)
+            addNode(description, shape, color, textColor, side, note, line, border, isElevated = isElevated)
             return
         }
         recordChange {
@@ -582,6 +585,7 @@ class MindMapState(
                 , line
                 , border
                 , index = index
+                , isElevated = isElevated
             )
             animateTreeChange()
         }
@@ -602,6 +606,7 @@ class MindMapState(
         , textColor: Color = shape.defaultTextColor
         , line: NodeLine = NodeLine()
         , border: NodeBorder = NodeBorder()
+        , isElevated: Boolean = false
     ) {
         val rootId = tree.getRootNode().id
         val groups = selectedBranches
@@ -628,6 +633,7 @@ class MindMapState(
                     , line = line
                     , border = border
                     , index = index
+                    , isElevated = isElevated
                 )
                 addNode?.let { tree.setSummary(it.id, ids) }
             }
@@ -652,6 +658,7 @@ class MindMapState(
      * @param noteDisplay optional note display setting applied to the new child node.
      * @param attributeDisplay optional attribute display setting applied to the new child node.
      * @param index optional insertion index within the target side.
+     * @param isElevated whether the new child node is drawn raised off the map, with a shadow below it.
      */
     private fun addChild(
         parent: NodeData<*>
@@ -666,6 +673,7 @@ class MindMapState(
         , noteDisplay: NoteDisplay? = null
         , attributeDisplay: AttributeDisplay? = null
         , index: Int? = null
+        , isElevated: Boolean = false
     ) {
         val addNode: NodeData<*> = when (shape) {
             NodeShape.CIRCLE -> NodeGenerator.makeNode(CircleNodeData::class, description, parent.id)
@@ -685,6 +693,7 @@ class MindMapState(
         AddNodeCommand(mindMapManager, addNode, side, index).execute()
         tree.setLine(addNode.id, line)
         tree.setBorder(addNode.id, border)
+        tree.setElevated(addNode.id, isElevated)
         if (noteDisplay != null || attributeDisplay != null) {
             tree.setNoteDisplay(addNode.id, noteDisplay)
             tree.setAttributeDisplay(addNode.id, attributeDisplay)
@@ -707,10 +716,22 @@ class MindMapState(
         , at: Offset? = null
         , line: NodeLine = NodeLine()
         , border: NodeBorder = NodeBorder()
+        , isElevated: Boolean = false
     ) {
         recordChange {
             val root = tree.getRootNode()
-            addChild(root, description, shape, color, textColor, LayoutSide.RIGHT, "", line, border)
+            addChild(
+                root
+                , description
+                , shape
+                , color
+                , textColor
+                , LayoutSide.RIGHT
+                , ""
+                , line
+                , border
+                , isElevated = isElevated
+            )
             val id = addNode?.id ?: return
             tree.setFloating(id, at?.let { floatingOffsetAt(it) } ?: floatingOffsetBelowAll())
             animateTreeChange()
@@ -1062,8 +1083,8 @@ class MindMapState(
 
     /**
      * Adds the [nodes] and the nodes below them as the last children of the selected node, on [side] of the
-     * root when that is the selected node. Each of them is a [shape] in [color] with text in [textColor], and
-     * has [border].
+     * root when that is the selected node. Each of them is a [shape] in [color] with text in [textColor], has
+     * [border], and is elevated when [isElevated].
      */
     fun addNodes(
         nodes: List<OutlineNode>
@@ -1072,6 +1093,7 @@ class MindMapState(
         , textColor: Color = shape.defaultTextColor
         , side: LayoutSide = layoutSide
         , border: NodeBorder = NodeBorder()
+        , isElevated: Boolean = false
     ) {
         recordChange {
             val parent = mindMapManager.getSelectedNode() ?: return
@@ -1084,6 +1106,7 @@ class MindMapState(
                 val id = IdGenerator.makeRandomNodeId()
                 tree.addNode(id, parentId, node.description, shape, color, textColor, side)
                 tree.setBorder(id, border)
+                tree.setElevated(id, isElevated)
                 addedIds.add(id)
                 node.children.forEach { add(it, id) }
             }

@@ -23,6 +23,11 @@ enum class NodeShape(
     , SQUARE(Color(0xFFC9B6E4), Color.Black)
     // A line node has no fill, so its text is in a color that reads on a light background and a dark one alike.
     , LINE(Color(0xFF3D7CC9), Color(0xFF3D7CC9))
+    ;
+
+    /** Whether a node of this shape can be drawn raised off the map, with a shadow below it: see [Tree.isElevated]. */
+    val canBeElevated: Boolean
+        get() = this == RECTANGLE || this == STADIUM
 }
 
 val NodeData<*>.shape: NodeShape

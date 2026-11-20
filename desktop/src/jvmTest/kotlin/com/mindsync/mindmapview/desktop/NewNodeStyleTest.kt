@@ -10,6 +10,8 @@ import com.corbettcode.mindmapview.library.model.LayoutSide
 import com.corbettcode.mindmapview.library.util.Dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class NewNodeStyleTest {
     private val tree = Tree<Any>(Dp(0f), Dp(0f))
@@ -56,6 +58,33 @@ class NewNodeStyleTest {
 
         assertEquals(border, style(rootId).border)
         assertEquals(border, style(rootId, shape = NodeShape.CIRCLE).border)
+    }
+
+    @Test
+    fun nodeIsElevatedWhenTheLastChildIs() {
+        tree.addNode("first", rootId, "first")
+        tree.addNode("last", rootId, "last", NodeShape.STADIUM)
+        tree.setElevated("last", true)
+
+        assertTrue(style(rootId).isElevated)
+        assertTrue(style(rootId, shape = NodeShape.RECTANGLE).isElevated)
+    }
+
+    @Test
+    fun nodeOfAShapeThatCannotBeElevatedIsFlat() {
+        tree.addNode("last", rootId, "last")
+        tree.setElevated("last", true)
+
+        assertFalse(style(rootId, shape = NodeShape.CIRCLE).isElevated)
+    }
+
+    @Test
+    fun nodeIsFlatWhenTheLastChildIs() {
+        tree.addNode("first", rootId, "first")
+        tree.setElevated("first", true)
+        tree.addNode("last", rootId, "last")
+
+        assertFalse(style(rootId).isElevated)
     }
 
     @Test

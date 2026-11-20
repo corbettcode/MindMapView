@@ -557,7 +557,14 @@ internal class MindMapApp(
                 , state.layoutSide
                 , defaultShape = preferences.topicOf(state.tree.childTopicKindOf(parent.id)).shape
             )
-            state.addNodes(nodes, style.shape, style.color, style.textColor, border = style.border)
+            state.addNodes(
+                nodes
+                , style.shape
+                , style.color
+                , style.textColor
+                , border = style.border
+                , isElevated = style.isElevated
+            )
         }
     }
 
@@ -584,7 +591,15 @@ internal class MindMapApp(
         arrowLinkSourceId = null
         state.addNodeForTextEdit {
             if (place == NewNodePlace.CHILD) {
-                addNode(text, style.shape, style.color, style.textColor, side, border = style.border)
+                addNode(
+                    text
+                    , style.shape
+                    , style.color
+                    , style.textColor
+                    , side
+                    , border = style.border
+                    , isElevated = style.isElevated
+                )
             }
             else {
                 addSiblingNode(
@@ -595,6 +610,7 @@ internal class MindMapApp(
                     , isAbove = place == NewNodePlace.SIBLING_ABOVE
                     , side = side
                     , border = style.border
+                    , isElevated = style.isElevated
                 )
             }
         }
@@ -621,6 +637,7 @@ internal class MindMapApp(
                 , style.textColor
                 , at = at
                 , border = style.border
+                , isElevated = style.isElevated
             )
         }
         typedNewNode = state.textEditNodeId?.let { Triple(it, kind, number) }
@@ -642,7 +659,14 @@ internal class MindMapApp(
         )
         arrowLinkSourceId = null
         state.addNodeForTextEdit {
-            addSummaryNode(SUMMARY_TEXT, style.shape, style.color, style.textColor, border = style.border)
+            addSummaryNode(
+                SUMMARY_TEXT
+                , style.shape
+                , style.color
+                , style.textColor
+                , border = style.border
+                , isElevated = style.isElevated
+            )
         }
     }
 
@@ -1770,7 +1794,7 @@ private fun MindMapScreen(
                         Operation.Update -> selectedNode?.let { state.tree.borderOf(it.id) } ?: NodeBorder()
                     },
                     isElevated = when (currentOperation) {
-                        is Operation.Add -> false
+                        is Operation.Add -> newNodeStyle?.isElevated ?: false
                         Operation.Update -> selectedNode?.let { state.tree.isElevated(it.id) } ?: false
                     },
                     noteDisplay = when (currentOperation) {
@@ -1836,9 +1860,9 @@ private fun MindMapScreen(
                                     border,
                                     noteDisplay,
                                     attributeDisplay,
+                                    isElevated,
                                 )
                                 state.getAddNode()?.let {
-                                    state.tree.setElevated(it.id, isElevated)
                                     state.tree.setAttributes(it.id, attributes)
                                     state.editNodeTask(it.id, task)
                                 }

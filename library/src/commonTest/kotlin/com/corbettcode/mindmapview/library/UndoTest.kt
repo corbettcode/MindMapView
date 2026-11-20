@@ -477,6 +477,26 @@ class UndoTest {
     }
 
     @Test
+    fun addedNodesAreElevatedAsAsked() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+
+        state.addNode("child", isElevated = true)
+        state.addSiblingNode("sibling", isElevated = true)
+        state.addFloatingNode("floating", isElevated = true)
+        state.addNodes(listOf(OutlineNode("pasted", listOf(OutlineNode("below")))), isElevated = true)
+        waitForIdle()
+
+        val names = setOf("child", "sibling", "floating", "pasted", "below")
+        val added = state.tree.nodes.values.filter { it.description in names }
+        assertEquals(5, added.size)
+        assertTrue(added.all { state.tree.isElevated(it.id) })
+        state.addNode("flat")
+        waitForIdle()
+        assertFalse(state.tree.isElevated(state.tree.nodes.values.single { it.description == "flat" }.id))
+    }
+
+    @Test
     fun pastedNodeKeepsItsElevation() = runComposeUiTest {
         val state = stateWithNodes()
         state.selectNode("first")
