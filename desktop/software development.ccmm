@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mindmapview version="1" theme="contrast">
+<mindmapview version="1" theme="meadow">
   <rootposition x="901.0" y="311.0"/>
   <node id="root" color="#ff0c9eb6" textColor="#ff000000" text="&lt;p&gt;🌱 software development&lt;/p&gt;">
-    <node id="73b46167-b478-407b-9f34-d1ad59380654" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Requirements&lt;/p&gt;"/>
-    <node id="b9f28908-c57d-494b-8b7e-50c90d56987b" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🪏 Architecture&lt;/p&gt;"/>
-    <node id="5b8dd05a-de48-45dc-9f50-8440ca2b8297" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🖌️ Design&lt;/p&gt;">
+    <node id="73b46167-b478-407b-9f34-d1ad59380654" shape="rectangle" side="left" elevated="true" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Requirements&lt;/p&gt;"/>
+    <node id="b9f28908-c57d-494b-8b7e-50c90d56987b" shape="rectangle" side="lower_right" elevated="true" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🪏 Architecture&lt;/p&gt;"/>
+    <node id="5b8dd05a-de48-45dc-9f50-8440ca2b8297" shape="rectangle" side="lower_left" elevated="true" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🖌️ Design&lt;/p&gt;">
       <node id="c63852ed-0f35-4b20-9612-9f613b03d8c0" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Use Cases&lt;/p&gt;"/>
       <node id="84cdf465-0003-4096-9419-d70ba90b829c" shape="rectangle" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Layouts&lt;/p&gt;"/>
     </node>
-    <node id="8ee79fe8-69e9-4078-9227-7d2e0bfb8571" shape="rectangle" side="right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;⌨️ Implementation&lt;/p&gt;"/>
+    <node id="8ee79fe8-69e9-4078-9227-7d2e0bfb8571" shape="rectangle" side="right" elevated="true" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;⌨️ Implementation&lt;/p&gt;"/>
   </node>
-  <preference name="arrowLinkColors" value="#B0B0B0,#5C5C5C,#B3261E,#C98A4E,#274E13,#0B5394,#8A5FA3"/>
+  <preference name="arrowLinkColors" value="#2E6B30,#BC4B51,#4E7D6D,#B5651D,#4A5899"/>
   <preference name="backgroundColor" value=""/>
-  <preference name="rootTopic.font" value="DEFAULT"/>
+  <preference name="rootTopic.font" value="NUNITO"/>
   <preference name="rootTopic.noteDisplay" value="FLYOVER"/>
   <preference name="rootTopic.attributeDisplay" value="INLINE"/>
   <preference name="rootTopic.shape" value="RECTANGLE"/>
-  <preference name="rootTopic.fill" value=""/>
-  <preference name="rootTopic.text" value=""/>
+  <preference name="rootTopic.fill" value="#2E6B30"/>
+  <preference name="rootTopic.text" value="#FFFFFF"/>
   <preference name="rootTopic.border" value="NONE,TWO,#000000"/>
-  <preference name="rootTopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
-  <preference name="rootTopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
-  <preference name="topic.font" value="DEFAULT"/>
+  <preference name="rootTopic.fillColors" value="#2E6B30,#F4D35E,#DCEFD0,#F4A259,#5B8E7D,#BC4B51,#8CB369"/>
+  <preference name="rootTopic.textColors" value="#FFFFFF,#1F3A1F,#2E6B30,#000000,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="topic.font" value="NUNITO"/>
   <preference name="topic.noteDisplay" value="FLYOVER"/>
   <preference name="topic.attributeDisplay" value="INLINE"/>
-  <preference name="topic.shape" value="RECTANGLE"/>
-  <preference name="topic.fill" value=""/>
-  <preference name="topic.text" value=""/>
+  <preference name="topic.shape" value="OVAL"/>
+  <preference name="topic.fill" value="#F4D35E"/>
+  <preference name="topic.text" value="#1F3A1F"/>
   <preference name="topic.border" value="NONE,TWO,#000000"/>
-  <preference name="topic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
-  <preference name="topic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
-  <preference name="subtopic.font" value="DEFAULT"/>
+  <preference name="topic.fillColors" value="#2E6B30,#F4D35E,#DCEFD0,#F4A259,#5B8E7D,#BC4B51,#8CB369"/>
+  <preference name="topic.textColors" value="#FFFFFF,#1F3A1F,#2E6B30,#000000,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.font" value="NUNITO"/>
   <preference name="subtopic.noteDisplay" value="FLYOVER"/>
   <preference name="subtopic.attributeDisplay" value="INLINE"/>
-  <preference name="subtopic.shape" value="RECTANGLE"/>
-  <preference name="subtopic.fill" value=""/>
-  <preference name="subtopic.text" value=""/>
+  <preference name="subtopic.shape" value="OVAL"/>
+  <preference name="subtopic.fill" value="#DCEFD0"/>
+  <preference name="subtopic.text" value="#1F3A1F"/>
   <preference name="subtopic.border" value="NONE,TWO,#000000"/>
-  <preference name="subtopic.fillColors" value="#2D5728,#8E7CC3,#B9BC81,#9BC4E2,#C9B6E4,#3D7CC9,#7AA37D,#4B877B,#336770,#B9884E,#6FA8DC"/>
-  <preference name="subtopic.textColors" value="#000000,#FFFFFF,#5C5C5C,#B3261E,#0B5394,#274E13"/>
+  <preference name="subtopic.fillColors" value="#2E6B30,#F4D35E,#DCEFD0,#F4A259,#5B8E7D,#BC4B51,#8CB369"/>
+  <preference name="subtopic.textColors" value="#FFFFFF,#1F3A1F,#2E6B30,#000000,#5C5C5C,#B3261E,#0B5394,#274E13"/>
 </mindmapview>
