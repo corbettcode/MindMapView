@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mindmapview version="1" theme="contrast">
   <rootposition x="901.0" y="311.0"/>
-  <node id="root" color="#ff336770" textColor="#ff000000" text="&lt;p&gt;🌱 software development&lt;/p&gt;">
+  <node id="root" color="#ff0c9eb6" textColor="#ff000000" text="&lt;p&gt;🌱 software development&lt;/p&gt;">
     <node id="73b46167-b478-407b-9f34-d1ad59380654" shape="rectangle" side="left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;Requirements&lt;/p&gt;"/>
     <node id="b9f28908-c57d-494b-8b7e-50c90d56987b" shape="rectangle" side="lower_right" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🪏 Architecture&lt;/p&gt;"/>
     <node id="5b8dd05a-de48-45dc-9f50-8440ca2b8297" shape="rectangle" side="lower_left" color="#ff8e7cc3" textColor="#ff000000" text="&lt;p&gt;🖌️ Design&lt;/p&gt;">
