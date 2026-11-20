@@ -1,11 +1,17 @@
 package com.corbettcode.mindmapview.library
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.unit.dp
 import com.corbettcode.mindmapview.library.data.DpOffset
 import com.corbettcode.mindmapview.library.data.NodeAttribute
 import com.corbettcode.mindmapview.library.data.NodeData
 import com.corbettcode.mindmapview.library.data.NodeTask
 import com.corbettcode.mindmapview.library.data.OvalNodeData
+import com.corbettcode.mindmapview.library.data.RectanglePath
 import com.corbettcode.mindmapview.library.data.TaskProgress
 import com.corbettcode.mindmapview.library.data.Tree
 import com.corbettcode.mindmapview.library.io.Inflater
@@ -24,6 +30,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -651,5 +658,41 @@ class XMindTest {
         assertEquals(listOf<String?>(null), matrix.labels)
         assertEquals(5, matrix.groupIds.size)
         assertNotNull(manager.treeTableGridOf(tree.getNode(coreConcepts.id)))
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun deepMindMapSavedFromXMindHasEveryTopicWithNoneOverlapping() = runComposeUiTest {
+        val tree = XMind.read(
+            repositoryFile("library/src/jvmTest/resources/xmind-modern-web-ecosystem.xmind").readBytes()
+            , "web"
+        )
+        val root = tree.getRootNode()
+        assertEquals("Modern Web Development Ecosystem", root.description)
+        assertEquals(MapStructure.MIND_MAP, tree.structure)
+        assertEquals(
+            listOf("Frontend Technologies", "Backend Infrastructure", "Data Management", "DevOps and Deployment")
+            , tree.childrenOf(root).map { it.description }
+        )
+        assertEquals(62, tree.nodes.size)
+        val deepest = tree.nodeNamed("Redux Toolkit for centralized global state logic")
+        assertEquals(5, generateSequence(deepest) { node -> node.parentId?.let { tree.getNode(it) } }.count() - 1)
+
+        val state = MindMapState(tree)
+        setContent { MindMap(state = state, modifier = Modifier.size(1200.dp, 900.dp)) }
+        state.animateTreeChange()
+        waitForIdle()
+        // The topics' long text makes them wide, which must not push one into another.
+        val boxes = state.tree.nodes.values
+            .filter { it.id != root.id }
+            .map { it.description to assertIs<RectanglePath>(it.path) }
+        assertTrue(boxes.all { (_, path) -> path.width.dpVal > 0f && path.height.dpVal > 0f })
+        boxes.forEachIndexed { i, (name, a) ->
+            boxes.drop(i + 1).forEach { (other, b) ->
+                val isOverlapping = a.leftX().dpVal < b.rightX().dpVal && b.leftX().dpVal < a.rightX().dpVal &&
+                    a.topY().dpVal < b.bottomY().dpVal && b.topY().dpVal < a.bottomY().dpVal
+                assertTrue(!isOverlapping, "\"$name\" overlaps \"$other\"")
+            }
+        }
     }
 }
