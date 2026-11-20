@@ -1769,6 +1769,10 @@ private fun MindMapScreen(
                         is Operation.Add -> newNodeStyle?.border ?: NodeBorder()
                         Operation.Update -> selectedNode?.let { state.tree.borderOf(it.id) } ?: NodeBorder()
                     },
+                    isElevated = when (currentOperation) {
+                        is Operation.Add -> false
+                        Operation.Update -> selectedNode?.let { state.tree.isElevated(it.id) } ?: false
+                    },
                     noteDisplay = when (currentOperation) {
                         is Operation.Add -> null
                         Operation.Update -> selectedNode?.let { state.tree.noteDisplayOf(it.id) }
@@ -1817,8 +1821,8 @@ private fun MindMapScreen(
                     },
                     attributeHint = MATRIX_LABEL_HINT.takeIf { isMatrixCellEdited },
                     isAttributesOpenOnStart = isEditForAttributes,
-                    onSubmit = { description, note, shape, color, textColor, line, border, attributes, noteDisplay,
-                        attributeDisplay, task ->
+                    onSubmit = { description, note, shape, color, textColor, line, border, isElevated, attributes,
+                        noteDisplay, attributeDisplay, task ->
                         when (currentOperation) {
                             is Operation.Add -> state.groupChanges {
                                 state.addNode(
@@ -1834,6 +1838,7 @@ private fun MindMapScreen(
                                     attributeDisplay,
                                 )
                                 state.getAddNode()?.let {
+                                    state.tree.setElevated(it.id, isElevated)
                                     state.tree.setAttributes(it.id, attributes)
                                     state.editNodeTask(it.id, task)
                                 }
@@ -1847,6 +1852,7 @@ private fun MindMapScreen(
                                 state.editNodeTextColor(textColor)
                                 state.editNodeLine(line)
                                 state.editNodeBorder(border)
+                                state.editNodeElevated(isElevated)
                                 state.editNodeNoteDisplay(noteDisplay)
                                 state.editNodeAttributeDisplay(attributeDisplay)
                                 state.editNodeAttributes(attributes)

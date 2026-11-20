@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import com.corbettcode.mindmapview.library.data.NodeShape
 import com.corbettcode.mindmapview.library.data.Tree
 import com.corbettcode.mindmapview.library.io.MindMapViewFile
 import com.corbettcode.mindmapview.library.io.XmlElement
@@ -226,6 +227,52 @@ class ThemeDrawingTest {
             if (isDifferent) differing++
         }
         assertTrue(differing <= image.width * image.height / 200, "$differing pixels differ")
+    }
+
+    // The pixels of [after] that differ from those of [before], each as the two colors, before and after.
+    private fun changedPixels(
+        before: BufferedImage
+        , after: BufferedImage
+    ): List<Pair<Int, Int>> {
+        assertEquals(before.width, after.width)
+        assertEquals(before.height, after.height)
+        return (0 until after.height).flatMap { y ->
+            (0 until after.width).map { x -> before.getRGB(x, y) to after.getRGB(x, y) }
+        }.filter { (a, b) -> a != b }
+    }
+
+    private fun Int.brightness(): Int = (this shr 16 and 0xFF) + (this shr 8 and 0xFF) + (this and 0xFF)
+
+    @Test
+    fun elevatedRectangleHasAShadowBelowIt() = runComposeUiTest {
+        val state = shownState(treeWithChildren())
+        val flat = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        state.select(state.tree.getNode("child1"))
+        state.editNodeElevated(true)
+        waitForIdle()
+        val elevated = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        val changed = changedPixels(flat, elevated)
+        assertTrue(changed.isNotEmpty(), "a shadow is drawn")
+        assertTrue(changed.all { (before, after) -> after.brightness() < before.brightness() }, "the shadow darkens")
+    }
+
+    @Test
+    fun elevatedCircleIsDrawnFlat() = runComposeUiTest {
+        val tree = Tree<Any>(Dp(150f), Dp(300f)).apply {
+            addNode("circle", getRootNode().id, "circle", shape = NodeShape.CIRCLE)
+        }
+        val state = shownState(tree)
+        val flat = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        state.select(state.tree.getNode("circle"))
+        state.editNodeElevated(true)
+        waitForIdle()
+        val elevated = assertNotNull(state.exportImage(pixelsPerDp = 1f)).toAwtImage()
+
+        assertTrue(state.tree.isElevated("circle"))
+        assertEquals(emptyList(), changedPixels(flat, elevated))
     }
 
     @Test

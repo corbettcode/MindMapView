@@ -24,6 +24,7 @@ import com.corbettcode.mindmapview.library.model.NoteDisplay
  * @property nodeNoteDisplays The map of node IDs to the way of showing their note they have of their own.
  * @property nodeAttributeDisplays The map of node IDs to the way of showing their attributes they have of their own.
  * @property foldedIds The set of node IDs corresponding to nodes that are currently folded.
+ * @property elevatedIds The set of node IDs of the rectangles drawn raised off the map.
  * @property floatingOffsets The floating topics, each with how far it is from the root.
  * @property branchStructures The topics laid out in a structure of their own, each with it.
  * @property gridColumns The topics a grid is laid out from, each with how many columns it has.
@@ -47,6 +48,7 @@ internal class TreeSnapshot(
     , val nodeNoteDisplays: Map<String, NoteDisplay>
     , val nodeAttributeDisplays: Map<String, AttributeDisplay>
     , val foldedIds: Set<String>
+    , val elevatedIds: Set<String>
     , val floatingOffsets: Map<String, DpOffset>
     , val branchStructures: Map<String, MapStructure>
     , val gridColumns: Map<String, Int>
@@ -73,6 +75,7 @@ internal class TreeSnapshot(
             && nodeNoteDisplays == other.nodeNoteDisplays
             && nodeAttributeDisplays == other.nodeAttributeDisplays
             && foldedIds == other.foldedIds
+            && elevatedIds == other.elevatedIds
             && floatingOffsets == other.floatingOffsets
             && branchStructures == other.branchStructures
             && gridColumns == other.gridColumns

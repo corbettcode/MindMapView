@@ -989,6 +989,7 @@ class MindMapState(
         , attributes = tree.attributesOf(node.id)
         , line = tree.lineOf(node.id)
         , border = tree.borderOf(node.id)
+        , isElevated = tree.isElevated(node.id)
         , task = tree.taskOf(node.id)
         , noteDisplay = tree.noteDisplayOf(node.id)
         , attributeDisplay = tree.attributeDisplayOf(node.id)
@@ -1018,6 +1019,7 @@ class MindMapState(
                 tree.setAttributes(id, branch.attributes)
                 tree.setLine(id, branch.line)
                 tree.setBorder(id, branch.border)
+                tree.setElevated(id, branch.isElevated)
                 tree.setTask(id, branch.task)
                 tree.setNoteDisplay(id, branch.noteDisplay)
                 tree.setAttributeDisplay(id, branch.attributeDisplay)
@@ -1602,6 +1604,16 @@ class MindMapState(
         recordChange {
             mindMapManager.getSelectedNode()?.let { node ->
                 tree.setBorder(node.id, border)
+                invalidate()
+            }
+        }
+    }
+
+    /** Draws the selected node raised off the map, with a shadow below it, or flat again. Only a rectangle shows it. */
+    fun editNodeElevated(isElevated: Boolean) {
+        recordChange {
+            mindMapManager.getSelectedNode()?.let { node ->
+                tree.setElevated(node.id, isElevated)
                 invalidate()
             }
         }
@@ -2597,6 +2609,7 @@ private class CopiedNode(
     , val attributes: List<NodeAttribute>
     , val line: NodeLine
     , val border: NodeBorder
+    , val isElevated: Boolean
     , val task: NodeTask
     , val noteDisplay: NoteDisplay?
     , val attributeDisplay: AttributeDisplay?

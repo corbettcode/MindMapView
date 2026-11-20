@@ -1,5 +1,6 @@
 package com.mindsync.mindmapview.desktop.dialog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -119,6 +123,7 @@ private val DIALOG_GAP = 16.dp
  * @param textColor The text color for the node.
  * @param line The node's own line settings, whose null values are inherited from its parent.
  * @param border What is drawn around the node: nothing, or a line of a width and color.
+ * @param isElevated Whether the node is drawn raised off the map, with a shadow below it, as a rectangle can be.
  * @param noteDisplay How the node's note is shown when it has a way of its own; null when it follows
  * [defaultNoteDisplay], the way of the Preferences.
  * @param attributeDisplay How the node's attributes are shown when it has a way of its own; null when it follows
@@ -130,8 +135,8 @@ private val DIALOG_GAP = 16.dp
  * @param onToneChange A callback triggered when the tone of an emoji is changed. Receives the base emoji
  * and its selected tonal variant.
  * @param onSubmit A callback triggered upon confirming the dialog. Receives the updated description,
- * note, shape, fill color, text color, line settings, border, attributes, note display and attribute
- * display of the node.
+ * note, shape, fill color, text color, line settings, border, whether it is elevated, attributes, note display
+ * and attribute display of the node.
  * @param onDismiss A callback triggered when the dialog is dismissed.
  * @param onAddAnother A callback triggered after the node is submitted with "Add Another", for another node to be
  * added. Without it, the dialog has no such button.
@@ -150,6 +155,7 @@ fun EditNodeDialog(
     , textColor: Color
     , line: NodeLine
     , border: NodeBorder
+    , isElevated: Boolean
     , noteDisplay: NoteDisplay?
     , defaultNoteDisplay: NoteDisplay
     , attributeDisplay: AttributeDisplay?
@@ -186,6 +192,7 @@ fun EditNodeDialog(
         , textColor: Color
         , line: NodeLine
         , border: NodeBorder
+        , isElevated: Boolean
         , attributes: List<NodeAttribute>
         , noteDisplay: NoteDisplay?
         , attributeDisplay: AttributeDisplay?
@@ -211,6 +218,7 @@ fun EditNodeDialog(
     var noteMarkdown by remember { mutableStateOf<String?>(null) }
     var selectedEmoji by remember { mutableStateOf(emoji) }
     var selectedShape by remember { mutableStateOf(shape) }
+    var isSelectedElevated by remember { mutableStateOf(isElevated) }
     var selectedColor by remember { mutableStateOf(color) }
     var selectedTextColor by remember { mutableStateOf(textColor) }
 
@@ -310,6 +318,8 @@ fun EditNodeDialog(
             , selectedTextColor
             , selectedLine
             , selectedBorder
+            // Only a rectangle is drawn elevated, so a node made another shape is flat again.
+            , isSelectedElevated && selectedShape == NodeShape.RECTANGLE
             , attributesToKeep(attributeRows)
             , selectedNoteDisplay
             , selectedAttributeDisplay
@@ -360,17 +370,40 @@ fun EditNodeDialog(
                 , onContentMinHeightChange = { dialogState.contentMinHeight = it }
                 , settings = {
                     selectedShape?.let { currentShape ->
-                        ShapePicker(
-                            selectedShape = currentShape
-                            , onSelect = { newShape ->
-                                // A color that was not chosen is that of the shape, so it goes along with the shape.
-                                if (selectedColor == currentShape.defaultColor) selectedColor = newShape.defaultColor
-                                if (selectedTextColor == currentShape.defaultTextColor) {
-                                    selectedTextColor = newShape.defaultTextColor
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            , verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ShapePicker(
+                                selectedShape = currentShape
+                                , onSelect = { newShape ->
+                                    // A color that was not chosen is that of the shape, so it goes along with it.
+                                    if (selectedColor == currentShape.defaultColor) {
+                                        selectedColor = newShape.defaultColor
+                                    }
+                                    if (selectedTextColor == currentShape.defaultTextColor) {
+                                        selectedTextColor = newShape.defaultTextColor
+                                    }
+                                    selectedShape = newShape
                                 }
-                                selectedShape = newShape
+                            )
+                            if (currentShape == NodeShape.RECTANGLE) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                    , modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { isSelectedElevated = !isSelectedElevated }
+                                        .padding(end = 12.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = isSelectedElevated
+                                        , onCheckedChange = null
+                                        , modifier = Modifier.padding(8.dp)
+                                    )
+                                    Text("Elevated")
+                                }
                             }
-                        )
+                        }
                     }
 
                     EmojiPicker(

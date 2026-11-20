@@ -106,6 +106,7 @@ import com.corbettcode.mindmapview.library.model.LayoutSide
 import com.corbettcode.mindmapview.library.model.MapStructure
 import com.corbettcode.mindmapview.library.model.NoteDisplay
 import com.corbettcode.mindmapview.library.node.NodeDrawerFactory
+import com.corbettcode.mindmapview.library.node.drawElevationShadow
 import com.corbettcode.mindmapview.library.util.Dp
 import com.corbettcode.mindmapview.library.util.toPx
 import kotlin.math.PI
@@ -982,6 +983,7 @@ private fun DrawScope.drawNodeWithContent(
 ) {
     val nodeDrawerFactory = NodeDrawerFactory(node, drawInfo, this, line?.color, line?.width)
     val nodeDrawer = nodeDrawerFactory.createNodeDrawer()
+    if (node is RectangleNodeData && state.tree.isElevated(node.id)) drawElevationShadow(node.path)
     nodeDrawer.drawNode(this)
     val border = state.tree.drawnBorderOf(node.id)
     if (!border.isNone) nodeDrawerFactory.createBorderDrawer(border).drawNode(this)

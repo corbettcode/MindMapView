@@ -33,8 +33,9 @@ import kotlin.io.encoding.Base64
 
 /**
  * Reads and writes mind maps in this library's own `.ccmm` format, which keeps all there is of a [Tree]:
- * each node's shape, colors, rich text, note and attributes and how they are shown, whether it is folded, the side of the root each
- * of its children is on, the arrow links, and where the root is when the user dragged it there.
+ * each node's shape, colors, rich text, note and attributes and how they are shown, whether it is folded or elevated,
+ * the side of the root each of its children is on, the arrow links, and where the root is when the user dragged it
+ * there.
  *
  * It is XML. The root `<mindmapview>` element holds the root `<node>`, which holds the nodes below it in
  * order, then the `<arrowlink>` elements, then the `<boundary>` elements, then the `<preference>` elements, and then
@@ -275,6 +276,7 @@ object MindMapViewFile {
             attribute("dy", offset.y.dpVal.toString())
         }
         if (tree.isFolded(node.id)) attribute("folded", "true")
+        if (tree.isElevated(node.id)) attribute("elevated", "true")
         tree.branchStructureOf(node.id)?.let { attribute("structure", it.fileName) }
         tree.gridColumnsOf(node.id)?.let { attribute("columns", it.toString()) }
         tree.summaryChildIds(node.id).takeIf { it.isNotEmpty() }?.let { attribute("summaryOf", it.joinToString(" ")) }
@@ -367,6 +369,7 @@ object MindMapViewFile {
         tree.setNoteDisplay(id, element.noteDisplay())
         tree.setAttributeDisplay(id, element.attributeDisplay())
         tree.setFolded(id, element.attributes["folded"] == "true")
+        tree.setElevated(id, element.attributes["elevated"] == "true")
         tree.setTask(id, element.task())
         tree.setBranchStructure(id, MapStructure.branchFromFileName(element.attributes["structure"]))
         tree.setGridColumns(id, element.gridColumns())

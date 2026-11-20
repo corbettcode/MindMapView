@@ -458,6 +458,40 @@ class UndoTest {
         assertEquals(border, state.tree.borderOf(pastedId))
     }
 
+    @Test
+    fun editNodeElevatedIsUndone() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+
+        state.editNodeElevated(true)
+        waitForIdle()
+        assertTrue(state.tree.isElevated("first"))
+
+        state.undo()
+        waitForIdle()
+        assertFalse(state.tree.isElevated("first"))
+
+        state.redo()
+        waitForIdle()
+        assertTrue(state.tree.isElevated("first"))
+    }
+
+    @Test
+    fun pastedNodeKeepsItsElevation() = runComposeUiTest {
+        val state = stateWithNodes()
+        state.selectNode("first")
+        state.editNodeElevated(true)
+        state.copyNode()
+        state.selectNode("second")
+
+        state.pasteNode()
+        waitForIdle()
+
+        val pastedId = state.tree.getNode("second").children.last()
+        assertTrue(state.tree.isElevated(pastedId))
+        assertFalse(state.tree.isElevated(state.tree.getNode(pastedId).children.single()))
+    }
+
     companion object {
         const val TAG = "mindMap"
     }

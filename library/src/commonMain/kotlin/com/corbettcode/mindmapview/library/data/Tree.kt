@@ -69,6 +69,9 @@ class Tree<T> {
 
     private val foldedIds = mutableSetOf<String>()
 
+    // The rectangles drawn raised off the map, with a shadow below them.
+    private val elevatedIds = mutableSetOf<String>()
+
     // The children of the root that float, each with how far its center is from the root's.
     private val floatingOffsets = mutableMapOf<String, DpOffset>()
 
@@ -387,6 +390,20 @@ class Tree<T> {
             else -> attributes.mapIndexed { i, it -> if (i == index) attribute else it }
         }
         setAttributes(id, changed)
+    }
+
+    /**
+     * Returns whether the node [id] is drawn raised off the map, with a shadow below it. Only a rectangle is, but the
+     * setting is kept whatever the shape, for when the node is a rectangle again.
+     */
+    fun isElevated(id: String): Boolean = id in elevatedIds
+
+    fun setElevated(
+        id: String
+        , isElevated: Boolean
+    ) {
+        getNode(id)
+        if (isElevated) elevatedIds.add(id) else elevatedIds.remove(id)
     }
 
     /** Returns what is drawn around a node: no border unless it was given one. */
@@ -748,6 +765,7 @@ class Tree<T> {
         , nodeNoteDisplays = nodeNoteDisplays.toMap()
         , nodeAttributeDisplays = nodeAttributeDisplays.toMap()
         , foldedIds = foldedIds.toSet()
+        , elevatedIds = elevatedIds.toSet()
         , floatingOffsets = floatingOffsets.toMap()
         , branchStructures = branchStructures.toMap()
         , gridColumns = gridColumns.toMap()
@@ -779,6 +797,8 @@ class Tree<T> {
         nodeAttributeDisplays.putAll(snapshot.nodeAttributeDisplays)
         foldedIds.clear()
         foldedIds.addAll(snapshot.foldedIds)
+        elevatedIds.clear()
+        elevatedIds.addAll(snapshot.elevatedIds)
         floatingOffsets.clear()
         floatingOffsets.putAll(snapshot.floatingOffsets)
         branchStructures.clear()
@@ -995,6 +1015,7 @@ class Tree<T> {
         floatingOffsets.remove(targetId)
         branchStructures.remove(targetId)
         gridColumns.remove(targetId)
+        elevatedIds.remove(targetId)
     }
 
     /**

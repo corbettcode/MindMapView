@@ -239,6 +239,22 @@ class MindMapViewFileTest {
     }
 
     @Test
+    fun elevatedNodesRoundTrip() {
+        val tree = Tree<Any>()
+        val rootId = tree.getRootNode().id
+        tree.addNode("a", rootId, "<p>a</p>")
+        tree.addNode("b", rootId, "<p>b</p>")
+        tree.setElevated("a", true)
+
+        val written = MindMapViewFile.write(tree)
+        val read = MindMapViewFile.read(written)
+
+        assertTrue(read.isElevated("a"))
+        assertFalse(read.isElevated("b"))
+        assertEquals(1, Regex(" elevated=\"true\"").findAll(written).count())
+    }
+
+    @Test
     fun borderSavedWithoutAColorIsInTheColorOfTheText() {
         val text = "<mindmapview version=\"1\"><node id=\"r\" text=\"r\">" +
             "<node id=\"a\" text=\"a\" textColor=\"#ff112233\" border=\"line\" borderWidth=\"4\"/></node></mindmapview>"
