@@ -75,11 +75,46 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/**
+ * Remembers a [MindMapState] for the specified mind map [tree].
+ *
+ * The same state instance is retained across recompositions as long as [tree] remains the same.
+ *
+ * @param tree The tree used to create and identify the remembered mind map state.
+ * @return The remembered [MindMapState] associated with [tree].
+ */
 @Composable
-fun rememberMindMapState(tree: Tree<*> = remember { Tree<Any>() }): MindMapState {
+fun rememberMindMapState(
+    tree: Tree<*> = remember { Tree<Any>() }
+): MindMapState {
     return remember(tree) { MindMapState(tree) }
 }
 
+/**
+ * Mutable editor state for an interactive mind map.
+ *
+ * This class coordinates the current map model with the transient UI state needed to render and edit it. It keeps
+ * the active tree, selection, hover and drag state, text editing state, layout and viewport information, loaded
+ * images, visual theme data, and undo/redo history in one place so that editor actions can be applied consistently.
+ *
+ * The state exposes operations for common mind-map editing tasks, including adding topics, adding sibling and summary
+ * topics, creating floating topics, changing map and branch layout, changing grid settings, attaching or moving
+ * floating topics, replacing the tree, and marking the current tree as saved. Mutating operations are recorded as
+ * history steps unless they are performed as part of an already recorded grouped change.
+ *
+ * Undo and redo restore both the tree snapshot and relevant visual state captured for the change. Selection is
+ * preserved where possible for nodes that still exist after restoration. Replacing the whole tree through the
+ * non-history-loading operation resets the saved baseline and clears the previous history, while the history-aware
+ * replacement operation records the replacement as a normal editable change.
+ *
+ * The class also resolves per-topic display settings for notes and attributes by falling back from node-specific
+ * settings to topic-kind settings and finally to map-wide defaults. Image lookup is lazy: an image that has been
+ * requested but not loaded yet contributes no rendered size until it becomes available.
+ *
+ * Instances are intended to be used by the mind-map editor layer as the single source of truth for editing,
+ * rendering, animation scheduling, change tracking, and derived UI state such as whether the map is modified,
+ * whether undo or redo is available, and whether copied or editable content exists.
+ */
 @Stable
 class MindMapState(
     tree: Tree<*> = Tree<Any>()
@@ -600,6 +635,24 @@ class MindMapState(
         }
     }
 
+    /**
+     * Creates a new child node for the specified parent, applies the requested visual
+     * and display settings, adds it to the mind map, and updates the tree when note
+     * or attribute display settings may affect layout measurements.
+     *
+     * @param parent parent node that receives the new child.
+     * @param description text description assigned to the new child node.
+     * @param shape shape used to determine the concrete node data type to create.
+     * @param color fill color assigned to the new child node.
+     * @param textColor text color assigned to the new child node.
+     * @param side layout side where the new child node should be inserted.
+     * @param note note text assigned to the new child node.
+     * @param line line style applied to the new child node.
+     * @param border border style applied to the new child node.
+     * @param noteDisplay optional note display setting applied to the new child node.
+     * @param attributeDisplay optional attribute display setting applied to the new child node.
+     * @param index optional insertion index within the target side.
+     */
     private fun addChild(
         parent: NodeData<*>
         , description: String
@@ -737,7 +790,14 @@ class MindMapState(
     private fun Tree<*>.isGridOwner(id: String): Boolean =
         (branchStructureOf(id) ?: structure.takeIf { getNode(id).parentId == null }) == MapStructure.GRID
 
-    /** Makes the selected floating topics attached children of the root again, on its right, as one change. */
+    /**
+     * Makes the selected floating topics attached children of the root again, on its right, as one change.
+     *
+     * Attaches all currently selected floating nodes to the root.
+     *
+     * Only selected nodes that are marked as floating are updated. The change is recorded
+     * and the tree is animated after the attachment is applied.
+     */
     fun attachToRoot() {
         recordChange {
             selectedNodes.filter { tree.isFloating(it.id) }.forEach { tree.setFloating(it.id, null) }
@@ -745,8 +805,19 @@ class MindMapState(
         }
     }
 
-    /** Moves the selected floating topics [by] that far, with the nodes below them, as one change. */
-    fun moveFloating(by: DpOffset) {
+    /**
+     * Moves the selected floating topics [by] that far, with the nodes below them, as one change.
+     *
+     * Moves each selected floating node by the specified offset.
+     *
+     * Selected nodes that do not have a floating offset are ignored. The change is recorded and
+     * the resulting tree update is animated.
+     *
+     * @param by The offset to add to each selected floating node's current position.
+     */
+    fun moveFloating(
+        by: DpOffset
+    ) {
         recordChange {
             selectedNodes.forEach { node ->
                 val offset = tree.floatingOffsetOf(node.id) ?: return@forEach
@@ -1911,6 +1982,19 @@ class MindMapState(
         node: NodeData<*>
     ): Offset = currentPoint + Offset(viewportSize.width / 2, viewportSize.height / 2) - screenPosition(node)
 
+    /**
+     * Adjusts the current view so the visible mind map content fits within the viewport.
+     *
+     * If the viewport has no size, the operation is skipped. Otherwise, the method computes the
+     * required map bounds from the measured root layout and all visible nodes, including floating
+     * topics that may extend beyond the root branch measurements. Additional padding is applied to
+     * the calculated bounds, and the resulting width and height requirements are converted to a
+     * zoom scale relative to the current viewport size.
+     *
+     * The final scale is constrained by the default zoom level, then applied through a fit animation.
+     * During the animation, the current scale factor and viewport offset are updated from the
+     * animation callback.
+     */
     fun fitScreen() {
         if (viewportSize.isEmpty()) return
         val root = tree.getRootNode()

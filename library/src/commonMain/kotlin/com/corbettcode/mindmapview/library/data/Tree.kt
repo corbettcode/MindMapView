@@ -16,6 +16,32 @@ import com.corbettcode.mindmapview.library.util.Dp
 import com.corbettcode.mindmapview.library.util.ExceptionMessage
 import com.corbettcode.mindmapview.library.util.NodeGenerator
 
+/**
+ * Mutable model of a mind-map style topic tree.
+ *
+ * A tree stores nodes addressed by their ids and the layout, presentation, and auxiliary
+ * data attached to those nodes. It tracks the root topic, ordinary and floating root
+ * children, branch placement, branch-specific structures, grid settings, folded nodes,
+ * boundaries, summaries, arrow links, and per-node visual or semantic metadata.
+ *
+ * Layout-related operations determine how a node is placed relative to its parent, which
+ * side of the root a branch belongs to, which structure owns a branch, and how summaries,
+ * floating topics, and root children are grouped or ordered. Branches may inherit the
+ * structure of an ancestor or define their own structure, while the root uses the tree's
+ * map structure.
+ *
+ * Presentation-related operations expose and modify node attributes, labels, borders,
+ * tasks, note display settings, attribute display settings, fill colors, topic styles,
+ * and theme-derived defaults. Node-specific settings may override map-level or
+ * topic-kind defaults, while unset values continue to follow the applicable inherited
+ * behavior.
+ *
+ * The class maintains the consistency of tree-specific invariants such as root-child
+ * ordering, attached versus floating root topics, branch side assignment, and structure
+ * ownership. Methods that change layout or metadata may reject invalid operations, such
+ * as assigning branch-only state to the root or floating a node that is not a child of
+ * the root.
+ */
 class Tree<T> {
     private var _nodes: MutableMap<String, NodeData<*>>
     val nodes get() = _nodes.toMap()

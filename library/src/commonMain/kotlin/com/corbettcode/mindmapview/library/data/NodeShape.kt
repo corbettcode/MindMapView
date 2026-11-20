@@ -4,6 +4,13 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * The shapes a node can take, each with the colors a node of that shape gets unless it is given its own.
+ *
+ * Defines the supported visual shapes for a node.
+ *
+ * Each shape provides default styling intended for rendering a node consistently
+ * across diagrams or graph-based views. Filled shapes use a default fill color
+ * and a contrasting text color, while line-based nodes use a color suitable for
+ * both the line and its text.
  */
 enum class NodeShape(
     val defaultColor: Color

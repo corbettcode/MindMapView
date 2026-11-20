@@ -28,7 +28,11 @@ class UserPreferencesStore(
     // Preferences kept before there were topic styles take those of the theme new maps start in.
     var preferences: UserPreferences =
         MapThemes.byId(read(MAP_THEME)).let { theme ->
-            readUserPreferences(read, UserPreferences().withTheme(theme), theme)
+            readUserPreferences(
+                read
+                , UserPreferences().withTheme(theme)
+                , theme
+            )
         }
         private set
 
@@ -89,13 +93,31 @@ class UserPreferencesStore(
             ARROW_LINK_COLORS
             , BACKGROUND_COLOR
         ) + TopicKind.entries.flatMap { kind ->
-            listOf(FONT, SHAPE, NOTE_DISPLAY, ATTRIBUTE_DISPLAY, FILL, TEXT, BORDER, FILL_COLORS, TOPIC_TEXT_COLORS)
-                .map { topicKey(kind, it) }
+            listOf(
+                FONT
+                , SHAPE
+                , NOTE_DISPLAY
+                , ATTRIBUTE_DISPLAY
+                , FILL
+                , TEXT
+                , BORDER
+                , FILL_COLORS
+                , TOPIC_TEXT_COLORS
+            )
+            .map {
+                topicKey(kind, it)
+            }
         }
 
         // What a map file saved before each kind of topic had its own preferences keeps, read for all of them.
-        internal val LEGACY_MAP_PREFERENCES =
-            setOf(NODE_FONT, NEW_NODE_SHAPE, NOTE_DISPLAY, ATTRIBUTE_DISPLAY, NODE_COLORS, TEXT_COLORS)
+        internal val LEGACY_MAP_PREFERENCES = setOf(
+            NODE_FONT
+            , NEW_NODE_SHAPE
+            , NOTE_DISPLAY
+            , ATTRIBUTE_DISPLAY
+            , NODE_COLORS
+            , TEXT_COLORS
+        )
     }
 }
 
