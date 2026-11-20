@@ -121,6 +121,7 @@ val DEFAULT_NODE_COLORS = NodeShape.entries.map { it.defaultColor } + listOf(
     Color(0xFF7AA37D)
     , Color(0xFF4B877B)
     , Color(0xFF336770)
+    , Color(0xFFB691BF)
     , Color(0xFFB9884E)
     , Color(0xFF6FA8DC)
 ).distinct()

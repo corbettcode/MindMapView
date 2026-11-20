@@ -282,11 +282,11 @@ class MindMapTest {
     }
 
     @Test
-    fun rootIsATealOvalWithBlackText() {
+    fun rootIsAPurpleOvalWithBlackText() {
         val root: NodeData<*> = Tree<Any>(Dp(150f), Dp(300f)).getRootNode()
         assertIs<OvalNodeData>(root)
         assertEquals("🌱" to "root", DescriptionEmoji.split(root.description))
-        assertEquals(Color(0xFF336770), root.color)
+        assertEquals(Color(0xFFB691BF), root.color)
         assertEquals(Color.Black, root.textColor)
     }
 
