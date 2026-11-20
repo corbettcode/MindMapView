@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.corbettcode.mindmapview"
-version = "2.0.0"
+version = "2.0.1"
 
 // The jar and klib files are named after the project as well, and library-jvm.jar can meet another project's
 // library-jvm.jar in an application's lib folder.

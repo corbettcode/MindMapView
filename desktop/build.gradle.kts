@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val appVersion = "2.0.0"
+val appVersion = "2.0.1"
 
 // The README and version are shown from the Help menu. They are put in the code, as there are no resources the
 // web app could read.
