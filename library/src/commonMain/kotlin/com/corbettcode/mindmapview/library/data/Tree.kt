@@ -1301,11 +1301,16 @@ class Tree<T> {
         private const val ROOT_ID = "root"
         private const val ROOT_EMOJI = "🌱"
 
-        internal val ROOT_COLOR = Color(0xFFB691BF)
+        internal val ROOT_COLOR = Color(0xFF0C9EB6)
         internal val ROOT_TEXT_COLOR = NodeShape.OVAL.defaultTextColor
 
         // The colors the root and the shapes started with in earlier versions of the app.
-        private val EARLIER_ROOT_COLORS = setOf(Color(0xFFB8B8B8), Color(0xFFCCCCCC), Color(0xFF336770))
+        private val EARLIER_ROOT_COLORS = setOf(
+            Color(0xFFB8B8B8)
+            , Color(0xFFCCCCCC)
+            , Color(0xFF336770)
+            , Color(0xFFB691BF)
+        )
         private val EARLIER_SHAPE_COLORS = mapOf(
             NodeShape.RECTANGLE to setOf(Color(0xFFFFCF96))
             , NodeShape.CIRCLE to setOf(Color(0xFFE1719F))
